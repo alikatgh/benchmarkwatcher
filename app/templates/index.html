@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-10 min-h-screen transition-colors duration-300">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-brand-black-80 dark:text-brand-paper font-serif">Market Benchmarks</h1>
+            <p
+                class="text-sm text-brand-black-60 dark:text-brand-black-60 mt-1 font-ui uppercase tracking-wider font-bold">
+                Terminal Reference Mode</p>
+        </div>
+        <div id="view-indicator"
+            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 uppercase tracking-widest bg-brand-black-60/5 dark:bg-white/5 px-3 py-1.5 rounded-full font-ui">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <!-- Grid View Container -->
+    <div id="grid-view" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for commodity in commodities %}
+            {% include 'components/price_card.html' %}
+            {% else %}
+            <div
+                class="col-span-full bg-brand-pink dark:bg-brand-slate p-12 rounded-2xl border-2 border-dashed border-brand-black-60/20 dark:border-brand-black-60/40 text-center text-brand-black-60">
+                <p class="font-bold">No benchmark data available.</p>
+                <p class="text-xs mt-1">Please initialize the data feed.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Compact View Container -->
+    <div id="compact-view" class="hidden">
+        <div
+            class="bg-brand-pink dark:bg-brand-slate border border-brand-black-60/20 dark:border-brand-black-60/40 rounded-xl overflow-hidden shadow-sm">
+            {% include 'components/compact_table.html' %}
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const viewMode = localStorage.getItem('view-mode') || 'grid';
+        const grid = document.getElementById('grid-view');
+        const compact = document.getElementById('compact-view');
+        const indicator = document.getElementById('view-indicator');
+
+        if (viewMode === 'compact') {
+            compact.classList.remove('hidden');
+            indicator.textContent = 'View Mode: Compact Terminal';
+        } else {
+            grid.classList.remove('hidden');
+            indicator.textContent = 'View Mode: Standard Grid';
+        }
+    })();
+</script>
+{% endblock %}

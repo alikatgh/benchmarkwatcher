@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BenchmarkWatcher{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Base brand colors */
+            --brand-claret: #990f3d;
+            --brand-teal: #0d7680;
+            --brand-oxford: #0f5499;
+
+            /* Theme-specific colors - defaults to light theme */
+            --theme-bg: #fffcfa;
+            --theme-surface: #fffcfa;
+            --theme-text: #33302e;
+            --theme-text-muted: #66605c;
+            --theme-border: rgba(51, 48, 46, 0.2);
+            --theme-accent: #0f5499;
+        }
+
+        /* Light Theme (Warm Cream) */
+        html[data-theme="light"] {
+            --theme-bg: #fffcfa;
+            --theme-surface: #fffcfa;
+            --theme-text: #33302e;
+            --theme-text-muted: #66605c;
+            --theme-border: rgba(51, 48, 46, 0.2);
+            --theme-accent: #0f5499;
+        }
+
+        /* Dark Theme (Terminal) */
+        html[data-theme="dark"] {
+            --theme-bg: #000000;
+            --theme-surface: #1a1a1a;
+            --theme-text: #ffffff;
+            --theme-text-muted: #999999;
+            --theme-border: rgba(255, 255, 255, 0.1);
+            --theme-accent: #1aecff;
+        }
+
+        /* Mono Light Theme (Black on White) */
+        html[data-theme="mono-light"] {
+            --theme-bg: #ffffff;
+            --theme-surface: #ffffff;
+            --theme-text: #000000;
+            --theme-text-muted: #555555;
+            --theme-border: rgba(0, 0, 0, 0.15);
+            --theme-accent: #000000;
+        }
+
+        /* Mono Dark Theme (White on Black) */
+        html[data-theme="mono-dark"] {
+            --theme-bg: #000000;
+            --theme-surface: #0a0a0a;
+            --theme-text: #ffffff;
+            --theme-text-muted: #aaaaaa;
+            --theme-border: rgba(255, 255, 255, 0.15);
+            --theme-accent: #ffffff;
+        }
+
+        /* Bloomberg Theme (Trading Terminal) */
+        html[data-theme="bloomberg"] {
+            --theme-bg: #1e1e1e;
+            --theme-surface: #2d2d2d;
+            --theme-text: #ff9933;
+            --theme-text-muted: #999999;
+            --theme-border: rgba(255, 153, 51, 0.2);
+            --theme-accent: #ff9933;
+            --theme-positive: #00ff00;
+            --theme-negative: #ff3333;
+        }
+
+        /* FT Theme (Financial Times Salmon) */
+        html[data-theme="ft"] {
+            --theme-bg: #fff1e5;
+            --theme-surface: #fff9f5;
+            --theme-text: #33302e;
+            --theme-text-muted: #66605c;
+            --theme-border: rgba(51, 48, 46, 0.15);
+            --theme-accent: #990f3d;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Georgia', serif;
+            color: var(--theme-text);
+            background-color: var(--theme-bg);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .font-ui {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Theme-aware utility classes */
+        .theme-bg {
+            background-color: var(--theme-bg);
+        }
+
+        .theme-surface {
+            background-color: var(--theme-surface);
+        }
+
+        .theme-text {
+            color: var(--theme-text);
+        }
+
+        .theme-text-muted {
+            color: var(--theme-text-muted);
+        }
+
+        .theme-border {
+            border-color: var(--theme-border);
+        }
+
+        .theme-accent {
+            color: var(--theme-accent);
+        }
+
+        .theme-accent-bg {
+            background-color: var(--theme-accent);
+        }
+
+        /* Card backgrounds */
+        .bg-brand-pink {
+            background-color: var(--theme-surface);
+        }
+
+        /* Header backgrounds */
+        header.bg-brand-pink {
+            background-color: var(--theme-bg);
+        }
+
+        /* Dark class for Tailwind compatibility */
+        html[data-theme="dark"] .dark\:bg-terminal-surface,
+        html[data-theme="dark"] .dark\:bg-terminal-black,
+        html[data-theme="mono-dark"] .dark\:bg-terminal-surface,
+        html[data-theme="mono-dark"] .dark\:bg-terminal-black {
+            background-color: var(--theme-surface);
+        }
+
+        html[data-theme="dark"] .dark\:text-white,
+        html[data-theme="mono-dark"] .dark\:text-white {
+            color: var(--theme-text);
+        }
+
+        html[data-theme="dark"] .dark\:border-white\/10,
+        html[data-theme="mono-dark"] .dark\:border-white\/10 {
+            border-color: var(--theme-border);
+        }
+
+        /* Mono themes use accent color for highlights instead of brand colors */
+        html[data-theme="mono-light"] .text-brand-oxford,
+        html[data-theme="mono-light"] .text-brand-teal {
+            color: #000000;
+        }
+
+        html[data-theme="mono-dark"] .text-brand-oxford,
+        html[data-theme="mono-dark"] .text-brand-teal,
+        html[data-theme="mono-dark"] .dark\:text-brand-teal {
+            color: #ffffff;
+        }
+
+        /* Keep claret for negative values in all themes */
+        .text-brand-claret {
+            color: var(--brand-claret);
+        }
+
+        .bg-brand-claret {
+            background-color: var(--brand-claret);
+        }
+
+        /* Keep teal for positive values in light/dark themes */
+        html[data-theme="light"] .text-brand-teal,
+        html[data-theme="dark"] .text-brand-teal {
+            color: var(--brand-teal);
+        }
+
+        html[data-theme="light"] .bg-brand-teal,
+        html[data-theme="dark"] .bg-brand-teal {
+            background-color: var(--brand-teal);
+        }
+
+        /* Mono themes: use grayscale for teal */
+        html[data-theme="mono-light"] .text-brand-teal {
+            color: #333333;
+        }
+
+        html[data-theme="mono-light"] .bg-brand-teal {
+            background-color: #333333;
+        }
+
+        html[data-theme="mono-dark"] .text-brand-teal {
+            color: #cccccc;
+        }
+
+        html[data-theme="mono-dark"] .bg-brand-teal {
+            background-color: #cccccc;
+        }
+
+        /* Bloomberg Theme - Override ALL colors */
+        html[data-theme="bloomberg"] {
+            --brand-teal: #00ff00;
+            --brand-claret: #ff3333;
+        }
+
+        html[data-theme="bloomberg"] body,
+        html[data-theme="bloomberg"] .text-brand-black-80,
+        html[data-theme="bloomberg"] .text-brand-black-60,
+        html[data-theme="bloomberg"] h1,
+        html[data-theme="bloomberg"] h2,
+        html[data-theme="bloomberg"] h3,
+        html[data-theme="bloomberg"] h4 {
+            color: #ff9933 !important;
+        }
+
+        html[data-theme="bloomberg"] .dark\:text-white {
+            color: #ff9933 !important;
+        }
+
+        html[data-theme="bloomberg"] .dark\:bg-terminal-surface,
+        html[data-theme="bloomberg"] .dark\:bg-terminal-black,
+        html[data-theme="bloomberg"] .bg-brand-pink {
+            background-color: #1e1e1e !important;
+        }
+
+        html[data-theme="bloomberg"] .dark\:border-white\/10,
+        html[data-theme="bloomberg"] .border-brand-black-60\/20 {
+            border-color: rgba(255, 153, 51, 0.3) !important;
+        }
+
+        html[data-theme="bloomberg"] .text-brand-oxford,
+        html[data-theme="bloomberg"] .dark\:text-brand-oxford {
+            color: #ff9933 !important;
+        }
+
+        html[data-theme="bloomberg"] .text-brand-teal,
+        html[data-theme="bloomberg"] .dark\:text-brand-teal {
+            color: #00ff00 !important;
+        }
+
+        html[data-theme="bloomberg"] .text-brand-claret {
+            color: #ff3333 !important;
+        }
+
+        html[data-theme="bloomberg"] .bg-brand-teal\/10 {
+            background-color: rgba(0, 255, 0, 0.15) !important;
+        }
+
+        html[data-theme="bloomberg"] .bg-brand-claret\/10 {
+            background-color: rgba(255, 51, 51, 0.15) !important;
+        }
+
+        html[data-theme="bloomberg"] header {
+            background-color: #1e1e1e !important;
+            border-color: rgba(255, 153, 51, 0.3) !important;
+        }
+
+        html[data-theme="bloomberg"] footer {
+            background-color: #1e1e1e !important;
+        }
+
+        html[data-theme="bloomberg"] .theme-text-muted,
+        html[data-theme="bloomberg"] .text-brand-black-60 {
+            color: #888888 !important;
+        }
+
+        html[data-theme="bloomberg"] a:not(.theme-btn) {
+            color: #ff9933 !important;
+        }
+
+        html[data-theme="bloomberg"] a:hover {
+            color: #ffb366 !important;
+        }
+
+        /* Bloomberg chart axis and labels */
+        html[data-theme="bloomberg"] .chart-container text {
+            fill: #ff9933 !important;
+        }
+
+        /* FT Theme - Salmon background with claret accents */
+        html[data-theme="ft"] .bg-brand-pink,
+        html[data-theme="ft"] header,
+        html[data-theme="ft"] footer {
+            background-color: #fff1e5 !important;
+        }
+
+        html[data-theme="ft"] .text-brand-oxford,
+        html[data-theme="ft"] .text-brand-teal {
+            color: #990f3d !important;
+        }
+
+        html[data-theme="ft"] .bg-brand-teal {
+            background-color: #990f3d !important;
+        }
+
+        html[data-theme="ft"] .bg-brand-teal\/10 {
+            background-color: rgba(13, 118, 128, 0.1) !important;
+        }
+
+        html[data-theme="ft"] a:not(.theme-btn) {
+            color: #990f3d !important;
+        }
+
+        html[data-theme="ft"] a:hover {
+            color: #b31245 !important;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            pink: '#fffcfa',
+                            grey: '#333',
+                            claret: '#990f3d',
+                            teal: '#0d7680',
+                            oxford: '#0f5499',
+                            slate: '#262a33',
+                            paper: '#f2dfce',
+                            wheat: '#f2dfce',
+                            'black-80': '#33302e',
+                            'black-70': '#4d4845',
+                            'black-60': '#66605c',
+                            'terminal-black': '#000000',
+                            'terminal-surface': '#1a1a1a',
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                        ui: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
+    <script>
+        // Immediate script to prevent flicker
+        (function () {
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+
+            // Add dark class for Tailwind dark: utilities
+            if (theme === 'dark' || theme === 'mono-dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+</head>
+
+<body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
+    {% include 'components/header.html' %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include 'components/footer.html' %}
+    {% include 'components/settings_modal.html' %}
+</body>
+
+</html>

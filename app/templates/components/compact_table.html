@@ -1,0 +1,920 @@
+<!-- Data Range Selector Bar -->
+<div
+    class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-brand-pink dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 font-ui">
+    <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60">Data
+                Range</span>
+        </div>
+        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+            <button onclick="setDataRange('1W')" id="range-1W"
+                class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1W</button>
+            <button onclick="setDataRange('1M')" id="range-1M"
+                class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1M</button>
+            <button onclick="setDataRange('3M')" id="range-3M"
+                class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">3M</button>
+            <button onclick="setDataRange('6M')" id="range-6M"
+                class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">6M</button>
+            <button onclick="setDataRange('1Y')" id="range-1Y"
+                class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1Y</button>
+            <button onclick="setDataRange('ALL')" id="range-ALL"
+                class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">ALL</button>
+        </div>
+    </div>
+    <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
+        <span class="font-medium">Showing:</span>
+        <span id="date-range-display" class="font-bold text-brand-black-80 dark:text-white ml-1">All available
+            data</span>
+    </div>
+</div>
+
+<!-- Table Settings Panel -->
+<div
+    class="mb-6 bg-brand-pink dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden">
+    <!-- Settings Header -->
+    <div
+        class="flex items-center justify-between px-4 py-3 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
+        <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                </path>
+            </svg>
+            <span
+                class="text-xs font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 font-ui">Table
+                Configuration</span>
+        </div>
+        <button onclick="toggleSettingsPanel()" id="settings-toggle-btn"
+            class="text-xs font-bold text-brand-oxford dark:text-brand-teal hover:underline font-ui">
+            <span id="settings-toggle-text">Show Settings</span>
+        </button>
+    </div>
+
+    <!-- Settings Content (Hidden by default) -->
+    <div id="settings-panel" class="hidden">
+        <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <!-- COMMODITY Column Settings -->
+            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="col-commodity" checked onchange="toggleColumn('commodity')"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Commodity</span>
+                    </div>
+                </div>
+                <!-- Live Preview -->
+                <div
+                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                        Preview</div>
+                    <div id="preview-commodity" class="flex items-center gap-2">
+                        <div
+                            class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center">
+                            <span class="text-[9px] font-bold text-brand-black-60">GO</span>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-brand-black-80 dark:text-white">Gold</div>
+                            <div class="text-[9px] text-brand-black-60 uppercase">METAL</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs font-ui">
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Display</label>
+                        <select id="commodity-display" onchange="updatePreview('commodity')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="full">Name + Category + Icon</option>
+                            <option value="name-category">Name + Category</option>
+                            <option value="name-only">Name Only</option>
+                            <option value="compact">Icon + Name</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TREND Column Settings -->
+            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="col-trend" checked onchange="toggleColumn('trend')"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Trend</span>
+                    </div>
+                </div>
+                <!-- Live Preview -->
+                <div
+                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                        Preview</div>
+                    <div id="preview-trend" class="h-8 flex items-center justify-center">
+                        <svg class="w-full h-6" viewBox="0 0 100 24">
+                            <defs>
+                                <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#0f5499;stop-opacity:0.3" />
+                                    <stop offset="100%" style="stop-color:#0f5499;stop-opacity:0" />
+                                </linearGradient>
+                            </defs>
+                            <path id="preview-trend-fill"
+                                d="M0,20 L10,18 L25,12 L40,15 L55,8 L70,10 L85,4 L100,6 L100,24 L0,24 Z"
+                                fill="url(#sparkGrad)" />
+                            <path id="preview-trend-line" d="M0,20 L10,18 L25,12 L40,15 L55,8 L70,10 L85,4 L100,6"
+                                fill="none" stroke="#0f5499" stroke-width="2" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs font-ui">
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Chart
+                            Type</label>
+                        <select id="trend-type" onchange="updatePreview('trend')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="area">Area Chart</option>
+                            <option value="line">Line Chart</option>
+                            <option value="none">Hide Chart</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Data
+                            Points</label>
+                        <select id="trend-points" onchange="updatePreview('trend')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="7">Last 7 days</option>
+                            <option value="15" selected>Last 15 days</option>
+                            <option value="30">Last 30 days</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRICE Column Settings -->
+            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="col-price" checked onchange="toggleColumn('price')"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Price</span>
+                    </div>
+                </div>
+                <!-- Live Preview -->
+                <div
+                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                        Preview</div>
+                    <div id="preview-price" class="text-right">
+                        <div class="text-sm font-bold text-brand-black-80 dark:text-white">2,328.23</div>
+                        <div class="text-[9px] text-brand-black-60 uppercase">USD</div>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs font-ui">
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Number
+                            Format</label>
+                        <select id="price-format" onchange="updatePreview('price')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="default">Default (89.84)</option>
+                            <option value="thousands">Thousands (2,328.23)</option>
+                            <option value="compact">Compact (2.3K)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Currency</label>
+                        <select id="price-currency" onchange="updatePreview('price')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="below">Below Price</option>
+                            <option value="inline">Inline (USD 89.84)</option>
+                            <option value="symbol">Symbol ($89.84)</option>
+                            <option value="none">Hide Currency</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHANGE Column Settings -->
+            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="col-chg" checked onchange="toggleColumn('chg')"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Change (Abs)</span>
+                    </div>
+                </div>
+                <!-- Live Preview -->
+                <div
+                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                        Preview</div>
+                    <div id="preview-chg" class="flex items-center justify-end gap-1">
+                        <span class="text-sm font-bold text-brand-teal">▲ +12.45</span>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs font-ui">
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Display</label>
+                        <select id="chg-format" onchange="updatePreview('chg')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="arrow">With Arrow (▲ +0.65)</option>
+                            <option value="sign">Sign Only (+0.65)</option>
+                            <option value="plain">Plain (0.65)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Color</label>
+                        <select id="chg-color" onchange="updatePreview('chg')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="colored">Green/Red</option>
+                            <option value="neutral">Neutral</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PERCENT CHANGE Column Settings -->
+            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="col-pct" checked onchange="toggleColumn('pct')"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Change (%)</span>
+                    </div>
+                </div>
+                <!-- Live Preview -->
+                <div
+                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                        Preview</div>
+                    <div id="preview-pct" class="flex justify-end">
+                        <span
+                            class="px-2 py-0.5 rounded text-xs font-bold bg-brand-teal/10 text-brand-teal">+0.72%</span>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs font-ui">
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Style</label>
+                        <select id="pct-style" onchange="updatePreview('pct')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="badge">Badge Style</option>
+                            <option value="plain">Plain Text</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Decimals</label>
+                        <select id="pct-decimals" onchange="updatePreview('pct')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="0">0 (-1%)</option>
+                            <option value="1">1 (-0.7%)</option>
+                            <option value="2" selected>2 (-0.72%)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPDATED Column Settings -->
+            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="col-updated" checked onchange="toggleColumn('updated')"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Updated</span>
+                    </div>
+                </div>
+                <!-- Live Preview -->
+                <div
+                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
+                    <div
+                        class="text-[9px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                        Preview</div>
+                    <div id="preview-updated" class="text-right">
+                        <span class="text-xs font-medium text-brand-black-60">2026-01-07</span>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs font-ui">
+                    <div>
+                        <label class="block text-[9px] font-bold uppercase tracking-wider text-brand-black-60 mb-1">Date
+                            Format</label>
+                        <select id="updated-format" onchange="updatePreview('updated')"
+                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                            <option value="iso">ISO (2026-01-07)</option>
+                            <option value="short">Short (Jan 7)</option>
+                            <option value="long">Long (January 7, 2026)</option>
+                            <option value="relative">Relative (Today)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Footer -->
+        <div
+            class="px-4 py-3 bg-brand-black-60/5 dark:bg-white/5 border-t border-brand-black-60/10 dark:border-white/5 flex items-center justify-between">
+            <div class="text-xs text-brand-black-60 dark:text-brand-black-60 font-ui">
+                <span id="visible-columns-count">6</span>/6 columns visible
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="resetAllSettings()"
+                    class="px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg transition-all font-ui">
+                    Reset Defaults
+                </button>
+                <button onclick="applySettings()"
+                    class="px-4 py-2 text-xs font-bold text-white bg-brand-black-80 dark:bg-white dark:text-terminal-black rounded-lg transition-all hover:opacity-90 font-ui">
+                    Apply Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse font-ui" id="data-table">
+        <thead class="bg-brand-black-60/5 dark:bg-white/5 border-y border-brand-black-60/20 dark:border-white/10">
+            <tr>
+                <th data-col="commodity"
+                    class="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-brand-black-60">Commodity</th>
+                <th data-col="trend"
+                    class="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-brand-black-60 w-32">Trend</th>
+                <th data-col="price"
+                    class="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-brand-black-60 text-right">
+                    Price</th>
+                <th data-col="chg"
+                    class="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-brand-black-60 text-right">Chg
+                </th>
+                <th data-col="pct"
+                    class="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-brand-black-60 text-right">%Chg
+                </th>
+                <th data-col="updated"
+                    class="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-brand-black-60 text-right">
+                    Updated
+                </th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-brand-black-60/10 dark:divide-white/5">
+            {% for commodity in commodities %}
+            <tr onclick="window.location='{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}'"
+                class="hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition-all duration-200 group">
+                <td data-col="commodity" class="px-4 py-5">
+                    <div class="flex items-center gap-3 commodity-cell">
+                        <div
+                            class="commodity-icon w-10 h-10 rounded-xl bg-brand-black-60/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-oxford/10 dark:group-hover:bg-brand-teal/10 transition-colors">
+                            <span
+                                class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 uppercase">{{
+                                commodity.id[:2] }}</span>
+                        </div>
+                        <div>
+                            <div
+                                class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">
+                                {{ commodity.name }}</div>
+                            <div class="commodity-category text-[10px] text-brand-black-60 uppercase tracking-wide">{{
+                                commodity.category }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td data-col="trend" class="px-4 py-5">
+                    <div class="h-10 w-28 bg-brand-black-60/5 dark:bg-white/5 rounded-lg p-1">
+                        <canvas id="sparkline-{{ commodity.id }}"></canvas>
+                    </div>
+                </td>
+                <td data-col="price" class="px-4 py-5 text-right">
+                    <div class="price-value text-sm font-bold text-brand-black-80 dark:text-white"
+                        data-raw="{{ commodity.price }}">{{ commodity.price }}</div>
+                    <div class="price-currency text-[10px] text-brand-black-60 uppercase">{{ commodity.currency }}</div>
+                </td>
+                <td data-col="chg" class="px-4 py-5 text-right">
+                    <div class="chg-cell inline-flex items-center gap-1 text-sm font-bold {% if commodity.change >= 0 %}text-brand-teal{% else %}text-brand-claret{% endif %}"
+                        data-value="{{ commodity.change }}">
+                        <span class="chg-arrow text-[10px]">{% if commodity.change >= 0 %}▲{% else %}▼{% endif %}</span>
+                        <span class="chg-value">{% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }}</span>
+                    </div>
+                </td>
+                <td data-col="pct" class="px-4 py-5 text-right">
+                    <div class="pct-cell inline-flex px-2 py-1 rounded-md text-sm font-bold {% if commodity.change >= 0 %}bg-brand-teal/10 text-brand-teal{% else %}bg-brand-claret/10 text-brand-claret{% endif %}"
+                        data-value="{{ commodity.change_percent }}">
+                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
+                    </div>
+                </td>
+                <td data-col="updated" class="px-4 py-5 text-right">
+                    <div class="updated-cell text-xs font-medium text-brand-black-60" data-raw="{{ commodity.date }}">{{
+                        commodity.date }}</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Settings state
+    const tableSettings = JSON.parse(localStorage.getItem('table-settings') || '{}');
+    const defaultColumns = ['commodity', 'trend', 'price', 'chg', 'pct', 'updated'];
+
+    // Default settings for each column
+    const defaultSettings = {
+        dataRange: 'ALL',
+        columns: { commodity: true, trend: true, price: true, chg: true, pct: true, updated: true },
+        commodity: { display: 'full', icon: 'initials' },
+        trend: { type: 'area', points: '15' },
+        price: { format: 'default', currency: 'below' },
+        chg: { format: 'arrow', color: 'colored' },
+        pct: { style: 'badge', decimals: '2' },
+        updated: { format: 'iso', time: 'no' }
+    };
+
+    // Merge with defaults
+    function getSettings() {
+        return { ...defaultSettings, ...tableSettings, columns: { ...defaultSettings.columns, ...(tableSettings.columns || {}) } };
+    }
+
+    // Data Range Functions
+    function setDataRange(range) {
+        // Save to localStorage for persistence
+        const settings = getSettings();
+        settings.dataRange = range;
+        saveSettings(settings);
+
+        // Reload page with range parameter to filter data server-side
+        const url = new URL(window.location.href);
+        url.searchParams.set('range', range);
+        window.location.href = url.toString();
+    }
+
+    function updateRangeButtons(activeRange) {
+        const ranges = ['1W', '1M', '3M', '6M', '1Y', 'ALL'];
+        ranges.forEach(range => {
+            const btn = document.getElementById(`range-${range}`);
+            if (btn) {
+                if (range === activeRange) {
+                    btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all';
+                } else {
+                    btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                }
+            }
+        });
+    }
+
+    function updateDateRangeDisplay(range) {
+        const display = document.getElementById('date-range-display');
+        const now = new Date();
+        let startDate = new Date();
+        let label = '';
+
+        switch (range) {
+            case '1W':
+                startDate.setDate(now.getDate() - 7);
+                label = 'Last 7 days';
+                break;
+            case '1M':
+                startDate.setMonth(now.getMonth() - 1);
+                label = 'Last month';
+                break;
+            case '3M':
+                startDate.setMonth(now.getMonth() - 3);
+                label = 'Last 3 months';
+                break;
+            case '6M':
+                startDate.setMonth(now.getMonth() - 6);
+                label = 'Last 6 months';
+                break;
+            case '1Y':
+                startDate.setFullYear(now.getFullYear() - 1);
+                label = 'Last year';
+                break;
+            case 'ALL':
+            default:
+                label = 'All available data';
+                break;
+        }
+
+        if (range !== 'ALL') {
+            const startStr = startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const endStr = now.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            display.textContent = `${label} (${startStr} — ${endStr})`;
+        } else {
+            display.textContent = label;
+        }
+    }
+
+    function initDataRange() {
+        // Read from URL parameter (server-side), falling back to localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const range = urlParams.get('range') || getSettings().dataRange || 'ALL';
+        updateRangeButtons(range);
+        updateDateRangeDisplay(range);
+    }
+
+    function toggleSettingsPanel() {
+        const panel = document.getElementById('settings-panel');
+        const toggleText = document.getElementById('settings-toggle-text');
+        panel.classList.toggle('hidden');
+        toggleText.textContent = panel.classList.contains('hidden') ? 'Show Settings' : 'Hide Settings';
+    }
+
+    function toggleColumn(colName) {
+        const checkbox = document.getElementById(`col-${colName}`);
+        const settings = getSettings();
+        settings.columns[colName] = checkbox.checked;
+        saveSettings(settings);
+        applyColumnVisibility(colName, checkbox.checked);
+        updateColumnCount();
+    }
+
+    function applyColumnVisibility(colName, visible) {
+        const cells = document.querySelectorAll(`[data-col="${colName}"]`);
+        cells.forEach(cell => {
+            cell.style.display = visible ? '' : 'none';
+        });
+    }
+
+    function updateColumnCount() {
+        const settings = getSettings();
+        const count = Object.values(settings.columns).filter(v => v).length;
+        document.getElementById('visible-columns-count').textContent = count;
+    }
+
+    function updateColumnSettings(colName) {
+        // Settings will be applied when user clicks "Apply Changes"
+    }
+
+    // Live Preview Functions
+    function updatePreview(colName) {
+        switch (colName) {
+            case 'commodity':
+                updateCommodityPreview();
+                break;
+            case 'trend':
+                updateTrendPreview();
+                break;
+            case 'price':
+                updatePricePreview();
+                break;
+            case 'chg':
+                updateChgPreview();
+                break;
+            case 'pct':
+                updatePctPreview();
+                break;
+            case 'updated':
+                updateUpdatedPreview();
+                break;
+        }
+    }
+
+    function updateCommodityPreview() {
+        const display = document.getElementById('commodity-display')?.value || 'full';
+        const preview = document.getElementById('preview-commodity');
+        if (!preview) return;
+
+        const icon = '<div class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center"><span class="text-[9px] font-bold text-brand-black-60">GO</span></div>';
+        const name = '<div class="text-xs font-bold text-brand-black-80 dark:text-white">Gold</div>';
+        const category = '<div class="text-[9px] text-brand-black-60 uppercase">METAL</div>';
+
+        switch (display) {
+            case 'full':
+                preview.innerHTML = `<div class="flex items-center gap-2">${icon}<div>${name}${category}</div></div>`;
+                break;
+            case 'name-category':
+                preview.innerHTML = `<div>${name}${category}</div>`;
+                break;
+            case 'name-only':
+                preview.innerHTML = name;
+                break;
+            case 'compact':
+                preview.innerHTML = `<div class="flex items-center gap-2">${icon}${name}</div>`;
+                break;
+        }
+    }
+
+    function updateTrendPreview() {
+        const type = document.getElementById('trend-type')?.value || 'area';
+        const fill = document.getElementById('preview-trend-fill');
+        const line = document.getElementById('preview-trend-line');
+        const container = document.getElementById('preview-trend');
+
+        if (type === 'none') {
+            if (container) container.innerHTML = '<span class="text-[9px] text-brand-black-60 italic">Hidden</span>';
+        } else {
+            if (container && !fill) {
+                container.innerHTML = `
+                    <svg class="w-full h-6" viewBox="0 0 100 24">
+                        <defs>
+                            <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#0f5499;stop-opacity:0.3" />
+                                <stop offset="100%" style="stop-color:#0f5499;stop-opacity:0" />
+                            </linearGradient>
+                        </defs>
+                        <path id="preview-trend-fill" d="M0,20 L10,18 L25,12 L40,15 L55,8 L70,10 L85,4 L100,6 L100,24 L0,24 Z" fill="${type === 'area' ? 'url(#sparkGrad)' : 'none'}" />
+                        <path id="preview-trend-line" d="M0,20 L10,18 L25,12 L40,15 L55,8 L70,10 L85,4 L100,6" fill="none" stroke="#0f5499" stroke-width="2" />
+                    </svg>`;
+            } else if (fill) {
+                fill.setAttribute('fill', type === 'area' ? 'url(#sparkGrad)' : 'none');
+            }
+        }
+    }
+
+    function updatePricePreview() {
+        const format = document.getElementById('price-format')?.value || 'default';
+        const currency = document.getElementById('price-currency')?.value || 'below';
+        const preview = document.getElementById('preview-price');
+        if (!preview) return;
+
+        let priceText = '2328.23';
+        if (format === 'thousands') priceText = '2,328.23';
+        else if (format === 'compact') priceText = '2.3K';
+        else priceText = '89.84';
+
+        let html = '';
+        switch (currency) {
+            case 'below':
+                html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div><div class="text-[9px] text-brand-black-60 uppercase">USD</div>`;
+                break;
+            case 'inline':
+                html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">USD ${priceText}</div>`;
+                break;
+            case 'symbol':
+                html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">$${priceText}</div>`;
+                break;
+            case 'none':
+                html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div>`;
+                break;
+        }
+        preview.innerHTML = html;
+    }
+
+    function updateChgPreview() {
+        const format = document.getElementById('chg-format')?.value || 'arrow';
+        const color = document.getElementById('chg-color')?.value || 'colored';
+        const preview = document.getElementById('preview-chg');
+        if (!preview) return;
+
+        const colorClass = color === 'colored' ? 'text-brand-teal' : 'text-brand-black-80 dark:text-white';
+        let text = '';
+        switch (format) {
+            case 'arrow': text = '▲ +12.45'; break;
+            case 'sign': text = '+12.45'; break;
+            case 'plain': text = '12.45'; break;
+        }
+        preview.innerHTML = `<span class="text-sm font-bold ${colorClass}">${text}</span>`;
+    }
+
+    function updatePctPreview() {
+        const style = document.getElementById('pct-style')?.value || 'badge';
+        const decimals = document.getElementById('pct-decimals')?.value || '2';
+        const preview = document.getElementById('preview-pct');
+        if (!preview) return;
+
+        let pctValue = '+1%';
+        if (decimals === '1') pctValue = '+0.7%';
+        else if (decimals === '2') pctValue = '+0.72%';
+
+        if (style === 'badge') {
+            preview.innerHTML = `<span class="px-2 py-0.5 rounded text-xs font-bold bg-brand-teal/10 text-brand-teal">${pctValue}</span>`;
+        } else {
+            preview.innerHTML = `<span class="text-xs font-bold text-brand-teal">${pctValue}</span>`;
+        }
+    }
+
+    function updateUpdatedPreview() {
+        const format = document.getElementById('updated-format')?.value || 'iso';
+        const preview = document.getElementById('preview-updated');
+        if (!preview) return;
+
+        let dateText = '';
+        switch (format) {
+            case 'iso': dateText = '2026-01-07'; break;
+            case 'short': dateText = 'Jan 7'; break;
+            case 'long': dateText = 'January 7, 2026'; break;
+            case 'relative': dateText = 'Today'; break;
+        }
+        preview.innerHTML = `<span class="text-xs font-medium text-brand-black-60">${dateText}</span>`;
+    }
+
+    function saveSettings(settings) {
+        localStorage.setItem('table-settings', JSON.stringify(settings));
+    }
+
+    function applySettings() {
+        const settings = getSettings();
+
+        // Read all select values
+        settings.commodity = {
+            display: document.getElementById('commodity-display')?.value || 'full',
+            icon: document.getElementById('commodity-icon')?.value || 'initials'
+        };
+        settings.trend = {
+            type: document.getElementById('trend-type')?.value || 'area',
+            points: document.getElementById('trend-points')?.value || '15'
+        };
+        settings.price = {
+            format: document.getElementById('price-format')?.value || 'default',
+            currency: document.getElementById('price-currency')?.value || 'below'
+        };
+        settings.chg = {
+            format: document.getElementById('chg-format')?.value || 'arrow',
+            color: document.getElementById('chg-color')?.value || 'colored'
+        };
+        settings.pct = {
+            style: document.getElementById('pct-style')?.value || 'badge',
+            decimals: document.getElementById('pct-decimals')?.value || '2'
+        };
+        settings.updated = {
+            format: document.getElementById('updated-format')?.value || 'iso',
+            time: document.getElementById('updated-time')?.value || 'no'
+        };
+
+        saveSettings(settings);
+
+        // Apply visual changes
+        applyVisualSettings(settings);
+
+        // Show confirmation
+        const btn = document.querySelector('[onclick="applySettings()"]');
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Applied!';
+        setTimeout(() => { btn.textContent = originalText; }, 1500);
+    }
+
+    function applyVisualSettings(settings) {
+        // Apply commodity display settings
+        document.querySelectorAll('.commodity-cell').forEach(cell => {
+            const icon = cell.querySelector('.commodity-icon');
+            const category = cell.querySelector('.commodity-category');
+
+            if (settings.commodity.icon === 'none' && icon) {
+                icon.style.display = 'none';
+            } else if (icon) {
+                icon.style.display = '';
+            }
+
+            if (settings.commodity.display === 'name-only' && category) {
+                category.style.display = 'none';
+            } else if (category) {
+                category.style.display = '';
+            }
+        });
+
+        // Apply price currency settings
+        document.querySelectorAll('.price-currency').forEach(el => {
+            if (settings.price.currency === 'none') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = '';
+            }
+        });
+
+        // Apply change arrow settings
+        document.querySelectorAll('.chg-arrow').forEach(el => {
+            if (settings.chg.format === 'sign' || settings.chg.format === 'plain') {
+                el.style.display = 'none';
+            } else {
+                el.style.display = '';
+            }
+        });
+
+        // Apply percent style settings
+        document.querySelectorAll('.pct-cell').forEach(el => {
+            if (settings.pct.style === 'plain') {
+                el.classList.remove('px-2', 'py-1', 'rounded-md', 'bg-brand-teal/10', 'bg-brand-claret/10');
+            }
+        });
+
+        // Apply change color settings
+        if (settings.chg.color === 'neutral') {
+            document.querySelectorAll('.chg-cell').forEach(el => {
+                el.classList.remove('text-brand-teal', 'text-brand-claret');
+                el.classList.add('text-brand-black-80', 'dark:text-white');
+            });
+        }
+    }
+
+    function resetAllSettings() {
+        localStorage.removeItem('table-settings');
+        location.reload();
+    }
+
+    function loadSettings() {
+        const settings = getSettings();
+
+        // Load column visibility checkboxes
+        defaultColumns.forEach(col => {
+            const checkbox = document.getElementById(`col-${col}`);
+            if (checkbox) {
+                checkbox.checked = settings.columns[col] !== false;
+                applyColumnVisibility(col, checkbox.checked);
+            }
+        });
+
+        // Load select values
+        const selects = {
+            'commodity-display': settings.commodity?.display,
+            'commodity-icon': settings.commodity?.icon,
+            'trend-type': settings.trend?.type,
+            'trend-points': settings.trend?.points,
+            'price-format': settings.price?.format,
+            'price-currency': settings.price?.currency,
+            'chg-format': settings.chg?.format,
+            'chg-color': settings.chg?.color,
+            'pct-style': settings.pct?.style,
+            'pct-decimals': settings.pct?.decimals,
+            'updated-format': settings.updated?.format,
+            'updated-time': settings.updated?.time
+        };
+
+        Object.entries(selects).forEach(([id, value]) => {
+            const select = document.getElementById(id);
+            if (select && value) {
+                select.value = value;
+            }
+        });
+
+        updateColumnCount();
+        applyVisualSettings(settings);
+    }
+
+    // Initialize on load
+    loadSettings();
+    initDataRange();
+
+    // Sparkline chart code
+    document.addEventListener('DOMContentLoaded', function () {
+        const isDark = document.documentElement.classList.contains('dark');
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const isBloomberg = currentTheme === 'bloomberg';
+
+        const sparklineColor = isBloomberg ? '#ff9933' : (isDark ? '#1aecff' : '#0f5499');
+        const sparklineGradientStart = isBloomberg ? 'rgba(255, 153, 51, 0.25)' : (isDark ? 'rgba(26, 236, 255, 0.2)' : 'rgba(15, 84, 153, 0.1)');
+        const sparklineGradientEnd = isBloomberg ? 'rgba(255, 153, 51, 0)' : (isDark ? 'rgba(26, 236, 255, 0)' : 'rgba(15, 84, 153, 0)');
+
+        const settings = getSettings();
+        const pointsCount = parseInt(settings.trend?.points || 15);
+        const chartType = settings.trend?.type || 'area';
+
+        const rawData = [
+            {% for commodity in commodities %}
+            {
+            id: '{{ commodity.id }}',
+            prices: {{ commodity.history | map(attribute = 'price') | list | tojson }}
+            }{% if not loop.last %}, {% endif %}
+    {% endfor %}
+        ];
+
+    rawData.forEach(item => {
+        const canvas = document.getElementById(`sparkline-${item.id}`);
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const dataPoints = item.prices.slice(-pointsCount);
+
+        // Create gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, 40);
+        gradient.addColorStop(0, sparklineGradientStart);
+        gradient.addColorStop(1, sparklineGradientEnd);
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataPoints.map((_, i) => i),
+                datasets: [{
+                    data: dataPoints,
+                    borderColor: sparklineColor,
+                    backgroundColor: chartType === 'area' ? gradient : 'transparent',
+                    borderWidth: 1.5,
+                    fill: chartType === 'area',
+                    tension: 0.3,
+                    pointRadius: 0,
+                    pointHoverRadius: 3,
+                    pointHoverBackgroundColor: sparklineColor,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+    });
+    });
+</script>

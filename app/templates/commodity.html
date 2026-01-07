@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-10 min-h-screen">
+    <div class="mb-10 flex items-end justify-between">
+        <div>
+            <div class="flex flex-col font-ui mb-2">
+                <span
+                    class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 uppercase tracking-[0.2em] mb-1">{{
+                    commodity.category }}</span>
+                <span class="text-xs text-brand-black-60/60 dark:text-brand-black-60 font-medium">Commodity ID: {{
+                    commodity.id }}</span>
+            </div>
+            <h1 class="text-4xl font-bold text-brand-black-80 dark:text-white font-serif">{{ commodity.name }}</h1>
+        </div>
+        <a href="{{ url_for('main.index') }}"
+            class="text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white transition-all font-ui uppercase tracking-widest">&larr;
+            Back to Market</a>
+    </div>
+
+    <div
+        class="bg-brand-pink dark:bg-terminal-surface rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
+        <div class="p-8 border-b border-brand-black-60/20 dark:border-white/10">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div
+                        class="text-sm text-brand-black-60 dark:text-brand-black-60 uppercase tracking-wider mb-2 font-semibold font-ui">
+                        Latest Daily
+                        Benchmark</div>
+                    <div class="flex items-baseline gap-2 font-ui">
+                        <span class="text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter">{{
+                            commodity.price
+                            }}</span>
+                        <span
+                            class="text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 uppercase tracking-widest">{{
+                            commodity.currency
+                            }} / {{ commodity.unit }}</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-end">
+                    <div
+                        class="text-2xl font-bold {% if commodity.change >= 0 %}text-brand-teal{% else %}text-brand-claret{% endif %} font-ui">
+                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
+                    </div>
+                    <div
+                        class="text-xs font-bold uppercase py-1 px-3 rounded-full mt-2 {% if commodity.change >= 0 %}bg-brand-teal text-white{% else %}bg-brand-claret text-white{% endif %} font-ui">
+                        {% if commodity.change >= 0 %}UP{% else %}DOWN{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 text-sm text-brand-black-60 dark:text-brand-black-60/80 font-ui">As of: {{ commodity.date
+                }}
+            </div>
+        </div>
+
+        <div
+            class="bg-brand-black-60/10 dark:bg-white/5 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 uppercase tracking-wider font-bold text-[10px] font-ui">
+            <div>
+                <div class="text-brand-black-60 dark:text-brand-black-60 mb-1">Data Source</div>
+                <div class="text-brand-black-80 dark:text-white">{{ commodity.source_name }}</div>
+                {% if commodity.source_url %}
+                <a href="{{ commodity.source_url }}" target="_blank"
+                    class="text-brand-oxford dark:text-brand-teal hover:underline mt-1 inline-block">View Official
+                    Website &rarr;</a>
+                {% endif %}
+            </div>
+            <div>
+                <div class="text-brand-black-60 dark:text-brand-black-60 mb-1">Last System Update</div>
+                <div class="text-brand-black-80 dark:text-white">{{ commodity.updated_at }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Chart Section -->
+    <div
+        class="mt-12 bg-brand-pink dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 shadow-sm transition-colors duration-500 overflow-hidden">
+
+        <!-- Chart Header with Controls -->
+        <div class="p-6 border-b border-brand-black-60/10 dark:border-white/5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">Benchmark
+                        Price
+                        Trend</h3>
+                    <p class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-1">
+                        Daily benchmark price (end-of-day)
+                    </p>
+                </div>
+
+                <!-- Chart Controls -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Time Range Selector -->
+                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                        <button onclick="setTimeRange('1W')" id="range-1W"
+                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1W</button>
+                        <button onclick="setTimeRange('1M')" id="range-1M"
+                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1M</button>
+                        <button onclick="setTimeRange('3M')" id="range-3M"
+                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">3M</button>
+                        <button onclick="setTimeRange('6M')" id="range-6M"
+                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">6M</button>
+                        <button onclick="setTimeRange('1Y')" id="range-1Y"
+                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1Y</button>
+                        <button onclick="setTimeRange('ALL')" id="range-ALL"
+                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">ALL</button>
+                    </div>
+
+                    <!-- Chart Type Selector -->
+                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                        <button onclick="setChartType('line')" id="type-line"
+                            class="type-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 12l3-3 3 3 4-4"></path>
+                            </svg>
+                            Line
+                        </button>
+                        <button onclick="setChartType('area')" id="type-area"
+                            class="type-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
+                                <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
+                                </path>
+                            </svg>
+                            Area
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Statistics Bar -->
+        <div
+            class="px-6 py-4 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 font-ui text-center">
+                <div>
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                        High</div>
+                    <div id="stat-high" class="text-sm font-bold text-brand-teal">--</div>
+                </div>
+                <div>
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                        Low</div>
+                    <div id="stat-low" class="text-sm font-bold text-brand-claret">--</div>
+                </div>
+                <div>
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                        Average</div>
+                    <div id="stat-avg" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
+                </div>
+                <div>
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                        Range</div>
+                    <div id="stat-range" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
+                </div>
+                <div>
+                    <div
+                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                        Data Points</div>
+                    <div id="stat-points" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="p-6">
+            <!-- Crosshair Info Display -->
+            <div id="crosshair-info" class="hidden mb-4 p-3 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-6">
+                        <div>
+                            <span
+                                class="text-[10px] font-bold uppercase text-brand-black-60 dark:text-brand-black-60">Date:</span>
+                            <span id="crosshair-date"
+                                class="text-sm font-bold text-brand-black-80 dark:text-white ml-2">--</span>
+                        </div>
+                        <div>
+                            <span
+                                class="text-[10px] font-bold uppercase text-brand-black-60 dark:text-brand-black-60">Price:</span>
+                            <span id="crosshair-price"
+                                class="text-sm font-bold text-brand-oxford dark:text-brand-teal ml-2">--</span>
+                        </div>
+                        <div>
+                            <span
+                                class="text-[10px] font-bold uppercase text-brand-black-60 dark:text-brand-black-60">Daily
+                                change (vs prev close):</span>
+                            <span id="crosshair-change" class="text-sm font-bold ml-2">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-[400px] w-full relative">
+                <canvas id="priceChart"></canvas>
+            </div>
+
+            <!-- Chart Actions -->
+            <div class="mt-4 flex items-center justify-between font-ui">
+                <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
+                    <span id="date-range-display">Showing all data</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="resetZoom()"
+                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                            </path>
+                        </svg>
+                        Reset View
+                    </button>
+                    <button onclick="downloadChart()"
+                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div
+        class="mt-16 p-8 border-l-4 border-brand-black-80 dark:border-brand-teal bg-brand-black-60/5 dark:bg-white/5 transition-colors duration-500">
+        <h3 class="text-brand-black-80 dark:text-white font-bold mb-3 uppercase tracking-wider text-[11px] font-ui">
+            Benchmark Overview</h3>
+        <p class="text-brand-black-80 dark:text-brand-black-60 text-sm leading-relaxed max-w-2xl">
+            This benchmark represents the end-of-day daily reference price for standard market monitoring. It is
+            provided for professional monitoring and historical analysis only. BenchmarkWatcher does not provide
+            real-time data or trading facilities.
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const ctx = document.getElementById('priceChart').getContext('2d');
+        const fullHistoryData = {{ commodity.history | tojson | safe
+    }};
+
+    let currentRange = 'ALL';
+    let currentChartType = 'line';
+    let priceChart = null;
+
+    const isDark = document.documentElement.classList.contains('dark');
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const isBloomberg = currentTheme === 'bloomberg';
+
+    const chartColors = isBloomberg ? {
+        price: '#ff9933',
+        priceLight: 'rgba(255, 153, 51, 0.15)',
+        grid: 'rgba(255, 153, 51, 0.1)',
+        text: '#ff9933',
+        tooltipBg: '#2d2d2d',
+        tooltipText: '#ff9933',
+        tooltipBorder: '#ff9933',
+        crosshair: 'rgba(255, 153, 51, 0.3)'
+    } : {
+        price: isDark ? '#1aecff' : '#0f5499',
+        priceLight: isDark ? 'rgba(26, 236, 255, 0.1)' : 'rgba(15, 84, 153, 0.1)',
+        grid: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(51, 48, 46, 0.1)',
+        text: isDark ? '#999' : '#66605c',
+        tooltipBg: isDark ? '#1a1a1a' : '#fff',
+        tooltipText: isDark ? '#fff' : '#000',
+        tooltipBorder: isDark ? '#333' : '#ddd',
+        crosshair: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'
+    };
+
+    // Filter data by time range
+    function filterDataByRange(data, range) {
+        if (range === 'ALL') return data;
+
+        const now = new Date();
+        let cutoffDate = new Date();
+
+        switch (range) {
+            case '1W': cutoffDate.setDate(now.getDate() - 7); break;
+            case '1M': cutoffDate.setMonth(now.getMonth() - 1); break;
+            case '3M': cutoffDate.setMonth(now.getMonth() - 3); break;
+            case '6M': cutoffDate.setMonth(now.getMonth() - 6); break;
+            case '1Y': cutoffDate.setFullYear(now.getFullYear() - 1); break;
+        }
+
+        return data.filter(item => new Date(item.date) >= cutoffDate);
+    }
+
+    // Calculate statistics
+    function calculateStats(data) {
+        const prices = data.map(item => item.price);
+        const high = Math.max(...prices);
+        const low = Math.min(...prices);
+        const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+        const range = high - low;
+
+        document.getElementById('stat-high').textContent = high.toLocaleString() + ' {{ commodity.currency }}';
+        document.getElementById('stat-low').textContent = low.toLocaleString() + ' {{ commodity.currency }}';
+        document.getElementById('stat-avg').textContent = avg.toFixed(2) + ' {{ commodity.currency }}';
+        document.getElementById('stat-range').textContent = range.toFixed(2) + ' {{ commodity.currency }}';
+        document.getElementById('stat-points').textContent = data.length;
+
+        // Update date range display
+        if (data.length > 0) {
+            const startDate = new Date(data[0].date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            const endDate = new Date(data[data.length - 1].date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('date-range-display').textContent = `${startDate} — ${endDate}`;
+        }
+    }
+
+    // Create gradient for area chart
+    function createGradient(ctx, chartArea) {
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        gradient.addColorStop(0, chartColors.priceLight);
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        return gradient;
+    }
+
+    // Initialize or update chart
+    function updateChart() {
+        const filteredData = filterDataByRange(fullHistoryData, currentRange);
+        const labels = filteredData.map(item => item.date);
+        const prices = filteredData.map(item => item.price);
+
+        calculateStats(filteredData);
+
+        const chartConfig = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Price',
+                    data: prices,
+                    borderColor: chartColors.price,
+                    backgroundColor: currentChartType === 'area' ? chartColors.priceLight : 'transparent',
+                    borderWidth: 2,
+                    fill: currentChartType === 'area',
+                    tension: 0.1,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: chartColors.price,
+                    pointHoverBorderColor: isDark ? '#000' : '#fff',
+                    pointHoverBorderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 300 },
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: chartColors.tooltipBg,
+                        titleColor: chartColors.tooltipText,
+                        bodyColor: chartColors.text,
+                        borderColor: chartColors.tooltipBorder,
+                        borderWidth: 1,
+                        titleFont: { size: 11, weight: 'bold', family: 'Inter' },
+                        bodyFont: { size: 13, weight: '600', family: 'Inter' },
+                        padding: 12,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            title: function (context) {
+                                const date = new Date(context[0].label);
+                                return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                            },
+                            label: function (context) {
+                                return context.parsed.y.toLocaleString() + ' {{ commodity.currency }}';
+                            },
+                            afterLabel: function (context) {
+                                if (context.dataIndex > 0) {
+                                    const prev = context.dataset.data[context.dataIndex - 1];
+                                    const curr = context.parsed.y;
+                                    const change = curr - prev;
+                                    const changePercent = ((change / prev) * 100).toFixed(2);
+                                    const sign = change >= 0 ? '+' : '';
+                                    return `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
+                                }
+                                return '';
+                            }
+                        }
+                    },
+                    zoom: {
+                        pan: {
+                            enabled: true,
+                            mode: 'x',
+                        },
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'x',
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            maxTicksLimit: 8,
+                            font: { size: 11, weight: '600', family: 'Inter' },
+                            color: chartColors.text,
+                            callback: function (value, index, values) {
+                                const date = new Date(this.getLabelForValue(value));
+                                if (currentRange === '1W' || currentRange === '1M') {
+                                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                                }
+                                return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+                            }
+                        }
+                    },
+                    y: {
+                        position: 'right',
+                        grid: {
+                            color: chartColors.grid,
+                            drawTicks: false,
+                            lineWidth: 1
+                        },
+                        border: { display: false },
+                        ticks: {
+                            font: { size: 11, weight: '600', family: 'Inter' },
+                            color: chartColors.text,
+                            padding: 10,
+                            maxTicksLimit: 6,
+                            callback: function (value) {
+                                return value.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                onHover: function (event, elements) {
+                    if (elements.length > 0) {
+                        const element = elements[0];
+                        const dataIndex = element.index;
+                        const dataset = this.data.datasets[element.datasetIndex];
+                        const price = dataset.data[dataIndex];
+                        const date = this.data.labels[dataIndex];
+
+                        document.getElementById('crosshair-info').classList.remove('hidden');
+                        document.getElementById('crosshair-date').textContent = new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                        document.getElementById('crosshair-price').textContent = price.toLocaleString() + ' {{ commodity.currency }}';
+
+                        if (dataIndex > 0) {
+                            const prev = dataset.data[dataIndex - 1];
+                            const change = price - prev;
+                            const changePercent = ((change / prev) * 100).toFixed(2);
+                            const sign = change >= 0 ? '+' : '';
+                            const changeEl = document.getElementById('crosshair-change');
+                            changeEl.textContent = `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
+                            changeEl.className = `text-sm font-bold ml-2 ${change >= 0 ? 'text-brand-teal' : 'text-brand-claret'}`;
+                        }
+                    }
+                }
+            }
+        };
+
+        if (priceChart) {
+            priceChart.destroy();
+        }
+
+        priceChart = new Chart(ctx, chartConfig);
+    }
+
+    // Set time range
+    window.setTimeRange = function (range) {
+        currentRange = range;
+        updateChart();
+        updateRangeButtons();
+    };
+
+    // Set chart type
+    window.setChartType = function (type) {
+        currentChartType = type;
+        updateChart();
+        updateTypeButtons();
+    };
+
+    // Reset zoom
+    window.resetZoom = function () {
+        if (priceChart) {
+            priceChart.resetZoom();
+        }
+    };
+
+    // Download chart as image
+    window.downloadChart = function () {
+        const link = document.createElement('a');
+        link.download = '{{ commodity.name }}-price-chart.png';
+        link.href = priceChart.toBase64Image();
+        link.click();
+    };
+
+    // Update button states
+    function updateRangeButtons() {
+        ['1W', '1M', '3M', '6M', '1Y', 'ALL'].forEach(range => {
+            const btn = document.getElementById(`range-${range}`);
+            if (range === currentRange) {
+                btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all';
+            } else {
+                btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+            }
+        });
+    }
+
+    function updateTypeButtons() {
+        ['line', 'area'].forEach(type => {
+            const btn = document.getElementById(`type-${type}`);
+            if (type === currentChartType) {
+                btn.className = 'type-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all flex items-center gap-1.5';
+            } else {
+                btn.className = 'type-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all flex items-center gap-1.5';
+            }
+        });
+    }
+
+    // Initialize
+    updateChart();
+    updateRangeButtons();
+    updateTypeButtons();
+    });
+</script>
+{% endblock %}
