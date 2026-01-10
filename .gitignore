@@ -33,6 +33,7 @@ env/
 
 # Internal documents (not for public)
 *.internal.md
+docs/DEPLOYMENT.md
 
 # Data files (generated, not source)
 data/*.json
