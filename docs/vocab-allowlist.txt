@@ -4,7 +4,8 @@
 # Lines starting with # are comments
 
 # Test files that intentionally contain forbidden terms for testing
-tests/e2e/disclaimer-safety.spec.ts
+tests/e2e/
+tests/test_data_handler.py
 __tests__/
 
 # Documentation about the rules themselves
@@ -19,11 +20,20 @@ scripts/check-vocab.js
 README.md
 CONTRIBUTING.md
 
-# JS/TS files use 'return' as a keyword - not UI-facing
-# Only scan HTML templates and documentation for UI text
-app/static/js/
-*.js
-*.ts
-*.py
+# Python scripts with technical comments (not UI-facing)
+scripts/fetch_daily_data.py
+app/data_handler.py
+app/routes.py
+app/__init__.py
 
-# Focus on template files (Jinja/HTML) which contain actual UI text
+# JavaScript files - 'trend' is a column name, 'signal' is AbortController API
+# These are technical terms in code, not user-facing UI text
+app/static/js/
+
+# Templates with legacy 'trend' naming (technical column name, not user-facing label)
+# TODO: Consider renaming to 'sparkline' in future refactor
+app/templates/components/compact_table.html
+
+# Footer disclaimer (legitimate use)
+app/templates/components/footer.html
+product_copy.md
