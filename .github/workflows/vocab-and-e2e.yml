@@ -21,7 +21,7 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
+        run: npm install
       
       - name: Vocabulary scan
         run: npm run check:vocab
@@ -55,5 +55,5 @@ jobs:
           node-version: '20'
           cache: 'npm'
       
-      - run: npm ci
+      - run: npm install
       - run: npm test
