@@ -31,6 +31,9 @@ env/
 .env.local
 .env.*.local
 
+# Internal documents (not for public)
+*.internal.md
+
 # Data files (generated, not source)
 data/*.json
 !data/.gitkeep
@@ -72,3 +75,7 @@ htmlcov/
 # Distribution
 *.tar.gz
 *.zip
+
+# Node.js
+node_modules/
+package-lock.json

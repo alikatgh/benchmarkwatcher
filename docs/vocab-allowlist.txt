@@ -1,0 +1,29 @@
+# Vocabulary Allowlist
+# Files listed here are excluded from the vocabulary check
+# Use relative paths from project root (partial match)
+# Lines starting with # are comments
+
+# Test files that intentionally contain forbidden terms for testing
+tests/e2e/disclaimer-safety.spec.ts
+__tests__/
+
+# Documentation about the rules themselves
+docs/ui-vocabulary.md
+docs/RELEASE_CHECKLIST.md
+docs/vocab-allowlist.txt
+
+# The checker script itself
+scripts/check-vocab.js
+
+# README explains what the app is NOT (legitimate use of forbidden terms)
+README.md
+CONTRIBUTING.md
+
+# JS/TS files use 'return' as a keyword - not UI-facing
+# Only scan HTML templates and documentation for UI text
+app/static/js/
+*.js
+*.ts
+*.py
+
+# Focus on template files (Jinja/HTML) which contain actual UI text

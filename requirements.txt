@@ -1,6 +1,22 @@
-Flask==3.0.0
-python-dotenv==1.0.0
-requests==2.31.0
-python-dateutil>=2.8.0
-numpy
-pandas
+# BenchmarkWatcher Dependencies
+# ==============================
+
+# Core Framework
+Flask>=2.3,<3.1        # Compatible with Flask 3.0 breaking changes
+Werkzeug>=3.0          # Required by Flask 3.0
+
+# Configuration
+python-dotenv>=1.0,<2.0
+
+# HTTP Requests
+requests>=2.31,<3.0
+
+# Date/Time Handling
+python-dateutil>=2.8,<3.0
+
+# Security (for HTML escaping if needed)
+MarkupSafe>=2.1
+
+# NOTE: pandas and numpy are NOT required for this application
+# The data handling uses standard library json and datetime
+# Only add them if you specifically need DataFrame functionality

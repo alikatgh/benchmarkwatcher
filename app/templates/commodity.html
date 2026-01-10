@@ -2,122 +2,246 @@
 
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-10 min-h-screen">
-    <div class="mb-10 flex items-end justify-between">
+    <!-- Header Row: Title (left) | Breadcrumb + Back (right) -->
+    <div class="flex items-start justify-between gap-6 mb-8">
+        <!-- Left: Title -->
         <div>
             <div class="flex flex-col font-ui mb-2">
                 <span
-                    class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 uppercase tracking-[0.2em] mb-1">{{
+                    class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.2em] mb-1 capitalize">{{
                     commodity.category }}</span>
                 <span class="text-xs text-brand-black-60/60 dark:text-brand-black-60 font-medium">Commodity ID: {{
                     commodity.id }}</span>
             </div>
             <h1 class="text-4xl font-bold text-brand-black-80 dark:text-white font-serif">{{ commodity.name }}</h1>
         </div>
-        <a href="{{ url_for('main.index') }}"
-            class="text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white transition-all font-ui uppercase tracking-widest">&larr;
-            Back to Market</a>
+
+        <!-- Right: Breadcrumb + Back -->
+        <div class="flex flex-col items-end gap-2 shrink-0">
+            <nav aria-label="Breadcrumb" class="font-ui">
+                <ol class="flex items-center gap-2 text-xs text-brand-black-60 dark:text-brand-black-60">
+                    <li><a href="{{ url_for('main.index') }}"
+                            class="hover:text-brand-oxford dark:hover:text-brand-teal transition-colors">Home</a></li>
+                    <li class="select-none">/</li>
+                    <li><a href="{{ url_for('main.index') }}?category={{ commodity.category }}"
+                            class="hover:text-brand-oxford dark:hover:text-brand-teal transition-colors capitalize">{{
+                            commodity.category }}</a></li>
+                    <li class="select-none">/</li>
+                    <li class="font-bold text-brand-black-80 dark:text-white" aria-current="page">{{ commodity.name }}
+                    </li>
+                </ol>
+            </nav>
+            <a href="{{ url_for('main.index') }}"
+                class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-brand-oxford dark:text-brand-teal border border-brand-oxford dark:border-brand-teal rounded-lg hover:bg-brand-oxford/10 dark:hover:bg-brand-teal/10 transition-all">
+                ← Back to Market
+            </a>
+        </div>
     </div>
 
+
+
     <div
-        class="bg-brand-pink dark:bg-terminal-surface rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
-        <div class="p-8 border-b border-brand-black-60/20 dark:border-white/10">
-            <div class="flex justify-between items-start">
-                <div>
-                    <div
-                        class="text-sm text-brand-black-60 dark:text-brand-black-60 uppercase tracking-wider mb-2 font-semibold font-ui">
-                        Latest Daily
-                        Benchmark</div>
-                    <div class="flex items-baseline gap-2 font-ui">
-                        <span class="text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter">{{
-                            commodity.price
-                            }}</span>
+        class="bg-card-warm dark:bg-terminal-surface rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
+        <div class="p-6 md:p-8">
+            <div class="flex flex-wrap md:flex-nowrap items-start justify-between gap-6">
+                <!-- LEFT: Price and Change (main content) -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div
+                            class="text-sm text-brand-black-60 dark:text-brand-black-60 tracking-wider font-semibold font-ui">
+                            Latest Benchmark
+                        </div>
+                        <!-- Frequency indicator badge -->
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full 
+                            {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold', 'silver', 'gasoline'] %}
+                                bg-brand-teal/20 text-brand-teal
+                            {% else %}
+                                bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal
+                            {% endif %}
+                            font-ui uppercase tracking-wider">
+                            {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold', 'silver',
+                            'gasoline'] %}
+                            Daily
+                            {% else %}
+                            Monthly
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-baseline gap-2 font-ui flex-wrap">
                         <span
-                            class="text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 uppercase tracking-widest">{{
-                            commodity.currency
-                            }} / {{ commodity.unit }}</span>
+                            class="text-4xl md:text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter">{{
+                            commodity.price }}</span>
+                        <span
+                            class="text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
+                            commodity.currency }} / {{ commodity.unit }}</span>
+                        <!-- Copy to clipboard button -->
+                        <button onclick="copyPrice('{{ commodity.price }} {{ commodity.currency }}')"
+                            aria-label="Copy price to clipboard"
+                            class="ml-2 p-2 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
+                            title="Copy price">
+                            <svg id="copy-icon" class="w-4 h-4 text-brand-black-60 dark:text-brand-black-60" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            <svg id="check-icon" class="w-4 h-4 text-brand-teal hidden" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Change percentage and badge -->
+                    <div class="flex items-center gap-3 mt-4 flex-wrap">
+                        <!-- Percentage badge with tooltip -->
+                        <div class="group relative cursor-help">
+                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all"
+                                style="background-color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %})20;">
+                                <span class="text-xl font-bold font-ui"
+                                    style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %});">
+                                    {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
+                                </span>
+                                <span class="text-xs font-bold py-0.5 px-2 rounded-full text-white"
+                                    style="background-color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %});">
+                                    {% if commodity.change >= 0 %}↑{% else %}↓{% endif %}
+                                </span>
+                            </div>
+                            <!-- Tooltip on hover -->
+                            <div
+                                class="absolute bottom-full left-0 mb-2 w-72 p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui">
+                                <div class="font-bold mb-2">Price Change Calculation</div>
+                                <div class="space-y-1.5 text-brand-black-60">
+                                    <div class="flex justify-between">
+                                        <span>Current ({{ commodity.date }}):</span>
+                                        <span class="text-white font-bold">{{ commodity.price }} {{ commodity.currency
+                                            }}</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Previous ({{ commodity.prev_date }}):</span>
+                                        <span class="text-white font-bold">{{ commodity.prev_price }} {{
+                                            commodity.currency }}</span>
+                                    </div>
+                                    <div class="pt-2 border-t border-white/20 mt-2 flex justify-between">
+                                        <span>Change:</span>
+                                        <span class="font-bold"
+                                            style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %});">
+                                            {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }} {{
+                                            commodity.currency }} ({% if commodity.change >= 0 %}+{% endif %}{{
+                                            commodity.change_percent }}%)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-0 left-4 transform translate-y-full">
+                                    <div
+                                        class="border-8 border-transparent border-t-brand-black-80 dark:border-t-terminal-black">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Context: vs what period -->
+                        <div class="text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui">
+                            vs previous {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold',
+                            'silver', 'gasoline'] %}day{% else %}month{% endif %} · As of {{ commodity.date }}
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col items-end">
-                    <div
-                        class="text-2xl font-bold {% if commodity.change >= 0 %}text-brand-teal{% else %}text-brand-claret{% endif %} font-ui">
-                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
+                <!-- RIGHT: Data Source Info (pushed to right edge) -->
+                <div
+                    class="shrink-0 border-l border-brand-black-60/10 dark:border-white/10 pl-6 flex flex-row md:flex-col gap-4 md:gap-3 ml-auto text-right">
+                    <div>
+                        <div
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
+                            DATA SOURCE</div>
+                        <div class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">{{
+                            commodity.source_name }}</div>
+                        {% if commodity.source_url %}
+                        <a href="{{ commodity.source_url }}" target="_blank" rel="noopener noreferrer"
+                            class="text-xs text-brand-oxford dark:text-brand-teal hover:underline mt-1 inline-flex items-center gap-1 font-ui justify-end">
+                            View Source
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                </path>
+                            </svg>
+                        </a>
+                        {% endif %}
                     </div>
-                    <div
-                        class="text-xs font-bold uppercase py-1 px-3 rounded-full mt-2 {% if commodity.change >= 0 %}bg-brand-teal text-white{% else %}bg-brand-claret text-white{% endif %} font-ui">
-                        {% if commodity.change >= 0 %}UP{% else %}DOWN{% endif %}
+                    <div>
+                        <div
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
+                            UPDATED</div>
+                        <div class="text-sm font-medium text-brand-black-80 dark:text-white font-ui">{{
+                            commodity.updated_at[:10] }}</div>
                     </div>
                 </div>
-            </div>
-            <div class="mt-4 text-sm text-brand-black-60 dark:text-brand-black-60/80 font-ui">As of: {{ commodity.date
-                }}
-            </div>
-        </div>
-
-        <div
-            class="bg-brand-black-60/10 dark:bg-white/5 p-6 grid grid-cols-1 md:grid-cols-2 gap-6 uppercase tracking-wider font-bold text-[10px] font-ui">
-            <div>
-                <div class="text-brand-black-60 dark:text-brand-black-60 mb-1">Data Source</div>
-                <div class="text-brand-black-80 dark:text-white">{{ commodity.source_name }}</div>
-                {% if commodity.source_url %}
-                <a href="{{ commodity.source_url }}" target="_blank"
-                    class="text-brand-oxford dark:text-brand-teal hover:underline mt-1 inline-block">View Official
-                    Website &rarr;</a>
-                {% endif %}
-            </div>
-            <div>
-                <div class="text-brand-black-60 dark:text-brand-black-60 mb-1">Last System Update</div>
-                <div class="text-brand-black-80 dark:text-white">{{ commodity.updated_at }}</div>
             </div>
         </div>
     </div>
 
     <!-- Enhanced Chart Section -->
     <div
-        class="mt-12 bg-brand-pink dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 shadow-sm transition-colors duration-500 overflow-hidden">
+        class="mt-12 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 shadow-sm transition-colors duration-500 overflow-hidden">
 
         <!-- Chart Header with Controls -->
         <div class="p-6 border-b border-brand-black-60/10 dark:border-white/5">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h3 class="text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">Benchmark
-                        Price
-                        Trend</h3>
-                    <p class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-1">
-                        Daily benchmark price (end-of-day)
-                    </p>
+                <div class="flex items-start gap-3">
+                    <div>
+                        <h3 class="text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">
+                            Benchmark
+                            Price
+                            History</h3>
+                        <p class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-1">
+                            Daily benchmark price (end-of-day)
+                        </p>
+                    </div>
+                    <!-- Chart Settings Cogwheel -->
+                    <button onclick="openChartSettings()" id="chart-settings-btn"
+                        class="p-2 rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors group"
+                        title="Chart Settings (S)">
+                        <svg class="w-5 h-5 text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
                 </div>
 
                 <!-- Chart Controls -->
                 <div class="flex flex-wrap items-center gap-3">
                     <!-- Time Range Selector -->
                     <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                        <button onclick="setTimeRange('1W')" id="range-1W"
-                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1W</button>
-                        <button onclick="setTimeRange('1M')" id="range-1M"
-                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1M</button>
-                        <button onclick="setTimeRange('3M')" id="range-3M"
-                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">3M</button>
-                        <button onclick="setTimeRange('6M')" id="range-6M"
-                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">6M</button>
-                        <button onclick="setTimeRange('1Y')" id="range-1Y"
-                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">1Y</button>
-                        <button onclick="setTimeRange('ALL')" id="range-ALL"
-                            class="range-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all">ALL</button>
+                        <button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
+                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
+                        <button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
+                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
+                        <button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
+                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
+                        <button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
+                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
+                        <button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
+                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
+                        <button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
+                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
                     </div>
 
                     <!-- Chart Type Selector -->
                     <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                        <button onclick="setChartType('line')" id="type-line"
-                            class="type-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5">
+                        <button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
+                            class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M7 12l3-3 3 3 4-4"></path>
                             </svg>
                             Line
                         </button>
-                        <button onclick="setChartType('area')" id="type-area"
-                            class="type-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5">
+                        <button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
+                            class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
                                 <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
@@ -126,41 +250,60 @@
                             Area
                         </button>
                     </div>
+
+                    <!-- View Mode Selector (Price vs Percent) -->
+                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                        <button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
+                            class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                            Price
+                        </button>
+                        <button onclick="setViewMode('percent')" id="view-percent" aria-label="Show percentage change"
+                            class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                            % Change
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Price Statistics Bar -->
-        <div
+        <div id="stats-bar"
             class="px-6 py-4 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
+            <div class="text-[10px] text-brand-black-60 font-ui mb-2 text-center">Based on selected historical window
+            </div>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4 font-ui text-center">
                 <div>
-                    <div
-                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         High</div>
-                    <div id="stat-high" class="text-sm font-bold text-brand-teal">--</div>
+                    <div id="stat-high" class="text-sm font-bold" style="color: var(--color-up);">--</div>
                 </div>
                 <div>
-                    <div
-                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Low</div>
-                    <div id="stat-low" class="text-sm font-bold text-brand-claret">--</div>
+                    <div id="stat-low" class="text-sm font-bold" style="color: var(--color-down);">--</div>
                 </div>
                 <div>
-                    <div
-                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Average</div>
                     <div id="stat-avg" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
                 </div>
                 <div>
-                    <div
-                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Range</div>
                     <div id="stat-range" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
                 </div>
                 <div>
-                    <div
-                        class="text-[10px] font-bold uppercase tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Data Points</div>
                     <div id="stat-points" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
                 </div>
@@ -169,34 +312,45 @@
 
         <!-- Chart Container -->
         <div class="p-6">
-            <!-- Crosshair Info Display -->
-            <div id="crosshair-info" class="hidden mb-4 p-3 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-6">
-                        <div>
-                            <span
-                                class="text-[10px] font-bold uppercase text-brand-black-60 dark:text-brand-black-60">Date:</span>
-                            <span id="crosshair-date"
-                                class="text-sm font-bold text-brand-black-80 dark:text-white ml-2">--</span>
-                        </div>
-                        <div>
-                            <span
-                                class="text-[10px] font-bold uppercase text-brand-black-60 dark:text-brand-black-60">Price:</span>
-                            <span id="crosshair-price"
-                                class="text-sm font-bold text-brand-oxford dark:text-brand-teal ml-2">--</span>
-                        </div>
-                        <div>
-                            <span
-                                class="text-[10px] font-bold uppercase text-brand-black-60 dark:text-brand-black-60">Daily
-                                change (vs prev close):</span>
-                            <span id="crosshair-change" class="text-sm font-bold ml-2">--</span>
-                        </div>
+            <!-- Crosshair Info Display - Mobile First, Fixed Width to prevent shaking -->
+            <div id="crosshair-info"
+                class="hidden mb-4 p-3 sm:p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                <div class="grid grid-cols-3 gap-2 sm:gap-6">
+                    <!-- Date -->
+                    <div class="flex flex-col min-w-0">
+                        <span
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider truncate">Date</span>
+                        <span id="crosshair-date"
+                            class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white truncate"
+                            style="min-width: 90px;">--</span>
+                    </div>
+                    <!-- Price -->
+                    <div class="flex flex-col min-w-0">
+                        <span
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider truncate">Price</span>
+                        <span id="crosshair-price"
+                            class="text-xs sm:text-sm font-bold text-brand-oxford dark:text-brand-teal truncate tabular-nums"
+                            style="min-width: 80px;">--</span>
+                    </div>
+                    <!-- Daily Change -->
+                    <div class="flex flex-col min-w-0">
+                        <span
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider truncate">Change
+                            (from previous)</span>
+                        <span id="crosshair-change" class="text-xs sm:text-sm font-bold truncate tabular-nums"
+                            style="min-width: 100px;">--</span>
                     </div>
                 </div>
             </div>
 
             <div class="h-[400px] w-full relative">
-                <canvas id="priceChart"></canvas>
+                <!-- Skeleton loader shows while chart loads -->
+                <div id="chart-skeleton"
+                    class="absolute inset-0 animate-pulse bg-brand-black-60/5 dark:bg-white/5 rounded-xl flex items-center justify-center">
+                    <div class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">Loading chart...</div>
+                </div>
+                <canvas id="priceChart" role="img"
+                    aria-label="Price chart showing {{ commodity.name }} benchmark prices over time. Use the range buttons above to change time period."></canvas>
             </div>
 
             <!-- Chart Actions -->
@@ -205,8 +359,8 @@
                     <span id="date-range-display">Showing all data</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="resetZoom()"
-                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5">
+                    <button onclick="resetZoom()" aria-label="Reset chart zoom to default view"
+                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -214,8 +368,8 @@
                         </svg>
                         Reset View
                     </button>
-                    <button onclick="downloadChart()"
-                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5">
+                    <button onclick="downloadChart()" aria-label="Download chart as PNG image"
+                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -227,307 +381,590 @@
         </div>
     </div>
 
+    <!-- Chart Settings Panel (Right Slide-Out for Live Preview) -->
+    <div id="chart-settings-modal" class="hidden fixed inset-0 z-50">
+        <!-- Semi-transparent overlay - click to close -->
+        <div class="absolute inset-0 bg-black/20" onclick="closeChartSettings()"></div>
+
+        <!-- Right Side Panel (doesn't cover chart) -->
+        <div
+            class="absolute top-0 right-0 h-full w-80 max-w-[384px] bg-card-warm dark:bg-terminal-surface shadow-2xl border-l border-brand-black-60/20 dark:border-white/10 flex flex-col transform transition-transform duration-300">
+
+            <!-- Panel Header -->
+            <div
+                class="p-4 border-b border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0">
+                <h3 class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Chart Settings</h3>
+                <button onclick="closeChartSettings()"
+                    class="p-1.5 rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors"
+                    title="Close (Esc)">
+                    <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tabs Navigation (Compact) -->
+            <div class="px-4 pt-3 shrink-0">
+                <div class="flex flex-wrap gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-lg">
+                    <button onclick="showChartSettingsTab('appearance')" id="tab-appearance"
+                        class="chart-settings-tab px-2.5 py-1.5 text-[10px] font-bold rounded transition-all bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
+                        Style
+                    </button>
+                    <button onclick="showChartSettingsTab('scales')" id="tab-scales"
+                        class="chart-settings-tab px-2.5 py-1.5 text-[10px] font-bold rounded transition-all text-brand-black-60 hover:text-brand-black-80">
+                        Axes
+                    </button>
+                    <button onclick="showChartSettingsTab('statusline')" id="tab-statusline"
+                        class="chart-settings-tab px-2.5 py-1.5 text-[10px] font-bold rounded transition-all text-brand-black-60 hover:text-brand-black-80">
+                        Stats
+                    </button>
+                    <button onclick="showChartSettingsTab('tooltip')" id="tab-tooltip"
+                        class="chart-settings-tab px-2.5 py-1.5 text-[10px] font-bold rounded transition-all text-brand-black-60 hover:text-brand-black-80">
+                        Tips
+                    </button>
+                    <button onclick="showChartSettingsTab('interaction')" id="tab-interaction"
+                        class="chart-settings-tab px-2.5 py-1.5 text-[10px] font-bold rounded transition-all text-brand-black-60 hover:text-brand-black-80">
+                        Zoom
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Contents (Scrollable) -->
+            <div class="flex-1 overflow-y-auto p-4">
+
+                <!-- APPEARANCE TAB -->
+                <div id="content-appearance" class="chart-settings-content space-y-6">
+                    <!-- Preset Themes -->
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">PRESET THEMES</div>
+                        <div class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                            <button onclick="applyChartTheme('light')"
+                                class="theme-preset p-3 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
+                                data-theme="light">
+                                <div
+                                    class="w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br from-white to-gray-100 border border-gray-200 flex items-center justify-center">
+                                    <div class="w-4 h-0.5 bg-brand-oxford rounded"></div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-brand-black-60 group-hover:text-brand-oxford">Light</span>
+                            </button>
+                            <button onclick="applyChartTheme('dark')"
+                                class="theme-preset p-3 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
+                                data-theme="dark">
+                                <div
+                                    class="w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br from-gray-800 to-black border border-gray-700 flex items-center justify-center">
+                                    <div class="w-4 h-0.5 bg-brand-teal rounded"></div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-brand-black-60 group-hover:text-brand-oxford">Dark</span>
+                            </button>
+                            <button onclick="applyChartTheme('bloomberg')"
+                                class="theme-preset p-3 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
+                                data-theme="bloomberg">
+                                <div
+                                    class="w-8 h-8 mx-auto mb-2 rounded-lg bg-black border border-orange-500 flex items-center justify-center">
+                                    <div class="w-4 h-0.5 bg-orange-500 rounded"></div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-brand-black-60 group-hover:text-brand-oxford">Bloomberg</span>
+                            </button>
+                            <button onclick="applyChartTheme('ocean')"
+                                class="theme-preset p-3 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
+                                data-theme="ocean">
+                                <div
+                                    class="w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 border border-sky-200 flex items-center justify-center">
+                                    <div class="w-4 h-0.5 bg-sky-500 rounded"></div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-brand-black-60 group-hover:text-brand-oxford">Ocean</span>
+                            </button>
+                            <button onclick="applyChartTheme('forest')"
+                                class="theme-preset p-3 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
+                                data-theme="forest">
+                                <div
+                                    class="w-8 h-8 mx-auto mb-2 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200 flex items-center justify-center">
+                                    <div class="w-4 h-0.5 bg-green-600 rounded"></div>
+                                </div>
+                                <span
+                                    class="text-[10px] font-bold text-brand-black-60 group-hover:text-brand-oxford">Forest</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chart Line -->
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">CHART LINE</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Color</label>
+                                <input type="color" id="setting-lineColor" value="#0f5499"
+                                    onchange="updateChartSetting('lineColor', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Width: <span
+                                        id="lineWidth-value">2</span>px</label>
+                                <input type="range" id="setting-lineWidth" min="1" max="5" value="2"
+                                    onchange="updateChartSetting('lineWidth', this.value); document.getElementById('lineWidth-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Smoothing: <span
+                                        id="tension-value">10</span>%</label>
+                                <input type="range" id="setting-tension" min="0" max="50" value="10"
+                                    onchange="updateChartSetting('tension', this.value); document.getElementById('tension-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Point Size: <span
+                                        id="pointRadius-value">0</span></label>
+                                <input type="range" id="setting-pointRadius" min="0" max="6" value="0"
+                                    onchange="updateChartSetting('pointRadius', this.value); document.getElementById('pointRadius-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Area Fill -->
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">AREA FILL</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="setting-enableFill" checked
+                                    onchange="updateChartSetting('enableFill', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                                <label for="setting-enableFill"
+                                    class="text-xs text-brand-black-80 dark:text-white">Enable
+                                    Fill</label>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Fill Color</label>
+                                <input type="color" id="setting-fillColor" value="#0f5499"
+                                    onchange="updateChartSetting('fillColor', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Opacity: <span
+                                        id="fillOpacity-value">15</span>%</label>
+                                <input type="range" id="setting-fillOpacity" min="0" max="50" value="15"
+                                    onchange="updateChartSetting('fillOpacity', this.value); document.getElementById('fillOpacity-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid -->
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">GRID</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="setting-showHGrid" checked
+                                    onchange="updateChartSetting('showHGrid', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                                <label for="setting-showHGrid"
+                                    class="text-xs text-brand-black-80 dark:text-white">Horizontal</label>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="setting-showVGrid"
+                                    onchange="updateChartSetting('showVGrid', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                                <label for="setting-showVGrid"
+                                    class="text-xs text-brand-black-80 dark:text-white">Vertical</label>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Grid Color</label>
+                                <input type="color" id="setting-gridColor" value="#33302e"
+                                    onchange="updateChartSetting('gridColor', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Opacity: <span
+                                        id="gridOpacity-value">10</span>%</label>
+                                <input type="range" id="setting-gridOpacity" min="0" max="30" value="10"
+                                    onchange="updateChartSetting('gridOpacity', this.value); document.getElementById('gridOpacity-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SCALES TAB -->
+                <div id="content-scales" class="chart-settings-content hidden space-y-6">
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">Y-AXIS</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Position</label>
+                                <select id="setting-yAxisPosition"
+                                    onchange="updateChartSetting('yAxisPosition', this.value)"
+                                    class="w-full px-3 py-2 text-sm bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                                    <option value="right">Right</option>
+                                    <option value="left">Left</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Max Ticks: <span
+                                        id="yMaxTicks-value">6</span></label>
+                                <input type="range" id="setting-yMaxTicks" min="3" max="12" value="6"
+                                    onchange="updateChartSetting('yMaxTicks', this.value); document.getElementById('yMaxTicks-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Font Size: <span
+                                        id="axisFontSize-value">11</span>px</label>
+                                <input type="range" id="setting-axisFontSize" min="9" max="14" value="11"
+                                    onchange="updateChartSetting('axisFontSize', this.value); document.getElementById('axisFontSize-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">X-AXIS</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Max Labels: <span
+                                        id="xMaxTicks-value">8</span></label>
+                                <input type="range" id="setting-xMaxTicks" min="4" max="12" value="8"
+                                    onchange="updateChartSetting('xMaxTicks', this.value); document.getElementById('xMaxTicks-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATUS LINE TAB -->
+                <div id="content-statusline" class="chart-settings-content hidden space-y-6">
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">STATISTICS VISIBILITY
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showStatHigh" checked
+                                    onchange="updateChartSetting('showStatHigh', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">High</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showStatLow" checked
+                                    onchange="updateChartSetting('showStatLow', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Low</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showStatAvg" checked
+                                    onchange="updateChartSetting('showStatAvg', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Average</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showStatRange" checked
+                                    onchange="updateChartSetting('showStatRange', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Range</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showStatPoints" checked
+                                    onchange="updateChartSetting('showStatPoints', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Data Points</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showStatsBar" checked
+                                    onchange="updateChartSetting('showStatsBar', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Entire Bar</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">COLORS</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Up Color (High)</label>
+                                <input type="color" id="setting-upColor" value="#00a878"
+                                    onchange="updateChartSetting('upColor', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Down Color (Low)</label>
+                                <input type="color" id="setting-downColor" value="#c23b22"
+                                    onchange="updateChartSetting('downColor', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOOLTIP TAB -->
+                <div id="content-tooltip" class="chart-settings-content hidden space-y-6">
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">CROSSHAIR INFO</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showCrosshairDate" checked
+                                    onchange="updateChartSetting('showCrosshairDate', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Show Date</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showCrosshairPrice" checked
+                                    onchange="updateChartSetting('showCrosshairPrice', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Show Price</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showCrosshairChange" checked
+                                    onchange="updateChartSetting('showCrosshairChange', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Show Change</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">TOOLTIP STYLE</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Background</label>
+                                <input type="color" id="setting-tooltipBg" value="#ffffff"
+                                    onchange="updateChartSetting('tooltipBg', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Text Color</label>
+                                <input type="color" id="setting-tooltipText" value="#000000"
+                                    onchange="updateChartSetting('tooltipText', this.value)"
+                                    class="w-full h-10 rounded-lg cursor-pointer border border-brand-black-60/20">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Corner Radius: <span
+                                        id="tooltipRadius-value">8</span>px</label>
+                                <input type="range" id="setting-tooltipRadius" min="0" max="16" value="8"
+                                    onchange="updateChartSetting('tooltipRadius', this.value); document.getElementById('tooltipRadius-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Padding: <span
+                                        id="tooltipPadding-value">12</span>px</label>
+                                <input type="range" id="setting-tooltipPadding" min="6" max="20" value="12"
+                                    onchange="updateChartSetting('tooltipPadding', this.value); document.getElementById('tooltipPadding-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTERACTION TAB -->
+                <div id="content-interaction" class="chart-settings-content hidden space-y-6">
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">ZOOM & PAN</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-enableZoom" checked
+                                    onchange="updateChartSetting('enableZoom', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Enable Zoom</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-enablePan" checked
+                                    onchange="updateChartSetting('enablePan', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Enable Pan</span>
+                            </label>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Zoom Key</label>
+                                <select id="setting-zoomModifier"
+                                    onchange="updateChartSetting('zoomModifier', this.value)"
+                                    class="w-full px-3 py-2 text-sm bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
+                                    <option value="ctrl">Ctrl/Cmd</option>
+                                    <option value="shift">Shift</option>
+                                    <option value="none">None (Free scroll)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">ANIMATION</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="setting-enableAnimation" checked
+                                    onchange="updateChartSetting('enableAnimation', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <label for="setting-enableAnimation"
+                                    class="text-xs text-brand-black-80 dark:text-white">Enable
+                                    Animation</label>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Duration: <span
+                                        id="animationDuration-value">300</span>ms</label>
+                                <input type="range" id="setting-animationDuration" min="0" max="1000" step="50"
+                                    value="300"
+                                    onchange="updateChartSetting('animationDuration', this.value); document.getElementById('animationDuration-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">ACTION BUTTONS</div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showResetBtn" checked
+                                    onchange="updateChartSetting('showResetBtn', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Reset View</span>
+                            </label>
+                            <label
+                                class="flex items-center gap-3 p-3 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
+                                <input type="checkbox" id="setting-showDownloadBtn" checked
+                                    onchange="updateChartSetting('showDownloadBtn', this.checked)"
+                                    class="w-5 h-5 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white font-medium">Download</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-3">CHART SIZE</div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Height: <span
+                                        id="chartHeight-value">400</span>px</label>
+                                <input type="range" id="setting-chartHeight" min="250" max="600" step="50" value="400"
+                                    onchange="updateChartSetting('chartHeight', this.value); document.getElementById('chartHeight-value').textContent=this.value"
+                                    class="w-full h-10 accent-brand-oxford">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div
+                class="p-6 border-t border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0">
+                <button onclick="resetChartSettings()"
+                    class="px-4 py-2 text-xs font-bold text-brand-claret hover:bg-brand-claret/10 rounded-lg transition-colors">
+                    Reset to Default
+                </button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeChartSettings()"
+                        class="px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Section: Data Frequency Explanation -->
     <div
-        class="mt-16 p-8 border-l-4 border-brand-black-80 dark:border-brand-teal bg-brand-black-60/5 dark:bg-white/5 transition-colors duration-500">
-        <h3 class="text-brand-black-80 dark:text-white font-bold mb-3 uppercase tracking-wider text-[11px] font-ui">
-            Benchmark Overview</h3>
-        <p class="text-brand-black-80 dark:text-brand-black-60 text-sm leading-relaxed max-w-2xl">
-            This benchmark represents the end-of-day daily reference price for standard market monitoring. It is
-            provided for professional monitoring and historical analysis only. BenchmarkWatcher does not provide
-            real-time data or trading facilities.
+        class="mt-16 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
+        <div class="p-6 md:p-8">
+            <div class="flex items-center gap-3 mb-4">
+                <svg class="w-5 h-5 text-brand-oxford dark:text-brand-teal" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="text-brand-black-80 dark:text-white font-bold tracking-wider text-sm font-ui">
+                    Understanding Data Frequency
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Daily Data -->
+                <div class="p-4 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/20">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span
+                            class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-teal/20 text-brand-teal font-ui uppercase tracking-wider">Daily</span>
+                        <span class="text-xs font-bold text-brand-black-80 dark:text-white font-ui">Exchange-Traded
+                            Benchmarks</span>
+                    </div>
+                    <p class="text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed mb-2">
+                        Updated every business day from public data sources. Reflects end-of-day benchmark
+                        prices.
+                    </p>
+                    <div class="text-[10px] text-brand-black-60 font-medium font-ui">
+                        <span class="font-bold">Includes:</span> Crude Oil (Brent, WTI), Natural Gas, Heating Oil, Jet
+                        Fuel, Propane, Gold
+                    </div>
+                </div>
+
+                <!-- Monthly Data -->
+                <div class="p-4 rounded-xl bg-brand-oxford/5 dark:bg-brand-oxford/10 border border-brand-oxford/20">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span
+                            class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal font-ui uppercase tracking-wider">Monthly</span>
+                        <span class="text-xs font-bold text-brand-black-80 dark:text-white font-ui">Global
+                            Benchmarks</span>
+                    </div>
+                    <p class="text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed mb-2">
+                        IMF/World Bank global commodity price indices. Published monthly with 1-2 month lag. Provides
+                        historical context over longer periods.
+                    </p>
+                    <div class="text-[10px] text-brand-black-60 font-medium font-ui">
+                        <span class="font-bold">Includes:</span> Industrial Metals (Copper, Aluminum, Zinc, etc.),
+                        Agricultural (Wheat, Corn, Coffee, etc.)
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-4 text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed">
+                <span class="font-bold">Why the difference?</span> Daily commodity prices from exchanges are freely
+                available for energy products. However, metals and agricultural commodities are typically traded through
+                private contracts, so free public data is only available as monthly averages from international
+                organizations.
+            </p>
+        </div>
+    </div>
+
+    <!-- Legal Disclaimer -->
+    <div
+        class="mt-8 p-6 border-l-4 border-brand-claret/50 bg-brand-black-60/5 dark:bg-white/5 rounded-r-xl transition-colors duration-500">
+        <h4
+            class="text-brand-black-80 dark:text-white font-bold mb-2 tracking-wider text-[11px] font-ui flex items-center gap-2">
+            <svg class="w-4 h-4 text-brand-claret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                </path>
+            </svg>
+            Benchmark Disclaimer
+        </h4>
+        <p class="text-brand-black-60 dark:text-brand-black-60 text-xs leading-relaxed">
+            This benchmark represents the end-of-day reference price for standard market monitoring. It is
+            provided for <span class="font-semibold">informational purposes only</span>. BenchmarkWatcher does not
+            provide
+            real-time data or trading facilities, and this data should not be used for trading decisions.
         </p>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+
+<!-- Data passed via JSON for external JS -->
+<script id="commodity-history" type="application/json">
+{{ commodity.history | tojson }}
+</script>
+
+<!-- External JS for commodity detail -->
+<script src="{{ url_for('static', filename='js/components/commodity.js') }}"></script>
+
 <script>
+    // Initialize commodity chart with Jinja2 data
     document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('priceChart').getContext('2d');
-        const fullHistoryData = {{ commodity.history | tojson | safe
-    }};
-
-    let currentRange = 'ALL';
-    let currentChartType = 'line';
-    let priceChart = null;
-
-    const isDark = document.documentElement.classList.contains('dark');
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
-    const isBloomberg = currentTheme === 'bloomberg';
-
-    const chartColors = isBloomberg ? {
-        price: '#ff9933',
-        priceLight: 'rgba(255, 153, 51, 0.15)',
-        grid: 'rgba(255, 153, 51, 0.1)',
-        text: '#ff9933',
-        tooltipBg: '#2d2d2d',
-        tooltipText: '#ff9933',
-        tooltipBorder: '#ff9933',
-        crosshair: 'rgba(255, 153, 51, 0.3)'
-    } : {
-        price: isDark ? '#1aecff' : '#0f5499',
-        priceLight: isDark ? 'rgba(26, 236, 255, 0.1)' : 'rgba(15, 84, 153, 0.1)',
-        grid: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(51, 48, 46, 0.1)',
-        text: isDark ? '#999' : '#66605c',
-        tooltipBg: isDark ? '#1a1a1a' : '#fff',
-        tooltipText: isDark ? '#fff' : '#000',
-        tooltipBorder: isDark ? '#333' : '#ddd',
-        crosshair: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.1)'
-    };
-
-    // Filter data by time range
-    function filterDataByRange(data, range) {
-        if (range === 'ALL') return data;
-
-        const now = new Date();
-        let cutoffDate = new Date();
-
-        switch (range) {
-            case '1W': cutoffDate.setDate(now.getDate() - 7); break;
-            case '1M': cutoffDate.setMonth(now.getMonth() - 1); break;
-            case '3M': cutoffDate.setMonth(now.getMonth() - 3); break;
-            case '6M': cutoffDate.setMonth(now.getMonth() - 6); break;
-            case '1Y': cutoffDate.setFullYear(now.getFullYear() - 1); break;
-        }
-
-        return data.filter(item => new Date(item.date) >= cutoffDate);
-    }
-
-    // Calculate statistics
-    function calculateStats(data) {
-        const prices = data.map(item => item.price);
-        const high = Math.max(...prices);
-        const low = Math.min(...prices);
-        const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
-        const range = high - low;
-
-        document.getElementById('stat-high').textContent = high.toLocaleString() + ' {{ commodity.currency }}';
-        document.getElementById('stat-low').textContent = low.toLocaleString() + ' {{ commodity.currency }}';
-        document.getElementById('stat-avg').textContent = avg.toFixed(2) + ' {{ commodity.currency }}';
-        document.getElementById('stat-range').textContent = range.toFixed(2) + ' {{ commodity.currency }}';
-        document.getElementById('stat-points').textContent = data.length;
-
-        // Update date range display
-        if (data.length > 0) {
-            const startDate = new Date(data[0].date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            const endDate = new Date(data[data.length - 1].date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            document.getElementById('date-range-display').textContent = `${startDate} — ${endDate}`;
-        }
-    }
-
-    // Create gradient for area chart
-    function createGradient(ctx, chartArea) {
-        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-        gradient.addColorStop(0, chartColors.priceLight);
-        gradient.addColorStop(1, 'rgba(0,0,0,0)');
-        return gradient;
-    }
-
-    // Initialize or update chart
-    function updateChart() {
-        const filteredData = filterDataByRange(fullHistoryData, currentRange);
-        const labels = filteredData.map(item => item.date);
-        const prices = filteredData.map(item => item.price);
-
-        calculateStats(filteredData);
-
-        const chartConfig = {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Price',
-                    data: prices,
-                    borderColor: chartColors.price,
-                    backgroundColor: currentChartType === 'area' ? chartColors.priceLight : 'transparent',
-                    borderWidth: 2,
-                    fill: currentChartType === 'area',
-                    tension: 0.1,
-                    pointRadius: 0,
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: chartColors.price,
-                    pointHoverBorderColor: isDark ? '#000' : '#fff',
-                    pointHoverBorderWidth: 2,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 300 },
-                interaction: {
-                    intersect: false,
-                    mode: 'index',
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: chartColors.tooltipBg,
-                        titleColor: chartColors.tooltipText,
-                        bodyColor: chartColors.text,
-                        borderColor: chartColors.tooltipBorder,
-                        borderWidth: 1,
-                        titleFont: { size: 11, weight: 'bold', family: 'Inter' },
-                        bodyFont: { size: 13, weight: '600', family: 'Inter' },
-                        padding: 12,
-                        cornerRadius: 8,
-                        displayColors: false,
-                        callbacks: {
-                            title: function (context) {
-                                const date = new Date(context[0].label);
-                                return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-                            },
-                            label: function (context) {
-                                return context.parsed.y.toLocaleString() + ' {{ commodity.currency }}';
-                            },
-                            afterLabel: function (context) {
-                                if (context.dataIndex > 0) {
-                                    const prev = context.dataset.data[context.dataIndex - 1];
-                                    const curr = context.parsed.y;
-                                    const change = curr - prev;
-                                    const changePercent = ((change / prev) * 100).toFixed(2);
-                                    const sign = change >= 0 ? '+' : '';
-                                    return `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
-                                }
-                                return '';
-                            }
-                        }
-                    },
-                    zoom: {
-                        pan: {
-                            enabled: true,
-                            mode: 'x',
-                        },
-                        zoom: {
-                            wheel: { enabled: true },
-                            pinch: { enabled: true },
-                            mode: 'x',
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: {
-                            maxTicksLimit: 8,
-                            font: { size: 11, weight: '600', family: 'Inter' },
-                            color: chartColors.text,
-                            callback: function (value, index, values) {
-                                const date = new Date(this.getLabelForValue(value));
-                                if (currentRange === '1W' || currentRange === '1M') {
-                                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                                }
-                                return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-                            }
-                        }
-                    },
-                    y: {
-                        position: 'right',
-                        grid: {
-                            color: chartColors.grid,
-                            drawTicks: false,
-                            lineWidth: 1
-                        },
-                        border: { display: false },
-                        ticks: {
-                            font: { size: 11, weight: '600', family: 'Inter' },
-                            color: chartColors.text,
-                            padding: 10,
-                            maxTicksLimit: 6,
-                            callback: function (value) {
-                                return value.toLocaleString();
-                            }
-                        }
-                    }
-                },
-                onHover: function (event, elements) {
-                    if (elements.length > 0) {
-                        const element = elements[0];
-                        const dataIndex = element.index;
-                        const dataset = this.data.datasets[element.datasetIndex];
-                        const price = dataset.data[dataIndex];
-                        const date = this.data.labels[dataIndex];
-
-                        document.getElementById('crosshair-info').classList.remove('hidden');
-                        document.getElementById('crosshair-date').textContent = new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-                        document.getElementById('crosshair-price').textContent = price.toLocaleString() + ' {{ commodity.currency }}';
-
-                        if (dataIndex > 0) {
-                            const prev = dataset.data[dataIndex - 1];
-                            const change = price - prev;
-                            const changePercent = ((change / prev) * 100).toFixed(2);
-                            const sign = change >= 0 ? '+' : '';
-                            const changeEl = document.getElementById('crosshair-change');
-                            changeEl.textContent = `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
-                            changeEl.className = `text-sm font-bold ml-2 ${change >= 0 ? 'text-brand-teal' : 'text-brand-claret'}`;
-                        }
-                    }
-                }
-            }
-        };
-
-        if (priceChart) {
-            priceChart.destroy();
-        }
-
-        priceChart = new Chart(ctx, chartConfig);
-    }
-
-    // Set time range
-    window.setTimeRange = function (range) {
-        currentRange = range;
-        updateChart();
-        updateRangeButtons();
-    };
-
-    // Set chart type
-    window.setChartType = function (type) {
-        currentChartType = type;
-        updateChart();
-        updateTypeButtons();
-    };
-
-    // Reset zoom
-    window.resetZoom = function () {
-        if (priceChart) {
-            priceChart.resetZoom();
-        }
-    };
-
-    // Download chart as image
-    window.downloadChart = function () {
-        const link = document.createElement('a');
-        link.download = '{{ commodity.name }}-price-chart.png';
-        link.href = priceChart.toBase64Image();
-        link.click();
-    };
-
-    // Update button states
-    function updateRangeButtons() {
-        ['1W', '1M', '3M', '6M', '1Y', 'ALL'].forEach(range => {
-            const btn = document.getElementById(`range-${range}`);
-            if (range === currentRange) {
-                btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all';
-            } else {
-                btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
-            }
-        });
-    }
-
-    function updateTypeButtons() {
-        ['line', 'area'].forEach(type => {
-            const btn = document.getElementById(`type-${type}`);
-            if (type === currentChartType) {
-                btn.className = 'type-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all flex items-center gap-1.5';
-            } else {
-                btn.className = 'type-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all flex items-center gap-1.5';
-            }
-        });
-    }
-
-    // Initialize
-    updateChart();
-    updateRangeButtons();
-    updateTypeButtons();
+        const historyData = JSON.parse(document.getElementById('commodity-history').textContent);
+        BW.Commodity.init(historyData, '{{ commodity.currency }}', '{{ commodity.name }}');
     });
 </script>
 {% endblock %}
