@@ -1,7 +1,13 @@
+<!-- Skip to main content link for accessibility -->
+<a href="#main-content"
+    class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-brand-oxford focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:text-sm focus:font-bold">
+    Skip to main content
+</a>
+
 <header
     class="bg-brand-pink dark:bg-terminal-black sticky top-0 z-40 shadow-sm border-b border-brand-black-60/20 dark:border-white/10 transition-colors duration-500 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
     <nav class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group">
+        <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group" aria-label="BenchmarkWatcher home">
             <!-- Logo icon -->
             <div
                 class="w-8 h-8 rounded-lg bg-brand-black-80 dark:bg-white flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -13,9 +19,9 @@
 
         <div class="flex items-center gap-2">
             <!-- Settings button -->
-            <button onclick="toggleSettings()"
-                class="p-2.5 rounded-xl text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all active:scale-95"
-                aria-label="Settings">
+            <button onclick="toggleSettings()" id="settings-button"
+                class="p-2.5 rounded-xl text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
+                aria-label="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-modal">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">

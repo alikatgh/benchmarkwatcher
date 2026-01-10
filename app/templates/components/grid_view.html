@@ -1,0 +1,196 @@
+<!-- Grid Settings Panel -->
+<div
+    class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-4 mb-6">
+    <!-- Data Range Selector -->
+    <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-brand-black-60 dark:text-brand-black-60 font-ui"
+                title="Ranges filter displayed observations only. Metrics are based on available data points, not calendar periods.">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <span class="text-xs font-bold tracking-wider">Display Range</span>
+            </div>
+            <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                <button onclick="setGridDataRange('1W')" id="grid-range-1W"
+                    aria-label="Show last 1 week of available observations"
+                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
+                <button onclick="setGridDataRange('1M')" id="grid-range-1M"
+                    aria-label="Show last 1 month of available observations"
+                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
+                <button onclick="setGridDataRange('3M')" id="grid-range-3M"
+                    aria-label="Show last 3 months of available observations"
+                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
+                <button onclick="setGridDataRange('6M')" id="grid-range-6M"
+                    aria-label="Show last 6 months of available observations"
+                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
+                <button onclick="setGridDataRange('1Y')" id="grid-range-1Y"
+                    aria-label="Show last 1 year of available observations"
+                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
+                <button onclick="setGridDataRange('ALL')" id="grid-range-ALL" aria-label="Show all data"
+                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="grid-date-range-display" class="text-xs text-brand-black-60 dark:text-brand-black-60 font-ui">
+                Showing: <span class="font-bold text-brand-black-80 dark:text-white" id="grid-range-text">All
+                    data</span>
+            </div>
+            <button onclick="toggleGridSettingsPanel()"
+                class="text-xs font-bold text-brand-oxford dark:text-brand-teal hover:underline font-ui flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span id="grid-settings-toggle-text">Show Settings</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Collapsible Grid Settings Panel -->
+    <div id="grid-settings-panel" class="hidden mt-4 pt-4 border-t border-brand-black-60/10 dark:border-white/5">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- LEFT: Settings Controls -->
+            <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- DATA VISIBILITY TOGGLES -->
+                <div class="space-y-2">
+                    <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-2">Show/Hide</div>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="grid-show-category" checked onchange="updateGridSettings()"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Category</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="grid-show-change-pct" checked onchange="updateGridSettings()"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Obs. % Change</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="grid-show-change-abs" checked onchange="updateGridSettings()"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Obs. Change</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="grid-show-date" checked onchange="updateGridSettings()"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Date</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="grid-show-unit" checked onchange="updateGridSettings()"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Unit</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer" title="D = Daily data, M = Monthly data">
+                        <input type="checkbox" id="grid-show-freq-badge" checked onchange="updateGridSettings()"
+                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Freq. Badge</span>
+                    </label>
+                </div>
+
+                <!-- Columns -->
+                <div class="space-y-2">
+                    <label for="grid-columns"
+                        class="text-[10px] font-bold text-brand-black-60 tracking-wider">Columns</label>
+                    <select id="grid-columns" onchange="updateGridSettings()"
+                        class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
+                        <option value="auto" selected>Auto</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+                </div>
+
+                <!-- Sort By -->
+                <div class="space-y-2">
+                    <label for="grid-sort" class="text-[10px] font-bold text-brand-black-60 tracking-wider">Sort</label>
+                    <select id="grid-sort" onchange="updateGridSettings()"
+                        class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
+                        <option value="name" selected>Name (A-Z)</option>
+                        <option value="name-desc">Name (Z-A)</option>
+                        <option value="change-desc">Obs. Change ↓</option>
+                        <option value="change-asc">Obs. Change ↑</option>
+                        <option value="price-desc">Price ↓</option>
+                        <option value="price-asc">Price ↑</option>
+                    </select>
+                </div>
+
+                <!-- Card Style -->
+                <div class="space-y-2">
+                    <label for="grid-card-style"
+                        class="text-[10px] font-bold text-brand-black-60 tracking-wider">Style</label>
+                    <select id="grid-card-style" onchange="updateGridSettings()"
+                        class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
+                        <option value="card" selected>Full Card</option>
+                        <option value="minimal">Minimal Row</option>
+                        <option value="dense">Dense Grid</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- RIGHT: Live Preview Card -->
+            <div class="lg:col-span-1">
+                <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-2">Preview</div>
+                <div id="grid-preview-card"
+                    class="bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border-2 border-dashed border-brand-oxford/30 dark:border-brand-teal/30">
+                    <!-- Category Badge -->
+                    <div id="preview-category" class="flex items-center justify-between mb-2">
+                        <span class="text-[9px] font-bold text-brand-black-60 tracking-wider">Energy</span>
+                        <div class="text-[9px] font-bold py-0.5 px-2 rounded-full"
+                            style="color: var(--color-up); background-color: var(--color-up-bg);">+ Change</div>
+                    </div>
+                    <!-- Name -->
+                    <h4 class="text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif">Example Commodity
+                    </h4>
+                    <!-- Price -->
+                    <div class="flex items-end justify-between gap-2">
+                        <div>
+                            <div class="text-xl font-extrabold text-brand-black-80 dark:text-white">123.45</div>
+                            <div id="preview-unit" class="text-[10px] text-brand-black-60 mt-0.5">USD / barrel</div>
+                        </div>
+                        <div class="text-right">
+                            <div id="preview-change-pct" class="text-sm font-bold" style="color: var(--color-up);">
+                                +2.15%</div>
+                            <div id="preview-change-abs" class="text-[10px] text-brand-black-60 mt-0.5">+2.60 USD</div>
+                        </div>
+                    </div>
+                    <!-- Footer -->
+                    <div id="preview-footer"
+                        class="mt-3 pt-2 border-t border-brand-black-60/10 flex justify-between items-center">
+                        <span class="text-[10px] text-brand-black-60">As of 2026-01-05</span>
+                        <svg class="w-3 h-3 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards Container with Loading State -->
+<div class="relative">
+    <div id="grid-loading" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+    </div>
+    <div id="grid-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for commodity in commodities %}
+        {% include 'components/price_card.html' %}
+        {% else %}
+        <div
+            class="col-span-full bg-card-warm dark:bg-brand-slate p-12 rounded-2xl border-2 border-dashed border-brand-black-60/20 dark:border-brand-black-60/40 text-center text-brand-black-60">
+            <p class="font-bold">No benchmark data available.</p>
+            <p class="text-xs mt-1">Please initialize the data feed.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+<!-- External JS for grid view -->
+<script src="{{ url_for('static', filename='js/core/settings.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/grid_view.js') }}"></script>

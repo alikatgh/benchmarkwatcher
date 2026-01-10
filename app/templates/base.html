@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BenchmarkWatcher - Benchmark monitoring dashboard with historical price.">
     <title>{% block title %}BenchmarkWatcher{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,6 +22,34 @@
             --theme-text-muted: #66605c;
             --theme-border: rgba(51, 48, 46, 0.2);
             --theme-accent: #0f5499;
+
+            /* Market colors - default: Western (Green=Up, Red=Down) */
+            --color-up: #0d7680;
+            --color-down: #990f3d;
+            --color-up-bg: rgba(13, 118, 128, 0.1);
+            --color-down-bg: rgba(153, 15, 61, 0.1);
+        }
+
+        /* Market Color Themes */
+        html[data-market="western"] {
+            --color-up: #0d7680;
+            --color-down: #990f3d;
+            --color-up-bg: rgba(13, 118, 128, 0.1);
+            --color-down-bg: rgba(153, 15, 61, 0.1);
+        }
+
+        html[data-market="asian"] {
+            --color-up: #990f3d;
+            --color-down: #0d7680;
+            --color-up-bg: rgba(153, 15, 61, 0.1);
+            --color-down-bg: rgba(13, 118, 128, 0.1);
+        }
+
+        html[data-market="monochrome"] {
+            --color-up: var(--theme-text);
+            --color-down: var(--theme-text);
+            --color-up-bg: transparent;
+            --color-down-bg: transparent;
         }
 
         /* Light Theme (Warm Cream) */
@@ -130,6 +159,10 @@
         /* Card backgrounds */
         .bg-brand-pink {
             background-color: var(--theme-surface);
+        }
+
+        .bg-card-warm {
+            background-color: #f2dfce;
         }
 
         /* Header backgrounds */
@@ -311,6 +344,267 @@
         html[data-theme="ft"] a:hover {
             color: #b31245 !important;
         }
+
+        /* Reduced Motion - Accessibility for vestibular disorders */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Print Stylesheet */
+        @media print {
+
+            header,
+            footer,
+            .settings-modal,
+            button:not(.print-show),
+            nav,
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .dark\:bg-terminal-surface,
+            .dark\:bg-terminal-black {
+                background: white !important;
+            }
+
+            .dark\:text-white,
+            .text-brand-black-80 {
+                color: black !important;
+            }
+
+            a {
+                text-decoration: underline;
+                color: inherit !important;
+            }
+
+            .shadow-sm,
+            .shadow-lg {
+                box-shadow: none !important;
+            }
+        }
+
+        /* === ACCESSIBILITY ENHANCEMENTS === */
+
+        /* Link Underlines for Accessibility */
+        a:not(.no-underline):not(.theme-btn):not(.range-btn):not(.type-btn):not(.market-btn):not(.view-btn):not(.grid-range-btn) {
+            text-decoration-line: underline;
+            text-decoration-color: transparent;
+            text-underline-offset: 2px;
+            transition: text-decoration-color 0.2s;
+        }
+
+        a:not(.no-underline):hover,
+        a:not(.no-underline):focus {
+            text-decoration-color: currentColor;
+        }
+
+        /* Focus-Visible for Keyboard Users Only */
+        :focus:not(:focus-visible) {
+            outline: none;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--theme-accent);
+            outline-offset: 2px;
+        }
+
+        /* Responsive Typography */
+        @media (max-width: 640px) {
+            html {
+                font-size: 15px;
+            }
+
+            h1 {
+                font-size: 1.75rem !important;
+            }
+
+            h2 {
+                font-size: 1.25rem !important;
+            }
+        }
+
+        /* Tooltip Styles using title attribute */
+        [title] {
+            cursor: help;
+            position: relative;
+        }
+
+        /* Better Empty State Styling */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            text-align: center;
+            color: var(--theme-text-muted);
+        }
+
+        .empty-state svg {
+            width: 3rem;
+            height: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            margin: 0.25rem 0;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--theme-border);
+            border-top-color: var(--theme-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .dark .loading-overlay {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Skeleton Animation */
+        .skeleton {
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+            background: linear-gradient(90deg,
+                    rgba(128, 128, 128, 0.1) 25%,
+                    rgba(128, 128, 128, 0.2) 50%,
+                    rgba(128, 128, 128, 0.1) 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes skeleton-pulse {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* High Contrast Mode Support */
+        @media (prefers-contrast: high) {
+            :root {
+                --theme-border: rgba(0, 0, 0, 0.5);
+            }
+
+            html[data-theme="dark"],
+            html[data-theme="mono-dark"],
+            html[data-theme="bloomberg"] {
+                --theme-border: rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+
+            header,
+            footer,
+            #settings-modal,
+            .loading-overlay,
+            button {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+            }
+
+            .bg-card-warm,
+            .bg-brand-pink {
+                background: #f5f5f5 !important;
+            }
+        }
+
+        /* Consistent Hover States */
+        button:hover:not(:disabled),
+        a:hover {
+            opacity: 0.9;
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        /* Disabled State */
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ============================================================
+           ACTIVE STATE STYLES (Tailwind-safe, attribute-based)
+           ============================================================ */
+
+        /* Theme buttons - active state */
+        .theme-btn[data-active="true"] {
+            border-color: var(--theme-accent) !important;
+            box-shadow: 0 0 0 1px var(--theme-accent), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background-color: rgba(128, 128, 128, 0.15) !important;
+        }
+
+        /* Market buttons - active state */
+        .market-btn[data-active="true"] {
+            border-color: var(--theme-accent) !important;
+            box-shadow: 0 0 0 1px var(--theme-accent), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background-color: rgba(128, 128, 128, 0.15) !important;
+        }
+
+        /* View buttons - active state */
+        .view-btn[data-active="true"] {
+            background-color: var(--theme-surface, #ffffff) !important;
+            color: var(--theme-text) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark .view-btn[data-active="true"] {
+            background-color: #333333 !important;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -343,26 +637,14 @@
             }
         };
     </script>
-    <script>
-        // Immediate script to prevent flicker
-        (function () {
-            const theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-
-            // Add dark class for Tailwind dark: utilities
-            if (theme === 'dark' || theme === 'mono-dark') {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        })();
-    </script>
+    <!-- External JS for base theme initialization -->
+    <script src="{{ url_for('static', filename='js/base.js') }}"></script>
 </head>
 
 <body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
     {% include 'components/header.html' %}
 
-    <main>
+    <main id="main-content">
         {% block content %}{% endblock %}
     </main>
 

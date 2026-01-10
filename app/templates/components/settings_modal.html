@@ -1,12 +1,12 @@
-<div id="settings-modal"
+<div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"
     class="fixed inset-0 z-50 flex items-center justify-center bg-terminal-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300"
     onclick="if(event.target === this) toggleSettings()">
     <div class="theme-surface w-full max-w-md p-8 rounded-2xl shadow-2xl border border-[var(--theme-border)] relative mx-4 transform scale-95 transition-all duration-300"
         style="background-color: var(--theme-surface);">
 
         <!-- Close button -->
-        <button onclick="toggleSettings()"
-            class="absolute top-4 right-4 p-2 rounded-lg theme-text-muted hover:theme-text transition-all active:scale-95">
+        <button onclick="toggleSettings()" aria-label="Close settings"
+            class="absolute top-4 right-4 p-2 rounded-lg theme-text-muted hover:theme-text transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -14,14 +14,14 @@
 
         <!-- Header -->
         <div class="mb-8">
-            <h2 class="text-2xl font-bold theme-text font-serif">Settings</h2>
-            <p class="text-sm theme-text-muted font-ui mt-1">Customize your experience</p>
+            <h2 id="settings-title" class="text-2xl font-bold theme-text font-serif">Settings</h2>
+            <p class="text-sm theme-text-muted font-ui mt-1">Customize display preferences</p>
         </div>
 
         <div class="space-y-6">
             <!-- Theme Selection -->
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-bold tracking-[0.2em] theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -33,8 +33,8 @@
                 </label>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <!-- Light Theme -->
-                    <button onclick="setTheme('light')" id="theme-light"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group">
+                    <button onclick="setTheme('light')" id="theme-light" aria-label="Light theme with warm cream colors"
+                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <div class="flex items-center gap-3 mb-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-[#fffcfa] border border-gray-200 flex items-center justify-center shadow-sm">
@@ -58,8 +58,8 @@
                     </button>
 
                     <!-- Dark Theme -->
-                    <button onclick="setTheme('dark')" id="theme-dark"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group">
+                    <button onclick="setTheme('dark')" id="theme-dark" aria-label="Dark theme with terminal colors"
+                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <div class="flex items-center gap-3 mb-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-gray-700 flex items-center justify-center shadow-sm">
@@ -72,7 +72,7 @@
                             </div>
                             <div>
                                 <div class="text-sm font-bold theme-text">Dark</div>
-                                <div class="text-[10px] theme-text-muted">Terminal</div>
+                                <div class="text-[10px] theme-text-muted">Terminal-style</div>
                             </div>
                         </div>
                         <div class="flex gap-1">
@@ -83,8 +83,8 @@
                     </button>
 
                     <!-- Mono Light Theme -->
-                    <button onclick="setTheme('mono-light')" id="theme-mono-light"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group">
+                    <button onclick="setTheme('mono-light')" id="theme-mono-light" aria-label="Monochrome light theme"
+                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <div class="flex items-center gap-3 mb-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-white border border-gray-300 flex items-center justify-center shadow-sm">
@@ -103,8 +103,8 @@
                     </button>
 
                     <!-- Mono Dark Theme -->
-                    <button onclick="setTheme('mono-dark')" id="theme-mono-dark"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group">
+                    <button onclick="setTheme('mono-dark')" id="theme-mono-dark" aria-label="Monochrome dark theme"
+                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <div class="flex items-center gap-3 mb-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-black border border-gray-600 flex items-center justify-center shadow-sm">
@@ -124,7 +124,8 @@
 
                     <!-- Bloomberg Theme -->
                     <button onclick="setTheme('bloomberg')" id="theme-bloomberg"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group">
+                        aria-label="Bloomberg professional theme"
+                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <div class="flex items-center gap-3 mb-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-[#1e1e1e] border border-[#ff9933] flex items-center justify-center shadow-sm">
@@ -132,7 +133,7 @@
                             </div>
                             <div>
                                 <div class="text-sm font-bold theme-text">Bloomberg</div>
-                                <div class="text-[10px] theme-text-muted">Trading Terminal</div>
+                                <div class="text-[10px] theme-text-muted">Terminal-style UI</div>
                             </div>
                         </div>
                         <div class="flex gap-1">
@@ -144,8 +145,8 @@
                     </button>
 
                     <!-- FT Theme -->
-                    <button onclick="setTheme('ft')" id="theme-ft"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group">
+                    <button onclick="setTheme('ft')" id="theme-ft" aria-label="Financial Times theme"
+                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <div class="flex items-center gap-3 mb-2">
                             <div
                                 class="w-8 h-8 rounded-lg bg-[#fff1e5] border border-[#990f3d] flex items-center justify-center shadow-sm">
@@ -165,9 +166,77 @@
                 </div>
             </div>
 
+            <!-- Market Color Theme -->
+            <div>
+                <label class="block text-[10px] font-bold tracking-[0.2em] theme-text-muted mb-3 font-ui">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Change Indicator Colors
+                    </span>
+                </label>
+                <div class="grid grid-cols-3 gap-2">
+                    <!-- Western (Green=Up) -->
+                    <button onclick="setMarketTheme('western')" id="market-western"
+                        aria-label="Western market colors - green for up, red for down"
+                        class="market-btn p-3 rounded-xl border-2 transition-all font-ui text-center group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="text-xs font-bold theme-text mb-2">Western</div>
+                        <div class="flex justify-center gap-2 mb-1">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] text-[#0d7680] font-bold">▲</span>
+                                <div class="w-4 h-3 rounded-sm bg-[#0d7680]"></div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] text-[#990f3d] font-bold">▼</span>
+                                <div class="w-4 h-3 rounded-sm bg-[#990f3d]"></div>
+                            </div>
+                        </div>
+                        <div class="text-[9px] theme-text-muted">Green=Up</div>
+                    </button>
+
+                    <!-- Asian (Red=Up) -->
+                    <button onclick="setMarketTheme('asian')" id="market-asian"
+                        aria-label="Asian market colors - red for up, green for down"
+                        class="market-btn p-3 rounded-xl border-2 transition-all font-ui text-center group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="text-xs font-bold theme-text mb-2">Asian</div>
+                        <div class="flex justify-center gap-2 mb-1">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] text-[#990f3d] font-bold">▲</span>
+                                <div class="w-4 h-3 rounded-sm bg-[#990f3d]"></div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] text-[#0d7680] font-bold">▼</span>
+                                <div class="w-4 h-3 rounded-sm bg-[#0d7680]"></div>
+                            </div>
+                        </div>
+                        <div class="text-[9px] theme-text-muted">Red=Up</div>
+                    </button>
+
+                    <!-- Monochrome -->
+                    <button onclick="setMarketTheme('monochrome')" id="market-monochrome"
+                        aria-label="Monochrome market colors - no color indicators"
+                        class="market-btn p-3 rounded-xl border-2 transition-all font-ui text-center group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="text-xs font-bold theme-text mb-2">Mono</div>
+                        <div class="flex justify-center gap-2 mb-1">
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] theme-text font-bold">▲</span>
+                                <div class="w-4 h-3 rounded-sm bg-gray-500"></div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[9px] theme-text font-bold">▼</span>
+                                <div class="w-4 h-3 rounded-sm bg-gray-500"></div>
+                            </div>
+                        </div>
+                        <div class="text-[9px] theme-text-muted">No color</div>
+                    </button>
+                </div>
+            </div>
+
             <!-- View Selection -->
             <div>
-                <label class="block text-[10px] font-bold uppercase tracking-[0.2em] theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-bold tracking-[0.2em] theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -179,8 +248,8 @@
                 </label>
                 <div class="grid grid-cols-2 gap-2 p-1.5 rounded-xl"
                     style="background-color: rgba(128, 128, 128, 0.1);">
-                    <button onclick="setView('grid')" id="view-grid"
-                        class="view-btn py-2.5 text-xs font-bold rounded-lg transition-all font-ui flex items-center justify-center gap-1.5">
+                    <button onclick="setView('grid')" id="view-grid" aria-label="Standard grid view with cards"
+                        class="view-btn py-2.5 text-xs font-bold rounded-lg transition-all font-ui flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
@@ -189,109 +258,24 @@
                         Standard
                     </button>
                     <button onclick="setView('compact')" id="view-compact"
-                        class="view-btn py-2.5 text-xs font-bold rounded-lg transition-all font-ui flex items-center justify-center gap-1.5">
+                        aria-label="Compact terminal-style table view"
+                        class="view-btn py-2.5 text-xs font-bold rounded-lg transition-all font-ui flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
                         </svg>
-                        Terminal
+                        Compact
                     </button>
                 </div>
             </div>
         </div>
 
         <button onclick="toggleSettings()"
-            class="mt-8 w-full py-3.5 rounded-xl theme-accent-bg text-white font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-md font-ui">
+            class="mt-8 w-full py-3.5 rounded-xl theme-accent-bg text-white font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-md font-ui focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
             Done
         </button>
     </div>
 </div>
 
-<script>
-    function toggleSettings() {
-        const modal = document.getElementById('settings-modal');
-        const content = modal.querySelector('div');
-
-        if (modal.classList.contains('opacity-0')) {
-            // Opening
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            modal.classList.add('opacity-100', 'pointer-events-auto');
-            content.classList.remove('scale-95');
-            content.classList.add('scale-100');
-        } else {
-            // Closing
-            modal.classList.remove('opacity-100', 'pointer-events-auto');
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-        }
-    }
-
-    function setTheme(mode) {
-        localStorage.setItem('theme', mode);
-        applyTheme();
-        updateSettingsUI();
-    }
-
-    function setView(mode) {
-        localStorage.setItem('view-mode', mode);
-        updateSettingsUI();
-        if (window.location.pathname === '/') {
-            window.location.reload();
-        } else {
-            toggleSettings();
-        }
-    }
-
-    function applyTheme() {
-        const theme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', theme);
-
-        // Add dark class for Tailwind dark: utilities
-        if (theme === 'dark' || theme === 'mono-dark' || theme === 'bloomberg') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    }
-
-    function updateSettingsUI() {
-        const theme = localStorage.getItem('theme') || 'light';
-        const view = localStorage.getItem('view-mode') || 'grid';
-        const isDark = theme === 'dark' || theme === 'mono-dark' || theme === 'bloomberg';
-
-        // Update Theme Buttons
-        ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach(m => {
-            const btn = document.getElementById(`theme-${m}`);
-            if (btn) {
-                if (m === theme) {
-                    btn.className = 'theme-btn p-4 rounded-xl border-2 border-[var(--theme-accent)] transition-all font-ui text-left group shadow-md';
-                    btn.style.backgroundColor = 'rgba(128, 128, 128, 0.15)';
-                } else {
-                    btn.className = 'theme-btn p-4 rounded-xl border-2 border-transparent hover:border-[var(--theme-border)] transition-all font-ui text-left group';
-                    btn.style.backgroundColor = 'rgba(128, 128, 128, 0.08)';
-                }
-            }
-        });
-
-        // Update View Buttons
-        ['grid', 'compact'].forEach(v => {
-            const btn = document.getElementById(`view-${v}`);
-            if (btn) {
-                if (v === view) {
-                    btn.className = 'view-btn py-2.5 text-xs font-bold rounded-lg shadow-md transition-all font-ui flex items-center justify-center gap-1.5';
-                    btn.style.backgroundColor = isDark ? '#333' : '#fff';
-                    btn.style.color = 'var(--theme-text)';
-                } else {
-                    btn.className = 'view-btn py-2.5 text-xs font-bold rounded-lg theme-text-muted transition-all font-ui flex items-center justify-center gap-1.5';
-                    btn.style.backgroundColor = 'transparent';
-                    btn.style.color = 'var(--theme-text-muted)';
-                }
-            }
-        });
-    }
-
-    // Initialize
-    applyTheme();
-    updateSettingsUI();
-</script>
+<!-- External JS for settings modal -->
+<script src="{{ url_for('static', filename='js/components/settings_modal.js') }}"></script>
