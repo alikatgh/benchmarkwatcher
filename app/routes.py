@@ -64,3 +64,9 @@ def commodity_detail(commodity_id):
     if not commodity:
         abort(404, description="Commodity not found")
     return render_template('commodity.html', commodity=commodity)
+
+
+@bp.route('/changelog')
+def changelog():
+    """Changelog page with updates and new features."""
+    return render_template('changelog.html')
