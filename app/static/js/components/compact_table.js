@@ -1062,6 +1062,17 @@ function sortTable(column) {
         activeIndicator.textContent = currentSortDirection === 'asc' ? ' ▲' : ' ▼';
     }
 
+    // Helper: get a data attribute from an element or its first child that has it.
+    // Handles both server-rendered (data-value on .chg-cell itself) and
+    // AJAX-rendered (data-value on inner child of .chg-cell) DOM structures.
+    function getDataAttr(row, selector, attr) {
+        const el = row.querySelector(selector);
+        if (!el) return undefined;
+        if (el.dataset[attr] !== undefined) return el.dataset[attr];
+        const child = el.querySelector(`[data-${attr}]`);
+        return child ? child.dataset[attr] : undefined;
+    }
+
     // Sort rows
     rows.sort((a, b) => {
         let aVal, bVal;
@@ -1072,20 +1083,20 @@ function sortTable(column) {
                 bVal = b.querySelector('.commodity-name')?.textContent?.trim() || '';
                 break;
             case 'price':
-                aVal = parseFloat(a.querySelector('.price-value')?.dataset?.raw || a.querySelector('.price-value')?.textContent || 0);
-                bVal = parseFloat(b.querySelector('.price-value')?.dataset?.raw || b.querySelector('.price-value')?.textContent || 0);
+                aVal = parseFloat(getDataAttr(a, '.price-value', 'raw') || a.querySelector('.price-value')?.textContent || 0);
+                bVal = parseFloat(getDataAttr(b, '.price-value', 'raw') || b.querySelector('.price-value')?.textContent || 0);
                 break;
             case 'change':
-                aVal = parseFloat(a.querySelector('.chg-cell')?.dataset?.value || 0);
-                bVal = parseFloat(b.querySelector('.chg-cell')?.dataset?.value || 0);
+                aVal = parseFloat(getDataAttr(a, '.chg-cell', 'value') || 0);
+                bVal = parseFloat(getDataAttr(b, '.chg-cell', 'value') || 0);
                 break;
             case 'pct':
-                aVal = parseFloat(a.querySelector('.pct-cell')?.dataset?.value || 0);
-                bVal = parseFloat(b.querySelector('.pct-cell')?.dataset?.value || 0);
+                aVal = parseFloat(getDataAttr(a, '.pct-cell', 'value') || 0);
+                bVal = parseFloat(getDataAttr(b, '.pct-cell', 'value') || 0);
                 break;
             case 'date':
-                aVal = a.querySelector('.updated-cell')?.dataset?.date || '';
-                bVal = b.querySelector('.updated-cell')?.dataset?.date || '';
+                aVal = getDataAttr(a, '.updated-cell', 'date') || '';
+                bVal = getDataAttr(b, '.updated-cell', 'date') || '';
                 break;
             default:
                 return 0;

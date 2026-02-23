@@ -40,22 +40,26 @@
         class="border-t border-brand-black-60/8 dark:border-white/6 transition-all duration-300 ease-in-out overflow-hidden"
         style="max-height: 36px;">
         <div class="max-w-6xl mx-auto px-4 overflow-x-auto scrollbar-hide">
+            {% set cat = selected_category|default('') %}
+            {% set base_cls = "px-3 py-1 text-[11px] font-semibold rounded-md transition-colors font-ui" %}
+            {% set idle_cls = "text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white
+            hover:bg-brand-black-60/8 dark:hover:bg-white/8" %}
+            {% set active_cls = "text-brand-black-80 dark:text-white bg-brand-black-60/10 dark:bg-white/10" %}
             <nav class="flex items-center gap-0.5 h-9 whitespace-nowrap" aria-label="Category filters">
-                <a href="{{ url_for('main.index') }}#energy"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Energy</a>
-                <a href="{{ url_for('main.index') }}#metals"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Metals</a>
-                <a href="{{ url_for('main.index') }}#precious"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Precious</a>
-                <a href="{{ url_for('main.index') }}#agricultural"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Agriculture</a>
-                <a href="{{ url_for('main.index') }}#livestock"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Livestock</a>
-                <a href="{{ url_for('main.index') }}#index"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Indices</a>
+                <a href="{{ url_for('main.index') }}"
+                    class="{{ base_cls }} {{ active_cls if not cat else idle_cls }}">All</a>
+                <a href="{{ url_for('main.index', category='energy') }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'energy' else idle_cls }}">Energy</a>
+                <a href="{{ url_for('main.index', category='metal') }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'metal' else idle_cls }}">Metals</a>
+                <a href="{{ url_for('main.index', category='precious') }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'precious' else idle_cls }}">Precious</a>
+                <a href="{{ url_for('main.index', category='agricultural') }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'agricultural' else idle_cls }}">Agriculture</a>
+                <a href="{{ url_for('main.index', category='livestock') }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'livestock' else idle_cls }}">Livestock</a>
                 <span class="w-px h-4 bg-brand-black-60/20 dark:bg-white/15 mx-1 self-center flex-shrink-0"></span>
-                <a href="{{ url_for('main.changelog') }}"
-                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Changelog</a>
+                <a href="{{ url_for('main.changelog') }}" class="{{ base_cls }} {{ idle_cls }}">Changelog</a>
             </nav>
         </div>
     </div>

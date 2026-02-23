@@ -47,13 +47,14 @@
             <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
                 <!-- LEFT: Price and Change (main content) -->
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-3 mb-2">
+                    <!-- Label + frequency badge: stacked on mobile, inline on sm+ -->
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-3">
                         <div
-                            class="text-sm text-brand-black-60 dark:text-brand-black-60 tracking-wider font-semibold font-ui">
+                            class="text-xs sm:text-sm text-brand-black-60 dark:text-brand-black-60 tracking-wider font-semibold font-ui">
                             Latest Benchmark
                         </div>
                         <!-- Frequency indicator badge -->
-                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full 
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full w-fit
                             {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold', 'silver', 'gasoline'] %}
                                 bg-brand-teal/20 text-brand-teal
                             {% else %}
@@ -68,66 +69,75 @@
                             {% endif %}
                         </span>
                     </div>
-                    <div class="flex items-baseline gap-2 font-ui flex-wrap">
+
+                    <!-- Price + unit: stacked on mobile, baseline-aligned on sm+ -->
+                    <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 font-ui">
                         <span
-                            class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter">{{
+                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter leading-none">{{
                             commodity.price }}</span>
-                        <span
-                            class="text-sm sm:text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
-                            commodity.currency }} / {{ commodity.unit }}</span>
-                        <!-- Copy to clipboard button -->
-                        <button onclick="copyPrice('{{ commodity.price }} {{ commodity.currency }}')"
-                            aria-label="Copy price to clipboard"
-                            class="ml-2 p-2 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
-                            title="Copy price">
-                            <svg id="copy-icon" class="w-4 h-4 text-brand-black-60 dark:text-brand-black-60" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                            <svg id="check-icon" class="w-4 h-4 text-brand-teal hidden" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 13l4 4L19 7"></path>
-                            </svg>
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="text-xs sm:text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
+                                commodity.currency }} / {{ commodity.unit }}</span>
+                            <!-- Copy to clipboard button -->
+                            <button onclick="copyPrice('{{ commodity.price }} {{ commodity.currency }}')"
+                                aria-label="Copy price to clipboard"
+                                class="p-1.5 sm:p-2 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
+                                title="Copy price">
+                                <svg id="copy-icon"
+                                    class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-black-60 dark:text-brand-black-60"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <svg id="check-icon" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-teal hidden"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Change percentage and badge -->
-                    <div class="flex items-center gap-3 mt-4 flex-wrap">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-4">
                         <!-- Percentage badge with tooltip -->
+                        {% set trend_color = 'var(--color-up)' if commodity.change >= 0 else 'var(--color-down)' %}
+                        {% set trend_bg = 'var(--color-up-bg)' if commodity.change >= 0 else 'var(--color-down-bg)' %}
+                        {% set style_bg = 'style="background-color: ' ~ trend_bg ~ ';"' %}
+                        {% set style_text = 'style="color: ' ~ trend_color ~ ';"' %}
+                        {% set style_bg_badge = 'style="background-color: ' ~ trend_color ~ ';"' %}
                         <div class="group relative cursor-help">
-                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all"
-                                style="background-color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %})20;">
-                                <span class="text-xl font-bold font-ui"
-                                    style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %});">
+                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all w-fit" {{
+                                style_bg|safe }}>
+                                <span class="text-lg sm:text-xl font-bold font-ui" {{ style_text|safe }}>
                                     {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
                                 </span>
-                                <span class="text-xs font-bold py-0.5 px-2 rounded-full text-white"
-                                    style="background-color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %});">
+                                <span class="text-xs font-bold py-0.5 px-2 rounded-full text-white" {{
+                                    style_bg_badge|safe }}>
                                     {% if commodity.change >= 0 %}↑{% else %}↓{% endif %}
                                 </span>
                             </div>
                             <!-- Tooltip on hover -->
                             <div
-                                class="absolute bottom-full left-0 mb-2 w-72 p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui">
+                                class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui">
                                 <div class="font-bold mb-2">Price Change Calculation</div>
                                 <div class="space-y-1.5 text-brand-black-60">
-                                    <div class="flex justify-between">
-                                        <span>Current ({{ commodity.date }}):</span>
-                                        <span class="text-white font-bold">{{ commodity.price }} {{ commodity.currency
+                                    <div class="flex justify-between gap-2">
+                                        <span class="shrink-0">Current ({{ commodity.date }}):</span>
+                                        <span class="text-white font-bold text-right">{{ commodity.price }} {{
+                                            commodity.currency
                                             }}</span>
                                     </div>
-                                    <div class="flex justify-between">
-                                        <span>Previous ({{ commodity.prev_date }}):</span>
-                                        <span class="text-white font-bold">{{ commodity.prev_price }} {{
+                                    <div class="flex justify-between gap-2">
+                                        <span class="shrink-0">Previous ({{ commodity.prev_date }}):</span>
+                                        <span class="text-white font-bold text-right">{{ commodity.prev_price }} {{
                                             commodity.currency }}</span>
                                     </div>
-                                    <div class="pt-2 border-t border-white/20 mt-2 flex justify-between">
-                                        <span>Change:</span>
-                                        <span class="font-bold"
-                                            style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %});">
+                                    <div class="pt-2 border-t border-white/20 mt-2 flex justify-between gap-2">
+                                        <span class="shrink-0">Change:</span>
+                                        <span class="font-bold text-right" {{ style_text|safe }}>
                                             {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }} {{
                                             commodity.currency }} ({% if commodity.change >= 0 %}+{% endif %}{{
                                             commodity.change_percent }}%)
@@ -142,7 +152,7 @@
                             </div>
                         </div>
                         <!-- Context: vs what period -->
-                        <div class="text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui">
+                        <div class="text-[11px] sm:text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui">
                             vs previous {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold',
                             'silver', 'gasoline'] %}day{% else %}month{% endif %} · As of {{ commodity.date }}
                         </div>
