@@ -1,0 +1,843 @@
+[
+  {
+    "id": "brent_oil",
+    "name": "Brent Crude Oil",
+    "category": "energy",
+    "unit": "barrel",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "RBRTE"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "wti_oil",
+    "name": "WTI Crude Oil",
+    "category": "energy",
+    "unit": "barrel",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "RWTC"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "natural_gas",
+    "name": "Natural Gas (Henry Hub)",
+    "category": "energy",
+    "unit": "MMBtu",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "DHHNGSP",
+      "source_info_url": "https://fred.stlouisfed.org/series/DHHNGSP"
+    }
+  },
+  {
+    "id": "heating_oil",
+    "name": "Heating Oil",
+    "category": "energy",
+    "unit": "gallon",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "EER_EPD2F_PF4_Y35NY_DPG"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "jet_fuel",
+    "name": "Jet Fuel",
+    "category": "energy",
+    "unit": "gallon",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "EER_EPJK_PF4_RGC_DPG"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "gasoline",
+    "name": "Gasoline (Gulf Coast)",
+    "category": "energy",
+    "unit": "gallon",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "DGASUSGULF",
+      "source_info_url": "https://fred.stlouisfed.org/series/DGASUSGULF"
+    }
+  },
+  {
+    "id": "propane",
+    "name": "Propane (Mont Belvieu)",
+    "category": "energy",
+    "unit": "gallon",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "EER_EPLLPA_PF4_Y44MB_DPG"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "copper",
+    "name": "Copper",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PCOPPUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PCOPPUSDM"
+    }
+  },
+  {
+    "id": "iron_ore",
+    "name": "Iron Ore",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PIORECRUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PIORECRUSDM"
+    }
+  },
+  {
+    "id": "aluminum",
+    "name": "Aluminum",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PALUMUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PALUMUSDM"
+    }
+  },
+  {
+    "id": "zinc",
+    "name": "Zinc",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PZINCUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PZINCUSDM"
+    }
+  },
+  {
+    "id": "nickel",
+    "name": "Nickel",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PNICKUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PNICKUSDM"
+    }
+  },
+  {
+    "id": "lead",
+    "name": "Lead",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PLEADUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PLEADUSDM"
+    }
+  },
+  {
+    "id": "tin",
+    "name": "Tin",
+    "category": "metal",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PTINUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PTINUSDM"
+    }
+  },
+  {
+    "id": "gold",
+    "name": "Gold",
+    "category": "precious",
+    "unit": "troy oz",
+    "source_type": "FREEGOLD",
+    "source_name": "FreeGoldAPI (World Bank/Yahoo)",
+    "api_config": {
+      "data_type": "gold",
+      "source_info_url": "https://freegoldapi.com"
+    }
+  },
+  {
+    "id": "silver",
+    "name": "Silver",
+    "category": "precious",
+    "unit": "troy oz",
+    "source_type": "YAHOO",
+    "source_name": "Yahoo Finance (COMEX Futures)",
+    "api_config": {
+      "symbol": "SI=F",
+      "source_info_url": "https://finance.yahoo.com/quote/SI=F"
+    }
+  },
+  {
+    "id": "platinum",
+    "name": "Platinum",
+    "category": "precious",
+    "unit": "troy oz",
+    "source_type": "YAHOO",
+    "source_name": "Yahoo Finance (NYMEX Futures)",
+    "api_config": {
+      "symbol": "PL=F",
+      "source_info_url": "https://finance.yahoo.com/quote/PL=F"
+    }
+  },
+  {
+    "id": "wheat",
+    "name": "Wheat",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PWHEAMTUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PWHEAMTUSDM"
+    }
+  },
+  {
+    "id": "corn",
+    "name": "Corn (Maize)",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PMAIZMTUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PMAIZMTUSDM"
+    }
+  },
+  {
+    "id": "soybeans",
+    "name": "Soybeans",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSOYBUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSOYBUSDM"
+    }
+  },
+  {
+    "id": "rice",
+    "name": "Rice (Average Price)",
+    "category": "agricultural",
+    "unit": "pound",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "APU0000701312",
+      "source_info_url": "https://fred.stlouisfed.org/series/APU0000701312"
+    }
+  },
+  {
+    "id": "sugar",
+    "name": "Sugar",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSUGAISAUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSUGAISAUSDM"
+    }
+  },
+  {
+    "id": "coffee",
+    "name": "Coffee (Arabica)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PCOFFOTMUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PCOFFOTMUSDM"
+    }
+  },
+  {
+    "id": "cocoa",
+    "name": "Cocoa",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PCOCOUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PCOCOUSDM"
+    }
+  },
+  {
+    "id": "cotton",
+    "name": "Cotton",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PCOTTINDUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PCOTTINDUSDM"
+    }
+  },
+  {
+    "id": "rubber",
+    "name": "Rubber (Natural)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PRUBBUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PRUBBUSDM"
+    }
+  },
+  {
+    "id": "palm_oil",
+    "name": "Palm Oil",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PPOILUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PPOILUSDM"
+    }
+  },
+  {
+    "id": "beef",
+    "name": "Beef (Global Price)",
+    "category": "agricultural",
+    "unit": "pound",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PBEEFUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PBEEFUSDM"
+    }
+  },
+  {
+    "id": "chicken",
+    "name": "Poultry (Chicken)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PPOULTUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PPOULTUSDM"
+    }
+  },
+  {
+    "id": "coal_australia",
+    "name": "Coal (Australian)",
+    "category": "energy",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PCOALAUUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PCOALAUUSDM"
+    }
+  },
+  {
+    "id": "crude_oil_brent",
+    "name": "Crude Oil (Brent, FRED)",
+    "category": "energy",
+    "unit": "barrel",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "POILBREUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/POILBREUSDM"
+    }
+  },
+  {
+    "id": "natural_gas_eu",
+    "name": "Natural Gas (Europe)",
+    "category": "energy",
+    "unit": "MMBtu",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PNGASEUUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PNGASEUUSDM"
+    }
+  },
+  {
+    "id": "natural_gas_japan",
+    "name": "Natural Gas (Japan/Korea)",
+    "category": "energy",
+    "unit": "MMBtu",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PNGASJPUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PNGASJPUSDM"
+    }
+  },
+  {
+    "id": "uranium",
+    "name": "Uranium",
+    "category": "metal",
+    "unit": "pound",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PURANUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PURANUSDM"
+    }
+  },
+  {
+    "id": "barley",
+    "name": "Barley",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PBARLUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PBARLUSDM"
+    }
+  },
+  {
+    "id": "soybean_oil",
+    "name": "Soybean Oil",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSOILUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSOILUSDM"
+    }
+  },
+  {
+    "id": "soybean_meal",
+    "name": "Soybean Meal",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSMEAUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSMEAUSDM"
+    }
+  },
+  {
+    "id": "rapeseed_oil",
+    "name": "Rapeseed Oil",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PROILUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PROILUSDM"
+    }
+  },
+  {
+    "id": "sunflower_oil",
+    "name": "Sunflower Oil",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSUNOUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSUNOUSDM"
+    }
+  },
+  {
+    "id": "olive_oil",
+    "name": "Olive Oil",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "POLVOILUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/POLVOILUSDM"
+    }
+  },
+  {
+    "id": "coffee_robusta",
+    "name": "Coffee (Robusta)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PCOFFROBUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PCOFFROBUSDM"
+    }
+  },
+  {
+    "id": "tea_kenyan",
+    "name": "Tea (Kenyan)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PTEAUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PTEAUSDM"
+    }
+  },
+  {
+    "id": "timber_logs_hard",
+    "name": "Logs (Hardwood)",
+    "category": "agricultural",
+    "unit": "cubic meter",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PLOGSKUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PLOGSKUSDM"
+    }
+  },
+  {
+    "id": "sawnwood",
+    "name": "Sawnwood (Softwood)",
+    "category": "agricultural",
+    "unit": "cubic meter",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSAWOREUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSAWOREUSDM"
+    }
+  },
+  {
+    "id": "hides",
+    "name": "Hides (Heavy Steers)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PHIDEUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PHIDEUSDM"
+    }
+  },
+  {
+    "id": "wool_fine",
+    "name": "Wool (Fine)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PWOOLFUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PWOOLFUSDM"
+    }
+  },
+  {
+    "id": "wool_coarse",
+    "name": "Wool (Coarse)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PWOOLCUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PWOOLCUSDM"
+    }
+  },
+  {
+    "id": "lamb",
+    "name": "Lamb",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PLAMBUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PLAMBUSDM"
+    }
+  },
+  {
+    "id": "swine",
+    "name": "Swine (Pork)",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PPORKUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PPORKUSDM"
+    }
+  },
+  {
+    "id": "shrimp",
+    "name": "Shrimp",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSHRIUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSHRIUSDM"
+    }
+  },
+  {
+    "id": "salmon",
+    "name": "Salmon",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PSALMUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSALMUSDM"
+    }
+  },
+  {
+    "id": "fishmeal",
+    "name": "Fishmeal",
+    "category": "agricultural",
+    "unit": "metric ton",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PFISHUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PFISHUSDM"
+    }
+  },
+  {
+    "id": "bananas",
+    "name": "Bananas",
+    "category": "agricultural",
+    "unit": "kg",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PBANSOPUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PBANSOPUSDM"
+    }
+  },
+  {
+    "id": "index_all_commodities",
+    "name": "All Commodities Index",
+    "category": "index",
+    "unit": "index (2016=100)",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PALLFNFINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PALLFNFINDEXM"
+    }
+  },
+  {
+    "id": "index_energy",
+    "name": "Energy Price Index",
+    "category": "index",
+    "unit": "index (2016=100)",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PNRGINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PNRGINDEXM"
+    }
+  },
+  {
+    "id": "index_food",
+    "name": "Food Price Index",
+    "category": "index",
+    "unit": "index (2016=100)",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PFOODINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PFOODINDEXM"
+    }
+  },
+  {
+    "id": "index_metals",
+    "name": "Metals Price Index",
+    "category": "index",
+    "unit": "index (2016=100)",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PMETAINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PMETAINDEXM"
+    }
+  },
+  {
+    "id": "index_agriculture",
+    "name": "Agricultural Raw Materials Index",
+    "category": "index",
+    "unit": "index (2016=100)",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PRAWMINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PRAWMINDEXM"
+    }
+  },
+  {
+    "id": "index_food_beverages",
+    "name": "Food & Beverages Index",
+    "category": "index",
+    "unit": "index (2016=100)",
+    "source_type": "FRED",
+    "api_config": {
+      "series_id": "PFANDBINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PFANDBINDEXM"
+    }
+  },
+  {
+    "id": "rbob_gasoline",
+    "name": "RBOB Gasoline",
+    "category": "energy",
+    "unit": "gallon",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "EER_EPMRU_PF4_Y35NY_DPG"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "diesel",
+    "name": "Ultra-Low Sulfur Diesel",
+    "category": "energy",
+    "unit": "gallon",
+    "source_type": "EIA",
+    "api_config": {
+      "url": "https://api.eia.gov/v2/petroleum/pri/spt/data/",
+      "facets": {
+        "series": [
+          "EER_EPD2DXL0_PF4_Y35NY_DPG"
+        ]
+      },
+      "source_info_url": "https://www.eia.gov/petroleum/gasdiesel/"
+    }
+  },
+  {
+    "id": "usda_wheat",
+    "name": "Wheat (US Farm Price)",
+    "category": "agricultural",
+    "unit": "bushel",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "WHEAT",
+      "unit_desc": "$ / BU",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_soybeans",
+    "name": "Soybeans (US Farm Price)",
+    "category": "agricultural",
+    "unit": "bushel",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "SOYBEANS",
+      "unit_desc": "$ / BU",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_rice",
+    "name": "Rice (US Farm Price)",
+    "category": "agricultural",
+    "unit": "cwt",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "RICE",
+      "unit_desc": "$ / CWT",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_cotton",
+    "name": "Cotton (US Farm Price)",
+    "category": "agricultural",
+    "unit": "lb",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "COTTON",
+      "unit_desc": "$ / LB",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_cattle",
+    "name": "Cattle (US Farm Price)",
+    "category": "agricultural",
+    "unit": "cwt",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "CATTLE",
+      "unit_desc": "$ / CWT",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_hogs",
+    "name": "Hogs (US Farm Price)",
+    "category": "agricultural",
+    "unit": "cwt",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "HOGS",
+      "unit_desc": "$ / CWT",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_milk",
+    "name": "Milk (US Farm Price)",
+    "category": "agricultural",
+    "unit": "cwt",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "MILK",
+      "unit_desc": "$ / CWT",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_hay",
+    "name": "Hay (US Farm Price)",
+    "category": "agricultural",
+    "unit": "ton",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "HAY",
+      "unit_desc": "$ / TON",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_oats",
+    "name": "Oats (US Farm Price)",
+    "category": "agricultural",
+    "unit": "bushel",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "OATS",
+      "unit_desc": "$ / BU",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_barley",
+    "name": "Barley (US Farm Price)",
+    "category": "agricultural",
+    "unit": "bushel",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "BARLEY",
+      "unit_desc": "$ / BU",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  },
+  {
+    "id": "usda_sorghum",
+    "name": "Sorghum (US Farm Price)",
+    "category": "agricultural",
+    "unit": "cwt",
+    "source_type": "USDA",
+    "api_config": {
+      "commodity_desc": "SORGHUM",
+      "unit_desc": "$ / CWT",
+      "source_info_url": "https://quickstats.nass.usda.gov/"
+    }
+  }
+]
