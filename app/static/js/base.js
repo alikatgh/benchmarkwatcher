@@ -130,6 +130,42 @@ window.BW = window.BW || {};
                 });
             });
         } catch (e) { /* ignore */ }
+
+        // Google Console-style scroll-hide for category strip
+        initScrollHideNav();
+    }
+
+    // Scroll-hide: hide category strip on scroll down, show on scroll up
+    function initScrollHideNav() {
+        const strip = doc.getElementById('category-strip');
+        if (!strip) return;
+
+        let lastScrollY = 0;
+        let ticking = false;
+        const THRESHOLD = 80; // pixels before hiding
+
+        function onScroll() {
+            if (ticking) return;
+            ticking = true;
+            requestAnimationFrame(() => {
+                const currentY = window.scrollY;
+                if (currentY > THRESHOLD && currentY > lastScrollY) {
+                    // Scrolling DOWN past threshold - hide
+                    strip.style.maxHeight = '0';
+                    strip.style.opacity = '0';
+                    strip.style.borderTopWidth = '0';
+                } else if (currentY < lastScrollY) {
+                    // Scrolling UP - show
+                    strip.style.maxHeight = '36px';
+                    strip.style.opacity = '1';
+                    strip.style.borderTopWidth = '';
+                }
+                lastScrollY = currentY;
+                ticking = false;
+            });
+        }
+
+        window.addEventListener('scroll', onScroll, { passive: true });
     }
 
     // Expose API

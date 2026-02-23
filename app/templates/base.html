@@ -82,6 +82,16 @@
             --text-3xl: clamp(1.6rem, 4.5vw, 2rem);
         }
 
+        /* Scrollbar-hide utility for horizontal scroll containers */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
         /* Market Color Themes */
         html[data-market="western"] {
             --color-up: #0d7680;

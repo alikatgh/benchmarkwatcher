@@ -1,10 +1,11 @@
 <!-- Grid Settings Panel -->
 <div
-    class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-4 mb-6">
-    <!-- Data Range Selector -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-2 text-brand-black-60 dark:text-brand-black-60 font-ui"
+    class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4 mb-6">
+    <!-- Data Range + Settings: stacked on mobile, side-by-side on desktop -->
+    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <!-- LEFT: Range label + scrollable buttons -->
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 min-w-0">
+            <div class="flex items-center gap-2 text-brand-black-60 dark:text-brand-black-60 font-ui shrink-0"
                 title="Ranges filter displayed observations only. Metrics are based on available data points, not calendar periods.">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -13,27 +14,32 @@
                 </svg>
                 <span class="text-xs font-bold tracking-wider">Display Range</span>
             </div>
-            <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                <button onclick="setGridDataRange('1W')" id="grid-range-1W"
-                    aria-label="Show last 1 week of available observations"
-                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
-                <button onclick="setGridDataRange('1M')" id="grid-range-1M"
-                    aria-label="Show last 1 month of available observations"
-                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
-                <button onclick="setGridDataRange('3M')" id="grid-range-3M"
-                    aria-label="Show last 3 months of available observations"
-                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
-                <button onclick="setGridDataRange('6M')" id="grid-range-6M"
-                    aria-label="Show last 6 months of available observations"
-                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
-                <button onclick="setGridDataRange('1Y')" id="grid-range-1Y"
-                    aria-label="Show last 1 year of available observations"
-                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
-                <button onclick="setGridDataRange('ALL')" id="grid-range-ALL" aria-label="Show all data"
-                    class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
+            <!-- Horizontally scrollable range buttons on mobile -->
+            <div class="overflow-x-auto scrollbar-hide -mx-1 px-1">
+                <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui w-max">
+                    <button onclick="setGridDataRange('1W')" id="grid-range-1W"
+                        aria-label="Show last 1 week of available observations"
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
+                    <button onclick="setGridDataRange('1M')" id="grid-range-1M"
+                        aria-label="Show last 1 month of available observations"
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
+                    <button onclick="setGridDataRange('3M')" id="grid-range-3M"
+                        aria-label="Show last 3 months of available observations"
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
+                    <button onclick="setGridDataRange('6M')" id="grid-range-6M"
+                        aria-label="Show last 6 months of available observations"
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
+                    <button onclick="setGridDataRange('1Y')" id="grid-range-1Y"
+                        aria-label="Show last 1 year of available observations"
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
+                    <button onclick="setGridDataRange('ALL')" id="grid-range-ALL" aria-label="Show all data"
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
+                </div>
             </div>
         </div>
-        <div class="flex items-center gap-4">
+        <!-- RIGHT: Showing + Card Options — side by side -->
+        <div
+            class="flex items-center justify-between gap-3 sm:gap-4 border-t border-brand-black-60/10 dark:border-white/5 pt-3 md:border-t-0 md:pt-0 shrink-0">
             <div id="grid-date-range-display" class="text-xs text-brand-black-60 dark:text-brand-black-60 font-ui">
                 Showing: <span class="font-bold text-brand-black-80 dark:text-white" id="grid-range-text">All
                     data</span>
