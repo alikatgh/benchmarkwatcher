@@ -10,6 +10,9 @@ load_dotenv()
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN', '')
 
+# Internal API key for secure bot-to-server communication
+INTERNAL_API_KEY = os.getenv('INTERNAL_API_KEY', '')
+
 # Website URL for branding
 WEBSITE_URL = 'https://benchmarkwatcher.online'
 

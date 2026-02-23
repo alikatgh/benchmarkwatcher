@@ -33,7 +33,7 @@ BW.SettingsModal = {
             // Modal is now visible to assistive tech
             modal.removeAttribute('aria-hidden');
             // Lock body scroll
-            document.body.style.overflow = 'hidden';
+            document.documentElement.classList.add('modal-open');
             // Hide main content from assistive tech while modal is open
             if (mainContent) {
                 try { mainContent.setAttribute('aria-hidden', 'true'); } catch (e) { /* ignore */ }
@@ -69,7 +69,7 @@ BW.SettingsModal = {
             // Modal is now hidden from assistive tech
             modal.setAttribute('aria-hidden', 'true');
             // Restore body scroll
-            document.body.style.overflow = '';
+            document.documentElement.classList.remove('modal-open');
             // Restore main content visibility to assistive tech
             if (mainContent) {
                 try { mainContent.removeAttribute('aria-hidden'); } catch (e) { /* ignore */ }
@@ -169,6 +169,9 @@ BW.SettingsModal = {
 
     // Update settings UI to reflect current state (attribute-based active styling)
     updateUI: function () {
+        // Guard: BW.Settings may not be loaded yet (script ordering issue)
+        if (!window.BW || !BW.Settings) return;
+
         // Use BW.Settings exclusively - no direct localStorage access
         const theme = BW.Settings.getTheme();
         const view = BW.Settings.getViewMode();

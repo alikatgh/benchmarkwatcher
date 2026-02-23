@@ -33,7 +33,7 @@ window.BW = window.BW || {};
         if (!t) return null;
         t = String(t).trim();
         // whitelist known themes
-        const allowed = ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft', 'mono'];
+        const allowed = ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'];
         return allowed.includes(t) ? t : null;
     }
 
@@ -153,6 +153,6 @@ window.BW = window.BW || {};
     }
 })(window.BW, document);
 
-// Optional global helpers for inline onclicks
-function setMarketTheme(t) { if (window.BW && window.BW.Base && window.BW.Base.setMarketTheme) window.BW.Base.setMarketTheme(t); }
-function setTheme(t) { if (window.BW && window.BW.Base && window.BW.Base.setTheme) window.BW.Base.setTheme(t); }
+// NOTE: Global setTheme() / setMarketTheme() helpers for inline onclick handlers are
+// defined in settings_modal.js to ensure they always call BW.SettingsModal.setTheme()
+// (which persists AND updates the settings UI). Do NOT re-declare them here.

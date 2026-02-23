@@ -1,10 +1,21 @@
 from flask import Blueprint, render_template, request, jsonify, abort
 from app.data_handler import get_all_commodities, get_commodity
+import os
+import warnings
 
 bp = Blueprint('main', __name__)
 
 # Valid parameter values
 VALID_RANGES = {'ALL', '1W', '1M', '3M', '6M', '1Y'}
+
+# Internal API key for bot authentication (optional but recommended)
+INTERNAL_API_KEY = os.getenv('INTERNAL_API_KEY', '')
+if not INTERNAL_API_KEY:
+    warnings.warn(
+        "INTERNAL_API_KEY is not set. The /internal/api/commodities endpoint will "
+        "always return 403, making it inaccessible to bots.",
+        stacklevel=1
+    )
 
 
 def filter_commodities(date_range, category):
@@ -25,7 +36,39 @@ def validate_range(date_range):
 
 @bp.route('/api/commodities')
 def api_commodities():
-    """API endpoint for fetching commodities data without page reload."""
+    """Public API endpoint for browser AJAX.
+    
+    This endpoint is used by the website's JavaScript for filtering.
+    No authentication required - it reads from local cached data anyway.
+    """
+    date_range = validate_range(request.args.get('range', 'ALL'))
+    category = request.args.get('category', None)
+    
+    commodities = filter_commodities(date_range, category)
+    
+    return jsonify({
+        'data': commodities,
+        'meta': {
+            'count': len(commodities),
+            'range': date_range,
+            'category': category
+        }
+    })
+
+
+@bp.route('/internal/api/commodities')
+def internal_api_commodities():
+    """Internal API endpoint for bots.
+    
+    STRICT: Requires valid X-Internal-Key header.
+    Used by Telegram/Discord bots deployed externally.
+    """
+    provided_key = request.headers.get('X-Internal-Key', '')
+    
+    # Strict check: key must be set AND match
+    if not INTERNAL_API_KEY or provided_key != INTERNAL_API_KEY:
+        return jsonify({'error': 'Forbidden: valid API key required'}), 403
+    
     date_range = validate_range(request.args.get('range', 'ALL'))
     category = request.args.get('category', None)
     
