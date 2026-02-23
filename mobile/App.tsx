@@ -2,7 +2,9 @@
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SettingsProvider } from './context/SettingsContext';
+import { LayoutProvider } from './context/LayoutContext';
 import HomeScreen from './screen/HomeScreen';
 import CommodityDetailScreen from './screen/CommodityDetailScreen';
 import SettingsScreen from './screen/SettingsScreen';
@@ -20,47 +22,51 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
-    <SettingsProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: '#f8fafc' }, // slate-50
-          }}
-        >
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen
-            name="CommodityDetail"
-            component={CommodityDetailScreen}
-            options={{
-              headerShown: true,
-              headerTitle: '',
-              headerTransparent: true,
-              headerTintColor: '#0f172a', // slate-900
-            }}
-          />
-          <Stack.Screen
-            name="Settings"
-            component={SettingsScreen}
-            options={{
-              headerShown: true,
-              headerTitle: '',
-              headerTransparent: true,
-              presentation: 'modal',
-            }}
-          />
-          <Stack.Screen
-            name="Changelog"
-            component={ChangelogScreen}
-            options={{
-              headerShown: false,
-              presentation: 'modal',
-            }}
-          />
-        </Stack.Navigator>
-        <StatusBar style="auto" />
-      </NavigationContainer>
-    </SettingsProvider>
+    <SafeAreaProvider>
+      <LayoutProvider>
+        <SettingsProvider>
+          <NavigationContainer>
+            <Stack.Navigator
+              initialRouteName="Home"
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: '#f8fafc' }, // slate-50
+              }}
+            >
+              <Stack.Screen name="Home" component={HomeScreen} />
+              <Stack.Screen
+                name="CommodityDetail"
+                component={CommodityDetailScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: '',
+                  headerTransparent: true,
+                  headerTintColor: '#0f172a', // slate-900
+                }}
+              />
+              <Stack.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{
+                  headerShown: true,
+                  headerTitle: '',
+                  headerTransparent: true,
+                  presentation: 'modal',
+                }}
+              />
+              <Stack.Screen
+                name="Changelog"
+                component={ChangelogScreen}
+                options={{
+                  headerShown: false,
+                  presentation: 'modal',
+                }}
+              />
+            </Stack.Navigator>
+            <StatusBar style="auto" />
+          </NavigationContainer>
+        </SettingsProvider>
+      </LayoutProvider>
+    </SafeAreaProvider>
   );
 }

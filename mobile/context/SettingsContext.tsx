@@ -2,39 +2,13 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'nativewind';
 
-export type ThemeFlavor = 'standard' | 'bloomberg' | 'ft' | 'mono';
+import { ThemeFlavor, MarketTheme, SettingsContextType } from '../types/settings';
+
 export type FontScale = 'small' | 'medium' | 'large';
 export type Density = 'compact' | 'cozy' | 'roomy';
-export type MarketTheme = 'western' | 'asian' | 'monochrome';
 
-interface SettingsContextProps {
-    isDarkMode: boolean;
-    setIsDarkMode: (val: boolean) => void;
-    themeFlavor: ThemeFlavor;
-    setThemeFlavor: (flavor: ThemeFlavor) => void;
-    marketTheme: MarketTheme;
-    setMarketTheme: (theme: MarketTheme) => void;
-    syncEnabled: boolean;
-    setSyncEnabled: (val: boolean) => void;
-    forceSync: () => void;
-    syncTrigger: number;
+interface SettingsContextProps extends SettingsContextType {
     getMarketColors: (isUp: boolean) => { textColor: string, bgColor: string, badgeColor: string, chartColor: string };
-
-    // Grid Settings
-    showCategory: boolean;
-    setShowCategory: (val: boolean) => void;
-    showChangePercent: boolean;
-    setShowChangePercent: (val: boolean) => void;
-    showChangeAbs: boolean;
-    setShowChangeAbs: (val: boolean) => void;
-    showDate: boolean;
-    setShowDate: (val: boolean) => void;
-    showUnit: boolean;
-    setShowUnit: (val: boolean) => void;
-    fontScale: FontScale;
-    setFontScale: (val: FontScale) => void;
-    density: Density;
-    setDensity: (val: Density) => void;
 }
 
 export const SettingsContext = createContext<SettingsContextProps>({
