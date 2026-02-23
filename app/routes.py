@@ -108,6 +108,14 @@ def commodity_detail(commodity_id):
         abort(404, description="Commodity not found")
     return render_template('commodity.html', commodity=commodity)
 
+@bp.route('/api/commodity/<string:commodity_id>')
+def api_commodity_detail(commodity_id):
+    """API Commodity detail endpoint."""
+    commodity = get_commodity(commodity_id)
+    if not commodity:
+        return jsonify({'error': 'Commodity not found'}), 404
+    return jsonify({'data': commodity})
+
 
 @bp.route('/changelog')
 def changelog():
