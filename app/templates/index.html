@@ -1,17 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-10 min-h-screen transition-colors duration-300">
-    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+<div class="max-w-6xl mx-auto px-4 py-8 min-h-screen transition-colors duration-300">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-3">
         <div>
             <h1 class="text-3xl font-bold text-brand-black-80 dark:text-brand-paper font-serif">Market Benchmarks</h1>
-            <p class="text-sm text-brand-black-60 dark:text-brand-black-60 mt-1 font-ui tracking-wider font-bold">
-                Terminal Reference (Historical Benchmarks)</p>
-            <span class="sr-only">Historical benchmark prices shown for reference only.</span>
-        </div>
-        <div id="view-indicator"
-            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-widest bg-brand-black-60/5 dark:bg-white/5 px-3 py-1.5 rounded-full font-ui">
-            <!-- Populated via JS -->
+            <p class="text-xs text-brand-black-60 dark:text-brand-black-60 mt-1 font-ui tracking-wide">
+                Historical reference data — not for trading or investment decisions</p>
         </div>
     </div>
 
@@ -30,5 +25,6 @@
 </div>
 
 <!-- External JS for index page -->
+<script src="{{ url_for('static', filename='js/core/responsive.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/index.js') }}"></script>
 {% endblock %}

@@ -5,22 +5,24 @@
 </a>
 
 <header
-    class="bg-brand-pink dark:bg-terminal-black sticky top-0 z-40 shadow-sm border-b border-brand-black-60/20 dark:border-white/10 transition-colors duration-500 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
-    <nav class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    class="bg-brand-pink dark:bg-terminal-black sticky top-0 z-40 border-b border-brand-black-60/15 dark:border-white/10 transition-colors duration-500 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95"
+    style="box-shadow: 0 1px 8px rgba(51,48,46,0.06);">
+    <!-- Primary nav row -->
+    <nav class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group" aria-label="BenchmarkWatcher home">
             <!-- Logo icon -->
             <div
-                class="w-8 h-8 rounded-lg bg-brand-black-80 dark:bg-white flex items-center justify-center group-hover:scale-105 transition-transform">
-                <span class="text-white dark:text-terminal-black font-bold text-sm font-ui">BW</span>
+                class="w-7 h-7 rounded-lg bg-brand-black-80 dark:bg-white flex items-center justify-center group-hover:scale-105 transition-transform">
+                <span class="text-white dark:text-terminal-black font-bold text-xs font-ui">BW</span>
             </div>
             <span
-                class="text-xl font-bold text-brand-black-80 dark:text-white tracking-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors font-serif">BenchmarkWatcher</span>
+                class="text-base font-bold text-brand-black-80 dark:text-white tracking-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors font-serif">BenchmarkWatcher</span>
         </a>
 
         <div class="flex items-center gap-2">
             <!-- Settings button -->
             <button onclick="toggleSettings()" id="settings-button"
-                class="p-2.5 rounded-xl text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
+                class="p-2 rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
                 aria-label="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-modal">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -32,4 +34,23 @@
             </button>
         </div>
     </nav>
+
+    <!-- Quick-nav category strip -->
+    <div class="border-t border-brand-black-60/8 dark:border-white/6">
+        <div class="max-w-6xl mx-auto px-4 overflow-x-auto">
+            <nav class="flex items-center gap-0.5 h-9 whitespace-nowrap" aria-label="Category filters">
+                <a href="{{ url_for('main.index') }}#energy"
+                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Energy</a>
+                <a href="{{ url_for('main.index') }}#metals"
+                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Metals</a>
+                <a href="{{ url_for('main.index') }}#precious"
+                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Precious</a>
+                <a href="{{ url_for('main.index') }}#agricultural"
+                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Agriculture</a>
+                <span class="w-px h-4 bg-brand-black-60/20 dark:bg-white/15 mx-1 self-center flex-shrink-0"></span>
+                <a href="{{ url_for('main.changelog') }}"
+                    class="px-3 py-1 text-[11px] font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/8 dark:hover:bg-white/8 rounded-md transition-colors font-ui">Changelog</a>
+            </nav>
+        </div>
+    </div>
 </header>

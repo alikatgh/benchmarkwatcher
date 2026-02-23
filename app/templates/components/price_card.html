@@ -1,6 +1,6 @@
 <a href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}" class="block group">
-    <div
-        class="bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 group-hover:shadow-lg group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden">
+    <div class="bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden"
+        style="box-shadow: var(--card-shadow);">
 
         <!-- Subtle gradient overlay on hover -->
         <div
@@ -23,51 +23,52 @@
                     {% if is_daily %}D{% else %}M{% endif %}
                 </span>
             </div>
-            <div class="text-[10px] font-bold py-1 px-2.5 rounded-full font-ui"
-                style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.change >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %});">
-                {% if commodity.change >= 0 %}+{% else %}−{% endif %} Change
+            <div class="text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui"
+                style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.change >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %}); border: 1px solid var({% if commodity.change >= 0 %}--color-up-border{% else %}--color-down-border{% endif %});"
+                aria-label="{% if commodity.change >= 0 %}Price up{% else %}Price down{% endif %}">
+                {% if commodity.change >= 0 %}▲{% else %}▼{% endif %} {{ commodity.change_percent | round(2) | abs }}%
             </div>
         </div>
 
         <!-- Commodity name -->
         <h3
-            class="text-lg font-bold text-brand-black-80 dark:text-white mb-4 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">
+            class="text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2">
             {{ commodity.name }}</h3>
 
         <!-- Price display -->
         <div class="flex items-end justify-between gap-4 font-ui">
             <div>
-                <div class="text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
-                    {{ commodity.price }}
+                <div class="text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
+                    {{ commodity.price | round(2) }}
                 </div>
-                <div class="text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
+                <div class="text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
                     {{ commodity.currency }} / {{ commodity.unit }}
                 </div>
             </div>
             <div class="text-right">
-                <div class="text-xl font-bold"
+                <div class="text-sm font-bold"
                     style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
                     title="Observation-to-observation percentage change">
                     {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
-                    commodity.daily_change_percent|default(commodity.change_percent) }}%
+                    commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
                 </div>
-                <div class="text-xs text-brand-black-60 dark:text-brand-black-60/60 mt-1">
+                <div class="text-[10px] text-brand-black-60 dark:text-brand-black-60/60 mt-0.5">
                     {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
-                    commodity.daily_change|default(commodity.change) }} {{ commodity.currency }}
+                    commodity.daily_change|default(commodity.change) | round(2) }} {{ commodity.currency }}
                 </div>
             </div>
         </div>
 
-        <!-- Footer with date and arrow -->
+        <!-- Footer with date -->
         <div
-            class="mt-5 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
-            <div class="text-xs text-brand-black-60 dark:text-brand-black-60/80 font-medium">
-                As of {{ commodity.date }} (latest observation)
+            class="mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
+            <div class="text-[10px] text-brand-black-60 dark:text-brand-black-60/80">
+                {{ commodity.date }}
             </div>
             <div
-                class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-1 transition-all">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                 </svg>
             </div>
         </div>

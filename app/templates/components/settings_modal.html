@@ -21,7 +21,7 @@
         <div class="space-y-6">
             <!-- Theme Selection -->
             <div>
-                <label class="block text-[10px] font-bold tracking-[0.2em] theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-bold tracking-wide theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -34,141 +34,83 @@
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <!-- Light Theme -->
                     <button onclick="setTheme('light')" id="theme-light" aria-label="Light theme with warm cream colors"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-[#fffcfa] border border-gray-200 flex items-center justify-center shadow-sm">
-                                <svg class="w-4 h-4 text-[#0f5499]" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold theme-text">Light</div>
-                                <div class="text-[10px] theme-text-muted">Warm cream</div>
-                            </div>
+                        class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <!-- Swatch preview: 3 color bars -->
+                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                            <div class="flex-1" style="background:#ede9e3;"></div>
+                            <div class="flex-1" style="background:#33302e;"></div>
+                            <div class="flex-1" style="background:#0f5499;"></div>
                         </div>
-                        <div class="flex gap-1">
-                            <div class="w-4 h-2 rounded-sm bg-[#fffcfa] border border-gray-200"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#33302e]"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#0f5499]"></div>
-                        </div>
+                        <div class="text-sm font-bold theme-text">Light</div>
+                        <div class="text-[10px] theme-text-muted">Warm cream</div>
                     </button>
 
                     <!-- Dark Theme -->
                     <button onclick="setTheme('dark')" id="theme-dark" aria-label="Dark theme with terminal colors"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-[#1a1a1a] border border-gray-700 flex items-center justify-center shadow-sm">
-                                <svg class="w-4 h-4 text-[#1aecff]" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold theme-text">Dark</div>
-                                <div class="text-[10px] theme-text-muted">Terminal-style</div>
-                            </div>
+                        class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                            <div class="flex-1" style="background:#0a0c10;"></div>
+                            <div class="flex-1" style="background:#e8e6e3;"></div>
+                            <div class="flex-1" style="background:#0d7680;"></div>
                         </div>
-                        <div class="flex gap-1">
-                            <div class="w-4 h-2 rounded-sm bg-[#000000] border border-gray-700"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#ffffff]"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#1aecff]"></div>
-                        </div>
+                        <div class="text-sm font-bold theme-text">Dark</div>
+                        <div class="text-[10px] theme-text-muted">Terminal</div>
                     </button>
 
                     <!-- Mono Light Theme -->
                     <button onclick="setTheme('mono-light')" id="theme-mono-light" aria-label="Monochrome light theme"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-white border border-gray-300 flex items-center justify-center shadow-sm">
-                                <span class="text-xs font-bold text-black">B</span>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold theme-text">Mono Light</div>
-                                <div class="text-[10px] theme-text-muted">Black & White</div>
-                            </div>
+                        class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                            <div class="flex-1" style="background:#ffffff; border:1px solid #e5e5e5;"></div>
+                            <div class="flex-1" style="background:#000000;"></div>
+                            <div class="flex-1" style="background:#777777;"></div>
                         </div>
-                        <div class="flex gap-1">
-                            <div class="w-4 h-2 rounded-sm bg-white border border-gray-300"></div>
-                            <div class="w-4 h-2 rounded-sm bg-black"></div>
-                            <div class="w-4 h-2 rounded-sm bg-gray-500"></div>
-                        </div>
+                        <div class="text-sm font-bold theme-text">Mono Light</div>
+                        <div class="text-[10px] theme-text-muted">Black &amp; White</div>
                     </button>
 
                     <!-- Mono Dark Theme -->
                     <button onclick="setTheme('mono-dark')" id="theme-mono-dark" aria-label="Monochrome dark theme"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-black border border-gray-600 flex items-center justify-center shadow-sm">
-                                <span class="text-xs font-bold text-white">W</span>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold theme-text">Mono Dark</div>
-                                <div class="text-[10px] theme-text-muted">White & Black</div>
-                            </div>
+                        class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                            <div class="flex-1" style="background:#000000;"></div>
+                            <div class="flex-1" style="background:#ffffff;"></div>
+                            <div class="flex-1" style="background:#aaaaaa;"></div>
                         </div>
-                        <div class="flex gap-1">
-                            <div class="w-4 h-2 rounded-sm bg-black border border-gray-600"></div>
-                            <div class="w-4 h-2 rounded-sm bg-white"></div>
-                            <div class="w-4 h-2 rounded-sm bg-gray-400"></div>
-                        </div>
+                        <div class="text-sm font-bold theme-text">Mono Dark</div>
+                        <div class="text-[10px] theme-text-muted">White &amp; Black</div>
                     </button>
 
                     <!-- Bloomberg Theme -->
                     <button onclick="setTheme('bloomberg')" id="theme-bloomberg"
                         aria-label="Bloomberg professional theme"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-[#1e1e1e] border border-[#ff9933] flex items-center justify-center shadow-sm">
-                                <span class="text-xs font-bold text-[#ff9933]">BB</span>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold theme-text">Bloomberg</div>
-                                <div class="text-[10px] theme-text-muted">Terminal-style UI</div>
-                            </div>
+                        class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                            <div class="flex-1" style="background:#1e1e1e;"></div>
+                            <div class="flex-1" style="background:#ff9933;"></div>
+                            <div class="flex-1" style="background:#00ff00;"></div>
                         </div>
-                        <div class="flex gap-1">
-                            <div class="w-4 h-2 rounded-sm bg-[#1e1e1e] border border-gray-600"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#ff9933]"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#00ff00]"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#ff3333]"></div>
-                        </div>
+                        <div class="text-sm font-bold theme-text">Bloomberg</div>
+                        <div class="text-[10px] theme-text-muted">Terminal UI</div>
                     </button>
 
                     <!-- FT Theme -->
                     <button onclick="setTheme('ft')" id="theme-ft" aria-label="Financial Times theme"
-                        class="theme-btn p-4 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex items-center gap-3 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-lg bg-[#fff1e5] border border-[#990f3d] flex items-center justify-center shadow-sm">
-                                <span class="text-xs font-bold text-[#990f3d]">FT</span>
-                            </div>
-                            <div>
-                                <div class="text-sm font-bold theme-text">FT</div>
-                                <div class="text-[10px] theme-text-muted">Financial Times</div>
-                            </div>
+                        class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                            <div class="flex-1" style="background:#fff1e5;"></div>
+                            <div class="flex-1" style="background:#33302e;"></div>
+                            <div class="flex-1" style="background:#990f3d;"></div>
                         </div>
-                        <div class="flex gap-1">
-                            <div class="w-4 h-2 rounded-sm bg-[#fff1e5] border border-gray-300"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#33302e]"></div>
-                            <div class="w-4 h-2 rounded-sm bg-[#990f3d]"></div>
-                        </div>
+                        <div class="text-sm font-bold theme-text">FT</div>
+                        <div class="text-[10px] theme-text-muted">Financial Times</div>
                     </button>
                 </div>
             </div>
 
             <!-- Market Color Theme -->
             <div>
-                <label class="block text-[10px] font-bold tracking-[0.2em] theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-bold tracking-wide theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -236,7 +178,7 @@
 
             <!-- View Selection -->
             <div>
-                <label class="block text-[10px] font-bold tracking-[0.2em] theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-bold tracking-wide theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -270,10 +212,12 @@
             </div>
         </div>
 
-        <button onclick="toggleSettings()"
-            class="mt-8 w-full py-3.5 rounded-xl theme-accent-bg text-white font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:shadow-md font-ui focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-            Done
-        </button>
+        <div class="mt-6 flex justify-end">
+            <button onclick="toggleSettings()"
+                class="px-6 py-2 rounded-lg theme-accent-bg text-white text-sm font-bold transition-all hover:opacity-90 active:scale-95 font-ui focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                Apply
+            </button>
+        </div>
     </div>
 </div>
 
