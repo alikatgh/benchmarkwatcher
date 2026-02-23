@@ -41,7 +41,7 @@
                     d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
                 </path>
             </svg>
-            <span class="text-xs font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60">Settings</span>
+            <span class="text-xs font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60">Columns</span>
         </div>
         <button onclick="toggleSettingsPanel()" id="settings-toggle-btn"
             class="text-xs font-bold text-brand-oxford dark:text-brand-teal hover:underline">
@@ -406,7 +406,7 @@
         <div class="loading-spinner"></div>
     </div>
     <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse font-ui" id="data-table">
+        <table class="w-full min-w-[640px] text-left border-collapse font-ui" id="data-table">
             <thead class="bg-brand-black-60/5 dark:bg-white/5 border-y border-brand-black-60/20 dark:border-white/10">
                 <tr>
                     <th data-col="commodity" data-sort="name" scope="col" onclick="sortTable('name')"
@@ -459,7 +459,7 @@
                             </div>
                             <div>
                                 <div
-                                    class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">
+                                    class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors whitespace-nowrap">
                                     {{ commodity.name }}</div>
                                 <div class="commodity-category text-[10px] text-brand-black-60 tracking-wide">
                                     {{

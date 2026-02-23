@@ -15,6 +15,11 @@ window.BW = window.BW || {};
 BW.Index = {
     // Initialize view mode
     init: function () {
+        // R2: Auto-detect device class and view mode on first visit
+        if (window.BW && BW.Responsive) {
+            BW.Responsive.autoApply();
+        }
+
         const viewMode = BW.Settings.getViewMode();
 
         // View containers (show/hide the active view)

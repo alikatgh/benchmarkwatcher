@@ -60,50 +60,75 @@
             /* Market colors - default: Western (Green=Up, Red=Down) */
             --color-up: #0d7680;
             --color-down: #990f3d;
-            --color-up-bg: rgba(13, 118, 128, 0.1);
-            --color-down-bg: rgba(153, 15, 61, 0.1);
+            --color-up-bg: rgba(13, 118, 128, 0.14);
+            --color-up-border: rgba(13, 118, 128, 0.30);
+            --color-down-bg: rgba(153, 15, 61, 0.14);
+            --color-down-border: rgba(153, 15, 61, 0.30);
+
+            /* Card elevation */
+            --card-shadow: 0 1px 3px rgba(51, 48, 46, 0.08), 0 1px 6px rgba(51, 48, 46, 0.04);
+
+            /* Layout: fluid grid card minimum width */
+            --card-min-w: 210px;
+
+            /* Fluid type scale — scales between mobile (320px) and 4K (2560px) */
+            --text-2xs: clamp(0.60rem, 1.2vw, 0.65rem);
+            --text-xs: clamp(0.65rem, 1.4vw, 0.75rem);
+            --text-sm: clamp(0.78rem, 1.8vw, 0.875rem);
+            --text-base: clamp(0.875rem, 1.8vw + 0.1rem, 1rem);
+            --text-lg: clamp(1rem, 2.2vw, 1.125rem);
+            --text-xl: clamp(1.1rem, 2.8vw, 1.25rem);
+            --text-2xl: clamp(1.25rem, 3.5vw, 1.5rem);
+            --text-3xl: clamp(1.6rem, 4.5vw, 2rem);
         }
 
         /* Market Color Themes */
         html[data-market="western"] {
             --color-up: #0d7680;
             --color-down: #990f3d;
-            --color-up-bg: rgba(13, 118, 128, 0.1);
-            --color-down-bg: rgba(153, 15, 61, 0.1);
+            --color-up-bg: rgba(13, 118, 128, 0.14);
+            --color-up-border: rgba(13, 118, 128, 0.30);
+            --color-down-bg: rgba(153, 15, 61, 0.14);
+            --color-down-border: rgba(153, 15, 61, 0.30);
         }
 
         html[data-market="asian"] {
             --color-up: #990f3d;
             --color-down: #0d7680;
-            --color-up-bg: rgba(153, 15, 61, 0.1);
-            --color-down-bg: rgba(13, 118, 128, 0.1);
+            --color-up-bg: rgba(153, 15, 61, 0.14);
+            --color-up-border: rgba(153, 15, 61, 0.30);
+            --color-down-bg: rgba(13, 118, 128, 0.14);
+            --color-down-border: rgba(13, 118, 128, 0.30);
         }
 
         html[data-market="monochrome"] {
             --color-up: var(--theme-text);
             --color-down: var(--theme-text);
-            --color-up-bg: transparent;
-            --color-down-bg: transparent;
+            --color-up-bg: rgba(74, 71, 68, 0.10);
+            --color-up-border: rgba(74, 71, 68, 0.22);
+            --color-down-bg: rgba(74, 71, 68, 0.10);
+            --color-down-border: rgba(74, 71, 68, 0.22);
         }
 
         /* Light Theme (Warm Cream) */
         html[data-theme="light"] {
-            --theme-bg: #fffcfa;
-            --theme-surface: #fffcfa;
+            --theme-bg: #ede9e3;
+            --theme-surface: #f7f4f0;
             --theme-text: #33302e;
             --theme-text-muted: #66605c;
-            --theme-border: rgba(51, 48, 46, 0.2);
+            --theme-border: rgba(51, 48, 46, 0.18);
             --theme-accent: #0f5499;
         }
 
         /* Dark Theme (Terminal) */
         html[data-theme="dark"] {
-            --theme-bg: #000000;
-            --theme-surface: #1a1a1a;
-            --theme-text: #ffffff;
-            --theme-text-muted: #999999;
-            --theme-border: rgba(255, 255, 255, 0.1);
-            --theme-accent: #1aecff;
+            --theme-bg: #0a0c10;
+            --theme-surface: #13171f;
+            --theme-text: #e8e6e3;
+            --theme-text-muted: #8a8580;
+            --theme-border: rgba(255, 255, 255, 0.10);
+            --theme-accent: #0d7680;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 6px rgba(0, 0, 0, 0.20);
         }
 
         /* Mono Light Theme (Black on White) */
@@ -156,6 +181,7 @@
 
         body {
             font-family: 'Georgia', serif;
+            font-size: var(--text-base);
             color: var(--theme-text);
             background-color: var(--theme-bg);
             transition: background-color 0.3s ease, color 0.3s ease;

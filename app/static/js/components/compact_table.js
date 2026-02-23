@@ -551,6 +551,18 @@ BW.CompactTable = {
         });
     },
 
+    // Public API for external callers (e.g. BW.Responsive).
+    // Sets visibility without requiring a checkbox in the DOM.
+    setColumnVisibility: function (colName, visible) {
+        const settings = this.getSettings();
+        if (settings.columns && colName in settings.columns) {
+            settings.columns[colName] = visible;
+            this.saveSettings(settings);
+        }
+        this.applyColumnVisibility(colName, visible);
+        this.updateColumnCount();
+    },
+
     // Update visible column count
     updateColumnCount: function () {
         const settings = this.getSettings();
