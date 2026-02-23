@@ -10,7 +10,7 @@
 
 ## What This Is
 
-BenchmarkWatcher is a monitoring tool that displays end-of-day benchmark prices for commodities like gold, silver, oil, and natural gas.
+BenchmarkWatcher is a monitoring tool that displays end-of-day benchmark prices for 70+ commodities across energy, metals, agriculture, and livestock.
 
 **This project is intended for:**
 - Viewing historical benchmark price trends
@@ -44,14 +44,15 @@ All data comes from freely accessible public sources:
 
 | Category | Commodity | Source | Update Frequency |
 |----------|-----------|--------|------------------|
-| **Energy** | Brent Crude Oil | [EIA](https://www.eia.gov/opendata/) | Daily |
-| **Energy** | WTI Crude Oil | [EIA](https://www.eia.gov/opendata/) | Daily |
+| **Energy** | Brent Crude Oil, WTI Crude Oil | [EIA](https://www.eia.gov/opendata/) | Daily |
 | **Energy** | Natural Gas (Henry Hub) | [FRED](https://fred.stlouisfed.org/series/DHHNGSP) | Daily |
-| **Energy** | Heating Oil, Gasoline, Jet Fuel, Propane | [EIA](https://www.eia.gov/opendata/) | Daily |
+| **Energy** | Heating Oil, Gasoline, Jet Fuel, Propane, Diesel | [EIA](https://www.eia.gov/opendata/) | Daily |
 | **Precious** | Gold | [FreeGoldAPI](https://freegoldapi.com) (World Bank/Yahoo) | Daily |
 | **Precious** | Silver, Platinum | [Yahoo Finance](https://finance.yahoo.com) (COMEX/NYMEX Futures) | Daily |
 | **Metal** | Copper, Iron Ore, Aluminum, Zinc, Nickel, Lead, Tin | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
-| **Agricultural** | Wheat, Corn, Soybeans, Rice, Sugar, Coffee, Cocoa, Cotton, Rubber, Palm Oil, Beef, Chicken | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
+| **Agricultural** | Wheat, Corn, Soybeans, Rice, Sugar, Coffee, Cocoa, Cotton, Rubber, Palm Oil | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
+| **Agricultural** | Wheat (US Farm Price), Corn, Soybeans, Oats, Barley, Sorghum, Rice, Cotton (Upland) | [USDA NASS](https://quickstats.nass.usda.gov/) | Monthly |
+| **Livestock** | Cattle (All), Hogs, Milk (All), Chicken, Eggs, Turkeys, Wool, Lamb | [USDA NASS](https://quickstats.nass.usda.gov/) | Monthly |
 
 **Important:** This application displays benchmark/reference prices only. It does not show real-time exchange prices, intraday data, or proprietary trading data.
 
@@ -98,5 +99,6 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 - [FRED](https://fred.stlouisfed.org/) — Federal Reserve Economic Data
 - [EIA](https://www.eia.gov/) — U.S. Energy Information Administration
+- [USDA NASS](https://quickstats.nass.usda.gov/) — U.S. Department of Agriculture, National Agricultural Statistics Service
 - [Tailwind CSS](https://tailwindcss.com/) — Styling
 - [Chart.js](https://www.chartjs.org/) — Charts

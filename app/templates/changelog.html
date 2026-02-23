@@ -13,6 +13,49 @@
         </p>
     </header>
 
+    <!-- Version 1.2.0 -->
+    <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
+        <div class="flex items-center gap-3 mb-4">
+            <span
+                class="px-3 py-1 bg-brand-teal/10 text-brand-teal dark:text-brand-teal rounded-full text-xs font-bold font-ui">
+                NEW
+            </span>
+            <time class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">
+                February 23, 2026
+            </time>
+        </div>
+
+        <h2 class="text-xl font-bold text-brand-black-80 dark:text-white font-serif mb-4">
+            v1.2.0 — USDA Source Expansion &amp; Mobile-First UI
+        </h2>
+
+        <div class="prose prose-sm dark:prose-invert font-ui text-brand-black-60 dark:text-brand-black-60/90">
+            <p class="mb-4">
+                Massive expansion from 26 to 72 tracked commodities, plus a complete mobile-first UI overhaul.
+            </p>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">Data Pipeline</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Added <strong>USDA NASS</strong> as a third data source (alongside FRED and EIA)</li>
+                <li>New <strong>Livestock</strong> category: Cattle, Hogs, Milk, Chicken, Eggs, Turkeys, Wool, Lamb</li>
+                <li>Expanded agricultural coverage: Oats, Barley, Sorghum, and US Farm Prices</li>
+                <li>Refactored monolithic fetch script into modular package (<code>scripts/fetchers/</code>)</li>
+                <li>Shared utilities: SmartDateParser, safe_get, merge_history, compute_metrics</li>
+                <li>Total commodities: <strong>72</strong> across 5 sources</li>
+            </ul>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">Mobile-First UI</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Scroll-hide category nav (Google Console style) — hides on scroll down, reappears on scroll up</li>
+                <li>Added <strong>Livestock</strong> and <strong>Indices</strong> links to category navigation</li>
+                <li>Horizontally scrollable range buttons and chart controls on mobile</li>
+                <li>Price hero section stacks vertically on mobile with responsive font sizes</li>
+                <li>Responsive chart height (280px → 350px → 400px by breakpoint)</li>
+                <li>Crosshair info and chart actions stack on narrow screens</li>
+            </ul>
+        </div>
+    </article>
+
     <!-- Version 1.1.0 -->
     <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
         <div class="flex items-center gap-3 mb-4">

@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-10 min-h-screen">
-    <!-- Header Row: Title (left) | Breadcrumb + Back (right) -->
-    <div class="flex items-start justify-between gap-6 mb-8">
+<div class="max-w-6xl mx-auto px-4 py-6 sm:py-10 min-h-screen">
+    <!-- Header Row: stacked on mobile, side-by-side on desktop -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
         <!-- Left: Title -->
         <div>
             <div class="flex flex-col font-ui mb-2">
@@ -13,11 +13,12 @@
                 <span class="text-xs text-brand-black-60/60 dark:text-brand-black-60 font-medium">Commodity ID: {{
                     commodity.id }}</span>
             </div>
-            <h1 class="text-4xl font-bold text-brand-black-80 dark:text-white font-serif">{{ commodity.name }}</h1>
+            <h1 class="text-2xl sm:text-4xl font-bold text-brand-black-80 dark:text-white font-serif">{{ commodity.name
+                }}</h1>
         </div>
 
         <!-- Right: Breadcrumb + Back -->
-        <div class="flex flex-col items-end gap-2 shrink-0">
+        <div class="flex flex-col sm:items-end gap-2 shrink-0">
             <nav aria-label="Breadcrumb" class="font-ui">
                 <ol class="flex items-center gap-2 text-xs text-brand-black-60 dark:text-brand-black-60">
                     <li><a href="{{ url_for('main.index') }}"
@@ -42,8 +43,8 @@
 
     <div
         class="bg-card-warm dark:bg-terminal-surface rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
-        <div class="p-6 md:p-8">
-            <div class="flex flex-wrap md:flex-nowrap items-start justify-between gap-6">
+        <div class="p-4 sm:p-6 md:p-8">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
                 <!-- LEFT: Price and Change (main content) -->
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-3 mb-2">
@@ -69,10 +70,10 @@
                     </div>
                     <div class="flex items-baseline gap-2 font-ui flex-wrap">
                         <span
-                            class="text-4xl md:text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter">{{
+                            class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-black-80 dark:text-white tracking-tighter">{{
                             commodity.price }}</span>
                         <span
-                            class="text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
+                            class="text-sm sm:text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
                             commodity.currency }} / {{ commodity.unit }}</span>
                         <!-- Copy to clipboard button -->
                         <button onclick="copyPrice('{{ commodity.price }} {{ commodity.currency }}')"
@@ -150,7 +151,7 @@
 
                 <!-- RIGHT: Data Source Info (pushed to right edge) -->
                 <div
-                    class="shrink-0 border-l border-brand-black-60/10 dark:border-white/10 pl-6 flex flex-row md:flex-col gap-4 md:gap-3 ml-auto text-right">
+                    class="shrink-0 border-t md:border-t-0 md:border-l border-brand-black-60/10 dark:border-white/10 pt-4 md:pt-0 md:pl-6 flex flex-row md:flex-col gap-4 md:gap-3 md:ml-auto md:text-right">
                     <div>
                         <div
                             class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
@@ -186,19 +187,18 @@
         class="mt-12 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 shadow-sm transition-colors duration-500 overflow-hidden">
 
         <!-- Chart Header with Controls -->
-        <div class="p-6 border-b border-brand-black-60/10 dark:border-white/5">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex items-start gap-3">
+        <div class="p-4 sm:p-6 border-b border-brand-black-60/10 dark:border-white/5">
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+                <!-- Title + Settings cog -->
+                <div class="flex items-start gap-3 shrink-0">
                     <div>
-                        <h3 class="text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">
-                            Benchmark
-                            Price
-                            History</h3>
-                        <p class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-1">
+                        <h3
+                            class="text-lg sm:text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">
+                            Benchmark Price History</h3>
+                        <p class="text-xs sm:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-1">
                             Daily benchmark price (end-of-day)
                         </p>
                     </div>
-                    <!-- Chart Settings Cogwheel -->
                     <button onclick="openChartSettings()" id="chart-settings-btn"
                         class="p-2 rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors group"
                         title="Chart Settings (S)">
@@ -212,65 +212,68 @@
                     </button>
                 </div>
 
-                <!-- Chart Controls -->
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- Time Range Selector -->
-                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                        <button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
-                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
-                        <button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
-                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
-                        <button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
-                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
-                        <button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
-                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
-                        <button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
-                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
-                        <button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
-                            class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
-                    </div>
+                <!-- Chart Controls — horizontally scrollable on mobile -->
+                <div class="overflow-x-auto scrollbar-hide -mx-1 px-1">
+                    <div class="flex items-center gap-2 w-max">
+                        <!-- Time Range Selector -->
+                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                            <button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
+                            <button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
+                            <button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
+                            <button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
+                            <button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
+                            <button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
+                        </div>
 
-                    <!-- Chart Type Selector -->
-                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                        <button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
-                            class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 12l3-3 3 3 4-4"></path>
-                            </svg>
-                            Line
-                        </button>
-                        <button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
-                            class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
-                                <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
-                                </path>
-                            </svg>
-                            Area
-                        </button>
-                    </div>
+                        <!-- Chart Type Selector -->
+                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                            <button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
+                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 12l3-3 3 3 4-4"></path>
+                                </svg>
+                                Line
+                            </button>
+                            <button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
+                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
+                                    <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
+                                    </path>
+                                </svg>
+                                Area
+                            </button>
+                        </div>
 
-                    <!-- View Mode Selector (Price vs Percent) -->
-                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                        <button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
-                            class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                                </path>
-                            </svg>
-                            Price
-                        </button>
-                        <button onclick="setViewMode('percent')" id="view-percent" aria-label="Show percentage change"
-                            class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                </path>
-                            </svg>
-                            % Change
-                        </button>
+                        <!-- View Mode Selector (Price vs Percent) -->
+                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
+                            <button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
+                                class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                    </path>
+                                </svg>
+                                Price
+                            </button>
+                            <button onclick="setViewMode('percent')" id="view-percent"
+                                aria-label="Show percentage change"
+                                class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                    </path>
+                                </svg>
+                                % Change
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -311,39 +314,37 @@
         </div>
 
         <!-- Chart Container -->
-        <div class="p-6">
-            <!-- Crosshair Info Display - Mobile First, Fixed Width to prevent shaking -->
+        <div class="p-4 sm:p-6">
+            <!-- Crosshair Info Display — stacks on mobile, 3-cols on sm+ -->
             <div id="crosshair-info"
                 class="hidden mb-4 p-3 sm:p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                <div class="grid grid-cols-3 gap-2 sm:gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-6">
                     <!-- Date -->
                     <div class="flex flex-col min-w-0">
                         <span
-                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider truncate">Date</span>
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Date</span>
                         <span id="crosshair-date"
-                            class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white truncate"
-                            style="min-width: 90px;">--</span>
+                            class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white tabular-nums">--</span>
                     </div>
                     <!-- Price -->
                     <div class="flex flex-col min-w-0">
                         <span
-                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider truncate">Price</span>
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Price</span>
                         <span id="crosshair-price"
-                            class="text-xs sm:text-sm font-bold text-brand-oxford dark:text-brand-teal truncate tabular-nums"
-                            style="min-width: 80px;">--</span>
+                            class="text-xs sm:text-sm font-bold text-brand-oxford dark:text-brand-teal tabular-nums">--</span>
                     </div>
                     <!-- Daily Change -->
                     <div class="flex flex-col min-w-0">
                         <span
-                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider truncate">Change
-                            (from previous)</span>
-                        <span id="crosshair-change" class="text-xs sm:text-sm font-bold truncate tabular-nums"
-                            style="min-width: 100px;">--</span>
+                            class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Change
+                            (prev)</span>
+                        <span id="crosshair-change" class="text-xs sm:text-sm font-bold tabular-nums">--</span>
                     </div>
                 </div>
             </div>
 
-            <div class="h-[400px] w-full relative">
+            <!-- Responsive chart height -->
+            <div class="h-[280px] sm:h-[350px] md:h-[400px] w-full relative">
                 <!-- Skeleton loader shows while chart loads -->
                 <div id="chart-skeleton"
                     class="absolute inset-0 animate-pulse bg-brand-black-60/5 dark:bg-white/5 rounded-xl flex items-center justify-center">
@@ -353,14 +354,14 @@
                     aria-label="Price chart showing {{ commodity.name }} benchmark prices over time. Use the range buttons above to change time period."></canvas>
             </div>
 
-            <!-- Chart Actions -->
-            <div class="mt-4 flex items-center justify-between font-ui">
+            <!-- Chart Actions — stacks on mobile -->
+            <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between font-ui">
                 <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
                     <span id="date-range-display">Showing all data</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <button onclick="resetZoom()" aria-label="Reset chart zoom to default view"
-                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -369,7 +370,7 @@
                         Reset View
                     </button>
                     <button onclick="downloadChart()" aria-label="Download chart as PNG image"
-                        class="px-3 py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
