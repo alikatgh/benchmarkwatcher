@@ -1,11 +1,12 @@
 import { Platform } from 'react-native';
 
+// Environment Targeting: Prefer EXPO_PUBLIC_API_URL (used for production)
 // In React Native:
 // iOS Simulator can access localhost directly.
 // Android Emulator requires 10.0.2.2 to access the host machine's localhost.
-export const API_BASE_URL = Platform.OS === 'android'
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android'
     ? 'http://10.0.2.2:5002'
-    : 'http://localhost:5002';
+    : 'http://localhost:5002');
 
 import { Commodity } from '../types/commodity';
 
