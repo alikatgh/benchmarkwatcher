@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
-import { View, Text, FlatList, ActivityIndicator, SafeAreaView, StatusBar, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, StatusBar, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import IconButton from '../components/ui/IconButton';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Switch, Modal, SafeAreaView, TextInput, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, Modal, TextInput, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '../ui/Icon';
 import IconButton from '../ui/IconButton';
 import CompactCommodityRow from '../CompactCommodityRow';

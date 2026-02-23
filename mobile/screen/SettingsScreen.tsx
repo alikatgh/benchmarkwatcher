@@ -1,5 +1,6 @@
 import React from 'react';
-import { Text, SafeAreaView, ScrollView } from 'react-native';
+import { Text, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
 import AppearanceSection from '../components/features/settings/AppearanceSection';

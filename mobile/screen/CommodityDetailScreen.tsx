@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
-import { View, Text, SafeAreaView, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
