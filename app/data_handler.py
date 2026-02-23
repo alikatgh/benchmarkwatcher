@@ -1,7 +1,10 @@
 import json
 import os
+import logging
 from datetime import datetime, timedelta
 from flask import current_app
+
+logger = logging.getLogger(__name__)
 
 def get_date_range_days(date_range):
     """Convert date range code to number of days for display filtering only.
@@ -43,8 +46,15 @@ def filter_history_by_range(history, date_range):
                 filtered.append(entry)
         except (ValueError, KeyError):
             continue
-    
-    return filtered if filtered else history[-1:]
+
+    if not filtered:
+        logger.warning(
+            "filter_history_by_range: all %d entries were unparseable or outside range '%s'; "
+            "falling back to last entry.",
+            len(history), date_range
+        )
+        return history[-1:]
+    return filtered
 
 
 def get_all_commodities(date_range='ALL'):
@@ -53,7 +63,7 @@ def get_all_commodities(date_range='ALL'):
     Uses pre-computed metrics from derived.descriptive_stats.
     Does NOT recompute financial calculations in the UI layer.
     """
-    data_dir = os.path.join(current_app.root_path, '..', 'data')
+    data_dir = current_app.config['JSON_DATA_DIR']
     commodities = []
     
     if not os.path.exists(data_dir):
@@ -103,7 +113,7 @@ def get_commodity(commodity_id):
     Uses pre-computed metrics from derived.descriptive_stats.
     Does NOT recompute financial calculations in the UI layer.
     """
-    data_dir = os.path.join(current_app.root_path, '..', 'data')
+    data_dir = current_app.config['JSON_DATA_DIR']
     filepath = os.path.join(data_dir, f"{commodity_id}.json")
     
     if os.path.exists(filepath):

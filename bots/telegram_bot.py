@@ -10,6 +10,7 @@ Commands:
     /top - Show top gainers and losers
     /list - Show available commodities
 """
+import asyncio
 import logging
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -81,10 +82,11 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
     
     query = ' '.join(context.args)
-    data = search_commodity(query)
+    # Run blocking I/O in thread to avoid blocking event loop
+    data = await asyncio.to_thread(search_commodity, query)
     
     if not data:
-        available = get_available_commodities()[:10]
+        available = await asyncio.to_thread(get_available_commodities)
         await update.message.reply_text(
             f"❓ Commodity '{query}' not found.\n\n"
             f"Try: `{', '.join(available[:5])}`...\n\n"
@@ -122,7 +124,7 @@ async def prices_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return
     
-    commodities = get_commodities_by_category(category)
+    commodities = await asyncio.to_thread(get_commodities_by_category, category)
     
     if not commodities:
         await update.message.reply_text(f"No data available for {category}.")
@@ -143,7 +145,7 @@ async def prices_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def top_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /top command - show top movers."""
-    gainers, losers = get_top_movers(5)
+    gainers, losers = await asyncio.to_thread(get_top_movers, 5)
     
     msg = "📈 **Top Gainers**\n"
     if gainers:
