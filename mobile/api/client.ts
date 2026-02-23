@@ -1,12 +1,19 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 // Environment Targeting: Prefer EXPO_PUBLIC_API_URL (used for production)
 // In React Native:
 // iOS Simulator can access localhost directly.
 // Android Emulator requires 10.0.2.2 to access the host machine's localhost.
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android'
-    ? 'http://10.0.2.2:5002'
-    : 'http://localhost:5002');
+// Physical devices on LAN need the host computer's local IP address.
+let host = 'localhost';
+if (__DEV__ && Constants.expoConfig?.hostUri) {
+    host = Constants.expoConfig.hostUri.split(':')[0];
+} else if (Platform.OS === 'android') {
+    host = '10.0.2.2';
+}
+
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || `http://${host}:5002`;
 
 export async function apiClient<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
