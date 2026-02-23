@@ -1,11 +1,19 @@
-import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, SafeAreaView, ScrollView, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState, useContext, useRef } from 'react';
+import { View, Text, SafeAreaView, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { LineChart } from 'react-native-chart-kit';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import * as Clipboard from 'expo-clipboard';
 import { RootStackParamList } from '../App';
 import { fetchCommodityDetail } from '../api/commodities';
 import { Commodity } from '../types/commodity';
 import { SettingsContext } from '../context/SettingsContext';
+
+import CommodityHeader from '../components/features/CommodityHeader';
+import CommodityDataSourceBlock from '../components/features/CommodityDataSourceBlock';
+import CommodityStatsBar from '../components/features/CommodityStatsBar';
+import CommodityChartSection from '../components/features/CommodityChartSection';
+import CommodityChartControls from '../components/features/CommodityChartControls';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CommodityDetail'>;
 
@@ -24,6 +32,11 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [autoFitBounds, setAutoFitBounds] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedPoint, setSelectedPoint] = useState<{ index: number, value: number, x: number, y: number, date: string } | null>(null);
+
+    // New Features State
+    const [selectedRange, setSelectedRange] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M');
+    const [viewMode, setViewMode] = useState<'price' | 'percent'>('price');
+    const chartRef = useRef<ViewShot>(null);
 
     useEffect(() => {
         const loadDetail = async () => {
@@ -47,197 +60,137 @@ export default function CommodityDetailScreen({ route }: Props) {
     const negativeColor = getMarketColors(false).textColor;
 
     // Prepare chart data
-    // The history array is expected to be { date: string, price: number }[]
     const getChartData = () => {
         if (!commodity.history || commodity.history.length === 0) return null;
 
-        // Take up to 30 points for the chart to avoid overloading
-        const chartPoints = commodity.history.length > 30
-            ? commodity.history.slice(-30)
-            : commodity.history;
+        let pointsCount = commodity.history.length;
+        switch (selectedRange) {
+            case '1W': pointsCount = 7; break;
+            case '1M': pointsCount = 30; break;
+            case '3M': pointsCount = 90; break;
+            case '6M': pointsCount = 180; break;
+            case '1Y': pointsCount = 365; break;
+            case 'ALL': pointsCount = commodity.history.length; break;
+        }
+
+        const chartPoints = commodity.history.slice(-pointsCount);
+        if (chartPoints.length === 0) return null;
+
+        const basePrice = chartPoints[0].price;
+
+        const dataPoints = chartPoints.map((p: any) => {
+            if (viewMode === 'percent') {
+                return ((p.price - basePrice) / basePrice) * 100;
+            }
+            return p.price;
+        });
+
+        // Downsample labels for cleaner x-axis if there are many points
+        const labelStep = Math.ceil(chartPoints.length / 6);
+        const labels = chartPoints.map((p: any, i: number) =>
+            (i === 0 || i === chartPoints.length - 1 || i % labelStep === 0) ? p.date.substring(5) : ''
+        );
 
         return {
-            labels: chartPoints.map((p: any) => p.date.substring(5)), // MM-DD
+            labels,
+            points: chartPoints, // Keep raw points for stats/tooltip
+            data: dataPoints,
             datasets: [
                 {
-                    data: chartPoints.map((p: any) => p.price),
+                    data: dataPoints,
                     color: (opacity = 1) => `rgba(${chartColor}, ${opacity})`,
                     strokeWidth: 2
                 }
             ],
-            legend: ["Price History"]
+            legend: [viewMode === 'percent' ? "% Change" : "Price History"]
         };
     };
 
-    const chartData = getChartData();
-    const chartWidth = chartData ? Math.max(screenWidth, chartData.labels.length * 20 * zoomLevel) : screenWidth;
+    const chartDataObj = getChartData();
+    const chartData = chartDataObj ? { labels: chartDataObj.labels, datasets: chartDataObj.datasets, legend: chartDataObj.legend } : null;
+    const chartWidth = chartData ? Math.max(screenWidth, chartData.labels.length * (zoomLevel > 1 ? 20 * zoomLevel : 10)) : screenWidth;
+
+    // Dynamic Stats Calculation
+    const getStats = () => {
+        if (!chartDataObj || chartDataObj.points.length === 0) return null;
+        const prices = chartDataObj.points.map((p: any) => p.price);
+        const high = Math.max(...prices);
+        const low = Math.min(...prices);
+        const avg = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+        return { high, low, avg, range: high - low, count: prices.length };
+    };
+    const stats = getStats();
+
+    const handleCopyPrice = async () => {
+        await Clipboard.setStringAsync(`${commodity.price} ${commodity.currency}`);
+    };
+
+    const handleDownloadChart = async () => {
+        if (chartRef.current && chartRef.current.capture) {
+            try {
+                const uri = await chartRef.current.capture();
+                await Sharing.shareAsync(uri, { dialogTitle: 'Share Chart', mimeType: 'image/png' });
+            } catch (err) {
+                console.error('Failed to capture and share chart:', err);
+            }
+        }
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
             <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-                {/* Header Info */}
-                <View className="px-5 pt-4">
-                    <Text className="text-xl text-slate-500 dark:text-slate-400 font-medium mb-1 uppercase tracking-wider">
-                        {commodity.category}
-                    </Text>
-                    <Text className="text-4xl font-bold text-slate-900 dark:text-white mb-6">
-                        {commodity.name}
-                    </Text>
+                <CommodityHeader
+                    commodity={commodity}
+                    isUp={isUp}
+                    changeColor={changeColor}
+                    badgeColor={badgeColor}
+                    handleCopyPrice={handleCopyPrice}
+                />
 
-                    <View className="mb-6">
-                        <Text className="text-5xl font-bold text-slate-900 dark:text-white" numberOfLines={1} adjustsFontSizeToFit>
-                            {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
-                        </Text>
-                        <Text className="text-lg text-slate-500 dark:text-slate-400 mt-1">
-                            {commodity.currency} / {commodity.unit}
-                        </Text>
-                    </View>
+                <CommodityDataSourceBlock commodity={commodity} />
 
-                    <View className="flex-row items-center flex-wrap gap-3 mb-6">
-                        <View className={`px-4 py-2 flex-row rounded-lg items-center ${changeBg}`}>
-                            <Text className={`text-xl font-bold ${changeColor}`}>
-                                {isUp ? '+' : ''}{commodity.change_percent}%
-                            </Text>
-                            <Text className={`text-xs font-bold py-1 px-2.5 ml-2 rounded-full text-white ${badgeColor}`}>
-                                {isUp ? '↑' : '↓'}
-                            </Text>
-                        </View>
-                    </View>
-                </View>
+                <CommodityStatsBar
+                    stats={stats}
+                    positiveColor={positiveColor}
+                    negativeColor={negativeColor}
+                />
 
-                {/* Chart Section */}
-                <View className="mb-6">
-                    {loading ? (
-                        <View className="h-[220px] items-center justify-center">
-                            <ActivityIndicator size="large" color="#3b82f6" />
-                        </View>
-                    ) : error || !chartData ? (
-                        <View className="h-[220px] items-center justify-center bg-slate-50 dark:bg-slate-800 mx-5 rounded-xl border border-slate-100 dark:border-slate-700">
-                            <Text className="text-slate-500 dark:text-slate-400">No chart data available</Text>
-                        </View>
-                    ) : (
-                        <View>
-                            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-                                <View>
-                                    <LineChart
-                                        data={chartData}
-                                        width={chartWidth}
-                                        height={260}
-                                        fromZero={!autoFitBounds}
-                                        withDots={true}
-                                        withInnerLines={!hideGrid}
-                                        withOuterLines={false}
-                                        withVerticalLines={false}
-                                        withHorizontalLines={!hideGrid}
-                                        withShadow={fillArea}
-                                        onDataPointClick={({ value, getColor, index, x, y }) => {
-                                            setSelectedPoint({ index, value, x, y, date: chartData.labels[index] });
-                                        }}
-                                        chartConfig={{
-                                            backgroundColor: 'transparent',
-                                            backgroundGradientFrom: 'transparent',
-                                            backgroundGradientFromOpacity: 0,
-                                            backgroundGradientTo: 'transparent',
-                                            backgroundGradientToOpacity: 0,
-                                            decimalPlaces: 2,
-                                            color: (opacity = 1) => `rgba(148, 163, 184, ${opacity})`, // Slate 400 for grid lines
-                                            labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`, // Slate 500 for text
-                                            style: {
-                                                borderRadius: 16
-                                            },
-                                            propsForDots: {
-                                                r: "4",
-                                                strokeWidth: "2",
-                                                stroke: changeColor.includes('emerald') ? '#10b981' : '#f43f5e'
-                                            },
-                                            propsForBackgroundLines: {
-                                                strokeDasharray: '4',
-                                                strokeWidth: 1,
-                                                stroke: 'rgba(148, 163, 184, 0.2)',
-                                            },
-                                        }}
-                                        bezier={smoothCurve}
-                                        style={{
-                                            marginVertical: 8,
-                                        }}
-                                    />
-                                    {selectedPoint && (
-                                        <View
-                                            style={{
-                                                position: 'absolute',
-                                                left: Math.max(0, Math.min(selectedPoint.x - 40, chartWidth - 80)),
-                                                top: selectedPoint.y - 50,
-                                            }}
-                                            className="bg-slate-900 dark:bg-slate-100 px-3 py-2 rounded-lg items-center shadow-lg"
-                                        >
-                                            <Text className="text-white dark:text-slate-900 font-bold text-sm">
-                                                {selectedPoint.value.toFixed(2)}
-                                            </Text>
-                                            <Text className="text-slate-300 dark:text-slate-600 font-medium text-[10px]">
-                                                {selectedPoint.date}
-                                            </Text>
-                                        </View>
-                                    )}
-                                </View>
-                            </ScrollView>
-                        </View>
-                    )}
-                </View>
+                <CommodityChartSection
+                    loading={loading}
+                    error={error}
+                    chartData={chartData}
+                    chartWidth={chartWidth}
+                    autoFitBounds={autoFitBounds}
+                    hideGrid={hideGrid}
+                    fillArea={fillArea}
+                    smoothCurve={smoothCurve}
+                    changeColor={changeColor}
+                    selectedPoint={selectedPoint}
+                    setSelectedPoint={setSelectedPoint}
+                    chartRef={chartRef}
+                />
 
-                {/* Chart Settings Toggles */}
-                {!loading && !error && chartData && (
-                    <View className="px-5 mb-8">
-                        <Text className="text-sm font-bold text-slate-900 dark:text-white mb-3">Chart Settings</Text>
-                        <View className="flex-row flex-wrap gap-2">
-                            <TouchableOpacity
-                                onPress={() => setSmoothCurve(!smoothCurve)}
-                                className={`px-3 py-1.5 rounded-lg border ${smoothCurve ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
-                            >
-                                <Text className={`text-xs font-medium ${smoothCurve ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Smooth Curve</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setFillArea(!fillArea)}
-                                className={`px-3 py-1.5 rounded-lg border ${fillArea ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
-                            >
-                                <Text className={`text-xs font-medium ${fillArea ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Fill Area</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setHideGrid(!hideGrid)}
-                                className={`px-3 py-1.5 rounded-lg border ${hideGrid ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
-                            >
-                                <Text className={`text-xs font-medium ${hideGrid ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Hide Grid</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setAutoFitBounds(!autoFitBounds)}
-                                className={`px-3 py-1.5 rounded-lg border ${autoFitBounds ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
-                            >
-                                <Text className={`text-xs font-medium ${autoFitBounds ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Auto-Fit Bounds</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <View className="flex-row flex-wrap gap-2 mt-3">
-                            <TouchableOpacity
-                                onPress={() => setZoomLevel(prev => Math.min(prev + 0.5, 4))}
-                                className={`px-3 py-1.5 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700`}
-                            >
-                                <Text className={`text-xs font-medium text-slate-600 dark:text-slate-400`}>Zoom In 🔍</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setZoomLevel(prev => Math.max(prev - 0.5, 1))}
-                                className={`px-3 py-1.5 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700`}
-                            >
-                                <Text className={`text-xs font-medium text-slate-600 dark:text-slate-400`}>Zoom Out 🔍</Text>
-                            </TouchableOpacity>
-                            {zoomLevel > 1 && (
-                                <TouchableOpacity
-                                    onPress={() => { setZoomLevel(1); setSelectedPoint(null); }}
-                                    className={`px-3 py-1.5 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700`}
-                                >
-                                    <Text className={`text-xs font-medium text-slate-600 dark:text-slate-400`}>Reset Zoom</Text>
-                                </TouchableOpacity>
-                            )}
-                        </View>
-                    </View>
-                )}
+                <CommodityChartControls
+                    loading={loading}
+                    error={error}
+                    chartData={chartData}
+                    selectedRange={selectedRange as any}
+                    setSelectedRange={setSelectedRange as any}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    smoothCurve={smoothCurve}
+                    setSmoothCurve={setSmoothCurve}
+                    fillArea={fillArea}
+                    setFillArea={setFillArea}
+                    hideGrid={hideGrid}
+                    setHideGrid={setHideGrid}
+                    autoFitBounds={autoFitBounds}
+                    setAutoFitBounds={setAutoFitBounds}
+                    zoomLevel={zoomLevel}
+                    setZoomLevel={setZoomLevel}
+                    setSelectedPoint={setSelectedPoint}
+                    handleDownloadChart={handleDownloadChart}
+                />
 
                 {/* Details Section */}
                 <View className="px-5">
