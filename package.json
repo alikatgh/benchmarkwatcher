@@ -6,14 +6,12 @@
     "test:e2e:ui": "playwright test --ui",
     "test:all": "npm test && npm run test:e2e",
     "check:vocab": "node scripts/check-vocab.js --fail-on-warn",
-    "ci:preflight": "npm run check:vocab && npm test && npm run test:e2e",
-    "build:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/tailwind.css --minify"
+    "ci:preflight": "npm run check:vocab && npm test && npm run test:e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.0",
     "@playwright/test": "^1.50.0",
     "jest": "^30.2.0",
-    "jest-environment-jsdom": "^30.2.0",
-    "tailwindcss": "^3.4.19"
+    "jest-environment-jsdom": "^30.2.0"
   }
 }
