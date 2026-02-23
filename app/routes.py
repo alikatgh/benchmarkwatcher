@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, abort
+from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory, current_app
 from app.data_handler import get_all_commodities, get_commodity
 import os
 import warnings
@@ -121,3 +121,10 @@ def api_commodity_detail(commodity_id):
 def changelog():
     """Changelog page with updates and new features."""
     return render_template('changelog.html')
+
+
+@bp.route('/favicon.ico')
+def favicon():
+    """Explicitly handle favicon.ico requests to avoid 404s in logs."""
+    return send_from_directory(os.path.join(current_app.root_path, 'static'),
+                               'favicon.png', mimetype='image/vnd.microsoft.icon')
