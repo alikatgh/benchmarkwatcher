@@ -16,6 +16,13 @@ BW.Commodity = {
     ctx: null,
     currency: 'USD',
     commodityName: 'commodity',
+    commodityId: '',
+
+    // Comparison state
+    comparisonData: {},      // { id: { name, history, color } }
+    allCommoditiesList: [],  // cached list from API
+    compareColors: ['#e11d48', '#8b5cf6', '#f59e0b', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6', '#f97316'],
+    compareColorIndex: 0,
 
     // Chart customization settings with defaults
     chartSettings: {
@@ -112,10 +119,11 @@ BW.Commodity = {
     },
 
     // Initialize with data
-    init: function (historyData, currency, commodityName) {
+    init: function (historyData, currency, commodityName, commodityId) {
         this.fullHistoryData = historyData;
         this.currency = currency || 'USD';
         this.commodityName = commodityName || 'commodity';
+        this.commodityId = commodityId || '';
 
         const canvas = document.getElementById('priceChart');
         if (!canvas) return;
@@ -241,6 +249,57 @@ BW.Commodity = {
         const fillHexAlpha = this.hexWithAlpha(this.chartSettings.fillColor, this.chartSettings.fillOpacity);
         const gridHexAlpha = this.hexWithAlpha(this.chartSettings.gridColor, this.chartSettings.gridOpacity);
 
+        // Build comparison datasets
+        var compDatasets = [];
+        var compIds = Object.keys(this.comparisonData);
+        for (var ci = 0; ci < compIds.length; ci++) {
+            var comp = this.comparisonData[compIds[ci]];
+            var compFiltered = this.filterDataByRange(comp.history, this.currentRange);
+            // Build a date->price map for this comparison commodity
+            var compMap = {};
+            for (var cj = 0; cj < compFiltered.length; cj++) {
+                compMap[compFiltered[cj].date] = compFiltered[cj].price;
+            }
+            // Align to the main chart's labels
+            var compPrices = [];
+            for (var ck = 0; ck < labels.length; ck++) {
+                compPrices.push(compMap[labels[ck]] !== undefined ? compMap[labels[ck]] : null);
+            }
+            // In percent mode, compute % change from first non-null value
+            var compChartData;
+            if (this.currentViewMode === 'percent') {
+                var compBase = null;
+                for (var cb = 0; cb < compPrices.length; cb++) {
+                    if (compPrices[cb] !== null) { compBase = compPrices[cb]; break; }
+                }
+                compChartData = compPrices.map(function (p) {
+                    return p !== null && compBase ? ((p - compBase) / compBase) * 100 : null;
+                });
+            } else {
+                compChartData = compPrices;
+            }
+
+            compDatasets.push({
+                label: comp.name,
+                data: compChartData,
+                borderColor: comp.color,
+                backgroundColor: 'transparent',
+                borderWidth: 1.5,
+                fill: false,
+                tension: this.chartSettings.tension / 100,
+                pointRadius: 0,
+                pointHoverRadius: 4,
+                pointHoverBackgroundColor: comp.color,
+                pointHoverBorderColor: document.documentElement.classList.contains('dark') ? '#000' : '#fff',
+                pointHoverBorderWidth: 2,
+                borderDash: [4, 2],
+                spanGaps: true,
+                yAxisID: this.currentViewMode === 'percent' ? 'y' : 'y2',
+            });
+        }
+
+        var useSecondYAxis = this.currentViewMode !== 'percent' && compDatasets.length > 0;
+
         const chartConfig = {
             type: 'line',
             data: {
@@ -260,7 +319,7 @@ BW.Commodity = {
                     pointHoverBackgroundColor: this.chartSettings.lineColor,
                     pointHoverBorderColor: document.documentElement.classList.contains('dark') ? '#000' : '#fff',
                     pointHoverBorderWidth: 2,
-                }]
+                }].concat(compDatasets)
             },
             options: {
                 responsive: true,
@@ -270,7 +329,7 @@ BW.Commodity = {
                 },
                 interaction: { intersect: false, mode: 'index' },
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: compDatasets.length > 0, position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Inter' }, usePointStyle: true, pointStyle: 'line' } },
                     tooltip: {
                         enabled: true,
                         backgroundColor: this.chartSettings.tooltipBg,
@@ -356,6 +415,19 @@ BW.Commodity = {
                         border: { display: false },
                         ticks: {
                             font: { size: this.chartSettings.axisFontSize, weight: '600', family: 'Inter' },
+                            color: this.chartColors?.text || '#666',
+                            padding: 10,
+                            maxTicksLimit: this.chartSettings.yMaxTicks,
+                            callback: function (value) { return value.toLocaleString(); }
+                        }
+                    },
+                    y2: {
+                        display: useSecondYAxis,
+                        position: this.chartSettings.yAxisPosition === 'right' ? 'left' : 'right',
+                        grid: { display: false },
+                        border: { display: false },
+                        ticks: {
+                            font: { size: this.chartSettings.axisFontSize - 1, weight: '600', family: 'Inter' },
                             color: this.chartColors?.text || '#666',
                             padding: 10,
                             maxTicksLimit: this.chartSettings.yMaxTicks,
@@ -458,34 +530,129 @@ BW.Commodity = {
         }
     },
 
-    // Download chart as image
-    downloadChart: function () {
+    // --- Download menu & multi-format export ---
+    toggleDownloadMenu: function () {
+        var menu = document.getElementById('download-menu');
+        var chevron = document.getElementById('download-chevron');
+        var btn = document.getElementById('download-menu-btn');
+        if (!menu) return;
+        var isOpen = !menu.classList.contains('hidden');
+        if (isOpen) {
+            menu.classList.add('hidden');
+            if (chevron) chevron.classList.remove('rotate-180');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        } else {
+            menu.classList.remove('hidden');
+            if (chevron) chevron.classList.add('rotate-180');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
+        }
+    },
+
+    closeDownloadMenu: function () {
+        var menu = document.getElementById('download-menu');
+        var chevron = document.getElementById('download-chevron');
+        var btn = document.getElementById('download-menu-btn');
+        if (menu) menu.classList.add('hidden');
+        if (chevron) chevron.classList.remove('rotate-180');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    },
+
+    exportDownload: function (format) {
+        this.closeDownloadMenu();
+        switch (format) {
+            case 'csv': this.exportCSV(); break;
+            case 'excel': this.exportExcel(); break;
+            case 'image': this.exportImage(); break;
+            case 'pptx': this.exportPPTX(); break;
+        }
+    },
+
+    // CSV export - price history as .csv
+    exportCSV: function () {
+        var filteredData = this.filterDataByRange(this.fullHistoryData, this.currentRange);
+        if (!filteredData || filteredData.length === 0) return;
+        var name = this.commodityName || 'commodity';
+        var currency = this.currency || 'USD';
+        var rows = ['Date,Price (' + currency + ')'];
+        filteredData.forEach(function (item) {
+            rows.push(item.date + ',' + item.price);
+        });
+        var blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = name + '-price-history.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    },
+
+    // Excel export - SpreadsheetML XML opened natively by Excel
+    exportExcel: function () {
+        var filteredData = this.filterDataByRange(this.fullHistoryData, this.currentRange);
+        if (!filteredData || filteredData.length === 0) return;
+        var name = this.commodityName || 'commodity';
+        var currency = this.currency || 'USD';
+        var xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            '<?mso-application progid="Excel.Sheet"?>\n' +
+            '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n' +
+            ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n' +
+            ' <Worksheet ss:Name="Price History">\n  <Table>\n' +
+            '   <Row><Cell><Data ss:Type="String">Date</Data></Cell>' +
+            '<Cell><Data ss:Type="String">Price (' + currency + ')</Data></Cell></Row>\n';
+        filteredData.forEach(function (item) {
+            xml += '   <Row><Cell><Data ss:Type="String">' + item.date + '</Data></Cell>' +
+                '<Cell><Data ss:Type="Number">' + item.price + '</Data></Cell></Row>\n';
+        });
+        xml += '  </Table>\n </Worksheet>\n</Workbook>';
+        var blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = name + '-price-history.xls';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    },
+
+    // Image export - PNG of chart (legacy downloadChart)
+    exportImage: function () {
         if (!this.priceChart) {
             console.warn('No chart available to download.');
             return;
         }
-        const btn = document.querySelector('[onclick="downloadChart()"]');
-        const originalHTML = btn ? btn.innerHTML : null;
-        if (btn) {
-            btn.innerHTML = '<span class="animate-pulse">Saving...</span>';
-            btn.disabled = true;
+        setTimeout(function () {
+            var link = document.createElement('a');
+            link.download = (this.commodityName || 'commodity') + '-price-chart.png';
+            link.href = this.priceChart.toBase64Image();
+            link.click();
+        }.bind(this), 100);
+    },
+
+    // PowerPoint export - lazy-loads PptxGenJS from CDN
+    exportPPTX: function () {
+        var self = this;
+        if (!this.priceChart) {
+            console.warn('No chart available to export.');
+            return;
         }
-        setTimeout(() => {
-            try {
-                const link = document.createElement('a');
-                link.download = `${this.commodityName}-price-chart.png`;
-                link.href = this.priceChart.toBase64Image();
-                link.click();
-            } finally {
-                if (btn) {
-                    btn.innerHTML = '✓ Saved';
-                    setTimeout(() => {
-                        btn.innerHTML = originalHTML;
-                        btn.disabled = false;
-                    }, 1500);
-                }
-            }
-        }, 100);
+        var run = function () {
+            var pptx = new PptxGenJS();
+            var slide = pptx.addSlide();
+            slide.addText(self.commodityName || 'Commodity', {
+                x: 0.5, y: 0.3, fontSize: 22, bold: true, color: '333333'
+            });
+            var imgData = self.priceChart.toBase64Image('image/png', 1);
+            slide.addImage({ data: imgData, x: 0.3, y: 0.9, w: 9.2, h: 4.5 });
+            pptx.writeFile({ fileName: (self.commodityName || 'commodity') + '-chart.pptx' });
+        };
+        if (window.PptxGenJS) { run(); return; }
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+        script.onload = run;
+        script.onerror = function () { alert('Failed to load PowerPoint export library. Please try again.'); };
+        document.head.appendChild(script);
+    },
+
+    // Backward-compatible alias
+    downloadChart: function () {
+        this.exportImage();
     },
 
     // Update range button states
@@ -726,9 +893,9 @@ BW.Commodity = {
 
         // Action buttons
         const resetBtn = document.querySelector('[onclick="resetZoom()"]');
-        const downloadBtn = document.querySelector('[onclick="downloadChart()"]');
+        const downloadContainer = document.getElementById('download-menu-container');
         if (resetBtn) resetBtn.style.display = s.showResetBtn ? '' : 'none';
-        if (downloadBtn) downloadBtn.style.display = s.showDownloadBtn ? '' : 'none';
+        if (downloadContainer) downloadContainer.style.display = s.showDownloadBtn ? '' : 'none';
 
         // Chart height - prefer canvas parent over brittle class selector
         const chartContainer = document.getElementById('priceChart') ? document.getElementById('priceChart').parentElement : null;
@@ -750,6 +917,135 @@ BW.Commodity = {
                 el.parentElement.style.display = show ? '' : 'none';
             }
         });
+    },
+
+    // ============================================================
+    // COMMODITY COMPARISON FUNCTIONS
+    // ============================================================
+
+    toggleCompareMenu: function () {
+        var menu = document.getElementById('compare-menu');
+        if (!menu) return;
+        var isOpen = !menu.classList.contains('hidden');
+        if (isOpen) {
+            menu.classList.add('hidden');
+        } else {
+            menu.classList.remove('hidden');
+            var search = document.getElementById('compare-search');
+            if (search) { search.value = ''; search.focus(); }
+            this.loadCompareList();
+        }
+    },
+
+    closeCompareMenu: function () {
+        var menu = document.getElementById('compare-menu');
+        if (menu) menu.classList.add('hidden');
+    },
+
+    loadCompareList: function () {
+        var self = this;
+        if (this.allCommoditiesList.length > 0) {
+            this.renderCompareList('');
+            return;
+        }
+        fetch('/api/commodities?range=ALL')
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                var data = json.data || json;
+                self.allCommoditiesList = (Array.isArray(data) ? data : [])
+                    .filter(function (c) { return c.id !== self.commodityId; })
+                    .map(function (c) { return { id: c.id, name: c.name, category: c.category }; });
+                self.renderCompareList('');
+            })
+            .catch(function () { self.allCommoditiesList = []; });
+    },
+
+    renderCompareList: function (query) {
+        var listEl = document.getElementById('compare-list');
+        if (!listEl) return;
+        var self = this;
+        var q = (query || '').toLowerCase();
+        var items = this.allCommoditiesList.filter(function (c) {
+            return !q || c.name.toLowerCase().indexOf(q) !== -1 || c.category.toLowerCase().indexOf(q) !== -1;
+        });
+        if (items.length === 0) {
+            listEl.innerHTML = '<div class="px-4 py-3 text-xs text-brand-black-60">No commodities found</div>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < items.length; i++) {
+            var c = items[i];
+            var isAdded = !!this.comparisonData[c.id];
+            html += '<button onclick="toggleCompare(\'' + c.id + '\', \'' + c.name.replace(/'/g, "\\'") + '\')" ' +
+                'class="w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between gap-2 ' +
+                (isAdded
+                    ? 'text-brand-oxford dark:text-brand-teal bg-brand-oxford/5 dark:bg-brand-teal/5'
+                    : 'text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5') + '">' +
+                '<span class="truncate">' + c.name + '</span>' +
+                '<span class="text-[9px] uppercase tracking-wider text-brand-black-60 shrink-0">' + c.category + '</span>' +
+                '</button>';
+        }
+        listEl.innerHTML = html;
+    },
+
+    toggleComparison: function (id, name) {
+        if (this.comparisonData[id]) {
+            this.removeComparison(id);
+        } else {
+            this.addComparison(id, name);
+        }
+    },
+
+    addComparison: function (id, name) {
+        var self = this;
+        var color = this.compareColors[this.compareColorIndex % this.compareColors.length];
+        this.compareColorIndex++;
+
+        fetch('/api/commodity/' + encodeURIComponent(id))
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+                var data = json.data || json;
+                self.comparisonData[id] = {
+                    name: name,
+                    history: data.history || [],
+                    color: color
+                };
+                self.updateChart();
+                self.updateCompareBar();
+                self.renderCompareList(document.getElementById('compare-search')?.value || '');
+            })
+            .catch(function (err) {
+                console.error('Failed to fetch comparison data for ' + id, err);
+            });
+    },
+
+    removeComparison: function (id) {
+        delete this.comparisonData[id];
+        this.updateChart();
+        this.updateCompareBar();
+        this.renderCompareList(document.getElementById('compare-search')?.value || '');
+    },
+
+    updateCompareBar: function () {
+        var bar = document.getElementById('compare-bar');
+        var tags = document.getElementById('compare-tags');
+        if (!bar || !tags) return;
+
+        var ids = Object.keys(this.comparisonData);
+        if (ids.length === 0) {
+            bar.classList.add('hidden');
+            return;
+        }
+        bar.classList.remove('hidden');
+        var html = '';
+        for (var i = 0; i < ids.length; i++) {
+            var comp = this.comparisonData[ids[i]];
+            html += '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-white" style="background-color:' + comp.color + '">' +
+                comp.name +
+                '<button onclick="removeComparison(\'' + ids[i] + '\')" class="ml-0.5 hover:opacity-70">&times;</button>' +
+                '</span>';
+        }
+        tags.innerHTML = html;
     }
 };
 
@@ -759,6 +1055,26 @@ function setChartType(t) { BW.Commodity.setChartType(t); }
 function setViewMode(m) { BW.Commodity.setViewMode(m); }
 function resetZoom() { BW.Commodity.resetZoom(); }
 function downloadChart() { BW.Commodity.downloadChart(); }
+function toggleDownloadMenu() { BW.Commodity.toggleDownloadMenu(); }
+function exportDownload(f) { BW.Commodity.exportDownload(f); }
+
+// Comparison functions
+function toggleCompareMenu() { BW.Commodity.toggleCompareMenu(); }
+function filterCompareList(q) { BW.Commodity.renderCompareList(q); }
+function toggleCompare(id, name) { BW.Commodity.toggleComparison(id, name); }
+function removeComparison(id) { BW.Commodity.removeComparison(id); }
+
+// Close download/compare menus on outside click
+document.addEventListener('click', function (e) {
+    var container = document.getElementById('download-menu-container');
+    if (container && !container.contains(e.target)) {
+        BW.Commodity.closeDownloadMenu();
+    }
+    var compareContainer = document.getElementById('compare-menu-container');
+    if (compareContainer && !compareContainer.contains(e.target)) {
+        BW.Commodity.closeCompareMenu();
+    }
+});
 
 // Chart settings modal functions
 function openChartSettings() { BW.Commodity.openChartSettings(); }

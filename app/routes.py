@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, abort
 from app.data_handler import get_all_commodities, get_commodity
 import os
 import warnings
+from datetime import datetime
 
 bp = Blueprint('main', __name__)
 
@@ -18,40 +19,58 @@ if not INTERNAL_API_KEY:
     )
 
 
-def filter_commodities(date_range, category):
-    """Fetch and filter commodities by date range and category."""
+def validate_range(date_range):
+    """Validate and sanitize the date range parameter."""
+    return date_range if date_range in VALID_RANGES else 'ALL'
+
+
+def validate_since(since_str):
+    """Validate the since date parameter. Returns None if invalid."""
+    if not since_str:
+        return None
+    try:
+        datetime.strptime(since_str, '%Y-%m-%d')
+        return since_str
+    except ValueError:
+        return None
+
+
+def filter_commodities(date_range, category, since=None):
+    """Fetch and filter commodities by date range, category, and optionally a since date."""
     commodities = get_all_commodities(date_range=date_range)
     if category:
         commodities = [
             c for c in commodities
             if c.get('category', '').lower() == category.lower()
         ]
+    if since:
+        # Incremental fetch: only return commodities with new data since the given date
+        commodities = [c for c in commodities if c.get('date', '') > since]
     return commodities
-
-
-def validate_range(date_range):
-    """Validate and sanitize the date range parameter."""
-    return date_range if date_range in VALID_RANGES else 'ALL'
 
 
 @bp.route('/api/commodities')
 def api_commodities():
-    """Public API endpoint for browser AJAX.
-    
-    This endpoint is used by the website's JavaScript for filtering.
-    No authentication required - it reads from local cached data anyway.
+    """Public API endpoint for browser AJAX and mobile app.
+
+    Supports optional `since` parameter for incremental fetching:
+    - If provided, only commodities with date > since are returned.
+    - Mobile clients use this to avoid re-downloading unchanged data.
     """
     date_range = validate_range(request.args.get('range', 'ALL'))
     category = request.args.get('category', None)
-    
-    commodities = filter_commodities(date_range, category)
-    
+    since = validate_since(request.args.get('since', None))
+
+    commodities = filter_commodities(date_range, category, since=since)
+
     return jsonify({
         'data': commodities,
         'meta': {
             'count': len(commodities),
             'range': date_range,
-            'category': category
+            'category': category,
+            'since': since,
+            'partial': since is not None,
         }
     })
 
@@ -59,21 +78,21 @@ def api_commodities():
 @bp.route('/internal/api/commodities')
 def internal_api_commodities():
     """Internal API endpoint for bots.
-    
+
     STRICT: Requires valid X-Internal-Key header.
     Used by Telegram/Discord bots deployed externally.
     """
     provided_key = request.headers.get('X-Internal-Key', '')
-    
+
     # Strict check: key must be set AND match
     if not INTERNAL_API_KEY or provided_key != INTERNAL_API_KEY:
         return jsonify({'error': 'Forbidden: valid API key required'}), 403
-    
+
     date_range = validate_range(request.args.get('range', 'ALL'))
     category = request.args.get('category', None)
-    
+
     commodities = filter_commodities(date_range, category)
-    
+
     return jsonify({
         'data': commodities,
         'meta': {
@@ -89,13 +108,13 @@ def index():
     """Main index page with commodity grid."""
     date_range = validate_range(request.args.get('range', 'ALL'))
     category = request.args.get('category', None)
-    
+
     commodities = filter_commodities(date_range, category)
-    
+
     return render_template(
-        'index.html', 
-        commodities=commodities, 
-        date_range=date_range, 
+        'index.html',
+        commodities=commodities,
+        date_range=date_range,
         selected_category=category
     )
 

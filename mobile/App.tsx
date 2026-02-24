@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SettingsProvider } from './context/SettingsContext';
 import { LayoutProvider } from './context/LayoutContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import HomeScreen from './screen/HomeScreen';
 import CommodityDetailScreen from './screen/CommodityDetailScreen';
 import SettingsScreen from './screen/SettingsScreen';
@@ -23,9 +24,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   return (
     <SafeAreaProvider>
-      <LayoutProvider>
-        <SettingsProvider>
-          <NavigationContainer>
+      <ErrorBoundary>
+        <LayoutProvider>
+          <SettingsProvider>
+            <NavigationContainer>
             <Stack.Navigator
               initialRouteName="Home"
               screenOptions={{
@@ -62,11 +64,12 @@ export default function App() {
                   presentation: 'modal',
                 }}
               />
-            </Stack.Navigator>
-            <StatusBar style="auto" />
-          </NavigationContainer>
-        </SettingsProvider>
-      </LayoutProvider>
+              </Stack.Navigator>
+              <StatusBar style="auto" />
+            </NavigationContainer>
+          </SettingsProvider>
+        </LayoutProvider>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

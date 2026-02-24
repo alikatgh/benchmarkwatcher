@@ -57,38 +57,34 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const [marketTheme, setMarketThemeState] = useState<MarketTheme>('western');
 
     useEffect(() => {
-        // Load persisted settings on mount
+        // Load all persisted settings in a single multiGet call
         const loadSettings = async () => {
             try {
-                const storedDarkMode = await AsyncStorage.getItem('@dark_mode');
-                const storedFlavor = await AsyncStorage.getItem('@theme_flavor');
-                const storedSync = await AsyncStorage.getItem('@sync_enabled');
+                const keys = [
+                    '@dark_mode', '@theme_flavor', '@sync_enabled',
+                    '@show_cat', '@show_chg_pct', '@show_chg_abs',
+                    '@show_date', '@show_unit', '@font_scale',
+                    '@density', '@market_theme',
+                ];
+                const pairs = await AsyncStorage.multiGet(keys);
+                const stored = Object.fromEntries(pairs.map(([k, v]) => [k, v]));
 
-                const storedCat = await AsyncStorage.getItem('@show_cat');
-                const storedChgPct = await AsyncStorage.getItem('@show_chg_pct');
-                const storedChgAbs = await AsyncStorage.getItem('@show_chg_abs');
-                const storedDate = await AsyncStorage.getItem('@show_date');
-                const storedUnit = await AsyncStorage.getItem('@show_unit');
-                const storedFont = await AsyncStorage.getItem('@font_scale');
-                const storedDensity = await AsyncStorage.getItem('@density');
-                const storedMarket = await AsyncStorage.getItem('@market_theme');
-
-                if (storedDarkMode !== null) {
-                    const isDark = storedDarkMode === 'true';
+                if (stored['@dark_mode'] !== null) {
+                    const isDark = stored['@dark_mode'] === 'true';
                     setDarkModeState(isDark);
                     setColorScheme(isDark ? 'dark' : 'light');
                 }
-                if (storedFlavor) setThemeFlavorState(storedFlavor as ThemeFlavor);
-                if (storedSync !== null) setSyncEnabledState(storedSync === 'true');
+                if (stored['@theme_flavor']) setThemeFlavorState(stored['@theme_flavor'] as ThemeFlavor);
+                if (stored['@sync_enabled'] !== null) setSyncEnabledState(stored['@sync_enabled'] === 'true');
 
-                if (storedCat !== null) setShowCategoryState(storedCat === 'true');
-                if (storedChgPct !== null) setShowChangePercentState(storedChgPct === 'true');
-                if (storedChgAbs !== null) setShowChangeAbsState(storedChgAbs === 'true');
-                if (storedDate !== null) setShowDateState(storedDate === 'true');
-                if (storedUnit !== null) setShowUnitState(storedUnit === 'true');
-                if (storedFont) setFontScaleState(storedFont as FontScale);
-                if (storedDensity) setDensityState(storedDensity as Density);
-                if (storedMarket) setMarketThemeState(storedMarket as MarketTheme);
+                if (stored['@show_cat'] !== null) setShowCategoryState(stored['@show_cat'] === 'true');
+                if (stored['@show_chg_pct'] !== null) setShowChangePercentState(stored['@show_chg_pct'] === 'true');
+                if (stored['@show_chg_abs'] !== null) setShowChangeAbsState(stored['@show_chg_abs'] === 'true');
+                if (stored['@show_date'] !== null) setShowDateState(stored['@show_date'] === 'true');
+                if (stored['@show_unit'] !== null) setShowUnitState(stored['@show_unit'] === 'true');
+                if (stored['@font_scale']) setFontScaleState(stored['@font_scale'] as FontScale);
+                if (stored['@density']) setDensityState(stored['@density'] as Density);
+                if (stored['@market_theme']) setMarketThemeState(stored['@market_theme'] as MarketTheme);
             } catch (e) {
                 console.error("Failed to load settings from AsyncStorage", e);
             }
