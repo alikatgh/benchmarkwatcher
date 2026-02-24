@@ -11,7 +11,11 @@ export type IconName =
     | 'grid'
     | 'list'
     | 'settings'
-    | 'back';
+    | 'back'
+    | 'compare'
+    | 'close'
+    | 'camera'
+    | 'check';
 
 interface IconProps {
     name: IconName;
@@ -70,6 +74,23 @@ export default function Icon({ name, size = 24, color = 'currentColor', classNam
                 );
             case 'back':
                 return <Path d="M19 12H5M12 19l-7-7 7-7" />;
+            case 'compare':
+                return (
+                    <>
+                        <Path d="M18 20V10M12 20V4M6 20v-6" />
+                    </>
+                );
+            case 'close':
+                return <Path d="M18 6L6 18M6 6l12 12" />;
+            case 'camera':
+                return (
+                    <>
+                        <Path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" />
+                        <Circle cx="12" cy="13" r="4" />
+                    </>
+                );
+            case 'check':
+                return <Path d="M20 6L9 17l-5-5" />;
             default:
                 return null;
         }

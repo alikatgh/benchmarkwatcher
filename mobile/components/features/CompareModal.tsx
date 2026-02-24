@@ -1,0 +1,174 @@
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, Modal, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
+import { SettingsContext } from '../../context/SettingsContext';
+import { Commodity, ComparisonSeries } from '../../types/commodity';
+import { fetchCommodities } from '../../api/commodities';
+import Icon from '../ui/Icon';
+
+const COMPARISON_COLORS = [
+    '#e11d48', '#8b5cf6', '#f59e0b', '#06b6d4',
+    '#84cc16', '#ec4899', '#14b8a6', '#f97316',
+];
+
+const MAX_COMPARISONS = 4;
+
+interface CompareModalProps {
+    visible: boolean;
+    onClose: () => void;
+    currentCommodityId: string;
+    comparisons: ComparisonSeries[];
+    onToggleCommodity: (commodity: Commodity) => void;
+    onClearAll: () => void;
+}
+
+export default function CompareModal({
+    visible, onClose, currentCommodityId,
+    comparisons, onToggleCommodity, onClearAll,
+}: CompareModalProps) {
+    const { isDarkMode } = useContext(SettingsContext);
+    const [search, setSearch] = useState('');
+    const [commodities, setCommodities] = useState<Commodity[]>([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!visible) return;
+        const load = async () => {
+            setLoading(true);
+            try {
+                const data = await fetchCommodities('all', 'name', 'asc', '1W');
+                setCommodities(data.filter(c => c.id !== currentCommodityId));
+            } catch {
+                setCommodities([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+        load();
+    }, [visible, currentCommodityId]);
+
+    const filtered = search.trim()
+        ? commodities.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+        : commodities;
+
+    // Group by category
+    const grouped = filtered.reduce<Record<string, Commodity[]>>((acc, c) => {
+        const cat = c.category || 'Other';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(c);
+        return acc;
+    }, {});
+
+    const isSelected = (id: string) => comparisons.some(c => c.id === id);
+    const getColor = (id: string) => comparisons.find(c => c.id === id)?.color;
+    const atLimit = comparisons.length >= MAX_COMPARISONS;
+
+    return (
+        <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+            <View className="flex-1 bg-white dark:bg-slate-900">
+                {/* Header */}
+                <View className="flex-row items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <Text className="text-lg font-bold text-slate-900 dark:text-white">Compare Commodities</Text>
+                    <TouchableOpacity onPress={onClose} className="p-2">
+                        <Icon name="close" size={20} color={isDarkMode ? '#94a3b8' : '#475569'} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Search */}
+                <View className="px-5 pt-3 pb-2">
+                    <View className="flex-row items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5">
+                        <Icon name="search" size={16} color="#94a3b8" />
+                        <TextInput
+                            value={search}
+                            onChangeText={setSearch}
+                            placeholder="Search commodities..."
+                            placeholderTextColor="#94a3b8"
+                            className="flex-1 ml-2 text-sm text-slate-900 dark:text-white"
+                        />
+                    </View>
+                    {comparisons.length > 0 && (
+                        <View className="flex-row items-center justify-between mt-3">
+                            <Text className="text-xs text-slate-500 dark:text-slate-400">
+                                {comparisons.length}/{MAX_COMPARISONS} selected
+                            </Text>
+                            <TouchableOpacity onPress={onClearAll}>
+                                <Text className="text-xs font-bold text-rose-500">Clear All</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+                </View>
+
+                {/* Active comparison tags */}
+                {comparisons.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 pb-3">
+                        <View className="flex-row gap-2">
+                            {comparisons.map(comp => (
+                                <TouchableOpacity
+                                    key={comp.id}
+                                    onPress={() => {
+                                        const commodity = commodities.find(c => c.id === comp.id);
+                                        if (commodity) onToggleCommodity(commodity);
+                                    }}
+                                    className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
+                                >
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: comp.color }} />
+                                    <Text className="text-xs font-medium text-slate-700 dark:text-slate-300" numberOfLines={1}>
+                                        {comp.name}
+                                    </Text>
+                                    <Text className="text-xs text-slate-400 ml-0.5">&times;</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </ScrollView>
+                )}
+
+                {/* Commodity List */}
+                {loading ? (
+                    <View className="flex-1 items-center justify-center">
+                        <ActivityIndicator size="large" color="#3b82f6" />
+                    </View>
+                ) : (
+                    <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 40 }}>
+                        {Object.entries(grouped).map(([category, items]) => (
+                            <View key={category} className="mb-4">
+                                <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 mt-2">
+                                    {category}
+                                </Text>
+                                {items.map(commodity => {
+                                    const selected = isSelected(commodity.id);
+                                    const disabled = !selected && atLimit;
+                                    return (
+                                        <TouchableOpacity
+                                            key={commodity.id}
+                                            onPress={() => !disabled && onToggleCommodity(commodity)}
+                                            disabled={disabled}
+                                            className={`flex-row items-center justify-between py-3 px-3 rounded-lg mb-1 ${selected ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${disabled ? 'opacity-40' : ''}`}
+                                        >
+                                            <View className="flex-row items-center gap-3 flex-1">
+                                                {selected && (
+                                                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: getColor(commodity.id) }} />
+                                                )}
+                                                <Text className={`text-sm font-medium ${selected ? 'text-blue-700 dark:text-blue-300' : 'text-slate-800 dark:text-white'}`} numberOfLines={1}>
+                                                    {commodity.name}
+                                                </Text>
+                                            </View>
+                                            <View className="flex-row items-center gap-2">
+                                                <Text className="text-xs text-slate-400 dark:text-slate-500">
+                                                    {commodity.price} {commodity.currency}
+                                                </Text>
+                                                {selected && (
+                                                    <Icon name="check" size={16} color="#3b82f6" />
+                                                )}
+                                            </View>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </View>
+                        ))}
+                    </ScrollView>
+                )}
+            </View>
+        </Modal>
+    );
+}
+
+export { COMPARISON_COLORS, MAX_COMPARISONS };

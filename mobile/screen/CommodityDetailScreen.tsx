@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
+import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -7,15 +7,18 @@ import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
 import { RootStackParamList } from '../App';
 import { fetchCommodityDetail } from '../api/commodities';
-import { Commodity } from '../types/commodity';
+import { Commodity, ComparisonSeries } from '../types/commodity';
 import { SettingsContext } from '../context/SettingsContext';
 import { ChartPoint, SelectedChartPoint } from '../components/features/SVGLineChart';
+import { COMPARISON_COLORS, MAX_COMPARISONS } from '../components/features/CompareModal';
 
 import CommodityHeader from '../components/features/CommodityHeader';
 import CommodityDataSourceBlock from '../components/features/CommodityDataSourceBlock';
 import CommodityStatsBar from '../components/features/CommodityStatsBar';
 import CommodityChartSection from '../components/features/CommodityChartSection';
 import CommodityChartControls from '../components/features/CommodityChartControls';
+import ChartSettingsModal from '../components/features/ChartSettingsModal';
+import CompareModal from '../components/features/CompareModal';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CommodityDetail'>;
 
@@ -27,16 +30,20 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [smoothCurve, setSmoothCurve] = useState(true);
-    const [fillArea, setFillArea] = useState(false);
-    const [hideGrid, setHideGrid] = useState(false);
-    const [autoFitBounds, setAutoFitBounds] = useState(true);
-    const [zoomLevel, setZoomLevel] = useState(1);
     const [selectedPoint, setSelectedPoint] = useState<SelectedChartPoint | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(1);
 
     const [selectedRange, setSelectedRange] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M');
     const [viewMode, setViewMode] = useState<'price' | 'percent'>('price');
     const chartRef = useRef<ViewShot>(null);
+
+    // Modals
+    const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+    const [compareModalVisible, setCompareModalVisible] = useState(false);
+
+    // Comparison state
+    const [comparisons, setComparisons] = useState<ComparisonSeries[]>([]);
+    const [colorIndex, setColorIndex] = useState(0);
 
     useEffect(() => {
         const loadDetail = async () => {
@@ -52,14 +59,44 @@ export default function CommodityDetailScreen({ route }: Props) {
         loadDetail();
     }, [initialCommodity.id]);
 
-    const { getMarketColors } = useContext(SettingsContext);
+    const { getMarketColors, chartSettings } = useContext(SettingsContext);
 
     const isUp = (commodity.change ?? 0) >= 0;
     const { textColor: changeColor, bgColor: changeBg, badgeColor, chartColor } = getMarketColors(isUp);
     const positiveColor = getMarketColors(true).textColor;
     const negativeColor = getMarketColors(false).textColor;
 
-    // Prepare chart data: returns {chartPoints, rawSlice} or null
+    // Comparison handlers
+    const handleToggleCommodity = useCallback(async (comp: Commodity) => {
+        const existing = comparisons.find(c => c.id === comp.id);
+        if (existing) {
+            setComparisons(prev => prev.filter(c => c.id !== comp.id));
+            return;
+        }
+        if (comparisons.length >= MAX_COMPARISONS) return;
+
+        try {
+            const detail = await fetchCommodityDetail(comp.id);
+            const history = (detail as any).history || [];
+            const newColor = COMPARISON_COLORS[colorIndex % COMPARISON_COLORS.length];
+            setColorIndex(prev => prev + 1);
+            setComparisons(prev => [...prev, {
+                id: comp.id,
+                name: comp.name,
+                color: newColor,
+                history,
+            }]);
+        } catch {
+            // silently fail
+        }
+    }, [comparisons, colorIndex]);
+
+    const handleClearComparisons = useCallback(() => {
+        setComparisons([]);
+        setColorIndex(0);
+    }, []);
+
+    // Prepare chart data
     const getChartData = () => {
         const history: any[] | undefined = commodity.history;
         if (!history || history.length === 0) return null;
@@ -74,7 +111,6 @@ export default function CommodityDetailScreen({ route }: Props) {
             case 'ALL': pointsCount = history.length; break;
         }
 
-        // Guard: filter out entries with invalid prices
         const rawSlice = history
             .slice(-pointsCount)
             .filter((p: any) => p && typeof p.price === 'number' && !isNaN(p.price));
@@ -104,7 +140,17 @@ export default function CommodityDetailScreen({ route }: Props) {
         ? Math.max(screenWidth, chartPoints.length * (zoomLevel > 1 ? 20 * zoomLevel : 10))
         : screenWidth;
 
-    // Stats over the current visible window (raw prices)
+    // Filter comparison histories to match visible date range
+    const visibleComparisons = comparisons.map(comp => {
+        if (!rawSlice || rawSlice.length === 0) return comp;
+        const startDate = rawSlice[0].date;
+        const endDate = rawSlice[rawSlice.length - 1].date;
+        return {
+            ...comp,
+            history: comp.history.filter(h => h.date >= startDate && h.date <= endDate),
+        };
+    });
+
     const getStats = () => {
         if (!rawSlice || rawSlice.length === 0) return null;
         const prices = rawSlice.map((p: any) => p.price as number);
@@ -157,19 +203,47 @@ export default function CommodityDetailScreen({ route }: Props) {
                     negativeColor={negativeColor}
                 />
 
+                {/* Active comparison tags */}
+                {comparisons.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 mb-3">
+                        <View className="flex-row gap-2">
+                            {comparisons.map(comp => (
+                                <TouchableOpacity
+                                    key={comp.id}
+                                    onPress={() => setComparisons(prev => prev.filter(c => c.id !== comp.id))}
+                                    className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
+                                >
+                                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: comp.color }} />
+                                    <Text className="text-xs font-medium text-slate-700 dark:text-slate-300" numberOfLines={1}>
+                                        {comp.name}
+                                    </Text>
+                                    <Text className="text-xs text-slate-400 ml-0.5">&times;</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </ScrollView>
+                )}
+
                 <CommodityChartSection
                     loading={loading}
                     error={error}
                     chartPoints={chartPoints}
                     chartWidth={chartWidth}
-                    autoFitBounds={autoFitBounds}
-                    hideGrid={hideGrid}
-                    fillArea={fillArea}
-                    smoothCurve={smoothCurve}
+                    autoFitBounds={chartSettings.chartAutoFitBounds}
+                    hideGrid={!chartSettings.chartGridVisible}
+                    fillArea={chartSettings.chartFillEnabled}
+                    smoothCurve={chartSettings.chartSmoothCurve}
                     color={chartColor}
                     selectedPoint={selectedPoint}
                     setSelectedPoint={setSelectedPoint}
                     chartRef={chartRef}
+                    comparisons={visibleComparisons}
+                    viewMode={viewMode}
+                    primaryName={commodity.name}
+                    lineColor={chartSettings.chartLineColor}
+                    fillColor={chartSettings.chartFillColor}
+                    fillOpacity={chartSettings.chartFillOpacity}
+                    gridColor={chartSettings.chartGridColor}
                 />
 
                 <CommodityChartControls
@@ -180,18 +254,9 @@ export default function CommodityDetailScreen({ route }: Props) {
                     setSelectedRange={setSelectedRange as any}
                     viewMode={viewMode}
                     setViewMode={setViewMode}
-                    smoothCurve={smoothCurve}
-                    setSmoothCurve={setSmoothCurve}
-                    fillArea={fillArea}
-                    setFillArea={setFillArea}
-                    hideGrid={hideGrid}
-                    setHideGrid={setHideGrid}
-                    autoFitBounds={autoFitBounds}
-                    setAutoFitBounds={setAutoFitBounds}
-                    zoomLevel={zoomLevel}
-                    setZoomLevel={setZoomLevel}
-                    setSelectedPoint={setSelectedPoint}
                     onExport={handleExport}
+                    onOpenSettings={() => setSettingsModalVisible(true)}
+                    onOpenCompare={() => setCompareModalVisible(true)}
                 />
 
                 {/* Details Section */}
@@ -237,6 +302,20 @@ export default function CommodityDetailScreen({ route }: Props) {
                 </View>
 
             </ScrollView>
+
+            {/* Modals */}
+            <ChartSettingsModal
+                visible={settingsModalVisible}
+                onClose={() => setSettingsModalVisible(false)}
+            />
+            <CompareModal
+                visible={compareModalVisible}
+                onClose={() => setCompareModalVisible(false)}
+                currentCommodityId={commodity.id}
+                comparisons={comparisons}
+                onToggleCommodity={handleToggleCommodity}
+                onClearAll={handleClearComparisons}
+            />
         </SafeAreaView>
     );
 }

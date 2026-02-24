@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ActivityIndicator, ScrollView } from 'react-native';
 import ViewShot from 'react-native-view-shot';
 import SVGLineChart, { ChartPoint, SelectedChartPoint } from './SVGLineChart';
+import { ComparisonSeries } from '../../types/commodity';
 
 interface CommodityChartSectionProps {
     loading: boolean;
@@ -16,12 +17,22 @@ interface CommodityChartSectionProps {
     selectedPoint: SelectedChartPoint | null;
     setSelectedPoint: (point: SelectedChartPoint | null) => void;
     chartRef: React.RefObject<ViewShot | null>;
+    // New props
+    comparisons?: ComparisonSeries[];
+    viewMode?: 'price' | 'percent';
+    primaryName?: string;
+    lineColor?: string;
+    fillColor?: string;
+    fillOpacity?: number;
+    gridColor?: string;
 }
 
 export default function CommodityChartSection({
     loading, error, chartPoints, chartWidth,
     autoFitBounds, hideGrid, fillArea, smoothCurve,
-    color, selectedPoint, setSelectedPoint, chartRef
+    color, selectedPoint, setSelectedPoint, chartRef,
+    comparisons, viewMode, primaryName,
+    lineColor, fillColor, fillOpacity, gridColor,
 }: CommodityChartSectionProps) {
     return (
         <View className="mb-6">
@@ -47,6 +58,13 @@ export default function CommodityChartSection({
                             autoFitBounds={autoFitBounds}
                             selectedPoint={selectedPoint}
                             onSelectPoint={setSelectedPoint}
+                            comparisons={comparisons}
+                            viewMode={viewMode}
+                            primaryName={primaryName}
+                            lineColor={lineColor}
+                            fillColor={fillColor}
+                            fillOpacity={fillOpacity}
+                            gridColor={gridColor}
                         />
                     </ScrollView>
                 </ViewShot>
