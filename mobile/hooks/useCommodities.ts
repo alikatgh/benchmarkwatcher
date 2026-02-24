@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AppState } from 'react-native';
 import { fetchCommodities } from '../api/commodities';
+import { sortCommodities } from '../utils/sortUtils';
 import { Commodity } from '../types/commodity';
 
 interface UseCommoditiesParams {
@@ -10,6 +11,12 @@ interface UseCommoditiesParams {
     selectedRange: string;
     sortMethod: string;
     sortOrder: string;
+}
+
+function getLatestDate(commodities: Commodity[]): string | undefined {
+    const dates = commodities.map(c => c.date).filter(Boolean);
+    if (dates.length === 0) return undefined;
+    return dates.sort().at(-1);
 }
 
 export function useCommodities({
@@ -27,24 +34,43 @@ export function useCommodities({
     const [lastFetchTime, setLastFetchTime] = useState<string | null>(null);
 
     const appState = useRef(AppState.currentState);
+    // Ref so loadData can read current data without stale closure
+    const dataRef = useRef<Commodity[]>([]);
+    useEffect(() => { dataRef.current = data; }, [data]);
 
     const loadData = useCallback(async (isRefresh = false) => {
         if (!isRefresh) setLoading(true);
         try {
             const apiCat = selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase();
-            const result = await fetchCommodities(apiCat, sortMethod, sortOrder, selectedRange);
-            setData(result);
+            // On background/pull-to-refresh, only fetch commodities newer than what we have
+            const since = isRefresh ? getLatestDate(dataRef.current) : undefined;
+            const result = await fetchCommodities(apiCat, sortMethod, sortOrder, selectedRange, since);
+
+            if (since && result.length > 0) {
+                // Partial refresh: merge updated commodities into existing list
+                setData(prev => {
+                    const map = new Map(prev.map(c => [c.id, c]));
+                    result.forEach(c => map.set(c.id, c));
+                    return sortCommodities(Array.from(map.values()), sortMethod, sortOrder);
+                });
+            } else if (!since) {
+                // Full fetch (initial load or first sync with empty cache)
+                setData(result);
+            }
+            // If since was set but result is empty: no new data, keep existing unchanged
+
             setLastFetchTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
             setError(null);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch data');
         } finally {
-            setLoading(false);
+            // Only reset the full loading spinner when it was set (non-refresh path)
+            if (!isRefresh) setLoading(false);
             setRefreshing(false);
         }
     }, [selectedCategory, sortMethod, sortOrder, selectedRange]);
 
-    // Initial Load & Filter Changes
+    // Initial Load & Filter/Sort Changes
     useEffect(() => {
         loadData();
     }, [loadData]);
@@ -64,7 +90,7 @@ export function useCommodities({
         if (syncEnabled) {
             intervalId = setInterval(() => {
                 loadData(true);
-            }, 30000); // 30s as requested by sync requirements
+            }, 30000);
         }
 
         const subscription = AppState.addEventListener('change', nextAppState => {

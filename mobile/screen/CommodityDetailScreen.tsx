@@ -9,6 +9,7 @@ import { RootStackParamList } from '../App';
 import { fetchCommodityDetail } from '../api/commodities';
 import { Commodity } from '../types/commodity';
 import { SettingsContext } from '../context/SettingsContext';
+import { ChartPoint, SelectedChartPoint } from '../components/features/SVGLineChart';
 
 import CommodityHeader from '../components/features/CommodityHeader';
 import CommodityDataSourceBlock from '../components/features/CommodityDataSourceBlock';
@@ -26,15 +27,13 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Chart Settings State
     const [smoothCurve, setSmoothCurve] = useState(true);
     const [fillArea, setFillArea] = useState(false);
     const [hideGrid, setHideGrid] = useState(false);
     const [autoFitBounds, setAutoFitBounds] = useState(true);
     const [zoomLevel, setZoomLevel] = useState(1);
-    const [selectedPoint, setSelectedPoint] = useState<{ index: number, value: number, x: number, y: number, date: string } | null>(null);
+    const [selectedPoint, setSelectedPoint] = useState<SelectedChartPoint | null>(null);
 
-    // New Features State
     const [selectedRange, setSelectedRange] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M');
     const [viewMode, setViewMode] = useState<'price' | 'percent'>('price');
     const chartRef = useRef<ViewShot>(null);
@@ -55,69 +54,63 @@ export default function CommodityDetailScreen({ route }: Props) {
 
     const { getMarketColors } = useContext(SettingsContext);
 
-    const isUp = commodity.change >= 0;
+    const isUp = (commodity.change ?? 0) >= 0;
     const { textColor: changeColor, bgColor: changeBg, badgeColor, chartColor } = getMarketColors(isUp);
     const positiveColor = getMarketColors(true).textColor;
     const negativeColor = getMarketColors(false).textColor;
 
-    // Prepare chart data
+    // Prepare chart data: returns {chartPoints, rawSlice} or null
     const getChartData = () => {
-        if (!commodity.history || commodity.history.length === 0) return null;
+        const history: any[] | undefined = commodity.history;
+        if (!history || history.length === 0) return null;
 
-        let pointsCount = commodity.history.length;
+        let pointsCount = history.length;
         switch (selectedRange) {
             case '1W': pointsCount = 7; break;
             case '1M': pointsCount = 30; break;
             case '3M': pointsCount = 90; break;
             case '6M': pointsCount = 180; break;
             case '1Y': pointsCount = 365; break;
-            case 'ALL': pointsCount = commodity.history.length; break;
+            case 'ALL': pointsCount = history.length; break;
         }
 
-        const chartPoints = commodity.history.slice(-pointsCount);
-        if (chartPoints.length === 0) return null;
+        // Guard: filter out entries with invalid prices
+        const rawSlice = history
+            .slice(-pointsCount)
+            .filter((p: any) => p && typeof p.price === 'number' && !isNaN(p.price));
 
-        const basePrice = chartPoints[0].price;
+        if (rawSlice.length === 0) return null;
 
-        const dataPoints = chartPoints.map((p: any) => {
-            if (viewMode === 'percent') {
-                return ((p.price - basePrice) / basePrice) * 100;
-            }
-            return p.price;
-        });
+        const basePrice = rawSlice[0].price;
+        const labelStep = Math.ceil(rawSlice.length / 6);
 
-        // Downsample labels for cleaner x-axis if there are many points
-        const labelStep = Math.ceil(chartPoints.length / 6);
-        const labels = chartPoints.map((p: any, i: number) =>
-            (i === 0 || i === chartPoints.length - 1 || i % labelStep === 0) ? p.date.substring(5) : ''
-        );
+        const chartPoints: ChartPoint[] = rawSlice.map((p: any, i: number) => ({
+            value: viewMode === 'percent'
+                ? ((p.price - basePrice) / basePrice) * 100
+                : p.price,
+            date: p.date ?? '',
+            label: (i === 0 || i === rawSlice.length - 1 || i % labelStep === 0)
+                ? (p.date ?? '').substring(5)
+                : '',
+        }));
 
-        return {
-            labels,
-            points: chartPoints, // Keep raw points for stats/tooltip
-            data: dataPoints,
-            datasets: [
-                {
-                    data: dataPoints,
-                    color: (opacity = 1) => `rgba(${chartColor}, ${opacity})`,
-                    strokeWidth: 2
-                }
-            ],
-            legend: [viewMode === 'percent' ? "% Change" : "Price History"]
-        };
+        return { chartPoints, rawSlice };
     };
 
-    const chartDataObj = getChartData();
-    const chartData = chartDataObj ? { labels: chartDataObj.labels, datasets: chartDataObj.datasets, legend: chartDataObj.legend } : null;
-    const chartWidth = chartData ? Math.max(screenWidth, chartData.labels.length * (zoomLevel > 1 ? 20 * zoomLevel : 10)) : screenWidth;
+    const chartDataResult = getChartData();
+    const chartPoints = chartDataResult?.chartPoints ?? null;
+    const rawSlice = chartDataResult?.rawSlice ?? null;
+    const chartWidth = chartPoints
+        ? Math.max(screenWidth, chartPoints.length * (zoomLevel > 1 ? 20 * zoomLevel : 10))
+        : screenWidth;
 
-    // Dynamic Stats Calculation
+    // Stats over the current visible window (raw prices)
     const getStats = () => {
-        if (!chartDataObj || chartDataObj.points.length === 0) return null;
-        const prices = chartDataObj.points.map((p: any) => p.price);
+        if (!rawSlice || rawSlice.length === 0) return null;
+        const prices = rawSlice.map((p: any) => p.price as number);
         const high = Math.max(...prices);
         const low = Math.min(...prices);
-        const avg = prices.reduce((a: number, b: number) => a + b, 0) / prices.length;
+        const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
         return { high, low, avg, range: high - low, count: prices.length };
     };
     const stats = getStats();
@@ -126,14 +119,22 @@ export default function CommodityDetailScreen({ route }: Props) {
         await Clipboard.setStringAsync(`${commodity.price} ${commodity.currency}`);
     };
 
-    const handleDownloadChart = async () => {
-        if (chartRef.current && chartRef.current.capture) {
-            try {
-                const uri = await chartRef.current.capture();
-                await Sharing.shareAsync(uri, { dialogTitle: 'Share Chart', mimeType: 'image/png' });
-            } catch (err) {
-                console.error('Failed to capture and share chart:', err);
+    const handleExport = async (format: 'image' | 'csv') => {
+        if (format === 'image') {
+            if (chartRef.current && chartRef.current.capture) {
+                try {
+                    const uri = await chartRef.current.capture();
+                    await Sharing.shareAsync(uri, { dialogTitle: 'Share Chart', mimeType: 'image/png' });
+                } catch (err) {
+                    console.error('Failed to capture and share chart:', err);
+                }
             }
+        } else if (format === 'csv') {
+            if (!rawSlice || rawSlice.length === 0) return;
+            const header = `Date,Price (${commodity.currency || 'USD'})`;
+            const rows = rawSlice.map((p: any) => `${p.date},${p.price}`);
+            const csv = [header, ...rows].join('\n');
+            await Clipboard.setStringAsync(csv);
         }
     };
 
@@ -159,13 +160,13 @@ export default function CommodityDetailScreen({ route }: Props) {
                 <CommodityChartSection
                     loading={loading}
                     error={error}
-                    chartData={chartData}
+                    chartPoints={chartPoints}
                     chartWidth={chartWidth}
                     autoFitBounds={autoFitBounds}
                     hideGrid={hideGrid}
                     fillArea={fillArea}
                     smoothCurve={smoothCurve}
-                    changeColor={changeColor}
+                    color={chartColor}
                     selectedPoint={selectedPoint}
                     setSelectedPoint={setSelectedPoint}
                     chartRef={chartRef}
@@ -174,7 +175,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                 <CommodityChartControls
                     loading={loading}
                     error={error}
-                    chartData={chartData}
+                    chartData={chartPoints}
                     selectedRange={selectedRange as any}
                     setSelectedRange={setSelectedRange as any}
                     viewMode={viewMode}
@@ -190,7 +191,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                     zoomLevel={zoomLevel}
                     setZoomLevel={setZoomLevel}
                     setSelectedPoint={setSelectedPoint}
-                    handleDownloadChart={handleDownloadChart}
+                    onExport={handleExport}
                 />
 
                 {/* Details Section */}
@@ -203,7 +204,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                         <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
                             <Text className="text-slate-500 dark:text-slate-400">Absolute Change</Text>
                             <Text className={`font-bold ${changeColor}`}>
-                                {isUp ? '+' : ''}{commodity.change}
+                                {isUp ? '+' : ''}{commodity.change ?? 0}
                             </Text>
                         </View>
                         <View className="flex-row justify-between">
@@ -214,14 +215,14 @@ export default function CommodityDetailScreen({ route }: Props) {
                             <>
                                 <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                                     <Text className="text-slate-500 dark:text-slate-400">30D Return</Text>
-                                    <Text className={`font-bold ${commodity.derived_stats.pct_30d !== undefined ? (commodity.derived_stats.pct_30d >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
-                                        {commodity.derived_stats.pct_30d !== undefined ? `${commodity.derived_stats.pct_30d > 0 ? '+' : ''}${commodity.derived_stats.pct_30d.toFixed(2)}%` : 'N/A'}
+                                    <Text className={`font-bold ${commodity.derived_stats.pct_30d != null ? (commodity.derived_stats.pct_30d >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
+                                        {commodity.derived_stats.pct_30d != null ? `${commodity.derived_stats.pct_30d > 0 ? '+' : ''}${commodity.derived_stats.pct_30d.toFixed(2)}%` : 'N/A'}
                                     </Text>
                                 </View>
                                 <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
                                     <Text className="text-slate-500 dark:text-slate-400">1Y Return</Text>
-                                    <Text className={`font-bold ${commodity.derived_stats.pct_1y !== undefined ? (commodity.derived_stats.pct_1y >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
-                                        {commodity.derived_stats.pct_1y !== undefined ? `${commodity.derived_stats.pct_1y > 0 ? '+' : ''}${commodity.derived_stats.pct_1y.toFixed(2)}%` : 'N/A'}
+                                    <Text className={`font-bold ${commodity.derived_stats.pct_1y != null ? (commodity.derived_stats.pct_1y >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
+                                        {commodity.derived_stats.pct_1y != null ? `${commodity.derived_stats.pct_1y > 0 ? '+' : ''}${commodity.derived_stats.pct_1y.toFixed(2)}%` : 'N/A'}
                                     </Text>
                                 </View>
                                 <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">

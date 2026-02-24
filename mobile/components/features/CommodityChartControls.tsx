@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Modal, Pressable } from 'react-native';
 import Icon from '../ui/Icon';
 
 type RangeType = '1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL';
@@ -24,7 +24,7 @@ interface CommodityChartControlsProps {
     zoomLevel: number;
     setZoomLevel: (v: number | ((prev: number) => number)) => void;
     setSelectedPoint: (p: any) => void;
-    handleDownloadChart: () => void;
+    onExport: (format: 'image' | 'csv') => void;
 }
 
 export default function CommodityChartControls({
@@ -37,8 +37,9 @@ export default function CommodityChartControls({
     autoFitBounds, setAutoFitBounds,
     zoomLevel, setZoomLevel,
     setSelectedPoint,
-    handleDownloadChart
+    onExport,
 }: CommodityChartControlsProps) {
+    const [showExportMenu, setShowExportMenu] = useState(false);
 
     if (loading || error || !chartData) return null;
 
@@ -128,13 +129,48 @@ export default function CommodityChartControls({
                     </TouchableOpacity>
                 )}
                 <TouchableOpacity
-                    onPress={handleDownloadChart}
+                    onPress={() => setShowExportMenu(true)}
                     className={`px-3 py-1.5 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 flex-row items-center gap-1.5`}
                 >
                     <Icon name="download" size={14} className="text-blue-600 dark:text-blue-400" />
-                    <Text className={`text-xs font-medium text-blue-600 dark:text-blue-400`}>Download PNG</Text>
+                    <Text className={`text-xs font-medium text-blue-600 dark:text-blue-400`}>Download</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* Export Format Sheet */}
+            <Modal
+                animationType="fade"
+                transparent
+                visible={showExportMenu}
+                onRequestClose={() => setShowExportMenu(false)}
+            >
+                <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setShowExportMenu(false)}>
+                    <View className="bg-white dark:bg-slate-900 rounded-t-2xl px-5 pt-4 pb-8">
+                        <Text className="text-sm font-bold text-slate-900 dark:text-white mb-4 text-center">Download</Text>
+                        {[
+                            { key: 'csv', label: 'CSV', desc: '(data)', icon: 'list' },
+                            { key: 'image', label: 'Image', desc: '(graph)', icon: 'download' },
+                        ].map((opt) => (
+                            <TouchableOpacity
+                                key={opt.key}
+                                onPress={() => { setShowExportMenu(false); onExport(opt.key as 'csv' | 'image'); }}
+                                className="flex-row items-center gap-4 py-3.5 px-2 border-b border-slate-100 dark:border-slate-800"
+                            >
+                                <Icon name={opt.icon as any} size={18} className="text-slate-500 dark:text-slate-400" />
+                                <Text className="text-sm font-medium text-slate-800 dark:text-white">
+                                    {opt.label} <Text className="text-slate-400 dark:text-slate-500 font-normal">{opt.desc}</Text>
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity
+                            onPress={() => setShowExportMenu(false)}
+                            className="mt-4 py-3 items-center bg-slate-100 dark:bg-slate-800 rounded-xl"
+                        >
+                            <Text className="text-sm font-bold text-slate-500 dark:text-slate-400">Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                </Pressable>
+            </Modal>
         </View>
     );
 }

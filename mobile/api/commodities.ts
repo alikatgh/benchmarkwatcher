@@ -2,8 +2,9 @@ import { Commodity } from '../types/commodity';
 import { sortCommodities } from '../utils/sortUtils';
 import { apiClient } from './client';
 
-export async function fetchCommodities(category = 'all', sort = 'priority', order = 'asc', range = '1W'): Promise<Commodity[]> {
-    const endpoint = `/api/commodities?category=${category}&sort=${sort}&order=${order}&range=${range}`;
+export async function fetchCommodities(category = 'all', sort = 'priority', order = 'asc', range = '1W', since?: string): Promise<Commodity[]> {
+    let endpoint = `/api/commodities?category=${category}&sort=${sort}&order=${order}&range=${range}`;
+    if (since) endpoint += `&since=${encodeURIComponent(since)}`;
 
     try {
         const data = await apiClient<Commodity[] | any>(endpoint);
