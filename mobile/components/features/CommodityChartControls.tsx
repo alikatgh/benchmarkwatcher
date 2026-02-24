@@ -13,31 +13,18 @@ interface CommodityChartControlsProps {
     setSelectedRange: (r: RangeType) => void;
     viewMode: ViewModeType;
     setViewMode: (v: ViewModeType) => void;
-    smoothCurve: boolean;
-    setSmoothCurve: (v: boolean) => void;
-    fillArea: boolean;
-    setFillArea: (v: boolean) => void;
-    hideGrid: boolean;
-    setHideGrid: (v: boolean) => void;
-    autoFitBounds: boolean;
-    setAutoFitBounds: (v: boolean) => void;
-    zoomLevel: number;
-    setZoomLevel: (v: number | ((prev: number) => number)) => void;
-    setSelectedPoint: (p: any) => void;
     onExport: (format: 'image' | 'csv') => void;
+    onOpenSettings: () => void;
+    onOpenCompare: () => void;
 }
 
 export default function CommodityChartControls({
     loading, error, chartData,
     selectedRange, setSelectedRange,
     viewMode, setViewMode,
-    smoothCurve, setSmoothCurve,
-    fillArea, setFillArea,
-    hideGrid, setHideGrid,
-    autoFitBounds, setAutoFitBounds,
-    zoomLevel, setZoomLevel,
-    setSelectedPoint,
     onExport,
+    onOpenSettings,
+    onOpenCompare,
 }: CommodityChartControlsProps) {
     const [showExportMenu, setShowExportMenu] = useState(false);
 
@@ -78,62 +65,29 @@ export default function CommodityChartControls({
                 </TouchableOpacity>
             </View>
 
-            <Text className="text-sm font-bold text-slate-900 dark:text-white mb-3">Chart Appearance</Text>
-            <View className="flex-row flex-wrap gap-2">
+            {/* Action Buttons Row: Compare | Settings | Export */}
+            <Text className="text-sm font-bold text-slate-900 dark:text-white mb-3">Actions</Text>
+            <View className="flex-row gap-2">
                 <TouchableOpacity
-                    onPress={() => setSmoothCurve(!smoothCurve)}
-                    className={`px-3 py-1.5 rounded-lg border ${smoothCurve ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
+                    onPress={onOpenCompare}
+                    className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                 >
-                    <Text className={`text-xs font-medium ${smoothCurve ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Smooth Curve</Text>
+                    <Icon name="compare" size={16} color="#6366f1" />
+                    <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">Compare</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                    onPress={() => setFillArea(!fillArea)}
-                    className={`px-3 py-1.5 rounded-lg border ${fillArea ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
+                    onPress={onOpenSettings}
+                    className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                 >
-                    <Text className={`text-xs font-medium ${fillArea ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Fill Area</Text>
+                    <Icon name="settings" size={16} color="#6366f1" />
+                    <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">Settings</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => setHideGrid(!hideGrid)}
-                    className={`px-3 py-1.5 rounded-lg border ${hideGrid ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
-                >
-                    <Text className={`text-xs font-medium ${hideGrid ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Hide Grid</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => setAutoFitBounds(!autoFitBounds)}
-                    className={`px-3 py-1.5 rounded-lg border ${autoFitBounds ? 'bg-blue-100 dark:bg-blue-900/30 border-blue-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
-                >
-                    <Text className={`text-xs font-medium ${autoFitBounds ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>Auto-Fit Bounds</Text>
-                </TouchableOpacity>
-            </View>
-            <View className="flex-row flex-wrap gap-2 mt-3">
-                <TouchableOpacity
-                    onPress={() => setZoomLevel((prev: number) => Math.min(prev + 0.5, 4))}
-                    className={`px-3 py-1.5 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex-row items-center gap-1`}
-                >
-                    <Icon name="zoomIn" size={14} className="text-slate-600 dark:text-slate-400" />
-                    <Text className={`text-xs font-medium text-slate-600 dark:text-slate-400`}>Zoom In</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    onPress={() => setZoomLevel((prev: number) => Math.max(prev - 0.5, 1))}
-                    className={`px-3 py-1.5 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 flex-row items-center gap-1`}
-                >
-                    <Icon name="zoomOut" size={14} className="text-slate-600 dark:text-slate-400" />
-                    <Text className={`text-xs font-medium text-slate-600 dark:text-slate-400`}>Zoom Out</Text>
-                </TouchableOpacity>
-                {zoomLevel > 1 && (
-                    <TouchableOpacity
-                        onPress={() => { setZoomLevel(1); setSelectedPoint(null); }}
-                        className={`px-3 py-1.5 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700`}
-                    >
-                        <Text className={`text-xs font-medium text-slate-600 dark:text-slate-400`}>Reset Zoom</Text>
-                    </TouchableOpacity>
-                )}
                 <TouchableOpacity
                     onPress={() => setShowExportMenu(true)}
-                    className={`px-3 py-1.5 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 flex-row items-center gap-1.5`}
+                    className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                 >
-                    <Icon name="download" size={14} className="text-blue-600 dark:text-blue-400" />
-                    <Text className={`text-xs font-medium text-blue-600 dark:text-blue-400`}>Download</Text>
+                    <Icon name="camera" size={16} color="#3b82f6" />
+                    <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">Export</Text>
                 </TouchableOpacity>
             </View>
 
@@ -146,7 +100,7 @@ export default function CommodityChartControls({
             >
                 <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setShowExportMenu(false)}>
                     <View className="bg-white dark:bg-slate-900 rounded-t-2xl px-5 pt-4 pb-8">
-                        <Text className="text-sm font-bold text-slate-900 dark:text-white mb-4 text-center">Download</Text>
+                        <Text className="text-sm font-bold text-slate-900 dark:text-white mb-4 text-center">Export</Text>
                         {[
                             { key: 'csv', label: 'CSV', desc: '(data)', icon: 'list' },
                             { key: 'image', label: 'Image', desc: '(graph)', icon: 'download' },

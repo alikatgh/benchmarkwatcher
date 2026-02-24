@@ -47,7 +47,22 @@ describe('CommodityCard', () => {
         setShowDate: jest.fn(),
         setShowUnit: jest.fn(),
         setFontScale: jest.fn(),
-        setDensity: jest.fn()
+        setDensity: jest.fn(),
+        chartSettings: {
+            chartTheme: 'default' as const,
+            chartLineColor: '59, 130, 246',
+            chartFillColor: '59, 130, 246',
+            chartFillOpacity: 0.3,
+            chartFillEnabled: false,
+            chartGridVisible: true,
+            chartGridColor: 'rgba(148,163,184,0.25)',
+            chartAnimationEnabled: true,
+            chartLineTension: 0.4,
+            chartSmoothCurve: true,
+            chartAutoFitBounds: true,
+        },
+        updateChartSettings: jest.fn(),
+        resetChartSettings: jest.fn()
     };
 
     beforeEach(() => {

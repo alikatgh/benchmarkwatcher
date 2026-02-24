@@ -1,3 +1,8 @@
+export interface HistoryPoint {
+    date: string;
+    price: number;
+}
+
 export interface Commodity {
     id: string;
     name: string;
@@ -10,12 +15,25 @@ export interface Commodity {
     unit: string;
     date: string;
     prev_date?: string;
+    history?: HistoryPoint[];
+    source_name?: string;
+    source_url?: string;
+    source_type?: string;
+    updated_at?: string;
+    derived?: boolean;
     derived_stats?: {
         pct_30d?: number;
         pct_1y?: number;
         trend?: string;
         volatility_30d?: number;
     };
+}
+
+export interface ComparisonSeries {
+    id: string;
+    name: string;
+    color: string;
+    history: HistoryPoint[];
 }
 
 export interface ApiResponse<T> {

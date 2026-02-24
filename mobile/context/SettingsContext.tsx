@@ -1,11 +1,25 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useColorScheme } from 'nativewind';
 
-import { ThemeFlavor, MarketTheme, SettingsContextType } from '../types/settings';
+import { ThemeFlavor, MarketTheme, SettingsContextType, ChartSettings, ChartThemeName } from '../types/settings';
 
 export type FontScale = 'small' | 'medium' | 'large';
 export type Density = 'compact' | 'cozy' | 'roomy';
+
+const DEFAULT_CHART_SETTINGS: ChartSettings = {
+    chartTheme: 'default',
+    chartLineColor: '59, 130, 246',
+    chartFillColor: '59, 130, 246',
+    chartFillOpacity: 0.3,
+    chartFillEnabled: false,
+    chartGridVisible: true,
+    chartGridColor: 'rgba(148,163,184,0.25)',
+    chartAnimationEnabled: true,
+    chartLineTension: 0.4,
+    chartSmoothCurve: true,
+    chartAutoFitBounds: true,
+};
 
 interface SettingsContextProps extends SettingsContextType {
     getMarketColors: (isUp: boolean) => { textColor: string, bgColor: string, badgeColor: string, chartColor: string };
@@ -36,6 +50,9 @@ export const SettingsContext = createContext<SettingsContextProps>({
     setDensity: () => { },
     marketTheme: 'western',
     setMarketTheme: () => { },
+    chartSettings: DEFAULT_CHART_SETTINGS,
+    updateChartSettings: () => { },
+    resetChartSettings: () => { },
     getMarketColors: () => ({ textColor: '', bgColor: '', badgeColor: '', chartColor: '' })
 });
 
@@ -55,6 +72,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const [fontScale, setFontScaleState] = useState<FontScale>('medium');
     const [density, setDensityState] = useState<Density>('cozy');
     const [marketTheme, setMarketThemeState] = useState<MarketTheme>('western');
+    const [chartSettings, setChartSettingsState] = useState<ChartSettings>(DEFAULT_CHART_SETTINGS);
 
     useEffect(() => {
         // Load all persisted settings in a single multiGet call
@@ -64,7 +82,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
                     '@dark_mode', '@theme_flavor', '@sync_enabled',
                     '@show_cat', '@show_chg_pct', '@show_chg_abs',
                     '@show_date', '@show_unit', '@font_scale',
-                    '@density', '@market_theme',
+                    '@density', '@market_theme', '@chart_settings',
                 ];
                 const pairs = await AsyncStorage.multiGet(keys);
                 const stored = Object.fromEntries(pairs.map(([k, v]) => [k, v]));
@@ -85,6 +103,12 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
                 if (stored['@font_scale']) setFontScaleState(stored['@font_scale'] as FontScale);
                 if (stored['@density']) setDensityState(stored['@density'] as Density);
                 if (stored['@market_theme']) setMarketThemeState(stored['@market_theme'] as MarketTheme);
+                if (stored['@chart_settings']) {
+                    try {
+                        const parsed = JSON.parse(stored['@chart_settings']);
+                        setChartSettingsState({ ...DEFAULT_CHART_SETTINGS, ...parsed });
+                    } catch { }
+                }
             } catch (e) {
                 console.error("Failed to load settings from AsyncStorage", e);
             }
@@ -116,6 +140,19 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
     const setFontScale = async (val: FontScale) => { setFontScaleState(val); await AsyncStorage.setItem('@font_scale', val); };
     const setDensity = async (val: Density) => { setDensityState(val); await AsyncStorage.setItem('@density', val); };
     const setMarketTheme = async (val: MarketTheme) => { setMarketThemeState(val); await AsyncStorage.setItem('@market_theme', val); };
+
+    const updateChartSettings = useCallback(async (updates: Partial<ChartSettings>) => {
+        setChartSettingsState(prev => {
+            const next = { ...prev, ...updates };
+            AsyncStorage.setItem('@chart_settings', JSON.stringify(next));
+            return next;
+        });
+    }, []);
+
+    const resetChartSettings = useCallback(async () => {
+        setChartSettingsState(DEFAULT_CHART_SETTINGS);
+        await AsyncStorage.setItem('@chart_settings', JSON.stringify(DEFAULT_CHART_SETTINGS));
+    }, []);
 
     const getMarketColors = (isUp: boolean) => {
         if (marketTheme === 'asian') {
@@ -161,6 +198,7 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
             fontScale, setFontScale,
             density, setDensity,
             marketTheme, setMarketTheme,
+            chartSettings, updateChartSettings, resetChartSettings,
             getMarketColors
         }}>
             {children}
