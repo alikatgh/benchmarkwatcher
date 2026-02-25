@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description"
         content="BenchmarkWatcher - Historical commodity benchmark reference display. Free, open-source dashboard for oil, gas, metals, and agricultural commodities.">
 
@@ -128,6 +128,12 @@
             --theme-text-muted: #66605c;
             --theme-border: rgba(51, 48, 46, 0.18);
             --theme-accent: #0f5499;
+            --sparkline-line: #0f5499;
+            --sparkline-grad-start: rgba(15, 84, 153, 0.1);
+            --sparkline-grad-end: rgba(15, 84, 153, 0);
+            --sparkline-ma: #990f3d;
+            --market-up: #0d7680;
+            --market-down: #990f3d;
         }
 
         /* Dark Theme (Terminal) */
@@ -139,6 +145,12 @@
             --theme-border: rgba(255, 255, 255, 0.10);
             --theme-accent: #0d7680;
             --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 6px rgba(0, 0, 0, 0.20);
+            --sparkline-line: #1aecff;
+            --sparkline-grad-start: rgba(26, 236, 255, 0.2);
+            --sparkline-grad-end: rgba(26, 236, 255, 0);
+            --sparkline-ma: #ff6b6b;
+            --market-up: #0d7680;
+            --market-down: #990f3d;
         }
 
         /* Mono Light Theme (Black on White) */
@@ -149,6 +161,12 @@
             --theme-text-muted: #555555;
             --theme-border: rgba(0, 0, 0, 0.15);
             --theme-accent: #000000;
+            --sparkline-line: #000000;
+            --sparkline-grad-start: rgba(0, 0, 0, 0.08);
+            --sparkline-grad-end: rgba(0, 0, 0, 0);
+            --sparkline-ma: #555555;
+            --market-up: #333333;
+            --market-down: #666666;
         }
 
         /* Mono Dark Theme (White on Black) */
@@ -159,6 +177,13 @@
             --theme-text-muted: #aaaaaa;
             --theme-border: rgba(255, 255, 255, 0.15);
             --theme-accent: #ffffff;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 6px rgba(0, 0, 0, 0.20);
+            --sparkline-line: #ffffff;
+            --sparkline-grad-start: rgba(255, 255, 255, 0.1);
+            --sparkline-grad-end: rgba(255, 255, 255, 0);
+            --sparkline-ma: #aaaaaa;
+            --market-up: #cccccc;
+            --market-down: #888888;
         }
 
         /* Bloomberg Theme (Trading Terminal) */
@@ -171,6 +196,13 @@
             --theme-accent: #ff9933;
             --theme-positive: #00ff00;
             --theme-negative: #ff3333;
+            --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 6px rgba(0, 0, 0, 0.20);
+            --sparkline-line: #ff9933;
+            --sparkline-grad-start: rgba(255, 153, 51, 0.25);
+            --sparkline-grad-end: rgba(255, 153, 51, 0);
+            --sparkline-ma: #ff5555;
+            --market-up: #00ff00;
+            --market-down: #ff3333;
         }
 
         /* FT Theme (Financial Times Salmon) */
@@ -181,6 +213,12 @@
             --theme-text-muted: #66605c;
             --theme-border: rgba(51, 48, 46, 0.15);
             --theme-accent: #990f3d;
+            --sparkline-line: #990f3d;
+            --sparkline-grad-start: rgba(153, 15, 61, 0.1);
+            --sparkline-grad-end: rgba(153, 15, 61, 0);
+            --sparkline-ma: #0f5499;
+            --market-up: #0d7680;
+            --market-down: #990f3d;
         }
 
 
@@ -236,7 +274,7 @@
         }
 
         .bg-card-warm {
-            background-color: #f2dfce;
+            background-color: var(--theme-surface);
         }
 
         /* Header backgrounds */
@@ -519,6 +557,12 @@
             position: relative;
         }
 
+        /* Touch-friendly tooltip toggle (mobile) */
+        .tooltip-open > .tooltip-content {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
         /* Better Empty State Styling */
         .empty-state {
             display: flex;
@@ -557,12 +601,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.8);
+            background: color-mix(in srgb, var(--theme-bg) 80%, transparent);
             z-index: 10;
-        }
-
-        .dark .loading-overlay {
-            background: rgba(0, 0, 0, 0.6);
         }
 
         @keyframes spin {
@@ -575,9 +615,9 @@
         .skeleton {
             animation: skeleton-pulse 1.5s ease-in-out infinite;
             background: linear-gradient(90deg,
-                    rgba(128, 128, 128, 0.1) 25%,
-                    rgba(128, 128, 128, 0.2) 50%,
-                    rgba(128, 128, 128, 0.1) 75%);
+                    color-mix(in srgb, var(--theme-text-muted) 10%, transparent) 25%,
+                    color-mix(in srgb, var(--theme-text-muted) 20%, transparent) 50%,
+                    color-mix(in srgb, var(--theme-text-muted) 10%, transparent) 75%);
             background-size: 200% 100%;
         }
 
@@ -650,7 +690,7 @@
         }
 
         .dark .view-btn[data-active="true"] {
-            background-color: #333333 !important;
+            background-color: var(--theme-surface) !important;
         }
     </style>
     <script>

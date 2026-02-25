@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-6 sm:py-10 min-h-screen">
+<div class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-10 min-h-screen">
     <!-- Header Row: stacked on mobile, side-by-side on desktop -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
         <!-- Left: Title -->
@@ -19,7 +19,7 @@
 
         <!-- Right: Breadcrumb + Back -->
         <div class="flex flex-col sm:items-end gap-2 shrink-0">
-            <nav aria-label="Breadcrumb" class="font-ui">
+            <nav aria-label="Breadcrumb" class="font-ui hidden sm:block">
                 <ol class="flex items-center gap-2 text-xs text-brand-black-60 dark:text-brand-black-60">
                     <li><a href="{{ url_for('main.index') }}"
                             class="hover:text-brand-oxford dark:hover:text-brand-teal transition-colors">Home</a></li>
@@ -33,7 +33,7 @@
                 </ol>
             </nav>
             <a href="{{ url_for('main.index') }}"
-                class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-brand-oxford dark:text-brand-teal border border-brand-oxford dark:border-brand-teal rounded-lg hover:bg-brand-oxford/10 dark:hover:bg-brand-teal/10 transition-all">
+                class="inline-flex items-center gap-2 px-3 py-1.5 min-h-[44px] text-xs font-bold text-brand-oxford dark:text-brand-teal border border-brand-oxford dark:border-brand-teal rounded-lg hover:bg-brand-oxford/10 dark:hover:bg-brand-teal/10 transition-all">
                 ← Back to Market
             </a>
         </div>
@@ -108,7 +108,7 @@
                         {% set style_bg = 'style="background-color: ' ~ trend_bg ~ ';"' %}
                         {% set style_text = 'style="color: ' ~ trend_color ~ ';"' %}
                         {% set style_bg_badge = 'style="background-color: ' ~ trend_color ~ ';"' %}
-                        <div class="group relative cursor-help">
+                        <div class="group relative cursor-help" onclick="this.classList.toggle('tooltip-open')" role="button" tabindex="0">
                             <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all w-fit" {{
                                 style_bg|safe }}>
                                 <span class="text-lg sm:text-xl font-bold font-ui" {{ style_text|safe }}>
@@ -121,7 +121,7 @@
                             </div>
                             <!-- Tooltip on hover -->
                             <div
-                                class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui">
+                                class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui tooltip-content">
                                 <div class="font-bold mb-2">Price Change Calculation</div>
                                 <div class="space-y-1.5 text-brand-black-60">
                                     <div class="flex justify-between gap-2">
@@ -194,17 +194,17 @@
 
     <!-- Enhanced Chart Section -->
     <div
-        class="mt-12 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 shadow-sm transition-colors duration-500 overflow-hidden">
+        class="mt-6 sm:mt-8 md:mt-12 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 shadow-sm transition-colors duration-500 overflow-hidden">
 
         <!-- Chart Header with Controls -->
-        <div class="p-4 sm:p-6 border-b border-brand-black-60/10 dark:border-white/5">
-            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+        <div class="p-3 sm:p-4 md:p-6 border-b border-brand-black-60/10 dark:border-white/5">
+            <div class="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
                 <!-- Title -->
                 <div class="shrink-0">
                     <h3
-                        class="text-lg sm:text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">
-                        Benchmark Price History</h3>
-                    <p class="text-xs sm:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-1">
+                        class="text-base sm:text-lg md:text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-serif">
+                        Price History</h3>
+                    <p class="text-[11px] sm:text-xs md:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-0.5 sm:mt-1">
                         Daily benchmark price (end-of-day)
                     </p>
                 </div>
@@ -236,7 +236,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M7 12l3-3 3 3 4-4"></path>
                                 </svg>
-                                Line
+                                <span class="hidden sm:inline">Line</span>
                             </button>
                             <button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
                                 class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
@@ -245,14 +245,14 @@
                                     <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
                                     </path>
                                 </svg>
-                                Area
+                                <span class="hidden sm:inline">Area</span>
                             </button>
                         </div>
 
                         <!-- View Mode Selector (Price vs Percent) -->
                         <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
                             <button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
-                                class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
+                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
@@ -262,13 +262,14 @@
                             </button>
                             <button onclick="setViewMode('percent')" id="view-percent"
                                 aria-label="Show percentage change"
-                                class="view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
+                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                                     </path>
                                 </svg>
-                                % Change
+                                <span class="hidden sm:inline">% Change</span>
+                                <span class="sm:hidden">%</span>
                             </button>
                         </div>
                     </div>
@@ -278,43 +279,43 @@
 
         <!-- Price Statistics Bar -->
         <div id="stats-bar"
-            class="px-6 py-4 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
+            class="px-4 sm:px-6 py-3 sm:py-4 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
             <div class="text-[10px] text-brand-black-60 font-ui mb-2 text-center">Based on selected historical window
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 font-ui text-center">
-                <div>
+            <div class="flex overflow-x-auto scrollbar-hide gap-3 sm:gap-4 sm:grid sm:grid-cols-5 font-ui text-center">
+                <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
                     <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         High</div>
-                    <div id="stat-high" class="text-sm font-bold" style="color: var(--color-up);">--</div>
+                    <div id="stat-high" class="text-xs sm:text-sm font-bold whitespace-nowrap" style="color: var(--color-up);">--</div>
                 </div>
-                <div>
+                <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
                     <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Low</div>
-                    <div id="stat-low" class="text-sm font-bold" style="color: var(--color-down);">--</div>
+                    <div id="stat-low" class="text-xs sm:text-sm font-bold whitespace-nowrap" style="color: var(--color-down);">--</div>
                 </div>
-                <div>
+                <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
                     <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Average</div>
-                    <div id="stat-avg" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
+                    <div id="stat-avg" class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
                 </div>
-                <div>
+                <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
                     <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Range</div>
-                    <div id="stat-range" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
+                    <div id="stat-range" class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
                 </div>
-                <div>
+                <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
                     <div class="text-[10px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
-                        Data Points</div>
-                    <div id="stat-points" class="text-sm font-bold text-brand-black-80 dark:text-white">--</div>
+                        Points</div>
+                    <div id="stat-points" class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
                 </div>
             </div>
         </div>
 
         <!-- Chart Container -->
-        <div class="p-4 sm:p-6">
+        <div class="p-3 sm:p-4 md:p-6">
             <!-- Crosshair Info Display — stacks on mobile, 3-cols on sm+ -->
             <div id="crosshair-info"
-                class="hidden mb-4 p-3 sm:p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui overflow-x-auto scrollbar-hide">
+                class="hidden mb-3 sm:mb-4 p-2.5 sm:p-3 md:p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui overflow-x-auto scrollbar-hide">
                 <div class="flex gap-4 sm:gap-6 min-w-max sm:min-w-0 sm:grid sm:grid-cols-3">
                     <!-- Date -->
                     <div class="flex flex-col min-w-0 shrink-0">
@@ -352,32 +353,33 @@
             </div>
 
             <!-- Compare Commodities Bar -->
-            <div id="compare-bar" class="hidden mt-4 p-3 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                <div class="flex items-center gap-2 flex-wrap">
+            <div id="compare-bar" class="hidden mt-3 sm:mt-4 p-2.5 sm:p-3 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui overflow-x-auto scrollbar-hide">
+                <div class="flex items-center gap-2 min-w-max">
                     <span class="text-[10px] font-bold text-brand-black-60 tracking-wider shrink-0">COMPARING:</span>
-                    <div id="compare-tags" class="flex items-center gap-1.5 flex-wrap"></div>
+                    <div id="compare-tags" class="flex items-center gap-1.5"></div>
                 </div>
             </div>
 
-            <!-- Chart Actions — stacks on mobile -->
-            <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between font-ui">
+            <!-- Chart Actions — horizontal scroll on mobile -->
+            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between font-ui">
                 <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
                     <span id="date-range-display">Showing all data</span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
                     <button onclick="resetZoom()" aria-label="Reset chart zoom to default view"
-                        class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
                             </path>
                         </svg>
-                        Reset View
+                        <span class="hidden sm:inline">Reset View</span>
+                        <span class="sm:hidden">Reset</span>
                     </button>
-                    <div class="relative" id="download-menu-container">
+                    <div class="relative shrink-0" id="download-menu-container">
 
                         <button onclick="toggleDownloadMenu()" id="download-menu-btn" aria-label="Download options" aria-expanded="false" aria-haspopup="true"
-                            class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -387,7 +389,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="download-menu" class="hidden absolute right-0 top-full mt-1.5 w-48 bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
+                        <div id="download-menu" class="hidden absolute right-0 bottom-full mb-1.5 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1.5 w-48 bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
                             <button onclick="exportDownload('csv')" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>CSV <span class="text-brand-black-60 dark:text-white/50 font-normal">(data)</span></span>
@@ -407,16 +409,16 @@
                             </button>
                         </div>
                     </div>
-                    <div class="relative" id="compare-menu-container">
+                    <div class="relative shrink-0" id="compare-menu-container">
                         <button onclick="toggleCompareMenu()" id="compare-menu-btn" aria-label="Compare commodities"
-                            class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                             </svg>
                             Compare
                         </button>
-                        <div id="compare-menu" class="hidden absolute right-0 bottom-full mb-1.5 w-64 bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 overflow-hidden">
+                        <div id="compare-menu" class="hidden absolute right-0 bottom-full mb-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 overflow-hidden">
                             <div class="p-2 border-b border-brand-black-60/10 dark:border-white/5">
                                 <input type="text" id="compare-search" placeholder="Search commodities..."
                                     oninput="filterCompareList(this.value)"
@@ -426,7 +428,7 @@
                         </div>
                     </div>
                     <button onclick="openChartSettings()" id="chart-settings-btn"
-                        class="flex-1 sm:flex-none px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
+                        class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
                         title="Chart Settings (S)">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -452,10 +454,10 @@
 
             <!-- Panel Header -->
             <div
-                class="p-4 border-b border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0">
+                class="p-3 sm:p-4 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-4 border-b border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0">
                 <h3 class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">Chart Settings</h3>
                 <button onclick="closeChartSettings()"
-                    class="p-2 rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors"
+                    class="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors"
                     title="Close (Esc)">
                     <svg class="w-5 h-5 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -464,41 +466,41 @@
                 </button>
             </div>
 
-            <!-- Tabs Navigation — scrollable row -->
-            <div class="px-4 pt-3 shrink-0">
-                <div class="flex gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-lg overflow-x-auto scrollbar-hide">
+            <!-- Tabs Navigation — scrollable row with proper touch targets -->
+            <div class="px-3 sm:px-4 pt-3 shrink-0">
+                <div class="flex gap-0.5 sm:gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-lg overflow-x-auto scrollbar-hide">
                     <button onclick="showChartSettingsTab('appearance')" id="tab-appearance"
-                        class="chart-settings-tab px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black">
                         Style
                     </button>
                     <button onclick="showChartSettingsTab('scales')" id="tab-scales"
-                        class="chart-settings-tab px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
                         Axes
                     </button>
                     <button onclick="showChartSettingsTab('statusline')" id="tab-statusline"
-                        class="chart-settings-tab px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
                         Stats
                     </button>
                     <button onclick="showChartSettingsTab('tooltip')" id="tab-tooltip"
-                        class="chart-settings-tab px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
                         Tips
                     </button>
                     <button onclick="showChartSettingsTab('interaction')" id="tab-interaction"
-                        class="chart-settings-tab px-3 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80">
                         Zoom
                     </button>
                 </div>
             </div>
 
             <!-- Tab Contents (Scrollable) -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-0">
+            <div class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-0">
 
                 <!-- APPEARANCE TAB -->
                 <div id="content-appearance" class="chart-settings-content space-y-5">
                     <!-- Preset Themes -->
                     <div>
                         <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-2">PRESET THEMES</div>
-                        <div class="grid grid-cols-5 gap-1.5">
+                        <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                             <button onclick="applyChartTheme('light')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
                                 data-theme="light">
@@ -725,13 +727,13 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Up Color (High)</label>
-                                <input type="color" id="setting-upColor" value="#00a878"
+                                <input type="color" id="setting-upColor" value="#0d7680"
                                     onchange="updateChartSetting('upColor', this.value)"
                                     class="w-full h-9 rounded-lg cursor-pointer border border-brand-black-60/20">
                             </div>
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Down Color (Low)</label>
-                                <input type="color" id="setting-downColor" value="#c23b22"
+                                <input type="color" id="setting-downColor" value="#990f3d"
                                     onchange="updateChartSetting('downColor', this.value)"
                                     class="w-full h-9 rounded-lg cursor-pointer border border-brand-black-60/20">
                             </div>
@@ -769,13 +771,13 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Background</label>
-                                <input type="color" id="setting-tooltipBg" value="#ffffff"
+                                <input type="color" id="setting-tooltipBg" value="#f7f4f0"
                                     onchange="updateChartSetting('tooltipBg', this.value)"
                                     class="w-full h-9 rounded-lg cursor-pointer border border-brand-black-60/20">
                             </div>
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Text Color</label>
-                                <input type="color" id="setting-tooltipText" value="#000000"
+                                <input type="color" id="setting-tooltipText" value="#33302e"
                                     onchange="updateChartSetting('tooltipText', this.value)"
                                     class="w-full h-9 rounded-lg cursor-pointer border border-brand-black-60/20">
                             </div>
@@ -874,13 +876,13 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="p-4 border-t border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0">
+            <div class="p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:pb-4 border-t border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0">
                 <button onclick="resetChartSettings()"
-                    class="px-3 py-2 text-xs font-bold text-brand-claret hover:bg-brand-claret/10 rounded-lg transition-colors">
-                    Reset to Default
+                    class="min-h-[44px] px-3 py-2 text-xs font-bold text-brand-claret hover:bg-brand-claret/10 rounded-lg transition-colors">
+                    Reset
                 </button>
                 <button onclick="closeChartSettings()"
-                    class="px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all">
+                    class="min-h-[44px] px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all">
                     Close
                 </button>
             </div>
@@ -889,8 +891,8 @@
 
     <!-- Educational Section: Data Frequency Explanation -->
     <div
-        class="mt-16 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
-        <div class="p-6 md:p-8">
+        class="mt-8 sm:mt-12 md:mt-16 bg-card-warm dark:bg-terminal-surface rounded-2xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
+        <div class="p-4 sm:p-6 md:p-8">
             <div class="flex items-center gap-3 mb-4">
                 <svg class="w-5 h-5 text-brand-oxford dark:text-brand-teal" fill="none" stroke="currentColor"
                     viewBox="0 0 24 24">
@@ -951,7 +953,7 @@
 
     <!-- Legal Disclaimer -->
     <div
-        class="mt-8 p-6 border-l-4 border-brand-claret/50 bg-brand-black-60/5 dark:bg-white/5 rounded-r-xl transition-colors duration-500">
+        class="mt-6 sm:mt-8 p-4 sm:p-6 border-l-4 border-brand-claret/50 bg-brand-black-60/5 dark:bg-white/5 rounded-r-xl transition-colors duration-500">
         <h4
             class="text-brand-black-80 dark:text-white font-bold mb-2 tracking-wider text-[11px] font-ui flex items-center gap-2">
             <svg class="w-4 h-4 text-brand-claret" fill="none" stroke="currentColor" viewBox="0 0 24 24">

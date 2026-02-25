@@ -24,18 +24,18 @@ BW.Commodity = {
     compareColors: ['#e11d48', '#8b5cf6', '#f59e0b', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6', '#f97316'],
     compareColorIndex: 0,
 
-    // Chart customization settings with defaults
+    // Chart customization settings with defaults (overridden by theme on init)
     chartSettings: {
-        // Colors
+        // Colors — will be set from active theme preset on init/reset
         lineColor: '#0f5499',
         fillColor: '#0f5499',
         fillOpacity: 15,
         gridColor: '#33302e',
         gridOpacity: 10,
-        upColor: '#00a878',
-        downColor: '#c23b22',
-        tooltipBg: '#ffffff',
-        tooltipText: '#000000',
+        upColor: '#0d7680',
+        downColor: '#990f3d',
+        tooltipBg: '#f7f4f0',
+        tooltipText: '#33302e',
 
         // Chart rendering
         lineWidth: 2,
@@ -89,22 +89,37 @@ BW.Commodity = {
         return `#${h}${ahex}`;
     },
 
-    // Preset themes
+    // Preset themes for chart customization
     themes: {
         light: {
             lineColor: '#0f5499', fillColor: '#0f5499', fillOpacity: 15,
-            gridColor: '#33302e', gridOpacity: 10, tooltipBg: '#ffffff', tooltipText: '#000000',
-            upColor: '#00a878', downColor: '#c23b22'
+            gridColor: '#33302e', gridOpacity: 10, tooltipBg: '#f7f4f0', tooltipText: '#33302e',
+            upColor: '#0d7680', downColor: '#990f3d'
         },
         dark: {
             lineColor: '#1aecff', fillColor: '#1aecff', fillOpacity: 15,
-            gridColor: '#ffffff', gridOpacity: 5, tooltipBg: '#1a1a1a', tooltipText: '#ffffff',
+            gridColor: '#e8e6e3', gridOpacity: 5, tooltipBg: '#13171f', tooltipText: '#e8e6e3',
             upColor: '#00d68f', downColor: '#ff6b6b'
+        },
+        'mono-light': {
+            lineColor: '#000000', fillColor: '#000000', fillOpacity: 10,
+            gridColor: '#000000', gridOpacity: 8, tooltipBg: '#ffffff', tooltipText: '#000000',
+            upColor: '#333333', downColor: '#666666'
+        },
+        'mono-dark': {
+            lineColor: '#ffffff', fillColor: '#ffffff', fillOpacity: 10,
+            gridColor: '#ffffff', gridOpacity: 5, tooltipBg: '#0a0a0a', tooltipText: '#ffffff',
+            upColor: '#cccccc', downColor: '#888888'
         },
         bloomberg: {
             lineColor: '#ff9933', fillColor: '#ff9933', fillOpacity: 20,
             gridColor: '#ff9933', gridOpacity: 10, tooltipBg: '#2d2d2d', tooltipText: '#ff9933',
-            upColor: '#00ff00', downColor: '#ff0000'
+            upColor: '#00ff00', downColor: '#ff3333'
+        },
+        ft: {
+            lineColor: '#990f3d', fillColor: '#990f3d', fillOpacity: 15,
+            gridColor: '#33302e', gridOpacity: 10, tooltipBg: '#fff9f5', tooltipText: '#33302e',
+            upColor: '#0d7680', downColor: '#990f3d'
         },
         ocean: {
             lineColor: '#0ea5e9', fillColor: '#0ea5e9', fillOpacity: 20,
@@ -148,28 +163,28 @@ BW.Commodity = {
         }
     },
 
-    // Setup chart colors based on theme
+    // Setup chart colors based on current theme - reads from CSS variables
     setupColors: function () {
-        const isDark = document.documentElement.classList.contains('dark');
+        const cs = getComputedStyle(document.documentElement);
         const theme = document.documentElement.getAttribute('data-theme') || 'light';
-        const isBloomberg = theme === 'bloomberg';
+        const isDark = document.documentElement.classList.contains('dark');
 
-        this.chartColors = isBloomberg ? {
-            price: '#ff9933',
-            priceLight: 'rgba(255, 153, 51, 0.15)',
-            grid: 'rgba(255, 153, 51, 0.1)',
-            text: '#ff9933',
-            tooltipBg: '#2d2d2d',
-            tooltipText: '#ff9933',
-            tooltipBorder: '#ff9933',
-        } : {
-            price: isDark ? '#1aecff' : '#0f5499',
-            priceLight: isDark ? 'rgba(26, 236, 255, 0.1)' : 'rgba(15, 84, 153, 0.1)',
-            grid: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(51, 48, 46, 0.1)',
-            text: isDark ? '#999' : '#66605c',
-            tooltipBg: isDark ? '#1a1a1a' : '#fff',
-            tooltipText: isDark ? '#fff' : '#000',
-            tooltipBorder: isDark ? '#333' : '#ddd',
+        // Read colors from the current theme preset if available
+        const preset = this.themes[theme];
+        const accentColor = cs.getPropertyValue('--theme-accent').trim() || (preset ? preset.lineColor : '#0f5499');
+        const textColor = cs.getPropertyValue('--theme-text-muted').trim() || (isDark ? '#999' : '#66605c');
+        const surfaceColor = cs.getPropertyValue('--theme-surface').trim() || (isDark ? '#13171f' : '#f7f4f0');
+        const mainText = cs.getPropertyValue('--theme-text').trim() || (isDark ? '#e8e6e3' : '#33302e');
+        const borderColor = cs.getPropertyValue('--theme-border').trim() || (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(51,48,46,0.2)');
+
+        this.chartColors = {
+            price: preset ? preset.lineColor : accentColor,
+            priceLight: this.hexWithAlpha(preset ? preset.fillColor : accentColor, 10) || accentColor,
+            grid: this.hexWithAlpha(preset ? preset.gridColor : mainText, preset ? preset.gridOpacity : 10) || mainText,
+            text: textColor,
+            tooltipBg: preset ? preset.tooltipBg : surfaceColor,
+            tooltipText: preset ? preset.tooltipText : mainText,
+            tooltipBorder: borderColor,
         };
     },
 
@@ -234,13 +249,13 @@ BW.Commodity = {
     updateChart: function () {
         const self = this;
         const filteredData = this.filterDataByRange(this.fullHistoryData, this.currentRange);
-        const labels = filteredData.map(item => item.date);
-        const prices = filteredData.map(item => item.price);
+        var labels = filteredData.map(item => item.date);
+        var prices = filteredData.map(item => item.price);
 
         // Calculate percentage change from first data point
-        const basePrice = prices.length > 0 ? prices[0] : 1;
-        const percentages = prices.map(p => ((p - basePrice) / basePrice) * 100);
-        const chartData = this.currentViewMode === 'percent' ? percentages : prices;
+        var basePrice = prices.length > 0 ? prices[0] : 1;
+        var percentages = prices.map(p => ((p - basePrice) / basePrice) * 100);
+        var chartData = this.currentViewMode === 'percent' ? percentages : prices;
         const dataLabel = this.currentViewMode === 'percent' ? 'Change %' : 'Price';
 
         this.calculateStats(filteredData);
@@ -249,22 +264,82 @@ BW.Commodity = {
         const fillHexAlpha = this.hexWithAlpha(this.chartSettings.fillColor, this.chartSettings.fillOpacity);
         const gridHexAlpha = this.hexWithAlpha(this.chartSettings.gridColor, this.chartSettings.gridOpacity);
 
-        // Build comparison datasets
+        // Build comparison datasets with unified timeline
+        // Handles mixed-frequency data (daily vs monthly) using LOCF interpolation
         var compDatasets = [];
         var compIds = Object.keys(this.comparisonData);
+
+        // If comparisons exist, build a unified date axis from all datasets
+        if (compIds.length > 0) {
+            // Collect all unique dates from main + comparison datasets
+            var allDatesSet = {};
+            for (var li = 0; li < labels.length; li++) {
+                allDatesSet[labels[li]] = true;
+            }
+            for (var ci = 0; ci < compIds.length; ci++) {
+                var compHist = this.filterDataByRange(this.comparisonData[compIds[ci]].history, this.currentRange);
+                for (var ch = 0; ch < compHist.length; ch++) {
+                    allDatesSet[compHist[ch].date] = true;
+                }
+            }
+            // Sort all dates chronologically to form unified timeline
+            var unifiedDates = Object.keys(allDatesSet).sort();
+
+            // Re-align main dataset to unified timeline using LOCF
+            var mainDateMap = {};
+            for (var mi = 0; mi < filteredData.length; mi++) {
+                mainDateMap[filteredData[mi].date] = filteredData[mi].price;
+            }
+            var unifiedMainPrices = [];
+            var lastMainPrice = null;
+            for (var ui = 0; ui < unifiedDates.length; ui++) {
+                if (mainDateMap[unifiedDates[ui]] !== undefined) {
+                    lastMainPrice = mainDateMap[unifiedDates[ui]];
+                }
+                unifiedMainPrices.push(lastMainPrice);
+            }
+
+            // Override labels and chart data with unified versions
+            labels = unifiedDates;
+            prices = unifiedMainPrices;
+            var newBasePrice = prices.length > 0 ? prices[0] : 1;
+            if (this.currentViewMode === 'percent') {
+                chartData = prices.map(function (p) { return p !== null ? ((p - newBasePrice) / newBasePrice) * 100 : null; });
+            } else {
+                chartData = prices;
+            }
+        }
+
         for (var ci = 0; ci < compIds.length; ci++) {
             var comp = this.comparisonData[compIds[ci]];
             var compFiltered = this.filterDataByRange(comp.history, this.currentRange);
-            // Build a date->price map for this comparison commodity
-            var compMap = {};
+
+            // Build date->price map for LOCF (Last Observation Carried Forward)
+            var compDateMap = {};
             for (var cj = 0; cj < compFiltered.length; cj++) {
-                compMap[compFiltered[cj].date] = compFiltered[cj].price;
+                compDateMap[compFiltered[cj].date] = compFiltered[cj].price;
             }
-            // Align to the main chart's labels
+
+            // Align to unified timeline using LOCF interpolation
+            // This handles daily-vs-monthly mismatches by carrying forward
+            // the last known price until a new observation appears
             var compPrices = [];
+            var lastKnown = null;
+            var firstCompDate = compFiltered.length > 0 ? compFiltered[0].date : null;
             for (var ck = 0; ck < labels.length; ck++) {
-                compPrices.push(compMap[labels[ck]] !== undefined ? compMap[labels[ck]] : null);
+                var dateKey = labels[ck];
+                if (compDateMap[dateKey] !== undefined) {
+                    lastKnown = compDateMap[dateKey];
+                }
+                // Only start carrying forward after the first actual data point
+                // to avoid a flat line before data begins
+                if (lastKnown !== null && firstCompDate && dateKey >= firstCompDate) {
+                    compPrices.push(lastKnown);
+                } else {
+                    compPrices.push(null);
+                }
             }
+
             // In percent mode, compute % change from first non-null value
             var compChartData;
             if (this.currentViewMode === 'percent') {
@@ -290,7 +365,7 @@ BW.Commodity = {
                 pointRadius: 0,
                 pointHoverRadius: 4,
                 pointHoverBackgroundColor: comp.color,
-                pointHoverBorderColor: document.documentElement.classList.contains('dark') ? '#000' : '#fff',
+                pointHoverBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').trim() || '#fff',
                 pointHoverBorderWidth: 2,
                 borderDash: [4, 2],
                 spanGaps: true,
@@ -317,7 +392,7 @@ BW.Commodity = {
                     pointRadius: this.chartSettings.pointRadius,
                     pointHoverRadius: 6,
                     pointHoverBackgroundColor: this.chartSettings.lineColor,
-                    pointHoverBorderColor: document.documentElement.classList.contains('dark') ? '#000' : '#fff',
+                    pointHoverBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').trim() || '#fff',
                     pointHoverBorderWidth: 2,
                 }].concat(compDatasets)
             },
@@ -341,7 +416,7 @@ BW.Commodity = {
                         bodyFont: { size: 13, weight: '600', family: 'Inter' },
                         padding: this.chartSettings.tooltipPadding,
                         cornerRadius: this.chartSettings.tooltipRadius,
-                        displayColors: false,
+                        displayColors: compDatasets.length > 0,
                         callbacks: {
                             title: function (context) {
                                 const date = new Date(context[0].label);
@@ -349,11 +424,12 @@ BW.Commodity = {
                             },
                             label: function (context) {
                                 const val = context.parsed.y;
+                                if (val === null || val === undefined) return null; // skip null values in tooltip
+                                var prefix = compDatasets.length > 0 ? (context.dataset.label + ': ') : '';
                                 if (self.currentViewMode === 'percent') {
-                                    // show percent with 2 decimals
-                                    return val.toFixed(2) + ' %';
+                                    return prefix + val.toFixed(2) + ' %';
                                 } else {
-                                    return val.toLocaleString() + ' ' + self.currency;
+                                    return prefix + val.toLocaleString() + ' ' + self.currency;
                                 }
                             },
                             afterLabel: function (context) {
@@ -394,7 +470,7 @@ BW.Commodity = {
                         ticks: {
                             maxTicksLimit: this.chartSettings.xMaxTicks,
                             font: { size: this.chartSettings.axisFontSize, weight: '600', family: 'Inter' },
-                            color: this.chartColors?.text || '#666',
+                            color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
                             callback: function (value) {
                                 const date = new Date(this.getLabelForValue(value));
                                 if (self.currentRange === '1W' || self.currentRange === '1M') {
@@ -415,7 +491,7 @@ BW.Commodity = {
                         border: { display: false },
                         ticks: {
                             font: { size: this.chartSettings.axisFontSize, weight: '600', family: 'Inter' },
-                            color: this.chartColors?.text || '#666',
+                            color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
                             padding: 10,
                             maxTicksLimit: this.chartSettings.yMaxTicks,
                             callback: function (value) { return value.toLocaleString(); }
@@ -428,7 +504,7 @@ BW.Commodity = {
                         border: { display: false },
                         ticks: {
                             font: { size: this.chartSettings.axisFontSize - 1, weight: '600', family: 'Inter' },
-                            color: this.chartColors?.text || '#666',
+                            color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
                             padding: 10,
                             maxTicksLimit: this.chartSettings.yMaxTicks,
                             callback: function (value) { return value.toLocaleString(); }
@@ -442,6 +518,8 @@ BW.Commodity = {
                     const dataset = this.data.datasets[el.datasetIndex];
                     const price = dataset.data[dataIndex];
                     const date = this.data.labels[dataIndex];
+
+                    if (price === null || price === undefined) return;
 
                     const infoEl = document.getElementById('crosshair-info');
                     const dateEl = document.getElementById('crosshair-date');
@@ -508,13 +586,13 @@ BW.Commodity = {
 
     // Update view mode button states
     updateViewButtons: function () {
-        const activeClasses = 'bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black';
+        const activeClasses = 'shadow-sm theme-surface theme-text';
         const inactiveClasses = 'text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5';
 
         document.querySelectorAll('.view-btn').forEach(btn => {
             const mode = btn.id.replace('view-', '');
             // Reset classes first
-            btn.className = 'view-btn px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5';
+            btn.className = 'view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5';
             if (mode === this.currentViewMode) {
                 btn.className += ' ' + activeClasses;
             } else {
@@ -662,9 +740,9 @@ BW.Commodity = {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
                 if (range === self.currentRange) {
-                    btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg shadow-sm transition-all theme-surface theme-text';
                 } else {
-                    btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
                 }
             }
         });
@@ -677,9 +755,9 @@ BW.Commodity = {
             const btn = document.getElementById(`type-${type}`);
             if (btn) {
                 if (type === self.currentChartType) {
-                    btn.className = 'type-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all flex items-center gap-1.5';
+                    btn.className = 'type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg shadow-sm transition-all theme-surface theme-text flex items-center gap-1.5';
                 } else {
-                    btn.className = 'type-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all flex items-center gap-1.5';
+                    btn.className = 'type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all flex items-center gap-1.5';
                 }
             }
         });
@@ -713,7 +791,7 @@ BW.Commodity = {
         document.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
         // Deactivate all tabs
         document.querySelectorAll('.chart-settings-tab').forEach(t => {
-            t.className = 'chart-settings-tab px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80';
+            t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80';
         });
         // Show selected content
         const content = document.getElementById('content-' + tabName);
@@ -721,7 +799,7 @@ BW.Commodity = {
         // Activate selected tab
         const tab = document.getElementById('tab-' + tabName);
         if (tab) {
-            tab.className = 'chart-settings-tab px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black';
+            tab.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all shadow-sm theme-surface theme-text';
         }
     },
 
@@ -838,14 +916,14 @@ BW.Commodity = {
 
     // Reset all settings to defaults
     resetChartSettings: function () {
-        const isDark = document.documentElement.classList.contains('dark');
-        const defaultTheme = isDark ? 'dark' : 'light';
+        const theme = document.documentElement.getAttribute('data-theme') || 'light';
+        const preset = this.themes[theme] || this.themes.light;
 
-        // Reset to default values
+        // Reset to default values using current theme preset
         this.chartSettings = {
-            lineColor: '#0f5499', fillColor: '#0f5499', fillOpacity: 15,
-            gridColor: '#33302e', gridOpacity: 10, upColor: '#00a878', downColor: '#c23b22',
-            tooltipBg: '#ffffff', tooltipText: '#000000',
+            lineColor: preset.lineColor, fillColor: preset.fillColor, fillOpacity: preset.fillOpacity,
+            gridColor: preset.gridColor, gridOpacity: preset.gridOpacity, upColor: preset.upColor, downColor: preset.downColor,
+            tooltipBg: preset.tooltipBg, tooltipText: preset.tooltipText,
             lineWidth: 2, pointRadius: 0, tension: 10, enableFill: true,
             showHGrid: true, showVGrid: false,
             yAxisPosition: 'right', yMaxTicks: 6, xMaxTicks: 8, axisFontSize: 11,
@@ -856,11 +934,6 @@ BW.Commodity = {
             showStatsBar: true, showStatHigh: true, showStatLow: true, showStatAvg: true,
             showStatRange: true, showStatPoints: true, showResetBtn: true, showDownloadBtn: true
         };
-
-        // Apply theme if dark mode
-        if (isDark) {
-            Object.assign(this.chartSettings, this.themes.dark);
-        }
 
         this.saveChartSettings();
         this.populateSettingsUI();
@@ -1040,9 +1113,9 @@ BW.Commodity = {
         var html = '';
         for (var i = 0; i < ids.length; i++) {
             var comp = this.comparisonData[ids[i]];
-            html += '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-white" style="background-color:' + comp.color + '">' +
+            html += '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-white shrink-0 whitespace-nowrap" style="background-color:' + comp.color + '">' +
                 comp.name +
-                '<button onclick="removeComparison(\'' + ids[i] + '\')" class="ml-0.5 hover:opacity-70">&times;</button>' +
+                '<button onclick="removeComparison(\'' + ids[i] + '\')" class="ml-0.5 p-1 min-w-[24px] min-h-[24px] flex items-center justify-center hover:opacity-70 rounded">&times;</button>' +
                 '</span>';
         }
         tags.innerHTML = html;

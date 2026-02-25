@@ -112,29 +112,19 @@ BW.Theme = (function () {
         const up = cs.getPropertyValue('--market-up').trim();
         const down = cs.getPropertyValue('--market-down').trim();
 
-        if (line || gradientStart || gradientEnd || ma || up || down) {
-            return {
-                line: line || '#0f5499',
-                gradientStart: gradientStart || 'rgba(15,84,153,0.1)',
-                gradientEnd: gradientEnd || 'rgba(15,84,153,0)',
-                ma: ma || '#990f3d',
-                up: up || '#0d7680',
-                down: down || '#990f3d'
-            };
-        }
-
-        // fallback behavior based on theme attribute/class
+        // CSS variables are now defined per-theme in base.html, so they should always be available
         const theme = root.getAttribute('data-theme') || safeGet('theme') || 'light';
         const isDark = root.classList.contains('dark') || theme === 'dark' || theme === 'mono-dark';
-
         const isBloomberg = theme === 'bloomberg';
+
+        // Use CSS variables with per-theme fallbacks
         return {
-            line: isBloomberg ? '#ff9933' : (isDark ? '#1aecff' : '#0f5499'),
-            gradientStart: isBloomberg ? 'rgba(255,153,51,0.25)' : (isDark ? 'rgba(26,236,255,0.2)' : 'rgba(15,84,153,0.1)'),
-            gradientEnd: isBloomberg ? 'rgba(255,153,51,0)' : (isDark ? 'rgba(26,236,255,0)' : 'rgba(15,84,153,0)'),
-            ma: isBloomberg ? '#ff5555' : (isDark ? '#ff6b6b' : '#990f3d'),
-            up: isBloomberg ? '#00ff00' : '#0d7680',
-            down: isBloomberg ? '#ff3333' : '#990f3d'
+            line: line || (isBloomberg ? '#ff9933' : (isDark ? '#1aecff' : '#0f5499')),
+            gradientStart: gradientStart || (isBloomberg ? 'rgba(255,153,51,0.25)' : (isDark ? 'rgba(26,236,255,0.2)' : 'rgba(15,84,153,0.1)')),
+            gradientEnd: gradientEnd || (isBloomberg ? 'rgba(255,153,51,0)' : (isDark ? 'rgba(26,236,255,0)' : 'rgba(15,84,153,0)')),
+            ma: ma || (isBloomberg ? '#ff5555' : (isDark ? '#ff6b6b' : '#990f3d')),
+            up: up || (isBloomberg ? '#00ff00' : '#0d7680'),
+            down: down || (isBloomberg ? '#ff3333' : '#990f3d')
         };
     }
 

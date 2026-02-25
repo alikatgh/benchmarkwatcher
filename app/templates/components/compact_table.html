@@ -2,8 +2,8 @@
 <div
     class="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 font-ui">
     <!-- LEFT: Data Range Selector -->
-    <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center gap-2"
+    <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-3 min-w-0">
+        <div class="flex items-center gap-2 shrink-0"
             title="Ranges filter displayed observations only. Metrics are based on available data points, not calendar periods.">
             <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -12,7 +12,8 @@
             <span class="text-xs font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60">Display
                 Range</span>
         </div>
-        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
+        <div class="overflow-x-auto scrollbar-hide -mx-1 px-1 w-full sm:w-auto">
+        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-max">
             <button onclick="setDataRange('1W')" id="range-1W" aria-label="Show last 1 week of available observations"
                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
             <button onclick="setDataRange('1M')" id="range-1M" aria-label="Show last 1 month of available observations"
@@ -26,6 +27,7 @@
             <button onclick="setDataRange('ALL')" id="range-ALL" aria-label="Show all data"
                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
         </div>
+        </div>
         <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
             <span class="font-medium">Showing:</span>
             <span id="date-range-display" class="font-bold text-brand-black-80 dark:text-white ml-1">All available
@@ -34,7 +36,7 @@
     </div>
 
     <!-- RIGHT: Table Configuration Toggle -->
-    <div class="flex items-center gap-3 shrink-0 border-l border-brand-black-60/10 dark:border-white/10 pl-4 md:pl-6">
+    <div class="flex items-center gap-3 shrink-0 border-t md:border-t-0 md:border-l border-brand-black-60/10 dark:border-white/10 pt-3 md:pt-0 md:pl-4 lg:pl-6">
         <div class="flex items-center gap-2">
             <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -379,22 +381,22 @@
             <div class="text-xs text-brand-black-60 dark:text-brand-black-60 font-ui">
                 <span id="visible-columns-count">6</span>/9 columns visible
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 flex-wrap">
                 <button onclick="exportToCSV()"
-                    class="px-4 py-2 text-xs font-bold text-brand-oxford dark:text-brand-teal hover:opacity-80 bg-brand-oxford/10 dark:bg-brand-teal/10 border border-brand-oxford/20 dark:border-brand-teal/20 rounded-lg transition-all font-ui flex items-center gap-1.5">
+                    class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold text-brand-oxford dark:text-brand-teal hover:opacity-80 bg-brand-oxford/10 dark:bg-brand-teal/10 border border-brand-oxford/20 dark:border-brand-teal/20 rounded-lg transition-all font-ui flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                     </svg>
-                    Export CSV
+                    <span class="hidden sm:inline">Export</span> CSV
                 </button>
                 <button onclick="resetAllSettings()"
-                    class="px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg transition-all font-ui">
-                    Reset Defaults
+                    class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg transition-all font-ui">
+                    Reset
                 </button>
                 <button onclick="applySettings()"
-                    class="px-4 py-2 text-xs font-bold text-white bg-brand-black-80 dark:bg-white dark:text-terminal-black rounded-lg transition-all hover:opacity-90 font-ui">
-                    Apply Changes
+                    class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold text-white bg-brand-black-80 dark:bg-white dark:text-terminal-black rounded-lg transition-all hover:opacity-90 font-ui">
+                    Apply
                 </button>
             </div>
         </div>

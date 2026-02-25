@@ -281,8 +281,8 @@ BW.GridView = {
             btn.setAttribute('tabindex', isActive ? '0' : '-1');
 
             btn.className = isActive
-                ? 'grid-range-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all'
-                : 'grid-range-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                ? 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg shadow-sm transition-all theme-surface theme-text'
+                : 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
         });
     },
 
@@ -426,8 +426,8 @@ BW.GridView = {
                     gap: 0.75rem;
                     padding: 0.5rem 0.75rem;
                     border-radius: 0.5rem;
-                    background: rgba(0,0,0,0.02);
-                    border: 1px solid rgba(0,0,0,0.06);
+                    background: var(--theme-surface);
+                    border: 1px solid var(--theme-border);
                     font-family: ui-monospace, SFMono-Regular, monospace;
                 `;
                 if (previewFooter) previewFooter.style.display = 'none';
@@ -436,7 +436,7 @@ BW.GridView = {
                 if (categoryBadge) {
                     categoryBadge.style.cssText = 'order: 1; display: flex; flex-direction: column; gap: 2px; margin: 0;';
                     const catSpan = categoryBadge.querySelector('span');
-                    if (catSpan) catSpan.style.cssText = 'font-size: 9px; font-weight: 600; color: #666; text-transform: capitalize;';
+                    if (catSpan) catSpan.style.cssText = 'font-size: 9px; font-weight: 600; color: var(--theme-text-muted); text-transform: capitalize;';
                     const upBadge = categoryBadge.querySelector('div');
                     if (upBadge) upBadge.style.display = 'none';
                 }
@@ -499,12 +499,12 @@ BW.GridView = {
         if (cardStyle === 'minimal') {
             // MINIMAL: Dense, terminal-style reference rows
             container.classList.add('gap-0');
-            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(500px, 1fr))';
+            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(min(500px, 100%), 1fr))';
 
             // Add table header style to container
             container.style.borderRadius = '0.5rem';
             container.style.overflow = 'hidden';
-            container.style.border = '1px solid rgba(0,0,0,0.1)';
+            container.style.border = '1px solid var(--theme-border)';
 
             container.querySelectorAll('a.block.group').forEach((link, index) => {
                 const card = link.querySelector('div');
@@ -515,19 +515,19 @@ BW.GridView = {
                 card.className = '';
                 card.style.cssText = `
                     display: grid;
-                    grid-template-columns: ${showCategory ? '70px' : ''} 1fr 140px 100px;
+                    grid-template-columns: ${showCategory ? 'minmax(50px,70px)' : ''} 1fr minmax(80px,140px) minmax(60px,100px);
                     align-items: center;
                     gap: 1rem;
                     padding: 0.625rem 1rem;
-                    background: ${isEven ? 'rgba(0,0,0,0.02)' : 'transparent'};
-                    border-bottom: 1px solid rgba(0,0,0,0.06);
+                    background: ${isEven ? 'var(--theme-surface)' : 'transparent'};
+                    border-bottom: 1px solid var(--theme-border);
                     transition: background 0.15s;
                     font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
                 `;
 
                 // Hover effect
-                link.onmouseenter = () => card.style.background = 'rgba(14, 55, 86, 0.08)';
-                link.onmouseleave = () => card.style.background = isEven ? 'rgba(0,0,0,0.02)' : 'transparent';
+                link.onmouseenter = () => card.style.background = 'color-mix(in srgb, var(--theme-accent) 8%, transparent)';
+                link.onmouseleave = () => card.style.background = isEven ? 'var(--theme-surface)' : 'transparent';
 
                 // Hide footer and overlay
                 const gradientOverlay = card.querySelector('.absolute');
@@ -557,7 +557,7 @@ BW.GridView = {
                                 font-weight: 600;
                                 letter-spacing: 0.02em;
                                 text-transform: capitalize;
-                                color: #666;
+                                color: var(--theme-text-muted);
                                 font-family: system-ui, sans-serif;
                             `;
                         }
@@ -578,7 +578,7 @@ BW.GridView = {
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        color: #1a1a1a;
+                        color: var(--theme-text);
                         font-family: system-ui, -apple-system, sans-serif;
                         letter-spacing: -0.01em;
                     `;
@@ -601,7 +601,7 @@ BW.GridView = {
                         priceEl.style.cssText = `
                             font-size: 13px;
                             font-weight: 700;
-                            color: #1a1a1a;
+                            color: var(--theme-text);
                             font-family: ui-monospace, SFMono-Regular, monospace;
                             letter-spacing: -0.02em;
                         `;
@@ -612,7 +612,7 @@ BW.GridView = {
                     if (unitEl) {
                         unitEl.style.cssText = `
                             font-size: 9px;
-                            color: #888;
+                            color: var(--theme-text-muted);
                             font-family: system-ui, sans-serif;
                             display: ${showUnit ? 'block' : 'none'};
                         `;
@@ -639,7 +639,7 @@ BW.GridView = {
                         const text = changePctEl.textContent || '';
                         const isPositive = text.includes('+') || (!text.includes('-') && parseFloat(text) > 0);
                         const isNegative = text.includes('-') || parseFloat(text) < 0;
-                        const color = isPositive ? 'var(--color-up)' : isNegative ? 'var(--color-down)' : '#666';
+                        const color = isPositive ? 'var(--color-up)' : isNegative ? 'var(--color-down)' : 'var(--theme-text-muted)';
 
                         changePctEl.style.cssText = `
                             font-size: 13px;
@@ -656,7 +656,7 @@ BW.GridView = {
                         const text = changeAbsEl.textContent || '';
                         const isPositive = text.includes('+');
                         const isNegative = text.includes('-');
-                        const color = isPositive ? 'var(--color-up)' : isNegative ? 'var(--color-down)' : '#888';
+                        const color = isPositive ? 'var(--color-up)' : isNegative ? 'var(--color-down)' : 'var(--theme-text-muted)';
 
                         changeAbsEl.style.cssText = `
                             font-size: 10px;
@@ -716,7 +716,7 @@ BW.GridView = {
                     const unitEl = priceSection.querySelector('.text-sm.font-medium');
                     if (unitEl) {
                         unitEl.className = '';
-                        unitEl.style.cssText = `font-size: 9px; color: #888; display: ${showUnit ? 'block' : 'none'};`;
+                        unitEl.style.cssText = `font-size: 9px; color: var(--theme-text-muted); display: ${showUnit ? 'block' : 'none'};`;
                     }
 
                     const changeSection = priceSection.querySelector('.text-right');
@@ -739,7 +739,7 @@ BW.GridView = {
                 const footer = card.querySelector('.mt-5');
                 if (footer) {
                     footer.className = '';
-                    footer.style.cssText = `display: ${showDate ? 'flex' : 'none'}; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(0,0,0,0.05);`;
+                    footer.style.cssText = `display: ${showDate ? 'flex' : 'none'}; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--theme-border);`;
                     const dateEl = footer.querySelector('.text-xs');
                     if (dateEl) dateEl.style.cssText = 'font-size: 9px;';
                 }

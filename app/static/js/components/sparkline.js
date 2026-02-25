@@ -29,14 +29,17 @@ BW.Sparkline = {
         ctx.scale(dpr, dpr);
         ctx.clearRect(0, 0, width, height);
 
-        // Get theme-aware colors
+        // Get theme-aware colors from CSS variables or theme module
         const colors = (BW.Theme && BW.Theme.getSparklineColors)
             ? BW.Theme.getSparklineColors()
-            : {
-                line: '#0f5499',
-                gradientStart: 'rgba(15, 84, 153, 0.1)',
-                gradientEnd: 'rgba(15, 84, 153, 0)'
-            };
+            : (() => {
+                const cs = getComputedStyle(document.documentElement);
+                return {
+                    line: cs.getPropertyValue('--sparkline-line').trim() || cs.getPropertyValue('--theme-accent').trim() || '#0f5499',
+                    gradientStart: cs.getPropertyValue('--sparkline-grad-start').trim() || 'rgba(15, 84, 153, 0.1)',
+                    gradientEnd: cs.getPropertyValue('--sparkline-grad-end').trim() || 'rgba(15, 84, 153, 0)'
+                };
+            })();
 
         const min = Math.min(...data);
         const max = Math.max(...data);
