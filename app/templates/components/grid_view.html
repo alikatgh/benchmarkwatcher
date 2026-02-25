@@ -187,7 +187,7 @@
         <div class="loading-spinner"></div>
     </div>
     <div id="grid-cards-container"
-        style="display:grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-min-w, 210px), 1fr)); gap: clamp(0.75rem, 2vw, 1.25rem);">
+        style="display:grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--card-min-w, 210px), 100%), 1fr)); gap: clamp(0.5rem, 2vw, 1.25rem);">
 
         {% for commodity in commodities %}
         {% include 'components/price_card.html' %}

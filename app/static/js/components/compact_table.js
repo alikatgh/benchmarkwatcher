@@ -246,14 +246,17 @@ BW.CompactTable = {
     initSparklines: function (commodities) {
         const self = this;
         requestAnimationFrame(() => {
-            const colors = BW.Theme ? BW.Theme.getSparklineColors() : {
-                line: '#0f5499',
-                gradientStart: 'rgba(15, 84, 153, 0.1)',
-                gradientEnd: 'rgba(15, 84, 153, 0)',
-                ma: '#990f3d',
-                up: '#0d7680',
-                down: '#990f3d'
-            };
+            const colors = BW.Theme ? BW.Theme.getSparklineColors() : (() => {
+                const cs = getComputedStyle(document.documentElement);
+                return {
+                    line: cs.getPropertyValue('--sparkline-line').trim() || '#0f5499',
+                    gradientStart: cs.getPropertyValue('--sparkline-grad-start').trim() || 'rgba(15, 84, 153, 0.1)',
+                    gradientEnd: cs.getPropertyValue('--sparkline-grad-end').trim() || 'rgba(15, 84, 153, 0)',
+                    ma: cs.getPropertyValue('--sparkline-ma').trim() || '#990f3d',
+                    up: cs.getPropertyValue('--market-up').trim() || '#0d7680',
+                    down: cs.getPropertyValue('--market-down').trim() || '#990f3d'
+                };
+            })();
 
             const settings = self.getSettings();
             const pointsSetting = settings.trend?.points || '30';
@@ -370,13 +373,13 @@ BW.CompactTable = {
                         mainDataset.fill = {
                             target: 'origin',
                             above: colors.gradientStart,
-                            below: 'rgba(153, 15, 61, 0.1)'
+                            below: 'color-mix(in srgb, ' + (colors.down || 'var(--color-down)') + ' 10%, transparent)'
                         };
                         mainDataset.tension = 0.2;
                         const avgPrice = dataPoints.reduce((a, b) => a + b, 0) / dataPoints.length;
                         datasets.push({
                             data: dataPoints.map(() => avgPrice),
-                            borderColor: 'rgba(128, 128, 128, 0.3)',
+                            borderColor: 'color-mix(in srgb, ' + (colors.line || 'var(--theme-text-muted)') + ' 30%, transparent)',
                             borderWidth: 1,
                             borderDash: [3, 3],
                             fill: false,
@@ -437,11 +440,14 @@ BW.CompactTable = {
 
     // Refresh sparkline colors on theme change (called by BW.Sparkline.refresh)
     refreshSparklines: function () {
-        const colors = BW.Theme ? BW.Theme.getSparklineColors() : {
-            line: '#0f5499',
-            gradientStart: 'rgba(15, 84, 153, 0.1)',
-            gradientEnd: 'rgba(15, 84, 153, 0)'
-        };
+        const colors = BW.Theme ? BW.Theme.getSparklineColors() : (() => {
+            const cs = getComputedStyle(document.documentElement);
+            return {
+                line: cs.getPropertyValue('--sparkline-line').trim() || '#0f5499',
+                gradientStart: cs.getPropertyValue('--sparkline-grad-start').trim() || 'rgba(15, 84, 153, 0.1)',
+                gradientEnd: cs.getPropertyValue('--sparkline-grad-end').trim() || 'rgba(15, 84, 153, 0)'
+            };
+        })();
 
         Object.keys(this.chartRegistry).forEach(canvasId => {
             const chart = this.chartRegistry[canvasId];
@@ -485,9 +491,9 @@ BW.CompactTable = {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
                 if (range === activeRange) {
-                    btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg bg-white dark:bg-white shadow-sm text-brand-black-80 dark:text-terminal-black transition-all';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg shadow-sm transition-all theme-surface theme-text';
                 } else {
-                    btn.className = 'range-btn px-3 py-1.5 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
                 }
             }
         });
@@ -618,42 +624,45 @@ BW.CompactTable = {
             return;
         }
 
+        // Get theme-aware colors for SVG preview
+        const themeColors = BW.Theme ? BW.Theme.getSparklineColors() : { line: '#0f5499', ma: '#990f3d', up: '#0d7680', down: '#990f3d' };
+
         let svg = '<svg class="w-full h-8" viewBox="0 0 100 24">';
-        svg += `<defs><linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#0f5499;stop-opacity:0.3" /><stop offset="100%" style="stop-color:#0f5499;stop-opacity:0" /></linearGradient></defs>`;
+        svg += `<defs><linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${themeColors.line}" stop-opacity="0.3" /><stop offset="100%" stop-color="${themeColors.line}" stop-opacity="0" /></linearGradient></defs>`;
 
         switch (type) {
             case 'area':
                 svg += `<path d="M${points.map(p => p.join(',')).join(' L')} L100,24 L0,24 Z" fill="url(#sparkGrad)" />`;
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="#0f5499" stroke-width="2" />`;
+                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
                 break;
             case 'line':
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="#0f5499" stroke-width="2" />`;
+                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
                 break;
             case 'bar':
-                const colors = ['#0f5499', '#0d7680', '#990f3d', '#0d7680', '#0d7680', '#990f3d', '#0d7680', '#990f3d', '#0d7680'];
-                points.forEach((p, i) => { svg += `<rect x="${p[0] - 4}" y="${p[1]}" width="8" height="${24 - p[1]}" fill="${colors[i]}" rx="1" />`; });
+                const barColors = [themeColors.line, themeColors.up, themeColors.down, themeColors.up, themeColors.up, themeColors.down, themeColors.up, themeColors.down, themeColors.up];
+                points.forEach((p, i) => { svg += `<rect x="${p[0] - 4}" y="${p[1]}" width="8" height="${24 - p[1]}" fill="${barColors[i]}" rx="1" />`; });
                 break;
             case 'step':
                 let stepPath = `M${points[0][0]},${points[0][1]}`;
                 for (let i = 1; i < points.length; i++) { stepPath += ` H${points[i][0]} V${points[i][1]}`; }
                 svg += `<path d="${stepPath} V24 H0 Z" fill="url(#sparkGrad)" />`;
-                svg += `<path d="${stepPath}" fill="none" stroke="#0f5499" stroke-width="2" />`;
+                svg += `<path d="${stepPath}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
                 break;
             case 'sparkline-range':
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="#0f5499" stroke-width="2" />`;
+                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
                 const avgY = points.reduce((a, p) => a + p[1], 0) / points.length;
-                svg += `<line x1="0" y1="${avgY}" x2="100" y2="${avgY}" stroke="#888" stroke-width="1" stroke-dasharray="3,3" />`;
+                svg += `<line x1="0" y1="${avgY}" x2="100" y2="${avgY}" stroke="var(--theme-text-muted)" stroke-width="1" stroke-dasharray="3,3" />`;
                 break;
         }
 
         if (showMA && ['area', 'line', 'step'].includes(type)) {
             const maPoints = [[25, 16], [38, 13], [50, 11], [63, 10], [75, 7], [88, 6], [100, 7]];
-            svg += `<path d="M${maPoints.map(p => p.join(',')).join(' L')}" fill="none" stroke="#990f3d" stroke-width="1.5" stroke-dasharray="2,2" />`;
+            svg += `<path d="M${maPoints.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.ma}" stroke-width="1.5" stroke-dasharray="2,2" />`;
         }
 
         if (showHighLow && type !== 'bar') {
-            svg += `<circle cx="${points[highIdx][0]}" cy="${points[highIdx][1]}" r="4" fill="#0d7680" />`;
-            svg += `<circle cx="${points[lowIdx][0]}" cy="${points[lowIdx][1]}" r="4" fill="#990f3d" />`;
+            svg += `<circle cx="${points[highIdx][0]}" cy="${points[highIdx][1]}" r="4" fill="${themeColors.up}" />`;
+            svg += `<circle cx="${points[lowIdx][0]}" cy="${points[lowIdx][1]}" r="4" fill="${themeColors.down}" />`;
         }
 
         svg += '</svg>';
