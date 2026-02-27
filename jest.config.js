@@ -10,5 +10,14 @@ module.exports = {
     ],
 
     // Default test environment
-    testEnvironment: 'node'
+    testEnvironment: 'node',
+
+    testEnvironmentOptions: {
+        // Node v25 introduced a native localStorage global (WebStorage API) with
+        // a getter that warns when accessed without --localstorage-file. Jest 30's
+        // cross-test global cleanup iterates all globals and trips that getter.
+        // 'off' disables the cleanup entirely — safe here because our tests don't
+        // install globals that need scrubbing between suites.
+        globalsCleanup: 'off',
+    },
 };
