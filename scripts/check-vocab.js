@@ -41,7 +41,7 @@ const SKIP_FILES = [
 ];
 
 // Directories to ignore
-const IGNORE_DIRS = ['node_modules', 'dist', 'build', '.git', 'venv', '__pycache__', '.pytest_cache'];
+const IGNORE_DIRS = ['node_modules', 'dist', 'build', '.git', 'venv', '__pycache__', '.pytest_cache', 'playwright-report', 'test-results'];
 
 // File extensions to check
 const CHECK_EXTENSIONS = ['.js', '.ts', '.jsx', '.tsx', '.html', '.jinja', '.jinja2', '.md', '.py'];
