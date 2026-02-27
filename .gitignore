@@ -73,6 +73,8 @@ instance/
 htmlcov/
 .pytest_cache/
 .tox/
+playwright-report/
+test-results/
 
 # Distribution
 *.tar.gz
