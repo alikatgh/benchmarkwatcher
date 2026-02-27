@@ -47,8 +47,7 @@ All data comes from freely accessible public sources:
 | **Energy** | Brent Crude Oil, WTI Crude Oil | [EIA](https://www.eia.gov/opendata/) | Daily |
 | **Energy** | Natural Gas (Henry Hub) | [FRED](https://fred.stlouisfed.org/series/DHHNGSP) | Daily |
 | **Energy** | Heating Oil, Gasoline, Jet Fuel, Propane, Diesel | [EIA](https://www.eia.gov/opendata/) | Daily |
-| **Precious** | Gold | [FreeGoldAPI](https://freegoldapi.com) (World Bank/Yahoo) | Daily |
-| **Precious** | Silver, Platinum | [Yahoo Finance](https://finance.yahoo.com) (COMEX/NYMEX Futures) | Daily |
+| **Precious** | Gold, Silver, Platinum | [Yahoo Finance](https://finance.yahoo.com) (COMEX/NYMEX Futures) | Daily |
 | **Metal** | Copper, Iron Ore, Aluminum, Zinc, Nickel, Lead, Tin | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
 | **Agricultural** | Wheat, Corn, Soybeans, Rice, Sugar, Coffee, Cocoa, Cotton, Rubber, Palm Oil | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
 | **Agricultural** | Wheat (US Farm Price), Corn, Soybeans, Oats, Barley, Sorghum, Rice, Cotton (Upland) | [USDA NASS](https://quickstats.nass.usda.gov/) | Monthly |
