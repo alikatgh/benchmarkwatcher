@@ -2,12 +2,14 @@ import json
 import os
 import logging
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 from flask import current_app
 from app.extensions import cache
 
 logger = logging.getLogger(__name__)
 
-def get_date_range_days(date_range):
+def get_date_range_days(date_range: str) -> Optional[int]:
     """Convert date range code to number of days for display filtering only.
     
     Note: This is UI-layer filtering for display purposes.
@@ -23,7 +25,7 @@ def get_date_range_days(date_range):
     }
     return ranges.get(date_range, None)
 
-def filter_history_by_range(history, date_range):
+def filter_history_by_range(history: List[Dict[str, Any]], date_range: str) -> List[Dict[str, Any]]:
     """Filter history for display purposes only.
     
     Uses the latest observation date as reference (not current date).
@@ -56,8 +58,40 @@ def filter_history_by_range(history, date_range):
     return filtered
 
 
+def _hydrate_change_fields(item: Dict[str, Any]) -> Dict[str, Any]:
+    """Populate canonical and legacy change fields from derived metrics with fallback."""
+    derived = item.get('derived', {}).get('descriptive_stats', {})
+    metrics = item.get('metrics', {})
+
+    item['change'] = derived.get('abs_change_1_obs', metrics.get('change_1d', 0.0))
+    item['change_percent'] = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0.0))
+    item['daily_change'] = item['change']
+    item['daily_change_percent'] = item['change_percent']
+    item['derived_stats'] = derived
+    return item
+
+
+def _apply_latest_display_point(item: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
+    """Update top-level display price/date to match the latest entry in provided history."""
+    if history:
+        latest = history[-1]
+        item['price'] = latest['price']
+        item['date'] = latest['date']
+
+
+def _set_previous_observation_fields(item: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
+    """Set previous observation fields for tooltip display."""
+    if len(history) >= 2:
+        previous = history[-2]
+        item['prev_price'] = previous['price']
+        item['prev_date'] = previous['date']
+    else:
+        item['prev_price'] = item.get('price', 0)
+        item['prev_date'] = item.get('date', '')
+
+
 @cache.memoize(timeout=600)
-def get_all_commodities(date_range='ALL', include_history=True):
+def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -> List[Dict[str, Any]]:
     """Load all commodities with display-filtered history.
     
     Uses pre-computed metrics from derived.descriptive_stats.
@@ -83,23 +117,8 @@ def get_all_commodities(date_range='ALL', include_history=True):
                     else:
                         item.pop('history', None)
                     
-                    # Update display price/date from filtered history
-                    if filtered_history:
-                        item['price'] = filtered_history[-1]['price']
-                        item['date'] = filtered_history[-1]['date']
-                    
-                    # Use pre-computed metrics from data model (single source of truth)
-                    derived = item.get('derived', {}).get('descriptive_stats', {})
-                    metrics = item.get('metrics', {})
-                    
-                    # Pass through observation-based metrics (no recomputation)
-                    item['change'] = derived.get('abs_change_1_obs', metrics.get('change_1d', 0.0))
-                    item['change_percent'] = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0.0))
-                    item['daily_change'] = item['change']  # Legacy alias
-                    item['daily_change_percent'] = item['change_percent']  # Legacy alias
-                    
-                    # Expose derived stats for templates that want them
-                    item['derived_stats'] = derived
+                    _apply_latest_display_point(item, filtered_history)
+                    _hydrate_change_fields(item)
                         
                     commodities.append(item)
             except (json.JSONDecodeError, IOError):
@@ -110,7 +129,7 @@ def get_all_commodities(date_range='ALL', include_history=True):
     return commodities
 
 
-def get_commodity(commodity_id):
+def get_commodity(commodity_id: str) -> Optional[Dict[str, Any]]:
     """Load single commodity with all data.
     
     Uses pre-computed metrics from derived.descriptive_stats.
@@ -124,25 +143,9 @@ def get_commodity(commodity_id):
             with open(filepath, 'r') as f:
                 item = json.load(f)
                 history = item.get('history', [])
-                
-                # Use pre-computed metrics from data model (single source of truth)
-                derived = item.get('derived', {}).get('descriptive_stats', {})
-                metrics = item.get('metrics', {})
-                
-                # Pass through observation-based metrics (no recomputation)
-                item['change'] = derived.get('abs_change_1_obs', metrics.get('change_1d', 0.0))
-                item['change_percent'] = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0.0))
-                
-                # Store previous observation for tooltip display
-                if len(history) >= 2:
-                    item['prev_price'] = history[-2]['price']
-                    item['prev_date'] = history[-2]['date']
-                else:
-                    item['prev_price'] = item.get('price', 0)
-                    item['prev_date'] = item.get('date', '')
-                
-                # Expose full derived stats for templates
-                item['derived_stats'] = derived
+
+                _hydrate_change_fields(item)
+                _set_previous_observation_fields(item, history)
                 
                 return item
         except (json.JSONDecodeError, IOError):
