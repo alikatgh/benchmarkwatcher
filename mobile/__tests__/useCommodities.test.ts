@@ -148,7 +148,7 @@ describe('useCommodities', () => {
         rerender({ ...defaultParams, syncTrigger: 1 });
 
         await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(2));
-        expect(result.current.refreshing).toBe(false);
+        await waitFor(() => expect(result.current.refreshing).toBe(false));
     });
 
     it('sends since param on incremental refresh', async () => {
