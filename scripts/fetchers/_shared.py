@@ -13,11 +13,15 @@ import time
 import logging
 import tempfile
 from datetime import datetime, date
-from typing import List, Optional, Dict, Any, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Reusable type aliases
+Observation = Dict[str, Any]          # {"date": "YYYY-MM-DD", "price": float}
+ParamsType = Union[Dict[str, Any], Sequence[Tuple[str, Any]], None]
 
 
 # =============================================================================
@@ -72,9 +76,12 @@ class SmartDateParser:
 # HTTP Helper
 # =============================================================================
 
-def safe_get(url: str, params: Optional[Dict] = None, retries: int = 3) -> requests.Response:
+def safe_get(url: str, params: ParamsType = None, retries: int = 3) -> requests.Response:
     """
     Robust HTTP GET with exponential backoff and proper User-Agent.
+
+    ``params`` accepts a dict **or** a sequence of (key, value) tuples
+    so callers like EIA can send repeated query-string keys.
     """
     headers = {'User-Agent': 'BenchmarkWatcher/1.0 (open-source commodity tracker)'}
     for attempt in range(retries):
@@ -94,19 +101,48 @@ def safe_get(url: str, params: Optional[Dict] = None, retries: int = 3) -> reque
 # Processing
 # =============================================================================
 
-def merge_history(existing: List[Dict], new_data: List[Dict]) -> List[Dict]:
+def parse_records(
+    raw_records: List[Dict[str, Any]],
+    *,
+    value_key: str = "value",
+    date_key: str = "date",
+    skip_values: Sequence[str] = (".", ""),
+) -> List[Observation]:
+    """Parse raw API records into [{date, price}] observations.
+
+    Shared by FRED and EIA fetchers which follow the same
+    iterate → extract value → parse date → append pattern.
+    Records are returned oldest-first.
+    """
+    parser = SmartDateParser()
+    results: List[Observation] = []
+    for rec in raw_records:
+        val = rec.get(value_key)
+        if val is None or val in skip_values:
+            continue
+        try:
+            price = float(val)
+            dt = parser.parse(rec.get(date_key))
+            if dt:
+                results.append({"date": dt, "price": round(price, 4)})
+        except (ValueError, TypeError):
+            continue
+    return list(reversed(results))
+
+
+def merge_history(existing: List[Observation], new_data: List[Observation]) -> List[Observation]:
     """Merge new data into existing history (deduplicated by date)."""
-    seen = {}
+    seen: Dict[str, Observation] = {}
     for entry in existing:
-        seen[entry.get('date')] = entry
+        seen[entry.get('date', '')] = entry
     for entry in new_data:
-        seen[entry.get('date')] = entry  # New data overwrites old
+        seen[entry.get('date', '')] = entry  # New data overwrites old
 
     merged = sorted(seen.values(), key=lambda x: x.get('date', ''))
     return merged
 
 
-def compute_metrics(history: List[Dict]) -> Dict:
+def compute_metrics(history: List[Observation]) -> Dict[str, Any]:
     """Compute descriptive, backward-looking summary statistics over observations."""
     if not history:
         return {}
@@ -153,7 +189,7 @@ def compute_metrics(history: List[Dict]) -> Dict:
 # I/O
 # =============================================================================
 
-def save_atomic(filepath: str, data: Dict) -> bool:
+def save_atomic(filepath: str, data: Dict[str, Any]) -> bool:
     """Atomic write: write to .tmp then rename to avoid corruption."""
     try:
         dir_name = os.path.dirname(filepath)
