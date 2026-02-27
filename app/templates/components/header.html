@@ -56,8 +56,6 @@
                     class="{{ base_cls }} {{ active_cls if cat == 'precious' else idle_cls }}">Precious</a>
                 <a href="{{ url_for('main.index', category='agricultural') }}"
                     class="{{ base_cls }} {{ active_cls if cat == 'agricultural' else idle_cls }}">Agriculture</a>
-                <a href="{{ url_for('main.index', category='livestock') }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'livestock' else idle_cls }}">Livestock</a>
                 <span class="w-px h-4 bg-brand-black-60/20 dark:bg-white/15 mx-1 self-center flex-shrink-0"></span>
                 <a href="{{ url_for('main.changelog') }}" class="{{ base_cls }} {{ idle_cls }}">Changelog</a>
             </nav>

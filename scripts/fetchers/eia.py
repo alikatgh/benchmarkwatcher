@@ -28,13 +28,16 @@ def fetch_eia_v2(api_url: str, facets: Dict[str, List[str]], length: int = 730) 
         "sort[0][direction]": "desc",
     }
 
+    # Build query params as list of tuples so repeated facet keys are preserved.
+    query_params = list(params.items())
+
     # Add facets dynamically
     for key, values in facets.items():
-        for i, val in enumerate(values):
-            params[f"facets[{key}][]"] = val
+        for val in values:
+            query_params.append((f"facets[{key}][]", val))
 
     try:
-        resp = safe_get(api_url, params=params)
+        resp = safe_get(api_url, params=query_params)
         data = resp.json()
         records = data.get("response", {}).get("data", [])
 

@@ -13,8 +13,12 @@ VALID_RANGES = {'ALL', '1W', '1M', '3M', '6M', '1Y'}
 VALID_VIEWS = {'grid', 'compact'}
 
 # Internal API key for bot authentication (optional but recommended)
-INTERNAL_API_KEY = os.getenv('INTERNAL_API_KEY', '')
-if not INTERNAL_API_KEY:
+def get_internal_api_key():
+    """Read INTERNAL_API_KEY at runtime."""
+    return os.getenv('INTERNAL_API_KEY', '')
+
+
+if not get_internal_api_key():
     warnings.warn(
         "INTERNAL_API_KEY is not set. The /internal/api/commodities endpoint will "
         "always return 403, making it inaccessible to bots.",
@@ -154,13 +158,14 @@ def internal_api_commodities():
     if is_internal_rate_limited():
         return jsonify({'error': 'Too many requests'}), 429
 
+    internal_api_key = get_internal_api_key()
     provided_key = request.headers.get('X-Internal-Key', '')
 
     # Strict check: key must be set AND match
     if (
-        not INTERNAL_API_KEY
+        not internal_api_key
         or not provided_key
-        or not secrets.compare_digest(provided_key, INTERNAL_API_KEY)
+        or not secrets.compare_digest(provided_key, internal_api_key)
     ):
         return jsonify({'error': 'Forbidden: valid API key required'}), 403
 
