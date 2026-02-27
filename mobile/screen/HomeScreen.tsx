@@ -26,7 +26,8 @@ export default function HomeScreen() {
         showDate, setShowDate,
         showUnit, setShowUnit,
         fontScale, setFontScale,
-        density, setDensity
+        density, setDensity,
+        isDarkMode,
     } = useContext(SettingsContext);
 
     // Filter State
@@ -186,7 +187,7 @@ export default function HomeScreen() {
 
     return (
         <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
-            <StatusBar barStyle="dark-content" />
+            <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
             <FlatList
                 data={data}
                 keyExtractor={(item) => item.id}

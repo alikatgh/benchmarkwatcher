@@ -7,10 +7,10 @@ export async function fetchCommodities(category = 'all', sort = 'priority', orde
     if (since) endpoint += `&since=${encodeURIComponent(since)}`;
 
     try {
-        const data = await apiClient<Commodity[] | any>(endpoint);
+        const data = await apiClient<Commodity[]>(endpoint);
 
-        // Handle variations where data might not be unwrapped yet based on type definitions
-        const commoditiesArray: Commodity[] = Array.isArray(data) ? data : (data.data || []);
+        // apiClient already unwraps { data: [...] } envelopes
+        const commoditiesArray: Commodity[] = Array.isArray(data) ? data : [];
 
         return sortCommodities(commoditiesArray, sort, order);
     } catch (error) {

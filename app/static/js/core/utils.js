@@ -8,6 +8,9 @@
 
 window.BW = window.BW || {};
 
+// Commodities that publish daily data (used by freq-badge logic in table and grid views)
+BW.DAILY_COMMODITY_IDS = ['brent_oil', 'wti_oil', 'natural_gas', 'heating_oil', 'jet_fuel', 'propane', 'gold', 'silver', 'gasoline'];
+
 BW.Utils = (function () {
     const MS_PER_DAY = 1000 * 60 * 60 * 24;
 

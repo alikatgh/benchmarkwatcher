@@ -25,17 +25,6 @@
         content="Historical commodity benchmark reference display. Free, open-source dashboard for oil, gas, metals, and agricultural commodities.">
     <meta name="twitter:image" content="https://benchmarkwatcher.online/static/images/og-image.png">
 
-    <!-- Google Analytics: Replace G-XXXXXXXXXX with your actual Measurement ID, or remove this block if not used -->
-    <!--
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX');
-    </script>
-    -->
-
     <title>{% block title %}BenchmarkWatcher{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
