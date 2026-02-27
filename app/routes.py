@@ -5,6 +5,7 @@ import os
 import secrets
 import warnings
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 bp = Blueprint('main', __name__)
 
@@ -67,24 +68,24 @@ def is_internal_rate_limited():
     return current_count > INTERNAL_API_RATE_LIMIT_PER_WINDOW
 
 
-def validate_range(date_range):
+def validate_range(date_range: str) -> str:
     """Validate and sanitize the date range parameter."""
     return date_range if date_range in VALID_RANGES else 'ALL'
 
 
-def validate_view(view_mode):
+def validate_view(view_mode: Optional[str]) -> Optional[str]:
     """Validate and sanitize the view mode parameter."""
     return view_mode if view_mode in VALID_VIEWS else None
 
 
-def parse_bool_flag(value, default=False):
+def parse_bool_flag(value: Optional[str], default: bool = False) -> bool:
     """Parse permissive boolean query values."""
     if value is None:
         return default
     return str(value).strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
-def validate_since(since_str):
+def validate_since(since_str: Optional[str]) -> Optional[str]:
     """Validate the since date parameter. Returns None if invalid."""
     if not since_str:
         return None
@@ -93,6 +94,37 @@ def validate_since(since_str):
         return since_str
     except ValueError:
         return None
+
+
+def is_valid_internal_key(provided_key: str, expected_key: str) -> bool:
+    """Strict check: expected key must exist and provided key must match."""
+    return bool(expected_key and provided_key and secrets.compare_digest(provided_key, expected_key))
+
+
+def build_commodities_response(
+    commodities: Any,
+    date_range: str,
+    category: Optional[str],
+    *,
+    since: Optional[str] = None,
+    include_history: Optional[bool] = None,
+) -> Dict[str, Any]:
+    """Build a consistent commodities API response envelope."""
+    meta: Dict[str, Any] = {
+        'count': len(commodities),
+        'range': date_range,
+        'category': category,
+    }
+    if since is not None:
+        meta['since'] = since
+        meta['partial'] = True
+    elif include_history is not None:
+        # Preserve public API shape in /api/commodities where since is always emitted.
+        meta['since'] = None
+        meta['partial'] = False
+    if include_history is not None:
+        meta['include_history'] = include_history
+    return {'data': commodities, 'meta': meta}
 
 
 def filter_commodities(date_range, category, since=None, include_history=True):
@@ -135,17 +167,15 @@ def api_commodities():
         include_history=include_history
     )
 
-    return jsonify({
-        'data': commodities,
-        'meta': {
-            'count': len(commodities),
-            'range': date_range,
-            'category': category,
-            'since': since,
-            'partial': since is not None,
-            'include_history': include_history,
-        }
-    })
+    return jsonify(
+        build_commodities_response(
+            commodities,
+            date_range,
+            category,
+            since=since,
+            include_history=include_history,
+        )
+    )
 
 
 @bp.route('/internal/api/commodities')
@@ -161,12 +191,7 @@ def internal_api_commodities():
     internal_api_key = get_internal_api_key()
     provided_key = request.headers.get('X-Internal-Key', '')
 
-    # Strict check: key must be set AND match
-    if (
-        not internal_api_key
-        or not provided_key
-        or not secrets.compare_digest(provided_key, internal_api_key)
-    ):
+    if not is_valid_internal_key(provided_key, internal_api_key):
         return jsonify({'error': 'Forbidden: valid API key required'}), 403
 
     date_range = validate_range(request.args.get('range', 'ALL'))
@@ -174,14 +199,7 @@ def internal_api_commodities():
 
     commodities = filter_commodities(date_range, category)
 
-    return jsonify({
-        'data': commodities,
-        'meta': {
-            'count': len(commodities),
-            'range': date_range,
-            'category': category
-        }
-    })
+    return jsonify(build_commodities_response(commodities, date_range, category))
 
 
 @bp.route('/')
