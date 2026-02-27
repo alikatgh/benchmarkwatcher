@@ -3,6 +3,7 @@ import os
 import logging
 from datetime import datetime, timedelta
 from flask import current_app
+from app.extensions import cache
 
 logger = logging.getLogger(__name__)
 
@@ -38,14 +39,12 @@ def filter_history_by_range(history, date_range):
         return history
     
     cutoff_date = latest_date - timedelta(days=days)
+    cutoff_date_str = cutoff_date.strftime('%Y-%m-%d')
     filtered = []
     for entry in history:
-        try:
-            entry_date = datetime.strptime(entry['date'], '%Y-%m-%d')
-            if entry_date >= cutoff_date:
-                filtered.append(entry)
-        except (ValueError, KeyError):
-            continue
+        date_str = entry.get('date', '')
+        if date_str and date_str >= cutoff_date_str:
+            filtered.append(entry)
 
     if not filtered:
         logger.warning(
@@ -57,6 +56,7 @@ def filter_history_by_range(history, date_range):
     return filtered
 
 
+@cache.memoize(timeout=600)
 def get_all_commodities(date_range='ALL'):
     """Load all commodities with display-filtered history.
     
