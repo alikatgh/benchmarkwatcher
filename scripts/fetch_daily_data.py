@@ -70,8 +70,6 @@ def fetch_new_data(commodity: Dict) -> list:
         return fetcher(conf.get('series_id'))
     elif source_type == 'EIA':
         return fetcher(conf.get('url'), conf.get('facets'))
-    elif source_type == 'FREEGOLD':
-        return fetcher(conf.get('data_type', 'gold'))
     elif source_type == 'YAHOO':
         return fetcher(conf.get('symbol'))
     elif source_type == 'USDA':
@@ -79,8 +77,6 @@ def fetch_new_data(commodity: Dict) -> list:
             commodity_desc=conf.get('commodity_desc'),
             unit_desc=conf.get('unit_desc', '$ / BU'),
         )
-    elif source_type == 'WORLDBANK':
-        return fetcher(conf.get('indicator'))
     else:
         return fetcher(**conf)
 
