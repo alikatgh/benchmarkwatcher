@@ -15,7 +15,7 @@ import sys
 import json
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Any, Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
 
@@ -47,7 +47,7 @@ DATA_DIR = os.path.join(SCRIPT_DIR, '..', 'data')
 CONFIG_PATH = os.path.join(SCRIPT_DIR, 'commodities.json')
 
 
-def load_config() -> list:
+def load_config() -> List[Dict[str, Any]]:
     """Load commodity configuration from commodities.json."""
     with open(CONFIG_PATH, 'r') as f:
         config = json.load(f)
@@ -55,7 +55,41 @@ def load_config() -> list:
     return config
 
 
-def fetch_new_data(commodity: Dict) -> list:
+def _fetch_fred(fetcher: Callable[..., List[Dict[str, Any]]], conf: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    return fetcher(conf.get('series_id'))
+
+
+def _fetch_eia(fetcher: Callable[..., List[Dict[str, Any]]], conf: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    return fetcher(conf.get('url'), conf.get('facets'))
+
+
+def _fetch_yahoo(fetcher: Callable[..., List[Dict[str, Any]]], conf: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    return fetcher(conf.get('symbol'))
+
+
+def _fetch_usda(fetcher: Callable[..., List[Dict[str, Any]]], conf: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    return fetcher(
+        commodity_desc=conf.get('commodity_desc'),
+        unit_desc=conf.get('unit_desc', '$ / BU'),
+    )
+
+
+def _fetch_default(fetcher: Callable[..., List[Dict[str, Any]]], conf: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+    return fetcher(**conf)
+
+
+FETCH_ADAPTERS: Dict[
+    str,
+    Callable[[Callable[..., List[Dict[str, Any]]], Dict[str, Any]], Optional[List[Dict[str, Any]]]]
+] = {
+    'FRED': _fetch_fred,
+    'EIA': _fetch_eia,
+    'YAHOO': _fetch_yahoo,
+    'USDA': _fetch_usda,
+}
+
+
+def fetch_new_data(commodity: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
     """Dispatch to the appropriate fetcher based on source_type."""
     source_type = commodity.get('source_type', '')
     conf = commodity.get('api_config', {})
@@ -65,23 +99,11 @@ def fetch_new_data(commodity: Dict) -> list:
         logger.warning(f"  No fetcher for source_type '{source_type}'")
         return None
 
-    # Build kwargs from api_config based on source_type
-    if source_type == 'FRED':
-        return fetcher(conf.get('series_id'))
-    elif source_type == 'EIA':
-        return fetcher(conf.get('url'), conf.get('facets'))
-    elif source_type == 'YAHOO':
-        return fetcher(conf.get('symbol'))
-    elif source_type == 'USDA':
-        return fetcher(
-            commodity_desc=conf.get('commodity_desc'),
-            unit_desc=conf.get('unit_desc', '$ / BU'),
-        )
-    else:
-        return fetcher(**conf)
+    adapter = FETCH_ADAPTERS.get(source_type, _fetch_default)
+    return adapter(fetcher, conf)
 
 
-def update_commodity(commodity: Dict) -> bool:
+def update_commodity(commodity: Dict[str, Any]) -> bool:
     """Orchestrates the update process for a single commodity. Returns True on success."""
     logger.info(f"Updating {commodity['name']}...")
 
