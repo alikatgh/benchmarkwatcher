@@ -14,7 +14,7 @@ const SORT_OPTIONS = [
     { label: 'Name (A-Z)', method: 'name', order: 'asc' },
     { label: 'Name (Z-A)', method: 'name', order: 'desc' },
     { label: 'Highest % Gain', method: 'change_percent', order: 'desc' },
-    { label: 'Highest % Loss', method: 'change_percent', order: 'asc' },
+    { label: 'Highest % Decrease', method: 'change_percent', order: 'asc' },
     { label: 'Highest Price', method: 'price', order: 'desc' },
     { label: 'Lowest Price', method: 'price', order: 'asc' },
     { label: 'Most Volatile (30d)', method: 'volatility', order: 'desc' },
