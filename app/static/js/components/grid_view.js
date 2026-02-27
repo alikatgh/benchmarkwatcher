@@ -15,6 +15,16 @@ BW.GridView = {
     // AbortController for request cancellation
     currentRequest: null,
 
+    // Escape untrusted text before HTML interpolation
+    escapeHtml: function (value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
     // Get grid settings via BW.Settings
     getSettings: function () {
         return BW.Settings.getGridSettings();
@@ -100,7 +110,7 @@ BW.GridView = {
         // Preserve category filter from URL
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${range}`;
+        let apiUrl = `/api/commodities?range=${encodeURIComponent(range)}&include_history=0`;
         if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
 
         const self = this;
@@ -198,6 +208,17 @@ BW.GridView = {
             const direction = isUp ? '' : '';  // Neutral: no interpretive label
             const sign = isUp ? '+' : '';
 
+            const commodityId = String(commodity.id || '');
+            const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
+            const safeName = this.escapeHtml(String(commodity.name || ''));
+            const safePrice = this.escapeHtml(String(commodity.price));
+            const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
+            const safeUnit = this.escapeHtml(String(commodity.unit || ''));
+            const safeDate = this.escapeHtml(String(commodity.date || ''));
+            const safeDisplayChange = this.escapeHtml(`${sign}${displayChange}`);
+            const safeDisplayChangePercent = this.escapeHtml(`${sign}${displayChangePercent}`);
+            const safeRangeLabel = this.escapeHtml(rangeLabel);
+
             // Determine if daily or monthly data
             const dailyCommodities = ['brent_oil', 'wti_oil', 'natural_gas', 'heating_oil', 'jet_fuel', 'propane', 'gold', 'silver', 'gasoline'];
             const isDaily = commodity.source_type === 'EIA' || dailyCommodities.includes(commodity.id);
@@ -210,7 +231,7 @@ BW.GridView = {
             const freqBadgeHtml = showFreqBadge ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${freqTitle}">${freqBadge}</span>` : '';
 
             const card = document.createElement('a');
-            card.href = `/commodity/${commodity.id}`;
+            card.href = `/commodity/${encodeURIComponent(commodityId)}`;
             card.className = 'block group';
             // Data attributes for stable sorting (avoids regex scraping rendered text)
             card.dataset.name = commodity.name;
@@ -222,7 +243,7 @@ BW.GridView = {
                     <div class="absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${commodity.category.toUpperCase()}</span>
+                            <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
                             ${freqBadgeHtml}
                         </div>
                         <div class="text-[10px] font-bold py-1 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar});">
@@ -230,29 +251,29 @@ BW.GridView = {
                         </div>
                     </div>
                     <h3 class="text-lg font-bold text-brand-black-80 dark:text-white mb-4 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">
-                        ${commodity.name}
+                        ${safeName}
                     </h3>
                     <div class="flex items-end justify-between gap-4 font-ui">
                         <div>
                             <div class="text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
-                                ${commodity.price}
+                                ${safePrice}
                             </div>
                             <div class="text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
-                                ${commodity.currency} / ${commodity.unit}
+                                ${safeCurrency} / ${safeUnit}
                             </div>
                         </div>
                         <div class="text-right">
                             <div class="text-xl font-bold" style="color: var(${colorVar});">
-                                ${sign}${displayChangePercent}%
+                                ${safeDisplayChangePercent}%
                             </div>
                             <div class="text-xs text-brand-black-60 dark:text-brand-black-60/60 mt-1">
-                                ${sign}${displayChange} ${commodity.currency}
+                                ${safeDisplayChange} ${safeCurrency}
                             </div>
                         </div>
                     </div>
                     <div class="mt-5 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
                         <div class="text-xs text-brand-black-60 dark:text-brand-black-60/80 font-medium">
-                            As of ${commodity.date} · <span class="italic">${rangeLabel}</span>
+                            As of ${safeDate} · <span class="italic">${safeRangeLabel}</span>
                         </div>
                         <div class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-1 transition-all">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 min-h-screen transition-colors duration-300">
+<div id="index-page-state" data-active-view="{{ active_view }}" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 min-h-screen transition-colors duration-300">
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-4 sm:mb-6 gap-2 sm:gap-3">
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold text-brand-black-80 dark:text-brand-paper font-serif">Market Benchmarks</h1>
@@ -11,16 +11,20 @@
     </div>
 
     <!-- Grid View Container -->
-    <div id="grid-view" class="hidden">
+    <div id="grid-view" class="{{ '' if active_view == 'grid' else 'hidden' }}">
+        {% if active_view == 'grid' %}
         {% include 'components/grid_view.html' %}
+        {% endif %}
     </div>
 
     <!-- Compact View Container -->
-    <div id="compact-view" class="hidden">
+    <div id="compact-view" class="{{ '' if active_view == 'compact' else 'hidden' }}">
+        {% if active_view == 'compact' %}
         <div
             class="bg-card-warm dark:bg-brand-slate border border-brand-black-60/20 dark:border-brand-black-60/40 rounded-xl overflow-hidden shadow-sm">
             {% include 'components/compact_table.html' %}
         </div>
+        {% endif %}
     </div>
 </div>
 

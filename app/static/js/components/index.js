@@ -20,7 +20,30 @@ BW.Index = {
             BW.Responsive.autoApply();
         }
 
-        const viewMode = BW.Settings.getViewMode();
+        const serverView = document.getElementById('index-page-state')?.dataset?.activeView;
+        const storedView = BW.Settings.getViewMode();
+        const params = new URLSearchParams(window.location.search);
+        const explicitView = params.get('view');
+
+        // If server and client preference diverge without explicit view param,
+        // reload once with preferred view so the server renders the right markup.
+        if (
+            window.location.pathname === '/' &&
+            !explicitView &&
+            (serverView === 'grid' || serverView === 'compact') &&
+            (storedView === 'grid' || storedView === 'compact') &&
+            serverView !== storedView
+        ) {
+            const redirectUrl = new URL(window.location.href);
+            redirectUrl.searchParams.set('view', storedView);
+            window.location.replace(redirectUrl.toString());
+            return;
+        }
+
+        const viewMode = (serverView === 'grid' || serverView === 'compact')
+            ? serverView
+            : storedView;
+        BW.Settings.setViewMode(viewMode);
 
         // View containers (show/hide the active view)
         const gridContainer = document.getElementById('grid-view');

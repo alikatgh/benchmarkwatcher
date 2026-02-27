@@ -37,6 +37,20 @@ BW.CompactTable = {
         localStorage.setItem('table-settings', JSON.stringify(settings));
     },
 
+    // Escape untrusted text before HTML interpolation
+    escapeHtml: function (value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    },
+
+    safeDomId: function (value) {
+        return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+    },
+
     // Data Range Functions
     setDataRange: function (range) {
         const settings = this.getSettings();
@@ -69,7 +83,7 @@ BW.CompactTable = {
         // Preserve category filter from URL
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${range}`;
+        let apiUrl = `/api/commodities?range=${encodeURIComponent(range)}&include_history=1`;
         if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
 
         // Fetch data via AJAX and update table
@@ -158,6 +172,21 @@ BW.CompactTable = {
             const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
             const arrow = isUp ? '▲' : '▼';
             const sign = isUp ? '+' : '';
+            const commodityId = String(commodity.id || '');
+            const safeRangeLabel = this.escapeHtml(rangeLabel);
+            const safeIconText = this.escapeHtml(commodityId.slice(0, 2));
+            const safeName = this.escapeHtml(String(commodity.name || ''));
+            const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
+            const safePrice = this.escapeHtml(String(commodity.price));
+            const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
+            const safeDisplayChange = this.escapeHtml(`${sign}${displayChange}`);
+            const safeDisplayChangePercent = this.escapeHtml(`${sign}${displayChangePercent}`);
+            const safeFirstPrice = this.escapeHtml(String(firstPrice));
+            const safeLastPrice = this.escapeHtml(String(lastPrice));
+            const safeFirstDate = this.escapeHtml(String(firstDate));
+            const safeLastDate = this.escapeHtml(String(lastDate));
+            const safeDate = this.escapeHtml(String(commodity.date || ''));
+            const sparklineId = `sparkline-${this.safeDomId(commodityId)}`;
 
             // Determine if daily or monthly data
             const dailyCommodities = ['brent_oil', 'wti_oil', 'natural_gas', 'heating_oil', 'jet_fuel', 'propane', 'gold', 'silver', 'gasoline'];
@@ -165,70 +194,71 @@ BW.CompactTable = {
             const freqBadge = isDaily ? 'D' : 'M';
             const freqTitle = isDaily ? 'Daily data' : 'Monthly data';
             const freqColor = isDaily ? 'bg-brand-teal/20 text-brand-teal' : 'bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal';
+            const safeFreqTitle = this.escapeHtml(freqTitle);
 
             const row = document.createElement('tr');
-            row.onclick = () => { window.location = `/commodity/${commodity.id}`; };
+            row.onclick = () => { window.location = `/commodity/${encodeURIComponent(commodityId)}`; };
             row.className = 'hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition-all duration-200 group';
 
             row.innerHTML = `
                 <td data-col="commodity" class="px-4 py-5">
                     <div class="flex items-center gap-3 commodity-cell">
                         <div class="commodity-icon w-10 h-10 rounded-xl bg-brand-black-60/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-oxford/10 dark:group-hover:bg-brand-teal/10 transition-colors">
-                            <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60">${commodity.id.slice(0, 2)}</span>
+                            <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60">${safeIconText}</span>
                         </div>
                         <div>
-                            <div class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">${commodity.name}</div>
+                            <div class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">${safeName}</div>
                             <div class="flex items-center gap-1.5">
-                                <span class="commodity-category text-[10px] text-brand-black-60 tracking-wide uppercase">${commodity.category.toUpperCase()}</span>
-                                <span class="text-[8px] font-bold px-1 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${freqTitle}">${freqBadge}</span>
+                                <span class="commodity-category text-[10px] text-brand-black-60 tracking-wide uppercase">${safeCategory}</span>
+                                <span class="text-[8px] font-bold px-1 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${safeFreqTitle}">${freqBadge}</span>
                             </div>
                         </div>
                     </div>
                 </td>
                 <td data-col="trend" class="px-4 py-5">
                     <div class="h-10 w-28 bg-brand-black-60/5 dark:bg-white/5 rounded-lg p-1">
-                        <canvas id="sparkline-${commodity.id}"></canvas>
+                        <canvas id="${sparklineId}"></canvas>
                     </div>
                 </td>
                 <td data-col="price" class="px-4 py-5 text-right">
-                    <div class="price-value text-sm font-bold text-brand-black-80 dark:text-white" data-raw="${commodity.price}">${commodity.price}</div>
-                    <div class="price-currency text-[10px] text-brand-black-60">${commodity.currency}</div>
+                    <div class="price-value text-sm font-bold text-brand-black-80 dark:text-white" data-raw="${safePrice}">${safePrice}</div>
+                    <div class="price-currency text-[10px] text-brand-black-60">${safeCurrency}</div>
                 </td>
                 <td data-col="chg" class="px-4 py-5 text-right">
                     <div class="chg-cell relative group/chg">
-                        <div class="inline-flex items-center gap-1 text-sm font-bold cursor-help" style="color: var(${colorVar});" data-value="${displayChange}">
+                        <div class="inline-flex items-center gap-1 text-sm font-bold cursor-help" style="color: var(${colorVar});" data-value="${safeDisplayChange}">
                             <span class="chg-arrow text-[10px]">${arrow}</span>
-                            <span class="chg-value">${sign}${displayChange}</span>
+                            <span class="chg-value">${safeDisplayChange}</span>
                         </div>
                         <!-- Tooltip -->
                         <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-[10px] opacity-0 invisible group-hover/chg:opacity-100 group-hover/chg:visible transition-all z-50 font-ui text-left">
-                            <div class="font-bold mb-1">Price Change (${rangeLabel})</div>
+                            <div class="font-bold mb-1">Price Change (${safeRangeLabel})</div>
                             <div class="space-y-0.5 text-brand-black-60">
-                                <div>Start: <span class="text-white">${firstPrice} ${commodity.currency}</span></div>
-                                <div>End: <span class="text-white">${lastPrice} ${commodity.currency}</span></div>
-                                <div class="pt-1 border-t border-white/20">Δ <span class="font-bold" style="color: var(${colorVar});">${sign}${displayChange} ${commodity.currency}</span></div>
+                                <div>Start: <span class="text-white">${safeFirstPrice} ${safeCurrency}</span></div>
+                                <div>End: <span class="text-white">${safeLastPrice} ${safeCurrency}</span></div>
+                                <div class="pt-1 border-t border-white/20">Δ <span class="font-bold" style="color: var(${colorVar});">${safeDisplayChange} ${safeCurrency}</span></div>
                             </div>
                         </div>
                     </div>
                 </td>
                 <td data-col="pct" class="px-4 py-5 text-right">
                     <div class="pct-cell relative group/pct">
-                        <div class="inline-flex px-2 py-1 rounded-md text-sm font-bold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${displayChangePercent}">
-                            ${sign}${displayChangePercent}%
+                        <div class="inline-flex px-2 py-1 rounded-md text-sm font-bold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${safeDisplayChangePercent}">
+                            ${safeDisplayChangePercent}%
                         </div>
                         <!-- Tooltip -->
                         <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-[10px] opacity-0 invisible group-hover/pct:opacity-100 group-hover/pct:visible transition-all z-50 font-ui text-left">
-                            <div class="font-bold mb-1">% Change (${rangeLabel})</div>
+                            <div class="font-bold mb-1">% Change (${safeRangeLabel})</div>
                             <div class="space-y-0.5 text-brand-black-60">
-                                <div>${firstDate} → ${lastDate}</div>
-                                <div>From: <span class="text-white">${firstPrice}</span> to <span class="text-white">${lastPrice}</span></div>
-                                <div class="pt-1 border-t border-white/20">= <span class="font-bold" style="color: var(${colorVar});">${sign}${displayChangePercent}%</span></div>
+                                <div>${safeFirstDate} → ${safeLastDate}</div>
+                                <div>From: <span class="text-white">${safeFirstPrice}</span> to <span class="text-white">${safeLastPrice}</span></div>
+                                <div class="pt-1 border-t border-white/20">= <span class="font-bold" style="color: var(${colorVar});">${safeDisplayChangePercent}%</span></div>
                             </div>
                         </div>
                     </div>
                 </td>
                 <td data-col="updated" class="px-4 py-5 text-right">
-                    <div class="updated-cell text-xs font-medium text-brand-black-60" data-date="${commodity.date}">${commodity.date}</div>
+                    <div class="updated-cell text-xs font-medium text-brand-black-60" data-date="${safeDate}">${safeDate}</div>
                 </td>
             `;
             tbody.appendChild(row);
@@ -267,7 +297,8 @@ BW.CompactTable = {
             const showHighLow = document.getElementById('trend-highlow')?.checked || settings.trend?.showHighLow || false;
 
             commodities.forEach(commodity => {
-                const canvasId = `sparkline-${commodity.id}`;
+                const commodityId = String(commodity.id || '');
+                const canvasId = `sparkline-${self.safeDomId(commodityId)}`;
                 const canvas = document.getElementById(canvasId);
                 if (!canvas || !commodity.history) return;
 
@@ -780,7 +811,7 @@ BW.CompactTable = {
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || 'ALL';
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${currentRange}`;
+        let apiUrl = `/api/commodities?range=${encodeURIComponent(currentRange)}&include_history=1`;
         if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
 
         fetch(apiUrl)
@@ -1006,13 +1037,31 @@ BW.CompactTable = {
         ['commodity', 'trend', 'price', 'chg', 'pct', 'updated'].forEach(col => this.updatePreview(col));
     },
 
+    loadSparklinesForCurrentRange: function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentRange = urlParams.get('range') || this.getSettings().dataRange || 'ALL';
+        const category = urlParams.get('category');
+        let apiUrl = `/api/commodities?range=${encodeURIComponent(currentRange)}&include_history=1`;
+        if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
+
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(response => {
+                const commodities = response.data || response;
+                this.initSparklines(commodities);
+            })
+            .catch(err => console.error('Failed to load sparkline data:', err));
+    },
+
     // Initialize component
     init: function (commodities) {
         this.loadSettings();
         this.initDataRange();
         if (commodities && commodities.length > 0) {
             this.initSparklines(commodities);
+            return;
         }
+        this.loadSparklinesForCurrentRange();
     }
 };
 
@@ -1024,6 +1073,13 @@ function updatePreview(c) { BW.CompactTable.updatePreview(c); }
 function applySettings() { BW.CompactTable.applySettings(); }
 function resetAllSettings() { BW.CompactTable.resetAllSettings(); }
 function exportToCSV() { BW.CompactTable.exportToCSV(); }
+
+document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('data-table')) {
+        BW.CompactTable.init();
+    }
+});
+
 function toggleFreqBadge() {
     const checkbox = document.getElementById('table-show-freq-badge');
     const showBadge = checkbox?.checked ?? true;
@@ -1124,4 +1180,3 @@ function sortTable(column) {
     // Re-append sorted rows
     rows.forEach(row => tbody.appendChild(row));
 }
-

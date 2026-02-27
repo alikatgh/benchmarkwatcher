@@ -3,7 +3,7 @@ import { sortCommodities } from '../utils/sortUtils';
 import { apiClient } from './client';
 
 export async function fetchCommodities(category = 'all', sort = 'priority', order = 'asc', range = '1W', since?: string): Promise<Commodity[]> {
-    let endpoint = `/api/commodities?category=${category}&sort=${sort}&order=${order}&range=${range}`;
+    let endpoint = `/api/commodities?category=${category}&sort=${sort}&order=${order}&range=${range}&include_history=0`;
     if (since) endpoint += `&since=${encodeURIComponent(since)}`;
 
     try {
