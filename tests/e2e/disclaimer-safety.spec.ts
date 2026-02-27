@@ -57,9 +57,10 @@ test.describe('UI vocabulary safety', () => {
 
     test('commodity cards use observational language', async ({ page }) => {
         await page.goto('/');
+        await page.waitForLoadState('networkidle');
         await page.waitForSelector('#grid-cards-container', { state: 'visible', timeout: 5000 }).catch(() => { });
 
-        const cardText = await page.locator('#grid-cards-container').innerText().catch(() => '');
+        const cardText = await page.locator('#grid-cards-container').innerText({ timeout: 5000 }).catch(() => '');
 
         // These terms specifically should never appear in commodity cards
         expect(cardText.toLowerCase()).not.toContain('trend');
