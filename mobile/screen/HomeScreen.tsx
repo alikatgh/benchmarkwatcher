@@ -13,7 +13,7 @@ import HomeModals from '../components/features/HomeModals';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
-const CATEGORIES = ['All', 'Energy', 'Metal', 'Agricultural', 'Precious', 'Livestock'];
+const CATEGORIES = ['All', 'Energy', 'Metal', 'Agricultural', 'Precious'];
 const RANGES = ['1W', '1M', '3M', '6M', '1Y', 'ALL'];
 
 export default function HomeScreen() {
@@ -50,7 +50,6 @@ export default function HomeScreen() {
         if (sortMethod === 'change_percent') return sortOrder === 'desc' ? '↑ % Gain' : '↓ % Decrease';
         if (sortMethod === 'name' || sortMethod === 'priority') return sortOrder === 'asc' ? 'Name (A-Z)' : 'Name (Z-A)';
         if (sortMethod === 'price') return sortOrder === 'desc' ? 'Highest Price' : 'Lowest Price';
-        if (sortMethod === 'volatility') return sortOrder === 'desc' ? 'Most Volatile' : 'Least Volatile';
         return 'Sort Options';
     };
 

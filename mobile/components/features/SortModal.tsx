@@ -17,8 +17,6 @@ const SORT_OPTIONS = [
     { label: 'Highest % Decrease', method: 'change_percent', order: 'asc' },
     { label: 'Highest Price', method: 'price', order: 'desc' },
     { label: 'Lowest Price', method: 'price', order: 'asc' },
-    { label: 'Most Volatile (30d)', method: 'volatility', order: 'desc' },
-    { label: 'Least Volatile (30d)', method: 'volatility', order: 'asc' },
 ] as const;
 
 export default function SortModal({ visible, onClose, sortMethod, setSortMethod, sortOrder, setSortOrder }: SortModalProps) {

@@ -2,7 +2,7 @@
 # ==============================
 
 # Core Framework
-Flask>=2.3,<3.1        # Compatible with Flask 3.0 breaking changes
+Flask>=3.1.3,<3.2      # Includes fix for CVE-2026-27205
 Werkzeug>=3.0          # Required by Flask 3.0
 Flask-Caching>=2.3     # In-memory caching
 
