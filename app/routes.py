@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, abort, make_response
+from flask import Blueprint, render_template, request, jsonify, abort
 from app.data_handler import get_all_commodities, get_commodity
 from app.extensions import cache
 import os
@@ -186,7 +186,6 @@ def index():
     category = request.args.get('category', None)
     active_view = (
         validate_view(request.args.get('view'))
-        or validate_view(request.cookies.get('view-mode'))
         or 'grid'
     )
 
@@ -196,15 +195,13 @@ def index():
         include_history=False
     )
 
-    response = make_response(render_template(
+    return render_template(
         'index.html',
         commodities=commodities,
         date_range=date_range,
         selected_category=category,
         active_view=active_view
-    ))
-    response.set_cookie('view-mode', active_view, max_age=31536000, samesite='Lax')
-    return response
+    )
 
 
 @bp.route('/commodity/<string:commodity_id>')
