@@ -140,12 +140,21 @@ BW.SettingsModal = {
 
     // Set view mode
     setView: function (mode) {
+        if (window.BW && BW.Settings && typeof BW.Settings.setViewMode === 'function') {
+            BW.Settings.setViewMode(mode);
+        } else {
+            try {
+                localStorage.setItem('view-mode', mode);
+            } catch (e) { /* localStorage unavailable */ }
+        }
         try {
-            localStorage.setItem('view-mode', mode);
-        } catch (e) { /* localStorage unavailable */ }
+            document.cookie = `view-mode=${encodeURIComponent(mode)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+        } catch (e) { /* cookie unavailable */ }
         this.updateUI();
         if (window.location.pathname === '/') {
-            window.location.reload();
+            const url = new URL(window.location.href);
+            url.searchParams.set('view', mode);
+            window.location.href = url.toString();
         } else {
             this.toggle();
         }

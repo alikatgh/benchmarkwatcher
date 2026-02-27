@@ -57,7 +57,7 @@ def filter_history_by_range(history, date_range):
 
 
 @cache.memoize(timeout=600)
-def get_all_commodities(date_range='ALL'):
+def get_all_commodities(date_range='ALL', include_history=True):
     """Load all commodities with display-filtered history.
     
     Uses pre-computed metrics from derived.descriptive_stats.
@@ -78,7 +78,10 @@ def get_all_commodities(date_range='ALL'):
                     # Filter history for display only
                     full_history = item.get('history', [])
                     filtered_history = filter_history_by_range(full_history, date_range)
-                    item['history'] = filtered_history
+                    if include_history:
+                        item['history'] = filtered_history
+                    else:
+                        item.pop('history', None)
                     
                     # Update display price/date from filtered history
                     if filtered_history:

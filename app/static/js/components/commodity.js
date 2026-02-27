@@ -1021,7 +1021,7 @@ BW.Commodity = {
             this.renderCompareList('');
             return;
         }
-        fetch('/api/commodities?range=ALL')
+        fetch('/api/commodities?range=ALL&include_history=0')
             .then(function (r) { return r.json(); })
             .then(function (json) {
                 var data = json.data || json;
@@ -1041,24 +1041,42 @@ BW.Commodity = {
         var items = this.allCommoditiesList.filter(function (c) {
             return !q || c.name.toLowerCase().indexOf(q) !== -1 || c.category.toLowerCase().indexOf(q) !== -1;
         });
+        listEl.innerHTML = '';
         if (items.length === 0) {
-            listEl.innerHTML = '<div class="px-4 py-3 text-xs text-brand-black-60">No commodities found</div>';
+            var empty = document.createElement('div');
+            empty.className = 'px-4 py-3 text-xs text-brand-black-60';
+            empty.textContent = 'No commodities found';
+            listEl.appendChild(empty);
             return;
         }
-        var html = '';
         for (var i = 0; i < items.length; i++) {
             var c = items[i];
             var isAdded = !!this.comparisonData[c.id];
-            html += '<button onclick="toggleCompare(\'' + c.id + '\', \'' + c.name.replace(/'/g, "\\'") + '\')" ' +
-                'class="w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between gap-2 ' +
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between gap-2 ' +
                 (isAdded
                     ? 'text-brand-oxford dark:text-brand-teal bg-brand-oxford/5 dark:bg-brand-teal/5'
-                    : 'text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5') + '">' +
-                '<span class="truncate">' + c.name + '</span>' +
-                '<span class="text-[9px] uppercase tracking-wider text-brand-black-60 shrink-0">' + c.category + '</span>' +
-                '</button>';
+                    : 'text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5');
+
+            (function (id, name) {
+                button.addEventListener('click', function () {
+                    self.toggleComparison(id, name);
+                });
+            })(c.id, c.name);
+
+            var nameSpan = document.createElement('span');
+            nameSpan.className = 'truncate';
+            nameSpan.textContent = c.name;
+
+            var categorySpan = document.createElement('span');
+            categorySpan.className = 'text-[9px] uppercase tracking-wider text-brand-black-60 shrink-0';
+            categorySpan.textContent = c.category;
+
+            button.appendChild(nameSpan);
+            button.appendChild(categorySpan);
+            listEl.appendChild(button);
         }
-        listEl.innerHTML = html;
     },
 
     toggleComparison: function (id, name) {
@@ -1110,15 +1128,31 @@ BW.Commodity = {
             return;
         }
         bar.classList.remove('hidden');
-        var html = '';
+        tags.innerHTML = '';
         for (var i = 0; i < ids.length; i++) {
-            var comp = this.comparisonData[ids[i]];
-            html += '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-white shrink-0 whitespace-nowrap" style="background-color:' + comp.color + '">' +
-                comp.name +
-                '<button onclick="removeComparison(\'' + ids[i] + '\')" class="ml-0.5 p-1 min-w-[24px] min-h-[24px] flex items-center justify-center hover:opacity-70 rounded">&times;</button>' +
-                '</span>';
+            var id = ids[i];
+            var comp = this.comparisonData[id];
+            var pill = document.createElement('span');
+            pill.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold text-white shrink-0 whitespace-nowrap';
+            pill.style.backgroundColor = comp.color;
+
+            var name = document.createElement('span');
+            name.textContent = comp.name;
+
+            var removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'ml-0.5 p-1 min-w-[24px] min-h-[24px] flex items-center justify-center hover:opacity-70 rounded';
+            removeBtn.textContent = '\u00D7';
+            (function (compareId) {
+                removeBtn.addEventListener('click', function () {
+                    BW.Commodity.removeComparison(compareId);
+                });
+            })(id);
+
+            pill.appendChild(name);
+            pill.appendChild(removeBtn);
+            tags.appendChild(pill);
         }
-        tags.innerHTML = html;
     }
 };
 

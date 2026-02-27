@@ -512,21 +512,8 @@
         </table>
     </div>
 </div>
-<!-- Data passed via JSON for external JS -->
-<script id="commodities-data" type="application/json">
-{{ commodities | tojson }}
-</script>
-
 <!-- External JS modules -->
 <script src="{{ url_for('static', filename='js/core/settings.js') }}"></script>
 <script src="{{ url_for('static', filename='js/core/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/compact_table.js') }}"></script>
-
-<script>
-    // Initialize compact table with Jinja2 data
-    document.addEventListener('DOMContentLoaded', function () {
-        const commodities = JSON.parse(document.getElementById('commodities-data').textContent);
-        BW.CompactTable.init(commodities);
-    });
-</script>

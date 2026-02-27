@@ -196,11 +196,13 @@ The Flask app reads JSON files from `data/` and serves them via API endpoints:
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /api/commodities` | List all commodities (supports `?category=`, `?range=`, `?sort=`, `?order=`, `?since=`) |
+| `GET /api/commodities` | List all commodities (supports `?category=`, `?range=`, `?sort=`, `?order=`, `?since=`, `?include_history=`) |
 | `GET /api/commodity/{id}` | Single commodity detail with full history |
 | `GET /internal/api/commodities` | Bot-only endpoint (requires `X-Internal-Key` header) |
 
 **`since` parameter**: When provided (format `YYYY-MM-DD`), only returns commodities with dates newer than the given value. Used by the mobile app for incremental/partial refreshes.
+
+**`include_history` parameter**: Controls whether each commodity includes its `history` array in list responses. Defaults to `false` for performance. Set `include_history=1` when list endpoints need sparkline/history data.
 
 ### Starting the backend for development
 

@@ -37,7 +37,7 @@
     -->
 
     <title>{% block title %}BenchmarkWatcher{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* @import must appear before all other rules */
@@ -693,37 +693,6 @@
             background-color: var(--theme-surface) !important;
         }
     </style>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            pink: '#fffcfa',
-                            grey: '#333',
-                            claret: '#990f3d',
-                            teal: '#0d7680',
-                            oxford: '#0f5499',
-                            slate: '#262a33',
-                            paper: '#f2dfce',
-                            wheat: '#f2dfce',
-                            'black-80': '#33302e',
-                            'black-70': '#4d4845',
-                            'black-60': '#66605c',
-                            'terminal-black': '#000000',
-                            'terminal-surface': '#1a1a1a',
-                        }
-                    },
-                    fontFamily: {
-                        serif: ['Georgia', 'serif'],
-                        sans: ['Inter', 'sans-serif'],
-                        ui: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        };
-    </script>
     <!-- External JS for base theme initialization -->
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
 </head>
