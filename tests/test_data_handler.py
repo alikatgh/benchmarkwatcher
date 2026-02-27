@@ -18,6 +18,8 @@ from app.data_handler import (
 # Fixtures
 # ------------------------------------------------------------------
 
+from app.extensions import cache
+
 @pytest.fixture
 def app_with_data(tmp_path):
     """
@@ -25,6 +27,8 @@ def app_with_data(tmp_path):
     containing one valid commodity JSON file.
     """
     app = Flask(__name__)
+    app.config['CACHE_TYPE'] = 'SimpleCache'
+    cache.init_app(app)
 
     # Create structure: tmp_path/app/ and tmp_path/data/
     # So that from app, ../data resolves to data dir
