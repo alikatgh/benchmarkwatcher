@@ -183,11 +183,11 @@
     "name": "Gold",
     "category": "precious",
     "unit": "troy oz",
-    "source_type": "FREEGOLD",
-    "source_name": "FreeGoldAPI (World Bank/Yahoo)",
+    "source_type": "YAHOO",
+    "source_name": "Yahoo Finance (COMEX Futures)",
     "api_config": {
-      "data_type": "gold",
-      "source_info_url": "https://freegoldapi.com"
+      "symbol": "GC=F",
+      "source_info_url": "https://finance.yahoo.com/quote/GC=F"
     }
   },
   {
