@@ -202,7 +202,7 @@ The Flask app reads JSON files from `data/` and serves them via API endpoints:
 
 **`since` parameter**: When provided (format `YYYY-MM-DD`), only returns commodities with dates newer than the given value. Used by the mobile app for incremental/partial refreshes.
 
-**`include_history` parameter**: Controls whether each commodity includes its `history` array in list responses. Defaults to `false` for performance. Set `include_history=1` when list endpoints need sparkline/history data.
+**`include_history` parameter**: Controls whether each commodity includes its `history` array in list responses. Defaults to `false` to reduce response size. Set `include_history=1` when list endpoints need sparkline/history data.
 
 ### Starting the backend for development
 

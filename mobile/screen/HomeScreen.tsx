@@ -47,7 +47,7 @@ export default function HomeScreen() {
     });
 
     const getSortText = () => {
-        if (sortMethod === 'change_percent') return sortOrder === 'desc' ? '↑ % Gain' : '↓ % Loss';
+        if (sortMethod === 'change_percent') return sortOrder === 'desc' ? '↑ % Gain' : '↓ % Decrease';
         if (sortMethod === 'name' || sortMethod === 'priority') return sortOrder === 'asc' ? 'Name (A-Z)' : 'Name (Z-A)';
         if (sortMethod === 'price') return sortOrder === 'desc' ? 'Highest Price' : 'Lowest Price';
         if (sortMethod === 'volatility') return sortOrder === 'desc' ? 'Most Volatile' : 'Least Volatile';

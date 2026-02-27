@@ -291,9 +291,9 @@ export default function CommodityDetailScreen({ route }: Props) {
                                     </Text>
                                 </View>
                                 <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                    <Text className="text-slate-500 dark:text-slate-400">Trend (30D)</Text>
-                                    <Text className={`font-bold uppercase ${commodity.derived_stats.trend === 'up' ? positiveColor : commodity.derived_stats.trend === 'down' ? negativeColor : 'text-slate-500 dark:text-slate-400'}`}>
-                                        {commodity.derived_stats.trend || 'N/A'}
+                                    <Text className="text-slate-500 dark:text-slate-400">Direction (30D)</Text>
+                                    <Text className={`font-bold uppercase ${commodity.derived_stats.direction_30_obs === 'up' ? positiveColor : commodity.derived_stats.direction_30_obs === 'down' ? negativeColor : 'text-slate-500 dark:text-slate-400'}`}>
+                                        {commodity.derived_stats.direction_30_obs || 'N/A'}
                                     </Text>
                                 </View>
                             </>

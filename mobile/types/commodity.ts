@@ -24,7 +24,7 @@ export interface Commodity {
     derived_stats?: {
         pct_30d?: number;
         pct_1y?: number;
-        trend?: string;
+        direction_30_obs?: string;
         volatility_30d?: number;
     };
 }

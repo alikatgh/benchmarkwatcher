@@ -81,7 +81,7 @@ Currently renders a single series with Catmull-Rom interpolation. Changes needed
 - **Max comparisons**: 4 on mobile (vs 8 on web) to keep chart readable on small screens
 - **Color assignment**: Sequential from palette, not recycled until all used
 - **Data fetching**: Fetch each comparison commodity's full detail on-demand (not prefetched)
-- **Performance**: Limit comparison history to same date range as primary commodity's visible range
+- **Efficiency**: Limit comparison history to same date range as primary commodity's visible range
 
 ---
 
@@ -254,7 +254,7 @@ Recommended sequence (each phase builds on the previous):
 
 ### Phase 5: Polish
 14. **Animations** — modal transitions, chart series fade-in
-15. **Performance** — memoize comparison path calculations, limit re-renders
+15. **Optimisation** — memoize comparison path calculations, limit re-renders
 16. **Testing** — verify on iOS simulator, Android emulator, physical device
 
 ---
