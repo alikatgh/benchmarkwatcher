@@ -19,6 +19,7 @@ if (!/^https:\/\//i.test(inputUrl)) {
 const root = process.cwd();
 const appJsonPath = join(root, 'app.json');
 const envExamplePath = join(root, '.env.example');
+const envPath = join(root, '.env');
 
 if (!existsSync(appJsonPath)) fail('app.json not found');
 if (!existsSync(envExamplePath)) fail('.env.example not found');
@@ -39,9 +40,22 @@ if (/^EXPO_PUBLIC_API_URL=.*$/m.test(envExample)) {
 }
 writeFileSync(envExamplePath, envExample, 'utf8');
 
+// Update or create .env
+let env = '';
+if (existsSync(envPath)) {
+  env = readFileSync(envPath, 'utf8');
+}
+if (/^EXPO_PUBLIC_API_URL=.*$/m.test(env)) {
+  env = env.replace(/^EXPO_PUBLIC_API_URL=.*$/m, `EXPO_PUBLIC_API_URL=${inputUrl}`);
+} else {
+  env = `${env.trimEnd()}${env.trim().length ? '\n' : ''}EXPO_PUBLIC_API_URL=${inputUrl}\n`;
+}
+writeFileSync(envPath, env, 'utf8');
+
 console.log('✅ API URL updated in:');
 console.log('- app.json (expo.extra.apiBaseUrl)');
 console.log('- .env.example (EXPO_PUBLIC_API_URL)');
+console.log('- .env (EXPO_PUBLIC_API_URL)');
 console.log('\nNext:');
 console.log(`- npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value ${inputUrl}`);
 console.log('- npm run preflight:release');

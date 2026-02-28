@@ -105,7 +105,11 @@ checkPlaceholders('PLAY_STORE_METADATA_TEMPLATE.md', [/your-domain\.example/i, /
 
 // 3) Expo auth check (developer-side)
 try {
-  const whoami = execSync('npx eas whoami', { stdio: 'pipe' }).toString().trim();
+  const whoami = execSync('npx eas whoami --non-interactive', {
+    stdio: 'pipe',
+    timeout: 15000,
+    env: { ...process.env, CI: '1' }
+  }).toString().trim();
   if (!whoami || /not logged in/i.test(whoami)) {
     addBlocker(
       'EAS CLI is not logged in (developer publishing account)',
@@ -141,17 +145,19 @@ if (blockers.length) {
     console.log(`- Apply it everywhere: npm run api:set -- ${detectedApiUrl}`);
     console.log('- Quick unblock commands:');
     console.log('  cd mobile');
-    console.log(`  npm run api:set -- ${detectedApiUrl}`);
+    console.log(`  export API_URL=${detectedApiUrl}`);
+    console.log('  npm run api:set -- $API_URL');
     console.log('  npm run eas:login');
-    console.log(`  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value ${detectedApiUrl}`);
+    console.log('  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value $API_URL');
     console.log('  npm run preflight:release');
   } else {
-    console.log('- Set production API URL in app.json/.env.example and EAS secret');
+    console.log('- Set production API URL in app.json/.env.example/.env and EAS secret');
     console.log('- Quick unblock commands:');
     console.log('  cd mobile');
-    console.log('  npm run api:set -- https://YOUR_REAL_API_DOMAIN');
+    console.log('  export API_URL=https://YOUR_REAL_API_DOMAIN');
+    console.log('  npm run api:set -- $API_URL');
     console.log('  npm run eas:login');
-    console.log('  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value https://YOUR_REAL_API_DOMAIN');
+    console.log('  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value $API_URL');
     console.log('  npm run preflight:release');
   }
   console.log('- Authenticate Expo maintainer account');
