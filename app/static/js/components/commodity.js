@@ -1353,9 +1353,8 @@ function filterCompareList(q) { BW.Commodity.renderCompareList(q); }
 function toggleCompare(id, name) { BW.Commodity.toggleComparison(id, name); }
 function removeComparison(id) { BW.Commodity.removeComparison(id); }
 
-const COMMODITY_GLOBAL_BIND_KEY = '__bwCommodityGlobalHandlersBound';
-if (!window[COMMODITY_GLOBAL_BIND_KEY]) {
-    window[COMMODITY_GLOBAL_BIND_KEY] = true;
+if (!window.__bwCommodityGlobalHandlersBound) {
+    window.__bwCommodityGlobalHandlersBound = true;
 
     // Close download/compare menus on outside click
     document.addEventListener('click', function (e) {
