@@ -69,3 +69,12 @@ EXPO_PUBLIC_API_URL=https://your-api-domain.example eas build -p android --profi
 - If `eas submit` asks for missing credentials/metadata, complete them in App Store Connect / Google Play Console.
 - For first iOS submission, ensure app record exists in App Store Connect.
 - For first Android submission, ensure app exists in Play Console and service account access is configured for automated submit.
+
+## Common preflight blockers
+
+- `Placeholder value detected in app.json/.env.example`
+	- Replace `https://your-api-domain.example` with your real production API URL.
+- `EAS CLI is not logged in`
+	- Run `npm run eas:login` (developer/maintainer only, not app users).
+- Preflight still failing
+	- Re-run `npm run preflight:release` and follow each printed `Fix:` line.
