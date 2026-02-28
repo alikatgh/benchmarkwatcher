@@ -25,6 +25,7 @@ interface CommodityChartSectionProps {
     fillColor?: string;
     fillOpacity?: number;
     gridColor?: string;
+    currency?: string;
 }
 
 export default function CommodityChartSection({
@@ -32,7 +33,7 @@ export default function CommodityChartSection({
     autoFitBounds, hideGrid, fillArea, smoothCurve,
     color, selectedPoint, setSelectedPoint, chartRef,
     comparisons, viewMode, primaryName,
-    lineColor, fillColor, fillOpacity, gridColor,
+    lineColor, fillColor, fillOpacity, gridColor, currency,
 }: CommodityChartSectionProps) {
     return (
         <View className="mb-6">
@@ -65,6 +66,7 @@ export default function CommodityChartSection({
                             fillColor={fillColor}
                             fillOpacity={fillOpacity}
                             gridColor={gridColor}
+                            currency={currency}
                         />
                     </ScrollView>
                 </ViewShot>

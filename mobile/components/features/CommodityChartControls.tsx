@@ -55,7 +55,7 @@ export default function CommodityChartControls({
                     onPress={() => setViewMode('price')}
                     className={`flex-1 px-4 py-3 rounded-lg border items-center ${viewMode === 'price' ? 'bg-indigo-100 dark:bg-indigo-900/30 border-indigo-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'}`}
                 >
-                    <Text className={`font-bold ${viewMode === 'price' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>Absolute Price</Text>
+                    <Text className={`font-bold ${viewMode === 'price' ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>Price</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     onPress={() => setViewMode('percent')}
@@ -87,7 +87,7 @@ export default function CommodityChartControls({
                     className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                 >
                     <Icon name="camera" size={16} color="#3b82f6" />
-                    <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">Export</Text>
+                    <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">Export/Share</Text>
                 </TouchableOpacity>
             </View>
 
@@ -100,10 +100,10 @@ export default function CommodityChartControls({
             >
                 <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setShowExportMenu(false)}>
                     <View className="bg-white dark:bg-slate-900 rounded-t-2xl px-5 pt-4 pb-8">
-                        <Text className="text-sm font-bold text-slate-900 dark:text-white mb-4 text-center">Export</Text>
+                        <Text className="text-sm font-bold text-slate-900 dark:text-white mb-4 text-center">Export or Share</Text>
                         {[
-                            { key: 'csv', label: 'CSV', desc: '(data)', icon: 'list' },
-                            { key: 'image', label: 'Image', desc: '(graph)', icon: 'download' },
+                            { key: 'csv', label: 'Copy CSV', desc: '(to clipboard)', icon: 'list' },
+                            { key: 'image', label: 'Share Image', desc: '(native share sheet)', icon: 'download' },
                         ].map((opt) => (
                             <TouchableOpacity
                                 key={opt.key}

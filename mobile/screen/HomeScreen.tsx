@@ -1,6 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StatusBar, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import IconButton from '../components/ui/IconButton';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,6 +16,9 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 const CATEGORIES = ['All', 'Energy', 'Metal', 'Agricultural', 'Precious'];
 const RANGES = ['1W', '1M', '3M', '6M', '1Y', 'ALL'];
+const SORT_METHODS = ['change_percent', 'name', 'price', 'priority'];
+const SORT_ORDERS = ['asc', 'desc'];
+const HOME_STATE_KEY = '@home_state_v1';
 
 export default function HomeScreen() {
     const navigation = useNavigation<NavigationProp>();
@@ -40,6 +44,77 @@ export default function HomeScreen() {
     const [isSortModalVisible, setSortModalVisible] = useState(false);
     const [isSearchModalVisible, setSearchModalVisible] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const hasHydratedHomeState = useRef(false);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const restoreHomeState = async () => {
+            try {
+                const raw = await AsyncStorage.getItem(HOME_STATE_KEY);
+                if (!raw) {
+                    hasHydratedHomeState.current = true;
+                    return;
+                }
+
+                const parsed = JSON.parse(raw) as {
+                    selectedCategory?: string;
+                    selectedRange?: string;
+                    sortMethod?: string;
+                    sortOrder?: string;
+                    isCompactView?: boolean;
+                };
+
+                if (!isMounted) return;
+
+                if (parsed.selectedCategory && CATEGORIES.includes(parsed.selectedCategory)) {
+                    setSelectedCategory(parsed.selectedCategory);
+                }
+                if (parsed.selectedRange && RANGES.includes(parsed.selectedRange)) {
+                    setSelectedRange(parsed.selectedRange);
+                }
+                if (parsed.sortMethod && SORT_METHODS.includes(parsed.sortMethod)) {
+                    setSortMethod(parsed.sortMethod);
+                }
+                if (parsed.sortOrder && SORT_ORDERS.includes(parsed.sortOrder)) {
+                    setSortOrder(parsed.sortOrder);
+                }
+                if (typeof parsed.isCompactView === 'boolean') {
+                    setIsCompactView(parsed.isCompactView);
+                }
+            } catch {
+                // non-blocking restore failure
+            } finally {
+                hasHydratedHomeState.current = true;
+            }
+        };
+
+        restoreHomeState();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!hasHydratedHomeState.current) return;
+
+        const persistHomeState = async () => {
+            try {
+                await AsyncStorage.setItem(HOME_STATE_KEY, JSON.stringify({
+                    selectedCategory,
+                    selectedRange,
+                    sortMethod,
+                    sortOrder,
+                    isCompactView,
+                }));
+            } catch {
+                // non-blocking persist failure
+            }
+        };
+
+        persistHomeState();
+    }, [selectedCategory, selectedRange, sortMethod, sortOrder, isCompactView]);
 
     const {
         data, loading, refreshing, error, lastFetchTime, handleRefresh
@@ -59,10 +134,10 @@ export default function HomeScreen() {
             <View className="px-4 mb-4 flex-row justify-between items-center">
                 <View>
                     <Text className="text-3xl font-bold text-slate-900 dark:text-white">
-                        Markets
+                        Market Benchmarks
                     </Text>
                     <Text className="text-sm text-slate-500 mt-1 mb-1">
-                        Latest commodity benchmarks
+                        Historical reference data — not for trading decisions
                     </Text>
                     {lastFetchTime && (
                         <Text className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-bold">
@@ -121,7 +196,7 @@ export default function HomeScreen() {
             <View className="px-4 flex-row justify-between items-center mb-2">
                 <View className="flex-row items-center">
                     <Text className="text-xs font-bold tracking-wider text-slate-500 uppercase mr-3">
-                        Display Range
+                        Data Range
                     </Text>
                     <TouchableOpacity onPress={() => setSettingsModalVisible(true)} className="flex-row items-center border-l border-slate-300 dark:border-slate-700 pl-3">
                         <Text className="text-xs font-bold text-blue-500">Columns</Text>
