@@ -22,6 +22,8 @@ BW.Commodity = {
 
     // Comparison state
     comparisonData: {},      // { id: { name, history, color } }
+    comparisonPendingSeq: {}, // { id: requestSeq } for in-flight compare additions
+    comparisonRequestSeq: 0,
     allCommoditiesList: [],  // cached list from API
     compareColors: ['#e11d48', '#8b5cf6', '#f59e0b', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6', '#f97316'],
     compareColorIndex: 0,
@@ -1186,7 +1188,7 @@ BW.Commodity = {
     },
 
     toggleComparison: function (id, name) {
-        if (this.comparisonData[id]) {
+        if (this.comparisonData[id] || this.comparisonPendingSeq[id]) {
             this.removeComparison(id);
         } else {
             this.addComparison(id, name);
@@ -1194,13 +1196,19 @@ BW.Commodity = {
     },
 
     addComparison: function (id, name) {
+        if (this.comparisonData[id]) return;
         var self = this;
         var color = this.compareColors[this.compareColorIndex % this.compareColors.length];
         this.compareColorIndex++;
+        this.comparisonRequestSeq += 1;
+        var requestSeq = this.comparisonRequestSeq;
+        this.comparisonPendingSeq[id] = requestSeq;
 
         fetch('/api/commodity/' + encodeURIComponent(id))
             .then(function (r) { return r.json(); })
             .then(function (json) {
+                if (self.comparisonPendingSeq[id] !== requestSeq) return;
+                delete self.comparisonPendingSeq[id];
                 var data = json.data || json;
                 self.comparisonData[id] = {
                     name: name,
@@ -1212,11 +1220,14 @@ BW.Commodity = {
                 self.renderCompareList(document.getElementById('compare-search')?.value || '');
             })
             .catch(function (err) {
+                if (self.comparisonPendingSeq[id] !== requestSeq) return;
+                delete self.comparisonPendingSeq[id];
                 console.error('Failed to fetch comparison data for ' + id, err);
             });
     },
 
     removeComparison: function (id) {
+        delete this.comparisonPendingSeq[id];
         delete this.comparisonData[id];
         this.updateChart();
         this.updateCompareBar();
