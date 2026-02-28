@@ -1122,8 +1122,11 @@ function resetAllSettings() { BW.CompactTable.resetAllSettings(); }
 function exportToCSV() { BW.CompactTable.exportToCSV(); }
 
 document.addEventListener('DOMContentLoaded', function () {
-    if (document.getElementById('data-table')) {
-        BW.CompactTable.init();
+    if (!window.__bwCompactTableDomReadyBound) {
+        window.__bwCompactTableDomReadyBound = true;
+        if (document.getElementById('data-table')) {
+            BW.CompactTable.init();
+        }
     }
 });
 
@@ -1141,11 +1144,19 @@ function toggleFreqBadge() {
 }
 
 // Table Sorting State
-let currentSortColumn = null;
-let currentSortDirection = 'asc';
+if (!window.__bwCompactTableSortState) {
+    window.__bwCompactTableSortState = {
+        currentSortColumn: null,
+        currentSortDirection: 'asc'
+    };
+}
 
 // Sort table by column
 function sortTable(column) {
+    const sortState = window.__bwCompactTableSortState || (window.__bwCompactTableSortState = {
+        currentSortColumn: null,
+        currentSortDirection: 'asc'
+    });
     const table = document.getElementById('data-table');
     if (!table) return;
 
@@ -1156,11 +1167,11 @@ function sortTable(column) {
     if (rows.length === 0) return;
 
     // Toggle direction if same column, otherwise reset to ascending
-    if (currentSortColumn === column) {
-        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+    if (sortState.currentSortColumn === column) {
+        sortState.currentSortDirection = sortState.currentSortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        currentSortColumn = column;
-        currentSortDirection = 'asc';
+        sortState.currentSortColumn = column;
+        sortState.currentSortDirection = 'asc';
     }
 
     // Update sort indicators
@@ -1169,7 +1180,7 @@ function sortTable(column) {
     });
     const activeIndicator = document.querySelector(`.sort-indicator[data-sort="${column}"]`);
     if (activeIndicator) {
-        activeIndicator.textContent = currentSortDirection === 'asc' ? ' ▲' : ' ▼';
+        activeIndicator.textContent = sortState.currentSortDirection === 'asc' ? ' ▲' : ' ▼';
     }
 
     // Helper: get a data attribute from an element or its first child that has it.
@@ -1215,10 +1226,10 @@ function sortTable(column) {
         // Compare values
         if (typeof aVal === 'string') {
             const cmp = aVal.localeCompare(bVal, undefined, { sensitivity: 'base' });
-            return currentSortDirection === 'asc' ? cmp : -cmp;
+            return sortState.currentSortDirection === 'asc' ? cmp : -cmp;
         } else {
             const cmp = aVal - bVal;
-            return currentSortDirection === 'asc' ? cmp : -cmp;
+            return sortState.currentSortDirection === 'asc' ? cmp : -cmp;
         }
     });
 
