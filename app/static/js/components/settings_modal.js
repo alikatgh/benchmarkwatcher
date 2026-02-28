@@ -7,6 +7,8 @@ window.BW = window.BW || {};
 
 BW.SettingsModal = {
     previouslyFocused: null,
+    openFocusTimer: null,
+    openFocusSeq: 0,
 
     // Stable handler reference for proper removeEventListener
     _boundHandleKeydown: function (e) { BW.SettingsModal.handleKeydown(e); },
@@ -56,6 +58,8 @@ BW.SettingsModal = {
         const isClosed = modal.classList.contains('opacity-0');
 
         if (isClosed) {
+            this.openFocusSeq += 1;
+            const activeOpenSeq = this.openFocusSeq;
             // Opening - save current focus
             this.previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -78,7 +82,14 @@ BW.SettingsModal = {
             }
 
             // Focus first focusable element (comprehensive selector)
-            setTimeout(() => {
+            if (this.openFocusTimer) {
+                clearTimeout(this.openFocusTimer);
+                this.openFocusTimer = null;
+            }
+
+            this.openFocusTimer = setTimeout(() => {
+                if (activeOpenSeq !== this.openFocusSeq) return;
+                if (modal.classList.contains('opacity-0')) return;
                 const selector = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, [tabindex]:not([tabindex="-1"]), [contenteditable]';
                 const focusable = Array.from(modal.querySelectorAll(selector)).filter(el => el.offsetParent !== null);
                 if (focusable.length) {
@@ -88,11 +99,17 @@ BW.SettingsModal = {
                     modal.setAttribute('tabindex', '-1');
                     modal.focus();
                 }
+                this.openFocusTimer = null;
             }, 100);
 
             // Add escape/tab listener (stable reference)
             document.addEventListener('keydown', this._boundHandleKeydown);
         } else {
+            this.openFocusSeq += 1;
+            if (this.openFocusTimer) {
+                clearTimeout(this.openFocusTimer);
+                this.openFocusTimer = null;
+            }
             // Closing - restore focus
             modal.classList.remove('opacity-100', 'pointer-events-auto');
             modal.classList.add('opacity-0', 'pointer-events-none');
