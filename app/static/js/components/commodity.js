@@ -17,6 +17,7 @@ BW.Commodity = {
     currency: 'USD',
     commodityName: 'commodity',
     commodityId: '',
+    previouslyFocusedChartControl: null,
 
     // Comparison state
     comparisonData: {},      // { id: { name, history, color } }
@@ -626,13 +627,20 @@ BW.Commodity = {
         var isOpen = !menu.classList.contains('hidden');
         if (isOpen) {
             menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
             if (chevron) chevron.classList.remove('rotate-180');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+                btn.focus();
+            }
         } else {
             this.closeCompareMenu();
             menu.classList.remove('hidden');
+            menu.setAttribute('aria-hidden', 'false');
             if (chevron) chevron.classList.add('rotate-180');
             if (btn) btn.setAttribute('aria-expanded', 'true');
+            const firstItem = menu.querySelector('[role="menuitem"]');
+            if (firstItem) firstItem.focus();
         }
     },
 
@@ -640,7 +648,10 @@ BW.Commodity = {
         var menu = document.getElementById('download-menu');
         var chevron = document.getElementById('download-chevron');
         var btn = document.getElementById('download-menu-btn');
-        if (menu) menu.classList.add('hidden');
+        if (menu) {
+            menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
+        }
         if (chevron) chevron.classList.remove('rotate-180');
         if (btn) btn.setAttribute('aria-expanded', 'false');
     },
@@ -781,8 +792,14 @@ BW.Commodity = {
     openChartSettings: function () {
         const modal = document.getElementById('chart-settings-modal');
         if (modal) {
+            this.previouslyFocusedChartControl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             modal.classList.remove('hidden');
+            modal.removeAttribute('aria-hidden');
             document.body.style.overflow = 'hidden'; // Prevent background scroll
+            const firstTab = document.getElementById('tab-appearance');
+            if (firstTab) {
+                setTimeout(() => firstTab.focus(), 0);
+            }
         }
     },
 
@@ -791,7 +808,11 @@ BW.Commodity = {
         const modal = document.getElementById('chart-settings-modal');
         if (modal) {
             modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = ''; // Restore scroll
+            if (this.previouslyFocusedChartControl && typeof this.previouslyFocusedChartControl.focus === 'function') {
+                this.previouslyFocusedChartControl.focus();
+            }
         }
     },
 
@@ -985,9 +1006,11 @@ BW.Commodity = {
         const chartContainer = document.getElementById('priceChart') ? document.getElementById('priceChart').parentElement : null;
         if (chartContainer) chartContainer.style.height = s.chartHeight + 'px';
 
-        // Up/Down colors as CSS variables for stats
-        document.documentElement.style.setProperty('--color-up', s.upColor);
-        document.documentElement.style.setProperty('--color-down', s.downColor);
+        // Up/Down colors: apply locally to chart stats only (do not override global market theme)
+        const statHigh = document.getElementById('stat-high');
+        const statLow = document.getElementById('stat-low');
+        if (statHigh) statHigh.style.color = s.upColor;
+        if (statLow) statLow.style.color = s.downColor;
 
         // Crosshair info fields
         const crosshairFields = {
@@ -1021,10 +1044,12 @@ BW.Commodity = {
         var isOpen = !menu.classList.contains('hidden');
         if (isOpen) {
             menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
             if (btn) btn.setAttribute('aria-expanded', 'false');
         } else {
             this.closeDownloadMenu();
             menu.classList.remove('hidden');
+            menu.setAttribute('aria-hidden', 'false');
             if (btn) btn.setAttribute('aria-expanded', 'true');
             var search = document.getElementById('compare-search');
             if (search) { search.value = ''; search.focus(); }
@@ -1035,7 +1060,10 @@ BW.Commodity = {
     closeCompareMenu: function () {
         var menu = document.getElementById('compare-menu');
         var btn = document.getElementById('compare-menu-btn');
-        if (menu) menu.classList.add('hidden');
+        if (menu) {
+            menu.classList.add('hidden');
+            menu.setAttribute('aria-hidden', 'true');
+        }
         if (btn) btn.setAttribute('aria-expanded', 'false');
     },
 

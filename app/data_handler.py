@@ -9,6 +9,22 @@ from app.extensions import cache
 
 logger = logging.getLogger(__name__)
 
+DAILY_SOURCE_TYPES = {'EIA', 'YAHOO', 'FREEGOLD'}
+DAILY_COMMODITY_IDS = {
+    'brent_oil',
+    'wti_oil',
+    'natural_gas',
+    'heating_oil',
+    'jet_fuel',
+    'propane',
+    'gold',
+    'silver',
+    'gasoline',
+    'diesel',
+    'rbob_gasoline',
+    'platinum',
+}
+
 def get_date_range_days(date_range: str) -> Optional[int]:
     """Convert date range code to number of days for display filtering only.
     
@@ -90,6 +106,54 @@ def _set_previous_observation_fields(item: Dict[str, Any], history: List[Dict[st
         item['prev_date'] = item.get('date', '')
 
 
+def _infer_is_daily(item: Dict[str, Any], history: List[Dict[str, Any]]) -> bool:
+    """Infer whether a commodity is daily-frequency.
+
+    Priority:
+    1) Known daily sources / IDs
+    2) Observed history cadence (median interval <= 10 days)
+    """
+    source_type = str(item.get('source_type', '')).upper()
+    commodity_id = str(item.get('id', ''))
+
+    if source_type in DAILY_SOURCE_TYPES or commodity_id in DAILY_COMMODITY_IDS:
+        return True
+
+    if len(history) < 3:
+        return False
+
+    parsed_dates: List[datetime] = []
+    for entry in history[-40:]:
+        try:
+            parsed_dates.append(datetime.strptime(entry.get('date', ''), '%Y-%m-%d'))
+        except (TypeError, ValueError):
+            continue
+
+    if len(parsed_dates) < 3:
+        return False
+
+    day_diffs: List[int] = []
+    for idx in range(1, len(parsed_dates)):
+        diff = (parsed_dates[idx] - parsed_dates[idx - 1]).days
+        if diff > 0:
+            day_diffs.append(diff)
+
+    if not day_diffs:
+        return False
+
+    sorted_diffs = sorted(day_diffs)
+    median_diff = sorted_diffs[len(sorted_diffs) // 2]
+    return median_diff <= 10
+
+
+def _set_frequency_fields(item: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
+    """Set unified frequency fields for UI consumers."""
+    is_daily = _infer_is_daily(item, history)
+    item['is_daily'] = is_daily
+    item['frequency_badge'] = 'D' if is_daily else 'M'
+    item['frequency_label'] = 'Daily data' if is_daily else 'Monthly data'
+
+
 @cache.memoize(timeout=600)
 def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -> List[Dict[str, Any]]:
     """Load all commodities with display-filtered history.
@@ -119,6 +183,7 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
                     
                     _apply_latest_display_point(item, filtered_history)
                     _hydrate_change_fields(item)
+                    _set_frequency_fields(item, full_history)
                         
                     commodities.append(item)
             except (json.JSONDecodeError, IOError):
@@ -146,6 +211,7 @@ def get_commodity(commodity_id: str) -> Optional[Dict[str, Any]]:
 
                 _hydrate_change_fields(item)
                 _set_previous_observation_fields(item, history)
+                _set_frequency_fields(item, history)
                 
                 return item
         except (json.JSONDecodeError, IOError):

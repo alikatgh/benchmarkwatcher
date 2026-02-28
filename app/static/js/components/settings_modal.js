@@ -131,9 +131,13 @@ BW.SettingsModal = {
 
     // Set theme
     setTheme: function (mode) {
-        try {
-            localStorage.setItem('theme', mode);
-        } catch (e) { /* localStorage unavailable */ }
+        if (window.BW && BW.Settings && typeof BW.Settings.setTheme === 'function') {
+            BW.Settings.setTheme(mode);
+        } else {
+            try {
+                localStorage.setItem('theme', mode);
+            } catch (e) { /* localStorage unavailable */ }
+        }
         this.applyTheme();
         this.updateUI();
     },
@@ -160,19 +164,48 @@ BW.SettingsModal = {
         }
     },
 
+    // Set market color theme (western/asian/monochrome)
+    setMarketTheme: function (mode) {
+        if (window.BW && BW.Settings && typeof BW.Settings.setMarketTheme === 'function') {
+            BW.Settings.setMarketTheme(mode);
+        } else {
+            try {
+                localStorage.setItem('market-theme', mode);
+            } catch (e) { /* localStorage unavailable */ }
+        }
+
+        // Apply immediately so CSS variables update without reload
+        if (window.BW && BW.Base && typeof BW.Base.setMarketTheme === 'function') {
+            BW.Base.setMarketTheme(mode);
+        } else {
+            document.documentElement.setAttribute('data-market', mode);
+        }
+
+        this.updateUI();
+    },
+
     // Apply theme to document
     applyTheme: function () {
         let theme = 'light';
-        try {
-            theme = localStorage.getItem('theme') || 'light';
-        } catch (e) { /* localStorage unavailable */ }
-        document.documentElement.setAttribute('data-theme', theme);
-
-        // Add dark class for Tailwind dark: utilities
-        if (theme === 'dark' || theme === 'mono-dark' || theme === 'bloomberg') {
-            document.documentElement.classList.add('dark');
+        if (window.BW && BW.Settings && typeof BW.Settings.getTheme === 'function') {
+            theme = BW.Settings.getTheme() || 'light';
         } else {
-            document.documentElement.classList.remove('dark');
+            try {
+                theme = localStorage.getItem('theme') || 'light';
+            } catch (e) { /* localStorage unavailable */ }
+        }
+
+        if (window.BW && BW.Base && typeof BW.Base.setTheme === 'function') {
+            BW.Base.setTheme(theme);
+        } else {
+            document.documentElement.setAttribute('data-theme', theme);
+
+            // Add dark class for Tailwind dark: utilities
+            if (theme === 'dark' || theme === 'mono-dark' || theme === 'bloomberg') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
         }
     },
 
@@ -242,6 +275,7 @@ BW.SettingsModal = {
 // Global function aliases for onclick handlers
 function toggleSettings() { BW.SettingsModal.toggle(); }
 function setTheme(m) { BW.SettingsModal.setTheme(m); }
+function setMarketTheme(m) { BW.SettingsModal.setMarketTheme(m); }
 function setView(m) { BW.SettingsModal.setView(m); }
 
 // Auto-initialize on DOM ready

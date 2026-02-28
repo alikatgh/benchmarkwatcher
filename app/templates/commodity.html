@@ -55,14 +55,13 @@
                         </div>
                         <!-- Frequency indicator badge -->
                         <span class="text-[9px] font-bold px-2 py-0.5 rounded-full w-fit
-                            {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold', 'silver', 'gasoline'] %}
+                            {% if commodity.is_daily %}
                                 bg-brand-teal/20 text-brand-teal
                             {% else %}
                                 bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal
                             {% endif %}
                             font-ui uppercase tracking-wider">
-                            {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold', 'silver',
-                            'gasoline'] %}
+                            {% if commodity.is_daily %}
                             Daily
                             {% else %}
                             Monthly
@@ -153,8 +152,7 @@
                         </div>
                         <!-- Context: vs what period -->
                         <div class="text-[11px] sm:text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui">
-                            vs previous {% if commodity.source_type == 'EIA' or commodity.id in ['natural_gas', 'gold',
-                            'silver', 'gasoline'] %}day{% else %}month{% endif %} · As of {{ commodity.date }}
+                            vs previous {% if commodity.is_daily %}day{% else %}month{% endif %} · As of {{ commodity.date }}
                         </div>
                     </div>
                 </div>
@@ -389,21 +387,21 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="download-menu" role="menu" aria-labelledby="download-menu-btn" class="hidden absolute right-0 bottom-full mb-1.5 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1.5 w-48 bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
-                            <button onclick="exportDownload('csv')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                        <div id="download-menu" role="menu" aria-labelledby="download-menu-btn" aria-hidden="true" class="hidden absolute right-0 bottom-full mb-1.5 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1.5 w-48 bw-popup-menu z-50 py-1.5">
+                            <button onclick="exportDownload('csv')" role="menuitem" class="bw-popup-menu-item w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>CSV <span class="text-brand-black-60 dark:text-white/50 font-normal">(data)</span></span>
                             </button>
-                            <button onclick="exportDownload('excel')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                            <button onclick="exportDownload('excel')" role="menuitem" class="bw-popup-menu-item w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                 <span>Excel <span class="text-brand-black-60 dark:text-white/50 font-normal">(data)</span></span>
                             </button>
                             <div class="border-t border-brand-black-60/10 dark:border-white/5 my-1"></div>
-                            <button onclick="exportDownload('image')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                            <button onclick="exportDownload('image')" role="menuitem" class="bw-popup-menu-item w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 <span>Image <span class="text-brand-black-60 dark:text-white/50 font-normal">(graph)</span></span>
                             </button>
-                            <button onclick="exportDownload('pptx')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                            <button onclick="exportDownload('pptx')" role="menuitem" class="bw-popup-menu-item w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 <span>PowerPoint <span class="text-brand-black-60 dark:text-white/50 font-normal">(graph)</span></span>
                             </button>
@@ -418,7 +416,7 @@
                             </svg>
                             Compare
                         </button>
-                        <div id="compare-menu" role="menu" aria-labelledby="compare-menu-btn" class="hidden absolute right-0 bottom-full mb-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 overflow-hidden">
+                        <div id="compare-menu" role="menu" aria-labelledby="compare-menu-btn" aria-hidden="true" class="hidden absolute right-0 bottom-full mb-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bw-popup-menu z-50">
                             <div class="p-2 border-b border-brand-black-60/10 dark:border-white/5">
                                 <input type="text" id="compare-search" placeholder="Search commodities..."
                                     oninput="filterCompareList(this.value)"
@@ -444,13 +442,13 @@
     </div>
 
     <!-- Chart Settings Panel — full-screen on mobile, side panel on md+ -->
-    <div id="chart-settings-modal" role="dialog" aria-modal="true" aria-labelledby="chart-settings-title" class="hidden fixed inset-0 z-50 font-ui">
+    <div id="chart-settings-modal" role="dialog" aria-modal="true" aria-labelledby="chart-settings-title" aria-hidden="true" class="hidden fixed inset-0 z-50 font-ui bw-popup-backdrop">
         <!-- Overlay (md+ only, click to close) -->
         <div class="hidden md:block absolute inset-0 bg-black/20" onclick="closeChartSettings()"></div>
 
         <!-- Panel: full-screen mobile, right side panel on md+ -->
         <div
-            class="absolute inset-0 md:inset-auto md:top-0 md:right-0 md:h-full md:w-[26rem] bg-card-warm dark:bg-terminal-surface md:shadow-2xl md:border-l border-brand-black-60/20 dark:border-white/10 flex flex-col overflow-hidden">
+            class="absolute inset-0 md:inset-auto md:top-0 md:right-0 md:h-full md:w-[26rem] bw-popup-surface md:rounded-none md:border-y-0 md:border-r-0 flex flex-col overflow-hidden">
 
             <!-- Panel Header -->
             <div

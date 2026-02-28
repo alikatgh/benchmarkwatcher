@@ -14,8 +14,7 @@
                     class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">{{
                     commodity.category|upper }}</span>
                 <!-- D/M frequency badge -->
-                {% set is_daily = commodity.source_type == 'EIA' or commodity.id in ['brent_oil', 'wti_oil',
-                'natural_gas', 'heating_oil', 'jet_fuel', 'propane', 'gold', 'silver', 'gasoline'] %}
+                {% set is_daily = commodity.is_daily %}
                 <span
                     class="text-[9px] font-bold px-1.5 py-0.5 rounded font-ui freq-badge
                     {% if is_daily %}bg-brand-teal/20 text-brand-teal{% else %}bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal{% endif %}"

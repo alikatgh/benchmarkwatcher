@@ -1,7 +1,7 @@
-<div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-terminal-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300"
+<div id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" aria-hidden="true"
+    class="fixed inset-0 z-50 flex items-center justify-center bw-popup-backdrop opacity-0 pointer-events-none transition-opacity duration-300"
     onclick="if(event.target === this) toggleSettings()">
-    <div class="theme-surface w-full max-w-md p-5 sm:p-8 rounded-2xl shadow-2xl border border-[var(--theme-border)] relative mx-3 sm:mx-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto"
+    <div class="bw-popup-surface font-ui w-full max-w-md p-5 sm:p-8 relative mx-3 sm:mx-4 transform scale-95 transition-all duration-300 max-h-[90vh] overflow-y-auto"
         style="background-color: var(--theme-surface);">
 
         <!-- Close button -->
@@ -14,7 +14,7 @@
 
         <!-- Header -->
         <div class="mb-8">
-            <h2 id="settings-title" class="text-2xl font-bold theme-text font-serif">Settings</h2>
+            <h2 id="settings-title" class="text-2xl font-bold theme-text font-ui">Settings</h2>
             <p class="text-sm theme-text-muted font-ui mt-1">Customize display preferences</p>
         </div>
 

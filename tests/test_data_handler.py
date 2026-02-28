@@ -111,6 +111,11 @@ def test_get_all_commodities_uses_derived_metrics(app_with_data):
     assert item["daily_change"] == item["change"]
     assert item["daily_change_percent"] == item["change_percent"]
 
+    # Frequency fields should be present and inferred from history cadence
+    assert item["is_daily"] is True
+    assert item["frequency_badge"] == "D"
+    assert item["frequency_label"] == "Daily data"
+
 
 def test_derived_stats_exposed(app_with_data):
     """Derived stats are exposed to templates."""

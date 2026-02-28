@@ -8,8 +8,8 @@
 
 window.BW = window.BW || {};
 
-// Commodities that publish daily data (used by freq-badge logic in table and grid views)
-BW.DAILY_COMMODITY_IDS = ['brent_oil', 'wti_oil', 'natural_gas', 'heating_oil', 'jet_fuel', 'propane', 'gold', 'silver', 'gasoline'];
+// Commodities that publish daily/high-frequency data (fallback when payload lacks `is_daily`)
+BW.DAILY_COMMODITY_IDS = ['brent_oil', 'wti_oil', 'natural_gas', 'heating_oil', 'jet_fuel', 'propane', 'gold', 'silver', 'gasoline', 'diesel', 'rbob_gasoline', 'platinum'];
 
 BW.Utils = (function () {
     const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -139,6 +139,18 @@ BW.Utils = (function () {
             if (response && Array.isArray(response.data)) return response.data;
             if (Array.isArray(response)) return response;
             return [];
+        },
+
+        // Unified frequency classifier for UI rendering.
+        // Prefers backend-provided `is_daily`; falls back to source/id heuristics.
+        isDailyCommodity: function (commodity) {
+            if (!commodity) return false;
+            if (typeof commodity.is_daily === 'boolean') return commodity.is_daily;
+
+            const sourceType = String(commodity.source_type || '').toUpperCase();
+            if (sourceType === 'EIA' || sourceType === 'YAHOO' || sourceType === 'FREEGOLD') return true;
+
+            return BW.DAILY_COMMODITY_IDS.includes(String(commodity.id || ''));
         },
 
         // Debounce preserving `this` and arguments
