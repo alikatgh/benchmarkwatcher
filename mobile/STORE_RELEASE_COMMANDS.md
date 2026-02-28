@@ -7,6 +7,9 @@ This project is configured for EAS production builds with:
 
 ## 1) One-time setup
 
+Developer-only note: `npm run eas:login` is required only for maintainers publishing builds.
+End users of the app do not need to create accounts or log in.
+
 ```bash
 cd mobile
 npm install

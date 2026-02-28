@@ -43,6 +43,7 @@ commodities,benchmark,energy,metals,agriculture,prices,market,data,charts
 ## Review Notes
 The app displays publicly available commodity benchmark data and user-set local preferences only.
 No user account, payments, or user-generated content.
+End users can open and use the app without creating an account or logging in.
 
 ## Age Rating Guidance
 - No violent, sexual, gambling, or user-generated content
