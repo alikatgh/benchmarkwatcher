@@ -15,6 +15,7 @@ BW.Theme = (function () {
     const root = document.documentElement;
     const THEME_KEY = 'theme';
     const MARKET_THEME_KEY = 'market-theme';
+    let _initialized = false;
 
     function safeGet(key) {
         try { return localStorage.getItem(key); } catch (e) { return null; }
@@ -145,7 +146,8 @@ BW.Theme = (function () {
     }
 
     // Initialization: apply saved or sensible defaults
-    function init() {
+    function init(force) {
+        if (_initialized && !force) return;
         // pick theme from BW.Settings if present, otherwise from localStorage, otherwise fallback to system-preference
         let theme = 'light';
         try {
@@ -180,6 +182,7 @@ BW.Theme = (function () {
         } catch (e) { /* ignore */ }
 
         applyMarketTheme(market);
+        _initialized = true;
     }
 
     // expose public API
@@ -193,7 +196,16 @@ BW.Theme = (function () {
     };
 })();
 
-// Auto-init on DOMContentLoaded (safe to call even if Settings loads later)
-document.addEventListener('DOMContentLoaded', function () {
-    if (BW.Theme && typeof BW.Theme.init === 'function') BW.Theme.init();
-});
+// Auto-init on DOMContentLoaded (bind once even if script is evaluated multiple times)
+if (!window.__bwThemeDomReadyBound) {
+    window.__bwThemeDomReadyBound = true;
+    const runThemeInit = function () {
+        if (BW.Theme && typeof BW.Theme.init === 'function') BW.Theme.init();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runThemeInit);
+    } else {
+        runThemeInit();
+    }
+}
