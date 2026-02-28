@@ -10,6 +10,7 @@ BW.CompactTable = {
     chartRegistry: {},
     currentRequest: null,  // AbortController for request cancellation
     requestSeq: 0,
+    sparklineRequestSeq: 0,
     defaultColumns: ['commodity', 'trend', 'price', 'chg', 'pct', 'updated'],
     defaultSettings: {
         dataRange: 'ALL',
@@ -841,19 +842,7 @@ BW.CompactTable = {
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || 'ALL';
         const category = urlParams.get('category');
-        const apiUrl = BW.Utils.buildCommoditiesApiUrl({
-            range: currentRange,
-            includeHistory: true,
-            category,
-        });
-
-        fetch(apiUrl)
-            .then(response => response.json())
-            .then(response => {
-                const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
-                this.initSparklines(commodities);
-            })
-            .catch(err => console.error('Failed to reload charts:', err));
+        this.requestSparklineData(currentRange, category, 'Failed to reload charts:');
 
         // Show confirmation
         const btn = document.querySelector('#table-settings-container [onclick*="applySettings"]')
@@ -1086,19 +1075,29 @@ BW.CompactTable = {
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || this.getSettings().dataRange || 'ALL';
         const category = urlParams.get('category');
+        this.requestSparklineData(currentRange, category, 'Failed to load sparkline data:');
+    },
+
+    requestSparklineData: function (range, category, errorPrefix) {
         const apiUrl = BW.Utils.buildCommoditiesApiUrl({
-            range: currentRange,
+            range,
             includeHistory: true,
             category,
         });
+        this.sparklineRequestSeq += 1;
+        const activeRequestSeq = this.sparklineRequestSeq;
 
         fetch(apiUrl)
             .then(response => response.json())
             .then(response => {
+                if (activeRequestSeq !== this.sparklineRequestSeq) return;
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 this.initSparklines(commodities);
             })
-            .catch(err => console.error('Failed to load sparkline data:', err));
+            .catch(err => {
+                if (activeRequestSeq !== this.sparklineRequestSeq) return;
+                console.error(errorPrefix || 'Failed to load sparkline data:', err);
+            });
     },
 
     // Initialize component
