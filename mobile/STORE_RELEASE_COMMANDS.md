@@ -61,6 +61,7 @@ EXPO_PUBLIC_API_URL=https://your-api-domain.example eas build -p android --profi
 
 ## Notes
 - This repository does not ship a shared public API endpoint by default.
+- You must set a real `EXPO_PUBLIC_API_URL` before running production builds.
 - If `eas submit` asks for missing credentials/metadata, complete them in App Store Connect / Google Play Console.
 - For first iOS submission, ensure app record exists in App Store Connect.
 - For first Android submission, ensure app exists in Play Console and service account access is configured for automated submit.
