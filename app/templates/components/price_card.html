@@ -30,7 +30,7 @@
             {{ commodity.name }}</h3>
 
         <div class="bw-grid-price-section font-ui mb-2">
-            <div class="bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+            <div class="bw-grid-price tabular-nums text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
                 {{ commodity.price | round(4) }}
             </div>
             <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
@@ -39,24 +39,24 @@
         </div>
 
         <div class="bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]">
-            <span class="bw-grid-change-pct text-sm font-bold"
+            <span class="bw-grid-change-pct tabular-nums text-sm font-bold"
                 style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
                 title="Period change">
                 {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
             </span>
             <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
-            <span class="bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
+            <span class="bw-grid-change-abs tabular-nums text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
                 {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change|default(commodity.change) | round(3) }} {{ commodity.currency }}
             </span>
         </div>
 
         <div
             class="bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
-            <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-brand-black-60/80">
+            <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-white/70">
                 {{ commodity.date }}
             </div>
             <div
-                class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
+                class="text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                 </svg>

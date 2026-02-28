@@ -26,6 +26,17 @@ BW.GridView = {
             .replace(/'/g, '&#39;');
     },
 
+    // Format numeric values for UI display with max precision and no grouping.
+    formatNumber: function (value, maxFractionDigits = 4) {
+        const numberValue = Number(value);
+        if (!Number.isFinite(numberValue)) return String(value ?? '');
+        return numberValue.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: maxFractionDigits,
+            useGrouping: false,
+        });
+    },
+
     // Get grid settings via BW.Settings
     getSettings: function () {
         return BW.Settings.getGridSettings();
@@ -254,7 +265,7 @@ BW.GridView = {
             const commodityId = String(commodity.id || '');
             const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
             const safeName = this.escapeHtml(String(commodity.name || ''));
-            const safePrice = this.escapeHtml(String(commodity.price));
+            const safePrice = this.escapeHtml(this.formatNumber(commodity.price, 4));
             const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
             const safeUnit = this.escapeHtml(String(commodity.unit || ''));
             const safeDate = this.escapeHtml(String(commodity.date || ''));
@@ -296,7 +307,7 @@ BW.GridView = {
                         ${safeName}
                     </h3>
                     <div class="bw-grid-price-section font-ui mb-2">
-                        <div class="bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+                        <div class="bw-grid-price tabular-nums text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
                             ${safePrice}
                         </div>
                         <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
@@ -304,19 +315,19 @@ BW.GridView = {
                         </div>
                     </div>
                     <div class="bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]">
-                        <span class="bw-grid-change-pct text-sm font-bold" style="color: var(${colorVar});">
+                        <span class="bw-grid-change-pct tabular-nums text-sm font-bold" style="color: var(${colorVar});">
                             ${safeDisplayChangePercent}%
                         </span>
                         <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
-                        <span class="bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
+                        <span class="bw-grid-change-abs tabular-nums text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
                             ${safeDisplayChange} ${safeCurrency}
                         </span>
                     </div>
                     <div class="bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
-                        <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-brand-black-60/80">
+                        <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-white/70">
                             As of ${safeDate} · <span class="italic">${safeRangeLabel}</span>
                         </div>
-                        <div class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
+                        <div class="text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                             </svg>
@@ -853,7 +864,7 @@ BW.GridView = {
 
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = 'bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.className = 'bw-grid-price tabular-nums text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
                         priceEl.style.cssText = '';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
@@ -871,12 +882,12 @@ BW.GridView = {
 
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     if (changePctEl) {
-                        changePctEl.className = 'bw-grid-change-pct text-sm font-bold';
+                        changePctEl.className = 'bw-grid-change-pct tabular-nums text-sm font-bold';
                         changePctEl.style.cssText = showChangePct ? '' : 'display: none;';
                     }
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changeAbsEl) {
-                        changeAbsEl.className = 'bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate';
+                        changeAbsEl.className = 'bw-grid-change-abs tabular-nums text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate';
                         changeAbsEl.style.cssText = showChangeAbs ? '' : 'display: none;';
                     }
                 }
@@ -889,13 +900,13 @@ BW.GridView = {
 
                     const dateEl = footer.querySelector('.bw-grid-date');
                     if (dateEl) {
-                        dateEl.className = 'bw-grid-date text-[10px] text-brand-black-60 dark:text-brand-black-60/80';
+                        dateEl.className = 'bw-grid-date text-[10px] text-brand-black-60 dark:text-white/70';
                         dateEl.style.cssText = '';
                     }
 
                     const arrowEl = footer.lastElementChild;
                     if (arrowEl) {
-                        arrowEl.className = 'text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all';
+                        arrowEl.className = 'text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all';
                         arrowEl.style.cssText = '';
                     }
                 }
