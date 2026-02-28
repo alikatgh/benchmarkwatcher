@@ -13,12 +13,25 @@ window.BW = window.BW || {};
 
 BW.Theme = (function () {
     const root = document.documentElement;
+    const THEME_KEY = 'theme';
+    const MARKET_THEME_KEY = 'market-theme';
 
     function safeGet(key) {
         try { return localStorage.getItem(key); } catch (e) { return null; }
     }
     function safeSet(key, val) {
         try { localStorage.setItem(key, val); } catch (e) { /* noop */ }
+    }
+
+    function getStoredRaw(key, settingsKey) {
+        if (BW.Settings && typeof BW.Settings._getRaw === 'function') {
+            return BW.Settings._getRaw(settingsKey || key);
+        }
+        return safeGet(key);
+    }
+
+    function hasStoredPreference(key, settingsKey) {
+        return getStoredRaw(key, settingsKey) !== null;
     }
 
     function isDarkThemeName(name) {
@@ -113,7 +126,10 @@ BW.Theme = (function () {
         const down = cs.getPropertyValue('--market-down').trim();
 
         // CSS variables are now defined per-theme in base.html, so they should always be available
-        const theme = root.getAttribute('data-theme') || safeGet('theme') || 'light';
+        const theme = root.getAttribute('data-theme')
+            || (BW.Settings && typeof BW.Settings.getTheme === 'function' ? BW.Settings.getTheme() : null)
+            || safeGet(THEME_KEY)
+            || 'light';
         const isDark = root.classList.contains('dark') || theme === 'dark' || theme === 'mono-dark';
         const isBloomberg = theme === 'bloomberg';
 
@@ -136,7 +152,7 @@ BW.Theme = (function () {
             if (BW.Settings && typeof BW.Settings.getTheme === 'function') {
                 theme = BW.Settings.getTheme() || theme;
             } else {
-                theme = safeGet('theme') || theme;
+                theme = safeGet(THEME_KEY) || theme;
             }
         } catch (e) { /* ignore */ }
 
@@ -144,7 +160,8 @@ BW.Theme = (function () {
         if (!theme || theme === 'light') {
             try {
                 const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (prefersDark && (!safeGet('theme') && !(BW.Settings && BW.Settings.getTheme && BW.Settings.getTheme()))) {
+                const settingsThemeKey = BW.Settings && BW.Settings.KEYS ? BW.Settings.KEYS.THEME : THEME_KEY;
+                if (prefersDark && !hasStoredPreference(THEME_KEY, settingsThemeKey)) {
                     theme = 'dark';
                 }
             } catch (e) { /* ignore */ }
@@ -158,7 +175,7 @@ BW.Theme = (function () {
             if (BW.Settings && typeof BW.Settings.getMarketTheme === 'function') {
                 market = BW.Settings.getMarketTheme() || market;
             } else {
-                market = safeGet('market-theme') || market;
+                market = safeGet(MARKET_THEME_KEY) || market;
             }
         } catch (e) { /* ignore */ }
 
