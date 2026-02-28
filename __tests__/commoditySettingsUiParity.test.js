@@ -14,16 +14,16 @@ function loadCommodityScript() {
 describe('Commodity chart settings UI parity', () => {
     beforeEach(() => {
         document.body.innerHTML = `
-            <div id="chart-settings-modal" class="hidden" aria-hidden="true"></div>
+            <div id="chart-settings-modal" class="hidden" aria-hidden="true">
+                <button id="tab-appearance" class="chart-settings-tab"></button>
+                <button id="tab-tooltip" class="chart-settings-tab"></button>
 
-            <button id="tab-appearance" class="chart-settings-tab"></button>
-            <button id="tab-tooltip" class="chart-settings-tab"></button>
+                <div id="content-appearance" class="chart-settings-content"></div>
+                <div id="content-tooltip" class="chart-settings-content hidden"></div>
 
-            <div id="content-appearance" class="chart-settings-content"></div>
-            <div id="content-tooltip" class="chart-settings-content hidden"></div>
-
-            <button class="theme-preset border-brand-black-60/10" data-theme="light"></button>
-            <button class="theme-preset border-brand-black-60/10" data-theme="dark"></button>
+                <button class="theme-preset border-brand-black-60/10" data-theme="light"></button>
+                <button class="theme-preset border-brand-black-60/10" data-theme="dark"></button>
+            </div>
         `;
 
         global.BW = {};
