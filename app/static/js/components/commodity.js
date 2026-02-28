@@ -1028,8 +1028,12 @@ BW.Commodity = {
         // Hide entire crosshair panel when all fields are off.
         const crosshairInfo = document.getElementById('crosshair-info');
         const showAnyCrosshairField = s.showCrosshairDate || s.showCrosshairPrice || s.showCrosshairChange;
-        if (crosshairInfo && !showAnyCrosshairField) {
-            crosshairInfo.classList.add('hidden');
+        if (crosshairInfo) {
+            if (!showAnyCrosshairField) {
+                crosshairInfo.classList.add('hidden');
+            } else {
+                crosshairInfo.classList.remove('hidden');
+            }
         }
     },
 
