@@ -31,6 +31,11 @@ describe('Compact table sparkline race handling', () => {
   beforeEach(() => {
     document.body.innerHTML = `<table id="data-table"></table>`;
 
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
+
     originalFetch = global.fetch;
 
     global.BW = {
