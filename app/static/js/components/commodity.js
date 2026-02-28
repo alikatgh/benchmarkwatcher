@@ -24,6 +24,9 @@ BW.Commodity = {
     comparisonData: {},      // { id: { name, history, color } }
     comparisonPendingSeq: {}, // { id: requestSeq } for in-flight compare additions
     comparisonRequestSeq: 0,
+    compareListRequest: null,
+    compareListRequestSeq: 0,
+    compareListLoading: false,
     allCommoditiesList: [],  // cached list from API
     compareColors: ['#e11d48', '#8b5cf6', '#f59e0b', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6', '#f97316'],
     compareColorIndex: 0,
@@ -1111,6 +1114,12 @@ BW.Commodity = {
     closeCompareMenu: function () {
         var menu = document.getElementById('compare-menu');
         var btn = document.getElementById('compare-menu-btn');
+        this.compareListRequestSeq += 1;
+        this.compareListLoading = false;
+        if (this.compareListRequest) {
+            this.compareListRequest.abort();
+            this.compareListRequest = null;
+        }
         if (menu) {
             menu.classList.add('hidden');
             menu.setAttribute('aria-hidden', 'true');
@@ -1121,17 +1130,31 @@ BW.Commodity = {
     loadCompareList: function () {
         var self = this;
         if (this.allCommoditiesList.length > 0) {
-            this.renderCompareList('');
+            var cachedQuery = document.getElementById('compare-search')?.value || '';
+            this.renderCompareList(cachedQuery);
             return;
         }
+        if (this.compareListLoading) {
+            return;
+        }
+
+        this.compareListLoading = true;
+        this.compareListRequestSeq += 1;
+        var activeRequestSeq = this.compareListRequestSeq;
+        if (this.compareListRequest) {
+            this.compareListRequest.abort();
+        }
+        this.compareListRequest = new AbortController();
+
         var apiUrl = BW.Utils.buildCommoditiesApiUrl({
             range: 'ALL',
             includeHistory: false,
         });
 
-        fetch(apiUrl)
+        fetch(apiUrl, { signal: this.compareListRequest.signal })
             .then(function (r) { return r.json(); })
             .then(function (json) {
+                if (activeRequestSeq !== self.compareListRequestSeq) return;
                 var data = BW.Utils.getCommoditiesFromApiResponse(json);
                 self.allCommoditiesList = (Array.isArray(data) ? data : [])
                     .filter(function (c) { return c.id !== self.commodityId; })
@@ -1139,7 +1162,16 @@ BW.Commodity = {
                 var liveQuery = document.getElementById('compare-search')?.value || '';
                 self.renderCompareList(liveQuery);
             })
-            .catch(function () { self.allCommoditiesList = []; });
+            .catch(function (err) {
+                if (activeRequestSeq !== self.compareListRequestSeq) return;
+                if (err && err.name === 'AbortError') return;
+                self.allCommoditiesList = [];
+            })
+            .finally(function () {
+                if (activeRequestSeq !== self.compareListRequestSeq) return;
+                self.compareListLoading = false;
+                self.compareListRequest = null;
+            });
     },
 
     renderCompareList: function (query) {
