@@ -605,7 +605,9 @@ BW.CompactTable = {
 
     // Apply column visibility
     applyColumnVisibility: function (colName, visible) {
-        document.querySelectorAll(`[data-col="${colName}"]`).forEach(cell => {
+        const table = document.getElementById('data-table');
+        const scopeRoot = table || document;
+        scopeRoot.querySelectorAll(`[data-col="${colName}"]`).forEach(cell => {
             cell.style.display = visible ? '' : 'none';
         });
     },
@@ -848,7 +850,8 @@ BW.CompactTable = {
             .catch(err => console.error('Failed to reload charts:', err));
 
         // Show confirmation
-        const btn = document.querySelector('[onclick*="applySettings"]');
+        const btn = document.querySelector('#table-settings-container [onclick*="applySettings"]')
+            || document.querySelector('[onclick*="applySettings"]');
         if (btn) {
             const originalText = btn.textContent;
             btn.textContent = '✓ Applied!';
@@ -858,8 +861,11 @@ BW.CompactTable = {
 
     // Apply visual settings to table
     applyVisualSettings: function (settings) {
+        const table = document.getElementById('data-table');
+        const scopeRoot = table || document;
+
         // Commodity display
-        document.querySelectorAll('.commodity-cell').forEach(cell => {
+        scopeRoot.querySelectorAll('.commodity-cell').forEach(cell => {
             const icon = cell.querySelector('.commodity-icon');
             const category = cell.querySelector('.commodity-category');
             const display = settings.commodity?.display || 'full';
@@ -869,7 +875,7 @@ BW.CompactTable = {
         });
 
         // Price format
-        document.querySelectorAll('.price-value').forEach(el => {
+        scopeRoot.querySelectorAll('.price-value').forEach(el => {
             const rawValue = parseFloat(el.dataset.raw);
             if (isNaN(rawValue)) return;
 
@@ -887,16 +893,16 @@ BW.CompactTable = {
         });
 
         // Price currency
-        document.querySelectorAll('.price-currency').forEach(el => {
+        scopeRoot.querySelectorAll('.price-currency').forEach(el => {
             el.style.display = settings.price?.currency === 'none' ? 'none' : '';
         });
 
         // Change format
-        document.querySelectorAll('.chg-arrow').forEach(el => {
+        scopeRoot.querySelectorAll('.chg-arrow').forEach(el => {
             el.style.display = (settings.chg?.format || 'arrow') === 'arrow' ? '' : 'none';
         });
 
-        document.querySelectorAll('.chg-value').forEach(el => {
+        scopeRoot.querySelectorAll('.chg-value').forEach(el => {
             const format = settings.chg?.format || 'arrow';
             const parent = el.closest('.chg-cell');
             const rawValue = parseFloat(parent?.dataset.value);
@@ -910,7 +916,7 @@ BW.CompactTable = {
         });
 
         // Change color
-        document.querySelectorAll('.chg-cell').forEach(el => {
+        scopeRoot.querySelectorAll('.chg-cell').forEach(el => {
             const color = settings.chg?.color || 'colored';
             const rawValue = parseFloat(el.dataset.value);
             el.classList.remove('text-brand-teal', 'text-brand-claret', 'text-brand-black-80');
@@ -924,7 +930,7 @@ BW.CompactTable = {
         });
 
         // Percent style
-        document.querySelectorAll('.pct-cell').forEach(el => {
+        scopeRoot.querySelectorAll('.pct-cell').forEach(el => {
             const style = settings.pct?.style || 'badge';
             const decimals = parseInt(settings.pct?.decimals || '2');
             const rawValue = parseFloat(el.dataset.value);
@@ -945,7 +951,7 @@ BW.CompactTable = {
         });
 
         // Date format
-        document.querySelectorAll('.updated-cell').forEach(el => {
+        scopeRoot.querySelectorAll('.updated-cell').forEach(el => {
             const rawDate = el.dataset.raw;
             if (!rawDate) return;
 
@@ -1153,7 +1159,7 @@ function sortTable(column) {
     }
 
     // Update sort indicators
-    document.querySelectorAll('.sort-indicator').forEach(el => {
+    document.querySelectorAll('#data-table .sort-indicator').forEach(el => {
         el.textContent = '';
     });
     const activeIndicator = document.querySelector(`.sort-indicator[data-sort="${column}"]`);
