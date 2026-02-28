@@ -327,10 +327,16 @@ function setView(m) { BW.SettingsModal.setView(m); }
 // Auto-initialize on DOM ready (bind once even if script is evaluated multiple times)
 if (!window.__bwSettingsModalDomReadyBound) {
     window.__bwSettingsModalDomReadyBound = true;
-    document.addEventListener('DOMContentLoaded', function () {
+    const runSettingsModalInit = function () {
         // Only init if settings modal exists on page
         if (document.getElementById('settings-modal')) {
             BW.SettingsModal.init();
         }
-    });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runSettingsModalInit);
+    } else {
+        runSettingsModalInit();
+    }
 }

@@ -23,6 +23,11 @@ describe('Compact table bootstrap lifecycle', () => {
     delete window.__bwCompactTableDomReadyBound;
     delete window.__bwCompactTableSortState;
 
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
+
     global.BW = {
       Settings: {
         getTableSettings: jest.fn(() => ({
@@ -68,5 +73,20 @@ describe('Compact table bootstrap lifecycle', () => {
       currentSortColumn: null,
       currentSortDirection: 'asc'
     });
+  });
+
+  test('initializes immediately when script loads after DOM is ready', () => {
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete'
+    });
+
+    global.fetch = jest.fn().mockResolvedValue({
+      json: () => Promise.resolve({ data: [] })
+    });
+
+    loadCompactTableScript();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 });

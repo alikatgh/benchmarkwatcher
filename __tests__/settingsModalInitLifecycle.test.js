@@ -22,6 +22,11 @@ describe('Settings modal init lifecycle', () => {
 
     delete window.__bwSettingsModalDomReadyBound;
 
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
+
     global.BW = {
       Settings: {
         getTheme: jest.fn(() => 'light'),
@@ -63,5 +68,16 @@ describe('Settings modal init lifecycle', () => {
 
     expect(applySpy).toHaveBeenCalledTimes(2);
     expect(uiSpy).toHaveBeenCalledTimes(2);
+  });
+
+  test('initializes immediately when script loads after DOM is ready', () => {
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete'
+    });
+
+    loadSettingsModalScript();
+
+    expect(BW.SettingsModal._initialized).toBe(true);
   });
 });

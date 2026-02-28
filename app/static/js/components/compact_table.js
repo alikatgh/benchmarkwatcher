@@ -1121,14 +1121,20 @@ function applySettings() { BW.CompactTable.applySettings(); }
 function resetAllSettings() { BW.CompactTable.resetAllSettings(); }
 function exportToCSV() { BW.CompactTable.exportToCSV(); }
 
-document.addEventListener('DOMContentLoaded', function () {
-    if (!window.__bwCompactTableDomReadyBound) {
-        window.__bwCompactTableDomReadyBound = true;
+if (!window.__bwCompactTableDomReadyBound) {
+    window.__bwCompactTableDomReadyBound = true;
+    const runCompactTableInit = function () {
         if (document.getElementById('data-table')) {
             BW.CompactTable.init();
         }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runCompactTableInit);
+    } else {
+        runCompactTableInit();
     }
-});
+}
 
 function toggleFreqBadge() {
     const checkbox = document.getElementById('table-show-freq-badge');

@@ -904,12 +904,19 @@ function setGridDataRange(r) { BW.GridView.setDataRange(r); }
 function toggleGridSettingsPanel() { BW.GridView.toggleSettingsPanel(); }
 function updateGridSettings() { BW.GridView.updateSettings(); }
 
-// Auto-initialize on DOM ready (defer to ensure elements exist)
-document.addEventListener('DOMContentLoaded', function () {
-    if (window.__bwGridViewDomReadyBound) return;
+// Auto-initialize on DOM ready (or immediately if already ready)
+if (!window.__bwGridViewDomReadyBound) {
     window.__bwGridViewDomReadyBound = true;
-    // Only init if grid view elements exist
-    if (document.getElementById('grid-cards-container') || document.getElementById('grid-range-1W')) {
-        BW.GridView.init();
+    const runGridInit = function () {
+        // Only init if grid view elements exist
+        if (document.getElementById('grid-cards-container') || document.getElementById('grid-range-1W')) {
+            BW.GridView.init();
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runGridInit);
+    } else {
+        runGridInit();
     }
-});
+}

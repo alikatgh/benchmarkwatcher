@@ -21,6 +21,10 @@ describe('CompactTable race handling', () => {
 
   beforeEach(() => {
     jest.resetModules();
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
     document.body.innerHTML = `
       <div id="table-loading" class="hidden"></div>
       <table id="data-table"><tbody id="commodities-tbody"></tbody></table>
