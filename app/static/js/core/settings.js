@@ -99,6 +99,7 @@ BW.Settings = (function () {
         KEYS: Object.freeze({
             TABLE: 'table-settings',
             GRID: 'grid-settings',
+            CHART_SETTINGS: 'chart-settings',
             THEME: 'theme',
             MARKET_THEME: 'market-theme',
             VIEW_MODE: 'view-mode'
@@ -188,6 +189,21 @@ BW.Settings = (function () {
                 return false;
             }
             return this._saveObject(this.KEYS.GRID, settings);
+        },
+
+        // Chart settings
+        getChartSettings: function () {
+            const parsed = this._getParsed(this.KEYS.CHART_SETTINGS);
+            if (!isPlainObject(parsed)) return null;
+            return parsed;
+        },
+
+        saveChartSettings: function (settings) {
+            if (!isPlainObject(settings)) {
+                console.warn('BW.Settings.saveChartSettings: expected object');
+                return false;
+            }
+            return this._saveObject(this.KEYS.CHART_SETTINGS, settings);
         },
 
         // Theme helpers
