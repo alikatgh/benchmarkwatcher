@@ -18,12 +18,13 @@ interface CompareModalProps {
     currentCommodityId: string;
     comparisons: ComparisonSeries[];
     onToggleCommodity: (commodity: Commodity) => void;
+    onRemoveComparison: (commodityId: string) => void;
     onClearAll: () => void;
 }
 
 export default function CompareModal({
     visible, onClose, currentCommodityId,
-    comparisons, onToggleCommodity, onClearAll,
+    comparisons, onToggleCommodity, onRemoveComparison, onClearAll,
 }: CompareModalProps) {
     const { isDarkMode } = useContext(SettingsContext);
     const [search, setSearch] = useState('');
@@ -108,10 +109,7 @@ export default function CompareModal({
                             {comparisons.map(comp => (
                                 <TouchableOpacity
                                     key={comp.id}
-                                    onPress={() => {
-                                        const commodity = commodities.find(c => c.id === comp.id);
-                                        if (commodity) onToggleCommodity(commodity);
-                                    }}
+                                    onPress={() => onRemoveComparison(comp.id)}
                                     className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
                                 >
                                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: comp.color }} />
