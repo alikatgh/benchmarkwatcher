@@ -20,8 +20,13 @@ export interface Commodity {
     source_url?: string;
     source_type?: string;
     updated_at?: string;
+    is_daily?: boolean;
     derived?: boolean;
     derived_stats?: {
+        abs_change_1_obs?: number;
+        pct_change_1_obs?: number;
+        pct_change_30_obs?: number;
+        pct_change_365_obs?: number;
         pct_30d?: number;
         pct_1y?: number;
         direction_30_obs?: string;

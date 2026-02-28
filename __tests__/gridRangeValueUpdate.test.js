@@ -27,6 +27,7 @@ describe('Grid range updates card change values', () => {
       },
       Utils: {
         isDailyCommodity: jest.fn(() => false),
+        escapeHtml: jest.fn((value) => String(value ?? '')),
       }
     };
 

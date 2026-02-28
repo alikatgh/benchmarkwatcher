@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -19,6 +20,7 @@ import CommodityChartSection from '../components/features/CommodityChartSection'
 import CommodityChartControls from '../components/features/CommodityChartControls';
 import ChartSettingsModal from '../components/features/ChartSettingsModal';
 import CompareModal from '../components/features/CompareModal';
+import { DETAIL_CHANGE_PERIOD_KEY } from '../utils/detailPreferences';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CommodityDetail'>;
 
@@ -34,6 +36,7 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [zoomLevel, setZoomLevel] = useState(1);
 
     const [selectedRange, setSelectedRange] = useState<'1W' | '1M' | '3M' | '6M' | '1Y' | 'ALL'>('1M');
+    const [selectedChangePeriod, setSelectedChangePeriod] = useState<'1' | '30' | '365'>('1');
     const [viewMode, setViewMode] = useState<'price' | 'percent'>('price');
     const chartRef = useRef<ViewShot>(null);
 
@@ -46,6 +49,17 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [colorIndex, setColorIndex] = useState(0);
 
     useEffect(() => {
+        const restoreChangePeriod = async () => {
+            try {
+                const stored = await AsyncStorage.getItem(DETAIL_CHANGE_PERIOD_KEY);
+                if (stored === '1' || stored === '30' || stored === '365') {
+                    setSelectedChangePeriod(stored);
+                }
+            } catch {
+                // non-blocking preference read
+            }
+        };
+
         const loadDetail = async () => {
             try {
                 const detail = await fetchCommodityDetail(initialCommodity.id);
@@ -56,15 +70,54 @@ export default function CommodityDetailScreen({ route }: Props) {
                 setLoading(false);
             }
         };
+
+        restoreChangePeriod();
         loadDetail();
     }, [initialCommodity.id]);
 
+    useEffect(() => {
+        AsyncStorage.setItem(DETAIL_CHANGE_PERIOD_KEY, selectedChangePeriod).catch(() => {
+            // non-blocking preference write
+        });
+    }, [selectedChangePeriod]);
+
     const { getMarketColors, chartSettings } = useContext(SettingsContext);
 
-    const isUp = (commodity.change ?? 0) >= 0;
-    const { textColor: changeColor, bgColor: changeBg, badgeColor, chartColor } = getMarketColors(isUp);
+    const baseIsUp = (commodity.change ?? 0) >= 0;
+    const { chartColor } = getMarketColors(baseIsUp);
     const positiveColor = getMarketColors(true).textColor;
     const negativeColor = getMarketColors(false).textColor;
+
+    const derivedStats = (commodity.derived_stats || {}) as {
+        abs_change_1_obs?: number;
+        pct_change_1_obs?: number;
+        pct_change_30_obs?: number;
+        pct_change_365_obs?: number;
+        pct_30d?: number;
+        pct_1y?: number;
+    };
+
+    const changeOptions = {
+        '1': {
+            pct: Number(commodity.change_percent ?? derivedStats.pct_change_1_obs ?? 0),
+            abs: Number(commodity.change ?? derivedStats.abs_change_1_obs ?? 0),
+            context: `vs ${commodity.is_daily ? 'prev day' : 'prev month'}`,
+        },
+        '30': {
+            pct: Number(derivedStats.pct_change_30_obs ?? derivedStats.pct_30d ?? 0),
+            abs: null,
+            context: 'vs ~30 obs',
+        },
+        '365': {
+            pct: Number(derivedStats.pct_change_365_obs ?? derivedStats.pct_1y ?? 0),
+            abs: null,
+            context: 'vs ~1 year',
+        },
+    } as const;
+
+    const selectedChange = changeOptions[selectedChangePeriod];
+    const selectedChangeIsUp = selectedChange.pct >= 0;
+    const { textColor: changeColor, badgeColor } = getMarketColors(selectedChangeIsUp);
 
     // Comparison handlers
     const handleToggleCommodity = useCallback(async (comp: Commodity) => {
@@ -189,10 +242,15 @@ export default function CommodityDetailScreen({ route }: Props) {
             <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
                 <CommodityHeader
                     commodity={commodity}
-                    isUp={isUp}
+                    isUp={selectedChangeIsUp}
                     changeColor={changeColor}
                     badgeColor={badgeColor}
                     handleCopyPrice={handleCopyPrice}
+                    selectedChangePeriod={selectedChangePeriod}
+                    onChangePeriod={setSelectedChangePeriod}
+                    changePercent={selectedChange.pct}
+                    changeAbs={selectedChange.abs}
+                    changeContextLabel={`${selectedChange.context} · As of ${commodity.date}`}
                 />
 
                 <CommodityDataSourceBlock commodity={commodity} />
@@ -269,7 +327,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                         <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
                             <Text className="text-slate-500 dark:text-slate-400">Absolute Change</Text>
                             <Text className={`font-bold ${changeColor}`}>
-                                {isUp ? '+' : ''}{commodity.change ?? 0}
+                                {baseIsUp ? '+' : ''}{commodity.change ?? 0}
                             </Text>
                         </View>
                         <View className="flex-row justify-between">

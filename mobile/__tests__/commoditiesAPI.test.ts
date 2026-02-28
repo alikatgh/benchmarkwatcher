@@ -12,6 +12,16 @@ const mockData = [
 ];
 
 describe('api/commodities', () => {
+    let consoleErrorSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+    });
+
+    afterAll(() => {
+        consoleErrorSpy.mockRestore();
+    });
+
     beforeEach(() => {
         (global.fetch as jest.Mock).mockClear();
     });

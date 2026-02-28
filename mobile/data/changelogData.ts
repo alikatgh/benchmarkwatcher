@@ -13,6 +13,34 @@ export interface ChangelogRelease {
 
 export const changelogData: ChangelogRelease[] = [
     {
+        version: "v1.2.1",
+        date: "February 28, 2026",
+        title: "Detail Change-Period Controls & Stability Updates",
+        tag: "UPDATE",
+        tagColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+        description: "Improved commodity detail insights with selectable return windows, persisted preferences, and targeted test stability fixes.",
+        sections: [
+            {
+                header: "Added",
+                points: [
+                    "Commodity detail change-period selector: Prev obs, ~30 obs, ~1 year",
+                    "Context label showing selected comparison window and as-of date",
+                    "Persisted detail change-period preference via AsyncStorage",
+                    "New mobile test coverage for detail header period switching"
+                ]
+            },
+            {
+                header: "Improved",
+                points: [
+                    "Period-aware change calculations now use derived stats when available",
+                    "Absolute change display remains anchored to base observation direction",
+                    "Commodity typing expanded for derived stats and frequency metadata",
+                    "Web test harness stability improved by stubbing shared escapeHtml utility"
+                ]
+            }
+        ]
+    },
+    {
         version: "v1.2.0",
         date: "February 23, 2026",
         title: "USDA Source Expansion & Mobile-First UI",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import IconButton from '../ui/IconButton';
 import Badge from '../ui/Badge';
 
@@ -9,9 +9,31 @@ interface CommodityHeaderProps {
     changeColor: string;
     badgeColor: string;
     handleCopyPrice: () => void;
+    selectedChangePeriod: '1' | '30' | '365';
+    onChangePeriod: (period: '1' | '30' | '365') => void;
+    changePercent: number;
+    changeAbs: number | null;
+    changeContextLabel: string;
 }
 
-export default function CommodityHeader({ commodity, isUp, changeColor, badgeColor, handleCopyPrice }: CommodityHeaderProps) {
+export default function CommodityHeader({
+    commodity,
+    isUp,
+    changeColor,
+    badgeColor,
+    handleCopyPrice,
+    selectedChangePeriod,
+    onChangePeriod,
+    changePercent,
+    changeAbs,
+    changeContextLabel,
+}: CommodityHeaderProps) {
+    const periodButtons: Array<{ key: '1' | '30' | '365'; label: string }> = [
+        { key: '1', label: 'Prev obs' },
+        { key: '30', label: '~30 obs' },
+        { key: '365', label: '~1 year' },
+    ];
+
     return (
         <View className="px-5 pt-4">
             <Text className="text-xl text-slate-500 dark:text-slate-400 font-medium mb-1 uppercase tracking-wider">
@@ -41,14 +63,40 @@ export default function CommodityHeader({ commodity, isUp, changeColor, badgeCol
 
             <View className="flex-row items-center flex-wrap gap-3 mb-6">
                 <Text className={`text-xl font-bold ${changeColor}`}>
-                    {isUp ? '+' : ''}{commodity.change_percent}%
+                    {isUp ? '+' : ''}{Math.abs(changePercent).toFixed(2)}%
                 </Text>
+                {selectedChangePeriod === '1' && typeof changeAbs === 'number' && (
+                    <Text className={`text-sm ${changeColor}`}>
+                        ({isUp ? '+' : ''}{changeAbs})
+                    </Text>
+                )}
                 <View className="ml-2">
                     <Badge
                         label={isUp ? '↑' : '↓'}
                         variant={isUp ? 'success' : 'danger'}
                     />
                 </View>
+            </View>
+
+            <Text className="text-xs text-slate-500 dark:text-slate-400 mb-3">{changeContextLabel}</Text>
+
+            <View className="flex-row items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 mb-6 self-start">
+                {periodButtons.map((btn) => {
+                    const isActive = selectedChangePeriod === btn.key;
+                    return (
+                        <TouchableOpacity
+                            key={btn.key}
+                            onPress={() => onChangePeriod(btn.key)}
+                            className={`px-3 py-1.5 rounded-lg ${isActive ? 'bg-white dark:bg-slate-700' : ''}`}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: isActive }}
+                        >
+                            <Text className={`text-[11px] font-bold ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                                {btn.label}
+                            </Text>
+                        </TouchableOpacity>
+                    );
+                })}
             </View>
         </View>
     );
