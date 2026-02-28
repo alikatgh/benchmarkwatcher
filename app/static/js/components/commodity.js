@@ -792,7 +792,7 @@ BW.Commodity = {
         document.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
         // Deactivate all tabs
         document.querySelectorAll('.chart-settings-tab').forEach(t => {
-            t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80';
+            t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white';
         });
         // Show selected content
         const content = document.getElementById('content-' + tabName);
