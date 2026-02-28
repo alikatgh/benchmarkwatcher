@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 import CommodityCard from '../components/CommodityCard';
-import { SettingsContext } from '../context/SettingsContext';
 import { Commodity } from '../types/commodity';
 import { createMockSettingsContext } from '../testUtils/settingsContextMock';
+import { renderWithSettings } from '../testUtils/renderWithSettings';
 
 describe('CommodityCard', () => {
     const mockCommodity: Commodity = {
@@ -23,11 +23,9 @@ describe('CommodityCard', () => {
     let mockContext = createMockSettingsContext();
 
     const renderCard = (contextOverrides = {}) => {
-        const contextValue = { ...mockContext, ...contextOverrides };
-        return render(
-            <SettingsContext.Provider value={contextValue}>
-                <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
+        return renderWithSettings(
+            <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />,
+            { ...mockContext, ...contextOverrides }
         );
     };
 

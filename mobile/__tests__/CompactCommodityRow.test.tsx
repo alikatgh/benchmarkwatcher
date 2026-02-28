@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 import CompactCommodityRow from '../components/CompactCommodityRow';
-import { SettingsContext } from '../context/SettingsContext';
 import { Commodity } from '../types/commodity';
 import { createMockSettingsContext } from '../testUtils/settingsContextMock';
+import { renderWithSettings } from '../testUtils/renderWithSettings';
 
 describe('CompactCommodityRow', () => {
     const mockCommodity: Commodity = {
@@ -23,11 +23,9 @@ describe('CompactCommodityRow', () => {
     let mockContext = { ...createMockSettingsContext(), density: 'compact' as const };
 
     const renderRow = (contextOverrides = {}) => {
-        const contextValue = { ...mockContext, ...contextOverrides };
-        return render(
-            <SettingsContext.Provider value={contextValue}>
-                <CompactCommodityRow commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
+        return renderWithSettings(
+            <CompactCommodityRow commodity={mockCommodity} onPress={mockOnPress} />,
+            { ...mockContext, ...contextOverrides }
         );
     };
 
