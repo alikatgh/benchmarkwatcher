@@ -526,6 +526,13 @@ BW.Commodity = {
                     const priceEl = document.getElementById('crosshair-price');
                     const changeEl = document.getElementById('crosshair-change');
 
+                    const showAnyCrosshairField =
+                        self.chartSettings.showCrosshairDate ||
+                        self.chartSettings.showCrosshairPrice ||
+                        self.chartSettings.showCrosshairChange;
+
+                    if (!showAnyCrosshairField) return;
+
                     if (infoEl) infoEl.classList.remove('hidden');
                     if (dateEl) dateEl.textContent = new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
@@ -543,13 +550,15 @@ BW.Commodity = {
                             const change = price - prev;
                             const sign = change >= 0 ? '+' : '';
                             changeEl.textContent = `${sign}${change.toFixed(2)} %`;
-                            changeEl.className = `text-sm font-bold ml-2 ${change >= 0 ? 'text-brand-teal' : 'text-brand-claret'}`;
+                            changeEl.className = 'text-sm font-bold ml-2';
+                            changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
                         } else {
                             const change = price - prev;
                             const changePercent = prev !== 0 ? ((change / prev) * 100).toFixed(2) : 'N/A';
                             const sign = change >= 0 ? '+' : '';
                             changeEl.textContent = `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
-                            changeEl.className = `text-sm font-bold ml-2 ${change >= 0 ? 'text-brand-teal' : 'text-brand-claret'}`;
+                            changeEl.className = 'text-sm font-bold ml-2';
+                            changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
                         }
                     }
                 }
@@ -966,10 +975,11 @@ BW.Commodity = {
         });
 
         // Action buttons
-        const resetBtn = document.querySelector('[onclick="resetZoom()"]');
+        const resetBtn = document.getElementById('reset-zoom-btn');
         const downloadContainer = document.getElementById('download-menu-container');
         if (resetBtn) resetBtn.style.display = s.showResetBtn ? '' : 'none';
         if (downloadContainer) downloadContainer.style.display = s.showDownloadBtn ? '' : 'none';
+        if (!s.showDownloadBtn) this.closeDownloadMenu();
 
         // Chart height - prefer canvas parent over brittle class selector
         const chartContainer = document.getElementById('priceChart') ? document.getElementById('priceChart').parentElement : null;
@@ -991,6 +1001,13 @@ BW.Commodity = {
                 el.parentElement.style.display = show ? '' : 'none';
             }
         });
+
+        // Hide entire crosshair panel when all fields are off.
+        const crosshairInfo = document.getElementById('crosshair-info');
+        const showAnyCrosshairField = s.showCrosshairDate || s.showCrosshairPrice || s.showCrosshairChange;
+        if (crosshairInfo && !showAnyCrosshairField) {
+            crosshairInfo.classList.add('hidden');
+        }
     },
 
     // ============================================================
