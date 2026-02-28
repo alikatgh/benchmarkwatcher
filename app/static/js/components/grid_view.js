@@ -487,7 +487,7 @@ BW.GridView = {
         // Transform preview card based on style to match dashboard exactly
         if (previewCard) {
             const nameEl = previewCard.querySelector('h4');
-            const priceSection = previewCard.querySelector('.flex.items-end');
+            const priceSection = document.getElementById('preview-price-section');
             const categoryBadge = previewCategory;
 
             if (cardStyle === 'minimal') {
@@ -554,6 +554,11 @@ BW.GridView = {
         // First: RESET all inline styles to prevent corruption
         // ============================================================
         container.className = 'grid';
+        container.style.borderRadius = '';
+        container.style.overflow = '';
+        container.style.border = '';
+        container.style.gridTemplateColumns = 'repeat(auto-fill, minmax(min(var(--card-min-w, 240px), 100%), 1fr))';
+        container.style.gap = 'clamp(0.75rem, 1.8vw, 1.5rem)';
 
         // RESET: Clear all inline styles from all card elements first
         container.querySelectorAll('a.block.group').forEach(link => {
