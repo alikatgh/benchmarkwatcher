@@ -18,6 +18,7 @@ BW.Commodity = {
     commodityName: 'commodity',
     commodityId: '',
     previouslyFocusedChartControl: null,
+    activeSettingsTab: 'appearance',
 
     // Comparison state
     comparisonData: {},      // { id: { name, history, color } }
@@ -28,6 +29,7 @@ BW.Commodity = {
     // Chart customization settings with defaults (overridden by theme on init)
     chartSettings: {
         // Colors — will be set from active theme preset on init/reset
+        chartTheme: 'light',
         lineColor: '#0f5499',
         fillColor: '#0f5499',
         fillOpacity: 15,
@@ -796,9 +798,11 @@ BW.Commodity = {
             modal.classList.remove('hidden');
             modal.removeAttribute('aria-hidden');
             document.body.style.overflow = 'hidden'; // Prevent background scroll
-            const firstTab = document.getElementById('tab-appearance');
-            if (firstTab) {
-                setTimeout(() => firstTab.focus(), 0);
+            const tabName = this.activeSettingsTab || 'appearance';
+            this.showChartSettingsTab(tabName);
+            const activeTab = document.getElementById('tab-' + tabName);
+            if (activeTab) {
+                setTimeout(() => activeTab.focus(), 0);
             }
         }
     },
@@ -818,6 +822,7 @@ BW.Commodity = {
 
     // Show settings tab
     showChartSettingsTab: function (tabName) {
+        this.activeSettingsTab = tabName;
         // Hide all content
         document.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
         // Deactivate all tabs
@@ -832,6 +837,21 @@ BW.Commodity = {
         if (tab) {
             tab.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all shadow-sm theme-surface theme-text';
         }
+    },
+
+    syncThemePresetUI: function () {
+        const activeTheme = String(this.chartSettings.chartTheme || '');
+        document.querySelectorAll('.theme-preset').forEach(btn => {
+            const isActive = btn.dataset.theme === activeTheme;
+            if (isActive) {
+                btn.classList.add('border-brand-oxford', 'dark:border-brand-teal');
+                btn.classList.remove('border-brand-black-60/10');
+            } else {
+                btn.classList.remove('border-brand-oxford', 'dark:border-brand-teal');
+                btn.classList.add('border-brand-black-60/10');
+            }
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
     },
 
     // Load settings from localStorage
@@ -908,6 +928,8 @@ BW.Commodity = {
             const el = document.getElementById('setting-' + field);
             if (el) el.value = s[field];
         });
+
+        this.syncThemePresetUI();
     },
 
     // Save settings to localStorage
@@ -950,21 +972,11 @@ BW.Commodity = {
         if (theme) {
             // Apply theme colors to settings
             Object.assign(this.chartSettings, theme);
+            this.chartSettings.chartTheme = themeName;
             this.saveChartSettings();
             this.populateSettingsUI();
             this.applySettingsToDOM();
             this.updateChart();
-
-            // Highlight selected theme button
-            document.querySelectorAll('.theme-preset').forEach(btn => {
-                if (btn.dataset.theme === themeName) {
-                    btn.classList.add('border-brand-oxford', 'dark:border-brand-teal');
-                    btn.classList.remove('border-brand-black-60/10');
-                } else {
-                    btn.classList.remove('border-brand-oxford', 'dark:border-brand-teal');
-                    btn.classList.add('border-brand-black-60/10');
-                }
-            });
         }
     },
 
@@ -975,6 +987,7 @@ BW.Commodity = {
 
         // Reset to default values using current theme preset
         this.chartSettings = {
+            chartTheme: this.themes[theme] ? theme : 'light',
             lineColor: preset.lineColor, fillColor: preset.fillColor, fillOpacity: preset.fillOpacity,
             gridColor: preset.gridColor, gridOpacity: preset.gridOpacity, upColor: preset.upColor, downColor: preset.downColor,
             tooltipBg: preset.tooltipBg, tooltipText: preset.tooltipText,
