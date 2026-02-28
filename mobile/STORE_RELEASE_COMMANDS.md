@@ -21,6 +21,7 @@ cp .env.example .env
 ## 2) Verify config before building
 
 ```bash
+npm run preflight:release
 npx expo config --type public
 npm run typecheck
 npm run test:ci
