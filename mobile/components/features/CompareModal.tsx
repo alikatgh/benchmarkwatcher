@@ -29,21 +29,25 @@ export default function CompareModal({
     const [search, setSearch] = useState('');
     const [commodities, setCommodities] = useState<Commodity[]>([]);
     const [loading, setLoading] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
+
+    const loadCommodities = async () => {
+        setLoading(true);
+        setLoadError(null);
+        try {
+            const data = await fetchCommodities('all', 'name', 'asc', '1W');
+            setCommodities(data.filter(c => c.id !== currentCommodityId));
+        } catch {
+            setCommodities([]);
+            setLoadError('Unable to load commodity list. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (!visible) return;
-        const load = async () => {
-            setLoading(true);
-            try {
-                const data = await fetchCommodities('all', 'name', 'asc', '1W');
-                setCommodities(data.filter(c => c.id !== currentCommodityId));
-            } catch {
-                setCommodities([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-        load();
+        loadCommodities();
     }, [visible, currentCommodityId]);
 
     const filtered = search.trim()
@@ -126,9 +130,22 @@ export default function CompareModal({
                     <View className="flex-1 items-center justify-center">
                         <ActivityIndicator size="large" color="#3b82f6" />
                     </View>
+                ) : loadError ? (
+                    <View className="flex-1 items-center justify-center px-6">
+                        <Text className="text-sm text-rose-500 font-semibold text-center">{loadError}</Text>
+                        <TouchableOpacity onPress={loadCommodities} className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2">
+                            <Text className="font-bold text-white dark:text-slate-900">Retry</Text>
+                        </TouchableOpacity>
+                    </View>
                 ) : (
                     <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 40 }}>
-                        {Object.entries(grouped).map(([category, items]) => (
+                        {Object.entries(grouped).length === 0 ? (
+                            <View className="pt-10 items-center">
+                                <Text className="text-slate-500 dark:text-slate-400 text-center">
+                                    No commodities match your search.
+                                </Text>
+                            </View>
+                        ) : Object.entries(grouped).map(([category, items]) => (
                             <View key={category} className="mb-4">
                                 <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 mt-2">
                                     {category}
