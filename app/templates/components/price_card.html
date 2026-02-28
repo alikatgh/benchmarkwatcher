@@ -26,30 +26,28 @@
         </div>
 
         <h3
-            class="bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2">
+            class="bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-3 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[2.5rem]">
             {{ commodity.name }}</h3>
 
-        <div class="bw-grid-price-section flex items-end justify-between gap-4 font-ui">
-            <div>
-                <div class="bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
-                    {{ commodity.price | round(2) }}
-                </div>
-                <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
-                    {{ commodity.currency }} / {{ commodity.unit }}
-                </div>
+        <div class="bw-grid-price-section font-ui mb-2">
+            <div class="bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+                {{ commodity.price | round(4) }}
             </div>
-            <div class="bw-grid-change text-right">
-                <div class="bw-grid-change-pct text-sm font-bold"
-                    style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
-                    title="Observation-to-observation percentage change">
-                    {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
-                    commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
-                </div>
-                <div class="bw-grid-change-abs text-[10px] text-brand-black-60 dark:text-brand-black-60/60 mt-0.5">
-                    {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
-                    commodity.daily_change|default(commodity.change) | round(2) }} {{ commodity.currency }}
-                </div>
+            <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
+                {{ commodity.currency }} / {{ commodity.unit }}
             </div>
+        </div>
+
+        <div class="bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]">
+            <span class="bw-grid-change-pct text-sm font-bold"
+                style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
+                title="Period change">
+                {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
+            </span>
+            <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
+            <span class="bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
+                {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change|default(commodity.change) | round(3) }} {{ commodity.currency }}
+            </span>
         </div>
 
         <div
