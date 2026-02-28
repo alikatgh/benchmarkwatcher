@@ -10,6 +10,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "test:ci": "jest --runInBand",
+    "preflight:release": "node scripts/releasePreflight.js",
     "eas:login": "eas login",
     "eas:build:ios": "eas build -p ios --profile production",
     "eas:build:android": "eas build -p android --profile production",
