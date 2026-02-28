@@ -26,9 +26,9 @@ Designed for informational and educational use:
 - No investment advice, forecasts, or trading signals
 
 ## Contact Details
-- Website: https://your-domain.example
-- Email: support@your-domain.example
-- Privacy Policy: https://your-domain.example/privacy
+- Website: https://benchmarkwatching.com
+- Email: support@benchmarkwatching.com
+- Privacy Policy: https://benchmarkwatching.com/privacy
 
 ## Data Safety Draft Inputs
 Validate against actual backend behavior before final submission.

@@ -32,13 +32,13 @@ Important notes:
 commodities,benchmark,energy,metals,agriculture,prices,market,data,charts
 
 ## Support URL
-- https://your-domain.example/support
+- https://benchmarkwatching.com/support
 
 ## Marketing URL (optional)
-- https://your-domain.example
+- https://benchmarkwatching.com
 
 ## Privacy Policy URL (required)
-- https://your-domain.example/privacy
+- https://benchmarkwatching.com/privacy
 
 ## Review Notes
 The app displays publicly available commodity benchmark data and user-set local preferences only.
