@@ -5,6 +5,7 @@ const { join } = require('node:path');
 const root = process.cwd();
 const blockers = [];
 const warnings = [];
+let detectedApiUrl = null;
 
 function addBlocker(message, fix) {
   blockers.push({ message, fix });
@@ -34,14 +35,29 @@ function checkPlaceholders(filePath, patterns) {
     if (pattern.test(content)) {
       addBlocker(
         `Placeholder value detected in ${filePath}`,
-        "Replace placeholder values with your production values before building"
+        detectedApiUrl
+          ? `Run: npm run api:set -- ${detectedApiUrl}`
+          : 'Run: npm run api:set -- https://YOUR_REAL_API_DOMAIN'
       );
       return;
     }
   }
 }
 
+function detectApiUrlFromEnv() {
+  const envPath = join(root, '.env');
+  if (!existsSync(envPath)) return null;
+  const content = readFileSync(envPath, 'utf8');
+  const match = content.match(/^EXPO_PUBLIC_API_URL=(.+)$/m);
+  if (!match) return null;
+  const value = match[1].trim().replace(/^['"]|['"]$/g, '');
+  if (!/^https:\/\//i.test(value)) return null;
+  if (/your-api-domain\.example/i.test(value)) return null;
+  return value;
+}
+
 console.log('=== Mobile Release Preflight ===');
+detectedApiUrl = detectApiUrlFromEnv();
 
 // 1) Build/test checks
 if (!runCheck('TypeScript check', 'npx tsc --noEmit')) {
@@ -93,7 +109,12 @@ if (blockers.length) {
     if (blocker.fix) console.log(`  Fix: ${blocker.fix}`);
   }
   console.log('\nNext steps:');
-  console.log('- Set production API URL in app.json/.env.example and EAS secret');
+  if (detectedApiUrl) {
+    console.log(`- Detected .env API URL: ${detectedApiUrl}`);
+    console.log(`- Apply it everywhere: npm run api:set -- ${detectedApiUrl}`);
+  } else {
+    console.log('- Set production API URL in app.json/.env.example and EAS secret');
+  }
   console.log('- Authenticate Expo maintainer account');
   console.log('- Re-run: npm run preflight:release');
   process.exitCode = 1;
