@@ -150,4 +150,43 @@ describe('CompareModal accessibility interactions', () => {
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(2));
         expect(queryByDisplayValue('gol')).toBeNull();
     });
+
+    it('retries loading commodities after initial failure', async () => {
+        mockedFetchCommodities
+            .mockRejectedValueOnce(new Error('network'))
+            .mockResolvedValueOnce([
+                {
+                    id: 'gold',
+                    name: 'Gold',
+                    category: 'Precious',
+                    price: 1850,
+                    currency: 'USD',
+                    unit: 'oz',
+                    date: '2026-01-01',
+                    change: 10,
+                    change_percent: 0.5,
+                } as any,
+            ]);
+
+        const { getByLabelText, findByText, queryByText } = render(
+            <SettingsContext.Provider value={mockContext}>
+                <CompareModal
+                    visible={true}
+                    onClose={jest.fn()}
+                    currentCommodityId="brent_oil"
+                    comparisons={[]}
+                    onToggleCommodity={jest.fn()}
+                    onRemoveComparison={jest.fn()}
+                    onClearAll={jest.fn()}
+                />
+            </SettingsContext.Provider>
+        );
+
+        expect(await findByText('Unable to load commodity list. Please try again.')).toBeTruthy();
+
+        fireEvent.press(getByLabelText('Retry loading commodities'));
+
+        await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(queryByText('Unable to load commodity list. Please try again.')).toBeNull());
+    });
 });
