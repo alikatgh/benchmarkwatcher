@@ -15,6 +15,13 @@ describe('BW.Responsive lifecycle safety', () => {
   beforeEach(() => {
     document.documentElement.innerHTML = '';
 
+    delete window.__bwResponsiveDomReadyBound;
+
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete'
+    });
+
     global.BW = {
       CompactTable: {
         setColumnVisibility: jest.fn()
@@ -32,6 +39,11 @@ describe('BW.Responsive lifecycle safety', () => {
   });
 
   test('replaces prior ResizeObserver on repeated initAfterDOM calls', () => {
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
+
     const observeMock1 = jest.fn();
     const disconnectMock1 = jest.fn();
     const observeMock2 = jest.fn();
@@ -56,5 +68,34 @@ describe('BW.Responsive lifecycle safety', () => {
     expect(observeMock1).toHaveBeenCalledTimes(1);
     expect(observeMock2).toHaveBeenCalledTimes(1);
     expect(disconnectMock2).not.toHaveBeenCalled();
+  });
+
+  test('binds DOM-ready responsive init only once across duplicate script loads', () => {
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete'
+    });
+
+    const observeMock1 = jest.fn();
+    const disconnectMock1 = jest.fn();
+    const observeMock2 = jest.fn();
+    const disconnectMock2 = jest.fn();
+
+    let instanceCount = 0;
+    global.ResizeObserver = jest.fn().mockImplementation(() => {
+      instanceCount += 1;
+      if (instanceCount === 1) {
+        return { observe: observeMock1, disconnect: disconnectMock1 };
+      }
+      return { observe: observeMock2, disconnect: disconnectMock2 };
+    });
+
+    loadResponsiveScript();
+    loadResponsiveScript();
+
+    expect(global.ResizeObserver).toHaveBeenCalledTimes(1);
+    expect(observeMock1).toHaveBeenCalledTimes(1);
+    expect(disconnectMock1).not.toHaveBeenCalled();
+    expect(observeMock2).not.toHaveBeenCalled();
   });
 });

@@ -185,6 +185,15 @@ BW.Responsive = (function () {
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 // autoApply runs synchronously (called from index.js before containers render)
 // initAfterDOM runs on DOMContentLoaded to wire up resize observer + columns
-document.addEventListener('DOMContentLoaded', function () {
-    BW.Responsive.initAfterDOM();
-});
+if (!window.__bwResponsiveDomReadyBound) {
+    window.__bwResponsiveDomReadyBound = true;
+    const runResponsiveInit = function () {
+        BW.Responsive.initAfterDOM();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runResponsiveInit);
+    } else {
+        runResponsiveInit();
+    }
+}
