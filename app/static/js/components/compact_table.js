@@ -1124,7 +1124,7 @@ function toggleFreqBadge() {
     BW.CompactTable.saveSettings(settings);
 
     // Toggle visibility of all freq badges in table
-    document.querySelectorAll('#table-body .freq-badge').forEach(badge => {
+    document.querySelectorAll('#data-table .freq-badge').forEach(badge => {
         badge.style.display = showBadge ? '' : 'none';
     });
 }

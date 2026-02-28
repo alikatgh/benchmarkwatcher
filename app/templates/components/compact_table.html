@@ -446,7 +446,7 @@
                     </th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-brand-black-60/10 dark:divide-white/5">
+            <tbody id="table-body" class="divide-y divide-brand-black-60/10 dark:divide-white/5">
                 {% for commodity in commodities %}
                 <tr onclick="window.location='{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}'"
                     tabindex="0" role="link"
@@ -463,9 +463,11 @@
                                 <div
                                     class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors whitespace-nowrap">
                                     {{ commodity.name }}</div>
-                                <div class="commodity-category text-[10px] text-brand-black-60 tracking-wide">
-                                    {{
-                                    commodity.category }}</div>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="commodity-category text-[10px] text-brand-black-60 tracking-wide">{{ commodity.category }}</div>
+                                    <span class="text-[8px] font-bold px-1 py-0.5 rounded font-ui freq-badge {% if commodity.is_daily %}bg-brand-teal/20 text-brand-teal{% else %}bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal{% endif %}"
+                                        title="{% if commodity.is_daily %}Daily data{% else %}Monthly data{% endif %}">{% if commodity.is_daily %}D{% else %}M{% endif %}</span>
+                                </div>
                             </div>
                         </div>
                     </td>
