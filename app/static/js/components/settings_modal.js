@@ -11,6 +11,40 @@ BW.SettingsModal = {
     // Stable handler reference for proper removeEventListener
     _boundHandleKeydown: function (e) { BW.SettingsModal.handleKeydown(e); },
 
+    resolveSettingKey: function (settingsKeyName, fallbackKey) {
+        if (window.BW && BW.Settings && BW.Settings.KEYS && BW.Settings.KEYS[settingsKeyName]) {
+            return BW.Settings.KEYS[settingsKeyName];
+        }
+        return fallbackKey;
+    },
+
+    getRawSetting: function (settingsKeyName, fallbackKey, defaultValue = null) {
+        const key = this.resolveSettingKey(settingsKeyName, fallbackKey);
+        if (window.BW && BW.Settings && typeof BW.Settings._getRaw === 'function') {
+            const value = BW.Settings._getRaw(key);
+            return value === null ? defaultValue : value;
+        }
+
+        try {
+            const value = localStorage.getItem(key);
+            return value === null ? defaultValue : value;
+        } catch (e) {
+            return defaultValue;
+        }
+    },
+
+    setRawSetting: function (settingsKeyName, fallbackKey, value) {
+        const key = this.resolveSettingKey(settingsKeyName, fallbackKey);
+        if (window.BW && BW.Settings && typeof BW.Settings._setRaw === 'function') {
+            BW.Settings._setRaw(key, value);
+            return;
+        }
+
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) { /* localStorage unavailable */ }
+    },
+
     // Toggle modal visibility with full accessibility support
     toggle: function () {
         const modal = document.getElementById('settings-modal');
@@ -134,9 +168,7 @@ BW.SettingsModal = {
         if (window.BW && BW.Settings && typeof BW.Settings.setTheme === 'function') {
             BW.Settings.setTheme(mode);
         } else {
-            try {
-                localStorage.setItem('theme', mode);
-            } catch (e) { /* localStorage unavailable */ }
+            this.setRawSetting('THEME', 'theme', mode);
         }
         this.applyTheme();
         this.updateUI();
@@ -147,9 +179,7 @@ BW.SettingsModal = {
         if (window.BW && BW.Settings && typeof BW.Settings.setViewMode === 'function') {
             BW.Settings.setViewMode(mode);
         } else {
-            try {
-                localStorage.setItem('view-mode', mode);
-            } catch (e) { /* localStorage unavailable */ }
+            this.setRawSetting('VIEW_MODE', 'view-mode', mode);
         }
         try {
             document.cookie = `view-mode=${encodeURIComponent(mode)}; Path=/; Max-Age=31536000; SameSite=Lax`;
@@ -169,9 +199,7 @@ BW.SettingsModal = {
         if (window.BW && BW.Settings && typeof BW.Settings.setMarketTheme === 'function') {
             BW.Settings.setMarketTheme(mode);
         } else {
-            try {
-                localStorage.setItem('market-theme', mode);
-            } catch (e) { /* localStorage unavailable */ }
+            this.setRawSetting('MARKET_THEME', 'market-theme', mode);
         }
 
         // Apply immediately so CSS variables update without reload
@@ -190,9 +218,7 @@ BW.SettingsModal = {
         if (window.BW && BW.Settings && typeof BW.Settings.getTheme === 'function') {
             theme = BW.Settings.getTheme() || 'light';
         } else {
-            try {
-                theme = localStorage.getItem('theme') || 'light';
-            } catch (e) { /* localStorage unavailable */ }
+            theme = this.getRawSetting('THEME', 'theme', 'light');
         }
 
         if (window.BW && BW.Base && typeof BW.Base.setTheme === 'function') {
