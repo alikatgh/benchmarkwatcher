@@ -14,6 +14,7 @@ End users of the app do not need to create accounts or log in.
 cd mobile
 npm install
 npm run eas:login
+npm run api:set -- https://your-api-domain.example
 cp .env.example .env
 # then edit .env and set EXPO_PUBLIC_API_URL=https://your-api-domain.example
 ```
