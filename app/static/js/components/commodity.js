@@ -1021,10 +1021,15 @@ BW.Commodity = {
             this.renderCompareList('');
             return;
         }
-        fetch('/api/commodities?range=ALL&include_history=0')
+        var apiUrl = BW.Utils.buildCommoditiesApiUrl({
+            range: 'ALL',
+            includeHistory: false,
+        });
+
+        fetch(apiUrl)
             .then(function (r) { return r.json(); })
             .then(function (json) {
-                var data = json.data || json;
+                var data = BW.Utils.getCommoditiesFromApiResponse(json);
                 self.allCommoditiesList = (Array.isArray(data) ? data : [])
                     .filter(function (c) { return c.id !== self.commodityId; })
                     .map(function (c) { return { id: c.id, name: c.name, category: c.category }; });
