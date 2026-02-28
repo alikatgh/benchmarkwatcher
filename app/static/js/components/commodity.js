@@ -620,6 +620,7 @@ BW.Commodity = {
             if (chevron) chevron.classList.remove('rotate-180');
             if (btn) btn.setAttribute('aria-expanded', 'false');
         } else {
+            this.closeCompareMenu();
             menu.classList.remove('hidden');
             if (chevron) chevron.classList.add('rotate-180');
             if (btn) btn.setAttribute('aria-expanded', 'true');
@@ -998,12 +999,16 @@ BW.Commodity = {
 
     toggleCompareMenu: function () {
         var menu = document.getElementById('compare-menu');
+        var btn = document.getElementById('compare-menu-btn');
         if (!menu) return;
         var isOpen = !menu.classList.contains('hidden');
         if (isOpen) {
             menu.classList.add('hidden');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
         } else {
+            this.closeDownloadMenu();
             menu.classList.remove('hidden');
+            if (btn) btn.setAttribute('aria-expanded', 'true');
             var search = document.getElementById('compare-search');
             if (search) { search.value = ''; search.focus(); }
             this.loadCompareList();
@@ -1012,7 +1017,9 @@ BW.Commodity = {
 
     closeCompareMenu: function () {
         var menu = document.getElementById('compare-menu');
+        var btn = document.getElementById('compare-menu-btn');
         if (menu) menu.classList.add('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
     },
 
     loadCompareList: function () {
@@ -1206,6 +1213,8 @@ document.addEventListener('keydown', function (e) {
     }
     // Escape closes settings
     if (e.key === 'Escape') {
+        BW.Commodity.closeDownloadMenu();
+        BW.Commodity.closeCompareMenu();
         BW.Commodity.closeChartSettings();
     }
 });
