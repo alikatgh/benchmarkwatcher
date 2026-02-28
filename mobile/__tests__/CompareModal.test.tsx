@@ -3,6 +3,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import CompareModal from '../components/features/CompareModal';
 import { SettingsContext } from '../context/SettingsContext';
 import { fetchCommodities } from '../api/commodities';
+import { createMockSettingsContext } from '../testUtils/settingsContextMock';
 
 jest.mock('../api/commodities', () => ({
     fetchCommodities: jest.fn(),
@@ -54,51 +55,11 @@ describe('CompareModal accessibility interactions', () => {
         { id: 'wheat', name: 'Wheat', color: '#06b6d4', history: [] },
     ];
 
-    const mockContext = {
-        showCategory: true,
-        showChangePercent: true,
-        showChangeAbs: true,
-        showDate: true,
-        showUnit: true,
-        fontScale: 'medium' as const,
-        density: 'cozy' as const,
-        getMarketColors: jest.fn().mockReturnValue({ textColor: 'text-emerald-500', bgColor: 'bg-emerald-500/10' }),
-        isDarkMode: false,
-        setIsDarkMode: jest.fn(),
-        themeFlavor: 'standard' as const,
-        setThemeFlavor: jest.fn(),
-        marketTheme: 'western' as const,
-        setMarketTheme: jest.fn(),
-        syncEnabled: false,
-        setSyncEnabled: jest.fn(),
-        forceSync: jest.fn(),
-        syncTrigger: 0,
-        setShowCategory: jest.fn(),
-        setShowChangePercent: jest.fn(),
-        setShowChangeAbs: jest.fn(),
-        setShowDate: jest.fn(),
-        setShowUnit: jest.fn(),
-        setFontScale: jest.fn(),
-        setDensity: jest.fn(),
-        chartSettings: {
-            chartTheme: 'default' as const,
-            chartLineColor: '59, 130, 246',
-            chartFillColor: '59, 130, 246',
-            chartFillOpacity: 0.3,
-            chartFillEnabled: false,
-            chartGridVisible: true,
-            chartGridColor: 'rgba(148,163,184,0.25)',
-            chartAnimationEnabled: true,
-            chartLineTension: 0.4,
-            chartSmoothCurve: true,
-            chartAutoFitBounds: true,
-        },
-        updateChartSettings: jest.fn(),
-        resetChartSettings: jest.fn()
-    };
+    let mockContext = createMockSettingsContext();
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockContext = createMockSettingsContext();
         mockedFetchCommodities.mockResolvedValue([goldCommodity]);
     });
 
