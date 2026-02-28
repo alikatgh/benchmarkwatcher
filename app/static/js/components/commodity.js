@@ -21,6 +21,10 @@ BW.Commodity = {
     activeSettingsTab: 'appearance',
     chartSettingsFocusTimer: null,
     chartSettingsFocusSeq: 0,
+    exportImageTimer: null,
+    exportImageSeq: 0,
+    copyFeedbackTimer: null,
+    copyFeedbackSeq: 0,
 
     // Comparison state
     comparisonData: {},      // { id: { name, history, color } }
@@ -730,11 +734,21 @@ BW.Commodity = {
             console.warn('No chart available to download.');
             return;
         }
-        setTimeout(function () {
+        this.exportImageSeq += 1;
+        const activeExportSeq = this.exportImageSeq;
+        if (this.exportImageTimer) {
+            clearTimeout(this.exportImageTimer);
+            this.exportImageTimer = null;
+        }
+
+        this.exportImageTimer = setTimeout(function () {
+            if (activeExportSeq !== this.exportImageSeq) return;
+            if (!this.priceChart || typeof this.priceChart.toBase64Image !== 'function') return;
             var link = document.createElement('a');
             link.download = (this.commodityName || 'commodity') + '-price-chart.png';
             link.href = this.priceChart.toBase64Image();
             link.click();
+            this.exportImageTimer = null;
         }.bind(this), 100);
     },
 
@@ -1377,16 +1391,36 @@ document.addEventListener('keydown', function (e) {
 
 // Copy price to clipboard with visual feedback
 function copyPrice(price) {
+    const commodity = (window.BW && BW.Commodity) ? BW.Commodity : null;
+    let activeFeedbackSeq = 0;
+    if (commodity) {
+        commodity.copyFeedbackSeq += 1;
+        activeFeedbackSeq = commodity.copyFeedbackSeq;
+        if (commodity.copyFeedbackTimer) {
+            clearTimeout(commodity.copyFeedbackTimer);
+            commodity.copyFeedbackTimer = null;
+        }
+    }
+
     navigator.clipboard.writeText(price).then(() => {
         const copyIcon = document.getElementById('copy-icon');
         const checkIcon = document.getElementById('check-icon');
         if (copyIcon && checkIcon) {
             copyIcon.classList.add('hidden');
             checkIcon.classList.remove('hidden');
-            setTimeout(() => {
+
+            const resetFeedback = () => {
+                if (commodity && activeFeedbackSeq !== commodity.copyFeedbackSeq) return;
                 copyIcon.classList.remove('hidden');
                 checkIcon.classList.add('hidden');
-            }, 1500);
+                if (commodity) commodity.copyFeedbackTimer = null;
+            };
+
+            if (commodity) {
+                commodity.copyFeedbackTimer = setTimeout(resetFeedback, 1500);
+            } else {
+                setTimeout(resetFeedback, 1500);
+            }
         }
     }).catch(err => {
         console.error('Failed to copy:', err);
