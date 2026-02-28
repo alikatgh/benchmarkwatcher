@@ -45,7 +45,7 @@ def app_with_data(tmp_path):
         "price": 2000.0,
         "date": "2024-01-10",
         "history": [
-            {"date": "2024-01-08", "price": 1950.0},
+            {"date": "2023-12-20", "price": 1950.0},
             {"date": "2024-01-09", "price": 1980.0},
             {"date": "2024-01-10", "price": 2000.0},
         ],
@@ -96,16 +96,17 @@ def test_filter_history_by_range_uses_latest_date():
     assert filtered[0]["date"] == "2024-01-10"
 
 
-def test_get_all_commodities_uses_derived_metrics(app_with_data):
-    """get_all_commodities() does NOT recompute metrics."""
+def test_get_all_commodities_uses_filtered_history_for_display_change(app_with_data):
+    """get_all_commodities() derives display change from filtered history window."""
     commodities = get_all_commodities(date_range="ALL")
 
     assert len(commodities) == 1
     item = commodities[0]
 
-    # Values must come from derived.descriptive_stats
-    assert item["change"] == 20.0
-    assert item["change_percent"] == 1.01
+    # Values are first->last over the selected display history window
+    # 1950 -> 2000 = +50.0 ; +2.564102...%
+    assert item["change"] == pytest.approx(50.0)
+    assert item["change_percent"] == pytest.approx((50.0 / 1950.0) * 100)
 
     # Legacy aliases must not diverge
     assert item["daily_change"] == item["change"]
@@ -128,13 +129,16 @@ def test_derived_stats_exposed(app_with_data):
     assert derived["observations"] == 3
 
 
-def test_date_range_does_not_change_metrics(app_with_data):
-    """Date-range filtering does NOT affect metrics."""
+def test_date_range_changes_display_metrics(app_with_data):
+    """Date-range filtering affects list display metrics via filtered history."""
     all_range = get_all_commodities("ALL")[0]
     short_range = get_all_commodities("1W")[0]
 
-    assert all_range["change"] == short_range["change"]
-    assert all_range["change_percent"] == short_range["change_percent"]
+    assert all_range["change"] != short_range["change"]
+    assert all_range["change_percent"] != short_range["change_percent"]
+    # In this fixture, 1W excludes the oldest point and keeps last two
+    assert short_range["change"] == pytest.approx(20.0)
+    assert short_range["change_percent"] == pytest.approx((20.0 / 1980.0) * 100)
 
 
 def test_get_commodity_prev_observation(app_with_data):
