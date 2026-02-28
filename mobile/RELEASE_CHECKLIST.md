@@ -25,6 +25,7 @@
 - [ ] Confirm store listing states: no end-user account/login required
 
 ## 4) Technical Validation
+- [ ] `npm run preflight:release` passes
 - [ ] `npm run typecheck` passes
 - [ ] `npm run test:ci` passes
 - [ ] Manual smoke test on iOS + Android release builds
