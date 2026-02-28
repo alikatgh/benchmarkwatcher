@@ -106,6 +106,26 @@ def _set_previous_observation_fields(item: Dict[str, Any], history: List[Dict[st
         item['prev_date'] = item.get('date', '')
 
 
+def _set_display_change_fields_from_history(item: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
+    """Set display change fields from first→last observation in provided history window."""
+    if not history:
+        return
+
+    try:
+        first_price = float(history[0].get('price', 0))
+        last_price = float(history[-1].get('price', first_price))
+    except (TypeError, ValueError):
+        return
+
+    abs_change = last_price - first_price
+    pct_change = (abs_change / first_price * 100) if first_price != 0 else 0.0
+
+    item['change'] = abs_change
+    item['change_percent'] = pct_change
+    item['daily_change'] = abs_change
+    item['daily_change_percent'] = pct_change
+
+
 def _infer_is_daily(item: Dict[str, Any], history: List[Dict[str, Any]]) -> bool:
     """Infer whether a commodity is daily-frequency.
 
@@ -183,6 +203,7 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
                     
                     _apply_latest_display_point(item, filtered_history)
                     _hydrate_change_fields(item)
+                    _set_display_change_fields_from_history(item, filtered_history)
                     _set_frequency_fields(item, full_history)
                         
                     commodities.append(item)
