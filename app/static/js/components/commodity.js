@@ -1353,17 +1353,22 @@ function filterCompareList(q) { BW.Commodity.renderCompareList(q); }
 function toggleCompare(id, name) { BW.Commodity.toggleComparison(id, name); }
 function removeComparison(id) { BW.Commodity.removeComparison(id); }
 
-// Close download/compare menus on outside click
-document.addEventListener('click', function (e) {
-    var container = document.getElementById('download-menu-container');
-    if (container && !container.contains(e.target)) {
-        BW.Commodity.closeDownloadMenu();
-    }
-    var compareContainer = document.getElementById('compare-menu-container');
-    if (compareContainer && !compareContainer.contains(e.target)) {
-        BW.Commodity.closeCompareMenu();
-    }
-});
+const COMMODITY_GLOBAL_BIND_KEY = '__bwCommodityGlobalHandlersBound';
+if (!window[COMMODITY_GLOBAL_BIND_KEY]) {
+    window[COMMODITY_GLOBAL_BIND_KEY] = true;
+
+    // Close download/compare menus on outside click
+    document.addEventListener('click', function (e) {
+        var container = document.getElementById('download-menu-container');
+        if (container && !container.contains(e.target)) {
+            BW.Commodity.closeDownloadMenu();
+        }
+        var compareContainer = document.getElementById('compare-menu-container');
+        if (compareContainer && !compareContainer.contains(e.target)) {
+            BW.Commodity.closeCompareMenu();
+        }
+    });
+}
 
 // Chart settings modal functions
 function openChartSettings() { BW.Commodity.openChartSettings(); }
@@ -1374,20 +1379,23 @@ function applyChartTheme(t) { BW.Commodity.applyChartTheme(t); }
 function resetChartSettings() { BW.Commodity.resetChartSettings(); }
 
 // Keyboard shortcuts for chart settings
-document.addEventListener('keydown', function (e) {
-    // S key opens settings (when not in input)
-    if (e.key === 's' && !e.ctrlKey && !e.metaKey &&
-        !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
-        e.preventDefault();
-        BW.Commodity.openChartSettings();
-    }
-    // Escape closes settings
-    if (e.key === 'Escape') {
-        BW.Commodity.closeDownloadMenu();
-        BW.Commodity.closeCompareMenu();
-        BW.Commodity.closeChartSettings();
-    }
-});
+if (!window.__bwCommodityGlobalKeydownBound) {
+    window.__bwCommodityGlobalKeydownBound = true;
+    document.addEventListener('keydown', function (e) {
+        // S key opens settings (when not in input)
+        if (e.key === 's' && !e.ctrlKey && !e.metaKey &&
+            !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+            e.preventDefault();
+            BW.Commodity.openChartSettings();
+        }
+        // Escape closes settings
+        if (e.key === 'Escape') {
+            BW.Commodity.closeDownloadMenu();
+            BW.Commodity.closeCompareMenu();
+            BW.Commodity.closeChartSettings();
+        }
+    });
+}
 
 // Copy price to clipboard with visual feedback
 function copyPrice(price) {
