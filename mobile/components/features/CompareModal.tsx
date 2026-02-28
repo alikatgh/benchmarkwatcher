@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { SettingsContext } from '../../context/SettingsContext';
 import { Commodity, ComparisonSeries } from '../../types/commodity';
@@ -32,7 +32,7 @@ export default function CompareModal({
     const [loading, setLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
 
-    const loadCommodities = async () => {
+    const loadCommodities = useCallback(async () => {
         setLoading(true);
         setLoadError(null);
         try {
@@ -44,27 +44,38 @@ export default function CompareModal({
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentCommodityId]);
 
     useEffect(() => {
         if (!visible) return;
+        setSearch('');
         loadCommodities();
-    }, [visible, currentCommodityId]);
+    }, [visible, loadCommodities]);
 
-    const filtered = search.trim()
-        ? commodities.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-        : commodities;
+    const filtered = useMemo(() => {
+        const normalizedSearch = search.trim().toLowerCase();
+        if (!normalizedSearch) return commodities;
+        return commodities.filter(c => c.name.toLowerCase().includes(normalizedSearch));
+    }, [search, commodities]);
 
     // Group by category
-    const grouped = filtered.reduce<Record<string, Commodity[]>>((acc, c) => {
+    const grouped = useMemo(() => filtered.reduce<Record<string, Commodity[]>>((acc, c) => {
         const cat = c.category || 'Other';
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(c);
         return acc;
-    }, {});
+    }, {}), [filtered]);
 
-    const isSelected = (id: string) => comparisons.some(c => c.id === id);
-    const getColor = (id: string) => comparisons.find(c => c.id === id)?.color;
+    const groupedEntries = useMemo(() => Object.entries(grouped), [grouped]);
+
+    const selectedMap = useMemo(() => {
+        const map = new Map<string, ComparisonSeries>();
+        comparisons.forEach(comp => map.set(comp.id, comp));
+        return map;
+    }, [comparisons]);
+
+    const isSelected = useCallback((id: string) => selectedMap.has(id), [selectedMap]);
+    const getColor = useCallback((id: string) => selectedMap.get(id)?.color, [selectedMap]);
     const atLimit = comparisons.length >= MAX_COMPARISONS;
 
     return (
@@ -144,13 +155,13 @@ export default function CompareModal({
                     </View>
                 ) : (
                     <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-                        {Object.entries(grouped).length === 0 ? (
+                        {groupedEntries.length === 0 ? (
                             <View className="pt-10 items-center">
                                 <Text className="text-slate-500 dark:text-slate-400 text-center">
                                     No commodities match your search.
                                 </Text>
                             </View>
-                        ) : Object.entries(grouped).map(([category, items]) => (
+                        ) : groupedEntries.map(([category, items]) => (
                             <View key={category} className="mb-4">
                                 <Text className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 mt-2">
                                     {category}
