@@ -106,6 +106,15 @@ BW.Index = {
 };
 
 // Auto-initialize on DOM ready
-document.addEventListener('DOMContentLoaded', function () {
-    BW.Index.init();
-});
+if (!window.__bwIndexDomReadyBound) {
+    window.__bwIndexDomReadyBound = true;
+    const runIndexInit = function () {
+        BW.Index.init();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runIndexInit);
+    } else {
+        runIndexInit();
+    }
+}

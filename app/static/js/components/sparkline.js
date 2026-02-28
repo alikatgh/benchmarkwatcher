@@ -101,9 +101,18 @@ BW.Sparkline = {
     }
 };
 
-// Auto-initialize on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function () {
-    if (BW.Sparkline) {
-        BW.Sparkline.renderAll();
+// Auto-initialize on DOMContentLoaded (bind once across duplicate script loads)
+if (!window.__bwSparklineDomReadyBound) {
+    window.__bwSparklineDomReadyBound = true;
+    const runSparklineInit = function () {
+        if (BW.Sparkline) {
+            BW.Sparkline.renderAll();
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runSparklineInit);
+    } else {
+        runSparklineInit();
     }
-});
+}
