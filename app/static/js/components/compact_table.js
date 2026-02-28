@@ -83,14 +83,17 @@ BW.CompactTable = {
         // Preserve category filter from URL
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${encodeURIComponent(range)}&include_history=1`;
-        if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
+        const apiUrl = BW.Utils.buildCommoditiesApiUrl({
+            range,
+            includeHistory: true,
+            category,
+        });
 
         // Fetch data via AJAX and update table
         fetch(apiUrl, { signal: this.currentRequest.signal })
             .then(response => response.json())
             .then(response => {
-                const commodities = response.data || response;  // Handle both formats
+                const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 this.updateTableData(commodities);
                 if (loading) loading.classList.add('hidden');
                 if (tableBody) {
@@ -99,6 +102,7 @@ BW.CompactTable = {
                 }
             })
             .catch(error => {
+                if (error.name === 'AbortError') return;
                 console.error('Failed to fetch data:', error);
                 if (loading) loading.classList.add('hidden');
                 if (tableBody) {
@@ -810,13 +814,16 @@ BW.CompactTable = {
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || 'ALL';
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${encodeURIComponent(currentRange)}&include_history=1`;
-        if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
+        const apiUrl = BW.Utils.buildCommoditiesApiUrl({
+            range: currentRange,
+            includeHistory: true,
+            category,
+        });
 
         fetch(apiUrl)
             .then(response => response.json())
             .then(response => {
-                const commodities = response.data || response;
+                const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 this.initSparklines(commodities);
             })
             .catch(err => console.error('Failed to reload charts:', err));
@@ -1040,13 +1047,16 @@ BW.CompactTable = {
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || this.getSettings().dataRange || 'ALL';
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${encodeURIComponent(currentRange)}&include_history=1`;
-        if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
+        const apiUrl = BW.Utils.buildCommoditiesApiUrl({
+            range: currentRange,
+            includeHistory: true,
+            category,
+        });
 
         fetch(apiUrl)
             .then(response => response.json())
             .then(response => {
-                const commodities = response.data || response;
+                const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 this.initSparklines(commodities);
             })
             .catch(err => console.error('Failed to load sparkline data:', err));

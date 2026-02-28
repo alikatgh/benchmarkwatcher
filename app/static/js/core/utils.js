@@ -127,6 +127,20 @@ BW.Utils = (function () {
             }
         },
 
+        // Build /api/commodities URL consistently across grid/compact/detail views.
+        buildCommoditiesApiUrl: function ({ range = 'ALL', includeHistory = false, category = null } = {}) {
+            let apiUrl = `/api/commodities?range=${encodeURIComponent(range)}&include_history=${includeHistory ? 1 : 0}`;
+            if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
+            return apiUrl;
+        },
+
+        // Unwrap common API envelope shape { data: [...] } with safe fallback to []
+        getCommoditiesFromApiResponse: function (response) {
+            if (response && Array.isArray(response.data)) return response.data;
+            if (Array.isArray(response)) return response;
+            return [];
+        },
+
         // Debounce preserving `this` and arguments
         debounce: function (func, wait = 200) {
             let timeout = null;

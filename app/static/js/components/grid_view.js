@@ -110,8 +110,11 @@ BW.GridView = {
         // Preserve category filter from URL
         const urlParams = new URLSearchParams(window.location.search);
         const category = urlParams.get('category');
-        let apiUrl = `/api/commodities?range=${encodeURIComponent(range)}&include_history=0`;
-        if (category) apiUrl += `&category=${encodeURIComponent(category)}`;
+        const apiUrl = BW.Utils.buildCommoditiesApiUrl({
+            range,
+            includeHistory: false,
+            category,
+        });
 
         const self = this;
 
@@ -119,7 +122,7 @@ BW.GridView = {
         fetch(apiUrl, { signal: this.currentRequest.signal })
             .then(response => response.json())
             .then(response => {
-                const commodities = response.data || response;
+                const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 self.updateCards(commodities);
                 if (loading) {
                     loading.classList.add('hidden');
