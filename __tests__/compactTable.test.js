@@ -13,6 +13,11 @@ function loadCompactTableScript() {
 
 describe('Compact table frequency badge toggle', () => {
     beforeEach(() => {
+        Object.defineProperty(document, 'readyState', {
+            configurable: true,
+            get: () => 'loading'
+        });
+
         document.body.innerHTML = `
             <input id="table-show-freq-badge" type="checkbox" checked />
             <table id="data-table">

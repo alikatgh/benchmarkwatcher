@@ -13,6 +13,11 @@ function loadCompactTableScript() {
 
 describe('Compact table selector scoping', () => {
     beforeEach(() => {
+        Object.defineProperty(document, 'readyState', {
+            configurable: true,
+            get: () => 'loading'
+        });
+
         document.body.innerHTML = `
             <table id="data-table">
                 <tbody>
