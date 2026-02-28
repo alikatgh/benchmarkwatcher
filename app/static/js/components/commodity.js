@@ -836,6 +836,20 @@ BW.Commodity = {
 
     // Load settings from localStorage
     loadChartSettings: function () {
+        if (window.BW && BW.Settings && typeof BW.Settings.getChartSettings === 'function') {
+            try {
+                const parsed = BW.Settings.getChartSettings();
+                if (parsed && typeof parsed === 'object') {
+                    this.chartSettings = { ...this.chartSettings, ...parsed };
+                }
+            } catch (e) {
+                console.warn('Could not load chart settings from BW.Settings:', e);
+            }
+            this.populateSettingsUI();
+            this.applySettingsToDOM();
+            return;
+        }
+
         try {
             const saved = localStorage.getItem('chart-settings');
             if (saved) {
@@ -898,6 +912,15 @@ BW.Commodity = {
 
     // Save settings to localStorage
     saveChartSettings: function () {
+        if (window.BW && BW.Settings && typeof BW.Settings.saveChartSettings === 'function') {
+            try {
+                BW.Settings.saveChartSettings(this.chartSettings);
+                return;
+            } catch (e) {
+                console.warn('Could not save chart settings to BW.Settings:', e);
+            }
+        }
+
         try {
             localStorage.setItem('chart-settings', JSON.stringify(this.chartSettings));
         } catch (e) {
