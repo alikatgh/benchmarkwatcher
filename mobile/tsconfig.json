@@ -11,5 +11,8 @@
     "**/*.ts",
     "**/*.tsx",
     "app.d.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }

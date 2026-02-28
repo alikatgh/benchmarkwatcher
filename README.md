@@ -64,6 +64,21 @@ All data comes from freely accessible public sources:
 * Missing or delayed data is expected behavior and not considered a defect.
 * Historical values may be revised by original publishers without notice.
 
+### Safe Defaults (No Extra Services)
+
+If you deploy publicly, use these defaults to reduce abuse risk without adding paid infrastructure:
+
+```dotenv
+RATELIMIT_STORAGE_URI=memory://
+PUBLIC_API_LIST_RATE_LIMIT=60 per minute
+PUBLIC_API_DETAIL_RATE_LIMIT=120 per minute
+INTERNAL_API_RATE_LIMIT=30 per minute
+INTERNAL_API_KEY=change_me
+```
+
+These values work with the current Flask + Flask-Limiter setup and keep the internal bot endpoint protected.
+For full hardening guidance, see `docs/API_HARDENING.md` and `SECURITY.md`.
+
 ---
 
 ## Disclaimer

@@ -14,6 +14,8 @@ const defaultParams = {
     sortOrder: 'asc',
 };
 
+type UseCommoditiesParams = typeof defaultParams;
+
 const mockCommodities = [
     { id: 'gold', name: 'Gold', category: 'Precious', price: 2000, change: 10, change_percent: 0.5, currency: 'USD', unit: 'oz', date: '2024-01-15' },
     { id: 'oil', name: 'Oil', category: 'Energy', price: 80, change: -1, change_percent: -1.2, currency: 'USD', unit: 'bbl', date: '2024-01-15' },
@@ -124,7 +126,7 @@ describe('useCommodities', () => {
     it('re-fetches when filter params change', async () => {
         mockFetch.mockResolvedValue(mockCommodities as any);
         const { rerender } = renderHook(
-            (props) => useCommodities(props),
+            (props: UseCommoditiesParams) => useCommodities(props),
             { initialProps: defaultParams }
         );
         await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
@@ -139,7 +141,7 @@ describe('useCommodities', () => {
     it('force sync trigger (syncTrigger > 0) fires a refresh', async () => {
         mockFetch.mockResolvedValue(mockCommodities as any);
         const { rerender, result } = renderHook(
-            (props) => useCommodities(props),
+            (props: UseCommoditiesParams) => useCommodities(props),
             { initialProps: defaultParams }
         );
         await waitFor(() => expect(result.current.loading).toBe(false));
