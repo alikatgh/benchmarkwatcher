@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { View, Text, FlatList, ActivityIndicator, StatusBar, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -121,6 +121,22 @@ export default function HomeScreen() {
     } = useCommodities({
         syncEnabled, syncTrigger, selectedCategory, selectedRange, sortMethod, sortOrder
     });
+
+    const keyExtractor = useCallback((item: any) => item.id, []);
+
+    const renderCommodityItem = useCallback(({ item }: { item: any }) => (
+        isCompactView ? (
+            <CompactCommodityRow
+                commodity={item}
+                onPress={(commodity) => navigation.navigate('CommodityDetail', { commodity })}
+            />
+        ) : (
+            <CommodityCard
+                commodity={item}
+                onPress={(commodity) => navigation.navigate('CommodityDetail', { commodity })}
+            />
+        )
+    ), [isCompactView, navigation]);
 
     const getSortText = () => {
         if (sortMethod === 'change_percent') return sortOrder === 'desc' ? '↑ % Gain' : '↓ % Decrease';
@@ -301,20 +317,11 @@ export default function HomeScreen() {
             <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
             <FlatList
                 data={data}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                    isCompactView ? (
-                        <CompactCommodityRow
-                            commodity={item}
-                            onPress={(commodity) => navigation.navigate('CommodityDetail', { commodity })}
-                        />
-                    ) : (
-                        <CommodityCard
-                            commodity={item}
-                            onPress={(commodity) => navigation.navigate('CommodityDetail', { commodity })}
-                        />
-                    )
-                )}
+                keyExtractor={keyExtractor}
+                renderItem={renderCommodityItem}
+                initialNumToRender={12}
+                maxToRenderPerBatch={12}
+                windowSize={7}
                 ListHeaderComponent={renderHeader}
                 ListEmptyComponent={
                     <View className="px-4 pt-10 items-center">
