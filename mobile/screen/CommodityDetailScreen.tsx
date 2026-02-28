@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, Dimensions, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -30,6 +30,7 @@ export default function CommodityDetailScreen({ route }: Props) {
     const { commodity: initialCommodity } = route.params;
     const [commodity, setCommodity] = useState<Commodity | any>(initialCommodity);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const [selectedPoint, setSelectedPoint] = useState<SelectedChartPoint | null>(null);
@@ -48,6 +49,24 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [comparisons, setComparisons] = useState<ComparisonSeries[]>([]);
     const [colorIndex, setColorIndex] = useState(0);
 
+    const loadDetail = useCallback(async (isRefresh = false) => {
+        if (isRefresh) {
+            setRefreshing(true);
+        } else {
+            setLoading(true);
+        }
+        try {
+            const detail = await fetchCommodityDetail(initialCommodity.id);
+            setCommodity(detail);
+            setError(null);
+        } catch {
+            setError('Unable to refresh commodity data. Please try again.');
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    }, [initialCommodity.id]);
+
     useEffect(() => {
         const restoreChangePeriod = async () => {
             try {
@@ -60,20 +79,9 @@ export default function CommodityDetailScreen({ route }: Props) {
             }
         };
 
-        const loadDetail = async () => {
-            try {
-                const detail = await fetchCommodityDetail(initialCommodity.id);
-                setCommodity(detail);
-            } catch (err: any) {
-                setError('Failed to load chart data');
-            } finally {
-                setLoading(false);
-            }
-        };
-
         restoreChangePeriod();
         loadDetail();
-    }, [initialCommodity.id]);
+    }, [loadDetail]);
 
     useEffect(() => {
         AsyncStorage.setItem(DETAIL_CHANGE_PERIOD_KEY, selectedChangePeriod).catch(() => {
@@ -255,7 +263,20 @@ export default function CommodityDetailScreen({ route }: Props) {
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
-            <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView
+                className="flex-1"
+                contentContainerStyle={{ paddingBottom: 40 }}
+                refreshControl={
+                    <RefreshControl refreshing={refreshing} onRefresh={() => loadDetail(true)} />
+                }
+            >
+                {error && (
+                    <View className="mx-5 mt-4 mb-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
+                        <Text className="text-xs font-semibold text-amber-800 dark:text-amber-300">{error}</Text>
+                        <Text className="text-[11px] mt-1 text-amber-700 dark:text-amber-400">Pull to refresh or tap retry in the chart section.</Text>
+                    </View>
+                )}
+
                 <CommodityHeader
                     commodity={commodity}
                     isUp={selectedChangeIsUp}
@@ -319,6 +340,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                     fillOpacity={chartSettings.chartFillOpacity}
                     gridColor={chartSettings.chartGridColor}
                     currency={commodity.currency}
+                    onRetry={() => loadDetail(true)}
                 />
 
                 <CommodityChartControls

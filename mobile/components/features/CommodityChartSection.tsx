@@ -26,6 +26,7 @@ interface CommodityChartSectionProps {
     fillOpacity?: number;
     gridColor?: string;
     currency?: string;
+    onRetry?: () => void;
 }
 
 export default function CommodityChartSection({
@@ -34,6 +35,7 @@ export default function CommodityChartSection({
     color, selectedPoint, setSelectedPoint, chartRef,
     comparisons, viewMode, primaryName,
     lineColor, fillColor, fillOpacity, gridColor, currency,
+    onRetry,
 }: CommodityChartSectionProps) {
     return (
         <View className="mb-6">
@@ -41,7 +43,19 @@ export default function CommodityChartSection({
                 <View className="h-[220px] items-center justify-center">
                     <ActivityIndicator size="large" color="#3b82f6" />
                 </View>
-            ) : error || !chartPoints ? (
+            ) : error ? (
+                <View className="h-[220px] items-center justify-center bg-slate-50 dark:bg-slate-800 mx-5 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <Text className="text-slate-500 dark:text-slate-400 px-5 text-center">Unable to load chart data right now.</Text>
+                    {onRetry && (
+                        <Text
+                            onPress={onRetry}
+                            className="mt-3 text-blue-600 dark:text-blue-400 font-semibold"
+                        >
+                            Retry
+                        </Text>
+                    )}
+                </View>
+            ) : !chartPoints ? (
                 <View className="h-[220px] items-center justify-center bg-slate-50 dark:bg-slate-800 mx-5 rounded-xl border border-slate-100 dark:border-slate-700">
                     <Text className="text-slate-500 dark:text-slate-400">No chart data available</Text>
                 </View>
