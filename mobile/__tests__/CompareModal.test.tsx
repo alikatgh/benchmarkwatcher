@@ -365,4 +365,73 @@ describe('CompareModal accessibility interactions', () => {
         fireEvent.press(addSilverControl);
         expect(onToggleCommodity).toHaveBeenCalledWith(expect.objectContaining({ id: 'silver' }));
     });
+
+    it('keeps non-selected filtered results disabled at max comparison limit', async () => {
+        mockedFetchCommodities.mockResolvedValueOnce([
+            {
+                id: 'gold',
+                name: 'Gold',
+                category: 'Precious',
+                price: 1850,
+                currency: 'USD',
+                unit: 'oz',
+                date: '2026-01-01',
+                change: 10,
+                change_percent: 0.5,
+            } as any,
+            {
+                id: 'silver',
+                name: 'Silver',
+                category: 'Precious',
+                price: 24,
+                currency: 'USD',
+                unit: 'oz',
+                date: '2026-01-01',
+                change: 0.2,
+                change_percent: 0.8,
+            } as any,
+            {
+                id: 'platinum',
+                name: 'Platinum',
+                category: 'Precious',
+                price: 950,
+                currency: 'USD',
+                unit: 'oz',
+                date: '2026-01-01',
+                change: 0.1,
+                change_percent: 0.2,
+            } as any,
+        ]);
+
+        const onToggleCommodity = jest.fn();
+
+        const { getByLabelText } = render(
+            <SettingsContext.Provider value={mockContext}>
+                <CompareModal
+                    visible={true}
+                    onClose={jest.fn()}
+                    currentCommodityId="brent_oil"
+                    comparisons={[
+                        { id: 'gold', name: 'Gold', color: '#e11d48', history: [] },
+                        { id: 'copper', name: 'Copper', color: '#8b5cf6', history: [] },
+                        { id: 'corn', name: 'Corn', color: '#f59e0b', history: [] },
+                        { id: 'wheat', name: 'Wheat', color: '#06b6d4', history: [] },
+                    ]}
+                    onToggleCommodity={onToggleCommodity}
+                    onRemoveComparison={jest.fn()}
+                    onClearAll={jest.fn()}
+                />
+            </SettingsContext.Provider>
+        );
+
+        await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
+
+        fireEvent.changeText(getByLabelText('Search commodities'), 'sil');
+
+        const addSilverControl = getByLabelText('Add Silver to comparison');
+        expect(addSilverControl.props.accessibilityState?.disabled).toBe(true);
+
+        fireEvent.press(addSilverControl);
+        expect(onToggleCommodity).not.toHaveBeenCalled();
+    });
 });
