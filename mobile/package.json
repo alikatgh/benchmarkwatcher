@@ -7,7 +7,14 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest"
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "test:ci": "jest --runInBand",
+    "eas:login": "eas login",
+    "eas:build:ios": "eas build -p ios --profile production",
+    "eas:build:android": "eas build -p android --profile production",
+    "eas:submit:ios": "eas submit -p ios --profile production",
+    "eas:submit:android": "eas submit -p android --profile production"
   },
   "jest": {
     "preset": "jest-expo",
@@ -43,6 +50,7 @@
     "@types/react": "~19.1.0",
     "@types/react-test-renderer": "^19.1.0",
     "babel-preset-expo": "^54.0.10",
+    "eas-cli": "^18.0.6",
     "jest": "^30.2.0",
     "jest-expo": "^54.0.17",
     "react-test-renderer": "^19.1.0",

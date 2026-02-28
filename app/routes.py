@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory
+from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory, current_app
 from app.data_handler import get_all_commodities, get_commodity
-from app.extensions import cache
+from app.extensions import limiter
 import os
 import secrets
 import warnings
@@ -27,45 +27,16 @@ if not get_internal_api_key():
     )
 
 
-def _positive_int_from_env(name, default):
-    """Read positive integer environment values with safe fallback."""
-    value = os.getenv(name)
-    if value is None or value == '':
-        return default
-    try:
-        parsed = int(value)
-        return parsed if parsed > 0 else default
-    except ValueError:
-        return default
+def _public_list_rate_limit() -> str:
+    return current_app.config.get('PUBLIC_API_LIST_RATE_LIMIT', '60 per minute')
 
 
-INTERNAL_API_RATE_LIMIT_WINDOW_SECONDS = 60
-INTERNAL_API_RATE_LIMIT_PER_WINDOW = _positive_int_from_env(
-    'INTERNAL_API_RATE_LIMIT_PER_MINUTE', 120
-)
+def _public_detail_rate_limit() -> str:
+    return current_app.config.get('PUBLIC_API_DETAIL_RATE_LIMIT', '120 per minute')
 
 
-def get_client_identifier():
-    """Best-effort client identity for simple per-client rate limiting."""
-    forwarded_for = request.headers.get('X-Forwarded-For', '')
-    if forwarded_for:
-        return forwarded_for.split(',')[0].strip() or 'unknown'
-    return request.remote_addr or 'unknown'
-
-
-def is_internal_rate_limited():
-    """Rate limit internal endpoint by client identity in a short window."""
-    client_id = get_client_identifier()
-    key = f'internal-api-rate:{client_id}'
-    current = cache.get(key)
-
-    if current is None:
-        cache.set(key, 1, timeout=INTERNAL_API_RATE_LIMIT_WINDOW_SECONDS)
-        return False
-
-    current_count = int(current) + 1
-    cache.set(key, current_count, timeout=INTERNAL_API_RATE_LIMIT_WINDOW_SECONDS)
-    return current_count > INTERNAL_API_RATE_LIMIT_PER_WINDOW
+def _internal_rate_limit() -> str:
+    return current_app.config.get('INTERNAL_API_RATE_LIMIT', '30 per minute')
 
 
 def validate_range(date_range: str) -> str:
@@ -145,6 +116,7 @@ def filter_commodities(date_range, category, since=None, include_history=True):
 
 
 @bp.route('/api/commodities')
+@limiter.limit(_public_list_rate_limit)
 def api_commodities():
     """Public API endpoint for browser AJAX and mobile app.
 
@@ -179,15 +151,13 @@ def api_commodities():
 
 
 @bp.route('/internal/api/commodities')
+@limiter.limit(_internal_rate_limit)
 def internal_api_commodities():
     """Internal API endpoint for bots.
 
     STRICT: Requires valid X-Internal-Key header.
     Used by Telegram/Discord bots deployed externally.
     """
-    if is_internal_rate_limited():
-        return jsonify({'error': 'Too many requests'}), 429
-
     internal_api_key = get_internal_api_key()
     provided_key = request.headers.get('X-Internal-Key', '')
 
@@ -236,6 +206,7 @@ def commodity_detail(commodity_id):
     return render_template('commodity.html', commodity=commodity)
 
 @bp.route('/api/commodity/<string:commodity_id>')
+@limiter.limit(_public_detail_rate_limit)
 def api_commodity_detail(commodity_id):
     """API Commodity detail endpoint."""
     commodity = get_commodity(commodity_id)

@@ -17,7 +17,13 @@ if (__DEV__) {
     }
 }
 
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || `http://${host}:5002`;
+const configuredBaseUrl = process.env.EXPO_PUBLIC_API_URL;
+
+if (!__DEV__ && (!configuredBaseUrl || !configuredBaseUrl.startsWith('https://'))) {
+    throw new Error('EXPO_PUBLIC_API_URL must be set to an https:// URL for production builds.');
+}
+
+export const API_BASE_URL = configuredBaseUrl || `http://${host}:5002`;
 
 const REQUEST_TIMEOUT_MS = 10000; // 10 seconds
 const MAX_RETRIES = 2;

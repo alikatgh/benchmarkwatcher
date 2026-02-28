@@ -46,3 +46,9 @@ We appreciate responsible disclosure. If you report a valid security issue, we w
 - Not pursue legal action for good-faith security research
 
 Thank you for helping keep BenchmarkWatcher safe.
+
+## Operational API Protection
+
+For deployment hardening guidance (rate limits, caching, abuse controls, and cost guardrails), see:
+
+- `docs/API_HARDENING.md`

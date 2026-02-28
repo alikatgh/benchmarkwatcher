@@ -1,8 +1,10 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "BenchmarkWatcher",
+    "slug": "benchmarkwatcher",
+    "description": "Daily benchmark commodity prices and historical trend tracking.",
     "version": "1.0.0",
+    "scheme": "benchmarkwatcher",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,9 +15,13 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.benchmarkwatcher.mobile",
+      "buildNumber": "1"
     },
     "android": {
+      "package": "com.benchmarkwatcher.mobile",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -25,6 +31,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiBaseUrl": "https://your-api-domain.example"
     }
   }
 }
