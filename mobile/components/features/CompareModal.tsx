@@ -73,7 +73,7 @@ export default function CompareModal({
                 {/* Header */}
                 <View className="flex-row items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700">
                     <Text className="text-lg font-bold text-slate-900 dark:text-white">Compare Commodities</Text>
-                    <TouchableOpacity onPress={onClose} className="p-2">
+                    <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close compare commodities" className="p-2">
                         <Icon name="close" size={20} color={isDarkMode ? '#94a3b8' : '#475569'} />
                     </TouchableOpacity>
                 </View>
@@ -87,6 +87,7 @@ export default function CompareModal({
                             onChangeText={setSearch}
                             placeholder="Search commodities..."
                             placeholderTextColor="#94a3b8"
+                            accessibilityLabel="Search commodities"
                             className="flex-1 ml-2 text-sm text-slate-900 dark:text-white"
                         />
                     </View>
@@ -95,7 +96,7 @@ export default function CompareModal({
                             <Text className="text-xs text-slate-500 dark:text-slate-400">
                                 {comparisons.length}/{MAX_COMPARISONS} selected
                             </Text>
-                            <TouchableOpacity onPress={onClearAll}>
+                            <TouchableOpacity onPress={onClearAll} accessibilityRole="button" accessibilityLabel="Clear all selected comparisons">
                                 <Text className="text-xs font-bold text-rose-500">Clear All</Text>
                             </TouchableOpacity>
                         </View>
@@ -110,6 +111,8 @@ export default function CompareModal({
                                 <TouchableOpacity
                                     key={comp.id}
                                     onPress={() => onRemoveComparison(comp.id)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Remove ${comp.name} from comparison`}
                                     className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
                                 >
                                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: comp.color }} />
@@ -131,7 +134,7 @@ export default function CompareModal({
                 ) : loadError ? (
                     <View className="flex-1 items-center justify-center px-6">
                         <Text className="text-sm text-rose-500 font-semibold text-center">{loadError}</Text>
-                        <TouchableOpacity onPress={loadCommodities} className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2">
+                        <TouchableOpacity onPress={loadCommodities} accessibilityRole="button" accessibilityLabel="Retry loading commodities" className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2">
                             <Text className="font-bold text-white dark:text-slate-900">Retry</Text>
                         </TouchableOpacity>
                     </View>
@@ -156,6 +159,9 @@ export default function CompareModal({
                                             key={commodity.id}
                                             onPress={() => !disabled && onToggleCommodity(commodity)}
                                             disabled={disabled}
+                                            accessibilityRole="button"
+                                            accessibilityLabel={`${isSelected(commodity.id) ? 'Remove' : 'Add'} ${commodity.name} ${isSelected(commodity.id) ? 'from' : 'to'} comparison`}
+                                            accessibilityState={{ disabled, selected }}
                                             className={`flex-row items-center justify-between py-3 px-3 rounded-lg mb-1 ${selected ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${disabled ? 'opacity-40' : ''}`}
                                         >
                                             <View className="flex-row items-center gap-3 flex-1">

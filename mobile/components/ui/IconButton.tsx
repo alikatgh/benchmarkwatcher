@@ -51,7 +51,8 @@ export default function IconButton({
             onPress={onPress}
             className={`${baseContainerClass} ${className}`}
             style={style}
-            aria-label={ariaLabel}
+            accessibilityRole="button"
+            accessibilityLabel={ariaLabel}
         >
             <Icon name={icon} size={size} color={color} className={iconClassName} />
             {label && (
