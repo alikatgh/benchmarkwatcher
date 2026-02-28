@@ -246,6 +246,7 @@ BW.GridView = {
             const isUp = displayChange >= 0;
             const colorVar = isUp ? '--color-up' : '--color-down';
             const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
+            const borderColorVar = isUp ? '--color-up-border' : '--color-down-border';
             const arrow = isUp ? '+' : '−';
             const direction = isUp ? '' : '';  // Neutral: no interpretive label
             const sign = isUp ? '+' : '';
@@ -280,45 +281,44 @@ BW.GridView = {
             card.dataset.changePct = displayChangePercent;
             card.dataset.changeAbs = displayChange;
             card.innerHTML = `
-                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 group-hover:shadow-lg group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden">
+                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
                     <div class="bw-grid-gradient absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     <div class="bw-grid-category-row flex items-center justify-between mb-3">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
                             ${freqBadgeHtml}
                         </div>
-                        <div class="bw-grid-direction-badge text-[10px] font-bold py-1 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar});">
+                        <div class="bw-grid-direction-badge text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar}); border: 1px solid var(${borderColorVar});">
                             ${arrow} ${direction}
                         </div>
                     </div>
-                    <h3 class="bw-grid-title text-lg font-bold text-brand-black-80 dark:text-white mb-4 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">
+                    <h3 class="bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-3 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[2.5rem]">
                         ${safeName}
                     </h3>
-                    <div class="bw-grid-price-section flex items-end justify-between gap-4 font-ui">
-                        <div>
-                            <div class="bw-grid-price text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
-                                ${safePrice}
-                            </div>
-                            <div class="bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
-                                ${safeCurrency} / ${safeUnit}
-                            </div>
+                    <div class="bw-grid-price-section font-ui mb-2">
+                        <div class="bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+                            ${safePrice}
                         </div>
-                        <div class="bw-grid-change text-right">
-                            <div class="bw-grid-change-pct text-xl font-bold" style="color: var(${colorVar});">
-                                ${safeDisplayChangePercent}%
-                            </div>
-                            <div class="bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 mt-1">
-                                ${safeDisplayChange} ${safeCurrency}
-                            </div>
+                        <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
+                            ${safeCurrency} / ${safeUnit}
                         </div>
                     </div>
-                    <div class="bw-grid-footer mt-5 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
-                        <div class="bw-grid-date text-xs text-brand-black-60 dark:text-brand-black-60/80 font-medium">
+                    <div class="bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]">
+                        <span class="bw-grid-change-pct text-sm font-bold" style="color: var(${colorVar});">
+                            ${safeDisplayChangePercent}%
+                        </span>
+                        <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
+                        <span class="bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
+                            ${safeDisplayChange} ${safeCurrency}
+                        </span>
+                    </div>
+                    <div class="bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
+                        <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-brand-black-60/80">
                             As of ${safeDate} · <span class="italic">${safeRangeLabel}</span>
                         </div>
-                        <div class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-1 transition-all">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        <div class="text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                             </svg>
                         </div>
                     </div>
@@ -765,35 +765,36 @@ BW.GridView = {
                 }
 
                 // Price section - compact
-                const priceSection = card.querySelector('.bw-grid-price-section') || card.querySelector('.flex.items-end.justify-between');
+                const priceSection = card.querySelector('.bw-grid-price-section');
                 if (priceSection) {
-                    priceSection.style.cssText = 'display: flex; align-items: flex-end; justify-content: space-between; gap: 0.5rem; flex: 1;';
+                    priceSection.style.cssText = 'display: block; flex: 1;';
 
-                    const priceEl = priceSection.querySelector('.bw-grid-price') || priceSection.querySelector('.text-3xl, .text-2xl');
+                    const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
                         priceEl.className = '';
                         priceEl.style.cssText = 'font-size: 18px; font-weight: 800;';
                     }
 
-                    const unitEl = priceSection.querySelector('.bw-grid-unit') || priceSection.querySelector('.text-sm.font-medium, .text-xs.font-medium');
+                    const unitEl = priceSection.querySelector('.bw-grid-unit');
                     if (unitEl) {
                         unitEl.className = '';
                         unitEl.style.cssText = `font-size: 9px; color: var(--theme-text-muted); display: ${showUnit ? 'block' : 'none'};`;
                     }
+                }
 
-                    const changeSection = priceSection.querySelector('.bw-grid-change') || priceSection.querySelector('.text-right');
-                    if (changeSection) {
-                        changeSection.style.cssText = `display: ${(!showChangePct && !showChangeAbs) ? 'none' : 'block'}; text-align: right;`;
-                        const changePctEl = changeSection.querySelector('.bw-grid-change-pct') || changeSection.querySelector('.text-xl, .text-sm.font-bold');
-                        const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs') || changeSection.querySelector('.text-xs, .text-\[10px\]');
-                        if (changePctEl) {
-                            changePctEl.className = '';
-                            changePctEl.style.cssText = `font-size: 13px; font-weight: 700; display: ${showChangePct ? 'block' : 'none'};`;
-                        }
-                        if (changeAbsEl) {
-                            changeAbsEl.className = '';
-                            changeAbsEl.style.cssText = `font-size: 9px; display: ${showChangeAbs ? 'block' : 'none'};`;
-                        }
+                // Change section (sibling of priceSection in new layout)
+                const changeSection = card.querySelector('.bw-grid-change');
+                if (changeSection) {
+                    changeSection.style.cssText = `display: ${(!showChangePct && !showChangeAbs) ? 'none' : 'flex'}; gap: 0.25rem;`;
+                    const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
+                    const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
+                    if (changePctEl) {
+                        changePctEl.className = '';
+                        changePctEl.style.cssText = `font-size: 13px; font-weight: 700; display: ${showChangePct ? 'inline' : 'none'};`;
+                    }
+                    if (changeAbsEl) {
+                        changeAbsEl.className = '';
+                        changeAbsEl.style.cssText = `font-size: 9px; display: ${showChangeAbs ? 'inline' : 'none'};`;
                     }
                 }
 
@@ -820,7 +821,8 @@ BW.GridView = {
             container.querySelectorAll('a.block.group').forEach(link => {
                 const card = link.querySelector('div');
                 if (!card) return;
-                card.className = 'bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl shadow-sm border border-brand-black-60/20 dark:border-white/10 group-hover:shadow-lg group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden';
+                card.style.boxShadow = 'var(--card-shadow)';
 
                 // Restore gradient overlay
                 const gradientOverlay = card.querySelector('.bw-grid-gradient') || card.querySelector('.absolute');
@@ -839,66 +841,61 @@ BW.GridView = {
                 // Restore commodity name
                 const commodityName = card.querySelector('.bw-grid-title') || card.querySelector('h3');
                 if (commodityName) {
-                    commodityName.className = 'text-lg font-bold text-brand-black-80 dark:text-white mb-4 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors';
+                    commodityName.className = 'bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-3 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[2.5rem]';
                     commodityName.style.cssText = '';
                 }
 
                 // Restore price section
-                const priceSection = card.querySelector('.bw-grid-price-section') || card.querySelector('.flex.items-end') || card.querySelectorAll('div')[3];
+                const priceSection = card.querySelector('.bw-grid-price-section');
                 if (priceSection) {
-                    priceSection.className = 'flex items-end justify-between gap-4 font-ui';
+                    priceSection.className = 'bw-grid-price-section font-ui mb-2';
                     priceSection.style.cssText = '';
 
-                    // Price value
-                    const priceDiv = priceSection.children[0];
-                    if (priceDiv) {
-                        priceDiv.style.cssText = '';
-                        const priceEl = priceDiv.querySelector('.bw-grid-price') || priceDiv.querySelector('div:first-child');
-                        if (priceEl) {
-                            priceEl.className = 'text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none';
-                            priceEl.style.cssText = '';
-                        }
-                        const unitEl = priceDiv.querySelector('.bw-grid-unit') || priceDiv.querySelector('div:last-child');
-                        if (unitEl) {
-                            unitEl.className = 'text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1';
-                            unitEl.style.cssText = showUnit ? '' : 'display: none;';
-                        }
+                    const priceEl = priceSection.querySelector('.bw-grid-price');
+                    if (priceEl) {
+                        priceEl.className = 'bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.style.cssText = '';
                     }
+                    const unitEl = priceSection.querySelector('.bw-grid-unit');
+                    if (unitEl) {
+                        unitEl.className = 'bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5';
+                        unitEl.style.cssText = showUnit ? '' : 'display: none;';
+                    }
+                }
 
-                    // Change section
-                    const changeSection = priceSection.querySelector('.bw-grid-change') || priceSection.querySelector('.text-right') || priceSection.children[1];
-                    if (changeSection) {
-                        changeSection.className = 'text-right';
-                        changeSection.style.cssText = (!showChangePct && !showChangeAbs) ? 'display: none;' : '';
+                // Restore change row (sibling of priceSection)
+                const changeSection = card.querySelector('.bw-grid-change');
+                if (changeSection) {
+                    changeSection.className = 'bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]';
+                    changeSection.style.cssText = (!showChangePct && !showChangeAbs) ? 'display: none;' : '';
 
-                        const changePctEl = changeSection.querySelector('.bw-grid-change-pct') || changeSection.children[0];
-                        if (changePctEl) {
-                            changePctEl.className = 'text-xl font-bold';
-                            changePctEl.style.cssText = showChangePct ? '' : 'display: none;';
-                        }
-                        const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs') || changeSection.children[1];
-                        if (changeAbsEl) {
-                            changeAbsEl.className = 'text-xs text-brand-black-60 dark:text-brand-black-60/60 mt-1';
-                            changeAbsEl.style.cssText = showChangeAbs ? '' : 'display: none;';
-                        }
+                    const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
+                    if (changePctEl) {
+                        changePctEl.className = 'bw-grid-change-pct text-sm font-bold';
+                        changePctEl.style.cssText = showChangePct ? '' : 'display: none;';
+                    }
+                    const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
+                    if (changeAbsEl) {
+                        changeAbsEl.className = 'bw-grid-change-abs text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate';
+                        changeAbsEl.style.cssText = showChangeAbs ? '' : 'display: none;';
                     }
                 }
 
                 // Restore footer
-                const footer = card.querySelector('.bw-grid-footer') || card.querySelector('.mt-5') || card.lastElementChild;
+                const footer = card.querySelector('.bw-grid-footer') || card.lastElementChild;
                 if (footer && footer.querySelector('svg')) {
-                    footer.className = 'mt-5 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui';
+                    footer.className = 'bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui';
                     footer.style.cssText = showDate ? '' : 'display: none;';
 
-                    const dateEl = footer.querySelector('.bw-grid-date') || footer.querySelector('.text-xs, .text-\[10px\]');
+                    const dateEl = footer.querySelector('.bw-grid-date');
                     if (dateEl) {
-                        dateEl.className = 'text-xs text-brand-black-60 dark:text-brand-black-60/80 font-medium';
+                        dateEl.className = 'bw-grid-date text-[10px] text-brand-black-60 dark:text-brand-black-60/80';
                         dateEl.style.cssText = '';
                     }
 
                     const arrowEl = footer.lastElementChild;
                     if (arrowEl) {
-                        arrowEl.className = 'text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-1 transition-all';
+                        arrowEl.className = 'text-brand-black-60 dark:text-brand-black-60 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all';
                         arrowEl.style.cssText = '';
                     }
                 }
