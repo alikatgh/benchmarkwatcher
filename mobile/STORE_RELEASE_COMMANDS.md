@@ -15,9 +15,9 @@ cd mobile
 npm install
 npm run eas:login
 npm run api:set -- https://your-api-domain.example
-cp .env.example .env
-# then edit .env and set EXPO_PUBLIC_API_URL=https://your-api-domain.example
 ```
+
+`npm run api:set` now updates all of: `app.json`, `.env.example`, and `.env`.
 
 ## 2) Verify config before building
 
