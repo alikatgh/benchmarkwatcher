@@ -33,7 +33,7 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "apiBaseUrl": "https://your-api-domain.example"
+      "apiBaseUrl": "https://benchmarkwatcher.online"
     }
   }
 }
