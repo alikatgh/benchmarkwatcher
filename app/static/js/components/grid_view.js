@@ -31,6 +31,30 @@ BW.GridView = {
         return BW.Settings.getGridSettings();
     },
 
+    // Filter history using latest observation as anchor (not current date)
+    getHistoryForRange: function (history, range) {
+        if (!Array.isArray(history) || history.length === 0) return [];
+        if (!range || range === 'ALL') return history;
+
+        const latestDate = new Date(history[history.length - 1].date);
+        if (isNaN(latestDate.getTime())) return history;
+
+        const cutoffDate = new Date(latestDate);
+        switch (range) {
+            case '1W': cutoffDate.setDate(latestDate.getDate() - 7); break;
+            case '1M': cutoffDate.setMonth(latestDate.getMonth() - 1); break;
+            case '3M': cutoffDate.setMonth(latestDate.getMonth() - 3); break;
+            case '6M': cutoffDate.setMonth(latestDate.getMonth() - 6); break;
+            case '1Y': cutoffDate.setFullYear(latestDate.getFullYear() - 1); break;
+            default: return history;
+        }
+
+        return history.filter(item => {
+            const d = new Date(item.date);
+            return !isNaN(d.getTime()) && d >= cutoffDate;
+        });
+    },
+
     // Save grid settings via BW.Settings
     saveSettings: function (settings) {
         BW.Settings.saveGridSettings(settings);
@@ -115,7 +139,7 @@ BW.GridView = {
         const category = urlParams.get('category');
         const apiUrl = BW.Utils.buildCommoditiesApiUrl({
             range,
-            includeHistory: false,
+            includeHistory: true,
             category,
         });
 
@@ -202,9 +226,22 @@ BW.GridView = {
                 return;
             }
 
-            // Observation-based percentage change (not time-normalized, not a return metric)
-            const displayChange = commodity.change !== undefined ? commodity.change : 0;
-            const displayChangePercent = commodity.change_percent !== undefined ? commodity.change_percent : 0;
+            const history = Array.isArray(commodity.history) ? commodity.history : [];
+            const scopedHistory = this.getHistoryForRange(history, currentRange);
+
+            let displayChange = commodity.change !== undefined ? commodity.change : 0;
+            let displayChangePercent = commodity.change_percent !== undefined ? commodity.change_percent : 0;
+
+            if (scopedHistory.length >= 2) {
+                const first = Number(scopedHistory[0].price);
+                const last = Number(scopedHistory[scopedHistory.length - 1].price);
+                if (Number.isFinite(first) && Number.isFinite(last)) {
+                    const abs = last - first;
+                    const pct = first !== 0 ? (abs / first) * 100 : 0;
+                    displayChange = Number(abs.toFixed(3));
+                    displayChangePercent = Number(pct.toFixed(2));
+                }
+            }
 
             const isUp = displayChange >= 0;
             const colorVar = isUp ? '--color-up' : '--color-down';
