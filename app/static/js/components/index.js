@@ -13,6 +13,10 @@
 window.BW = window.BW || {};
 
 BW.Index = {
+    normalizeViewMode: function (value) {
+        return value === 'grid' || value === 'compact' ? value : null;
+    },
+
     // Initialize view mode
     init: function () {
         // R2: Auto-detect device class and view mode on first visit
@@ -20,18 +24,18 @@ BW.Index = {
             BW.Responsive.autoApply();
         }
 
-        const serverView = document.getElementById('index-page-state')?.dataset?.activeView;
-        const storedView = BW.Settings.getViewMode();
+        const serverView = this.normalizeViewMode(document.getElementById('index-page-state')?.dataset?.activeView);
+        const storedView = this.normalizeViewMode(BW.Settings.getViewMode());
         const params = new URLSearchParams(window.location.search);
-        const explicitView = params.get('view');
+        const explicitView = this.normalizeViewMode(params.get('view'));
 
         // If server and client preference diverge without explicit view param,
         // reload once with preferred view so the server renders the right markup.
         if (
             window.location.pathname === '/' &&
             !explicitView &&
-            (serverView === 'grid' || serverView === 'compact') &&
-            (storedView === 'grid' || storedView === 'compact') &&
+            !!serverView &&
+            !!storedView &&
             serverView !== storedView
         ) {
             const redirectUrl = new URL(window.location.href);
@@ -40,9 +44,7 @@ BW.Index = {
             return;
         }
 
-        const viewMode = (serverView === 'grid' || serverView === 'compact')
-            ? serverView
-            : storedView;
+        const viewMode = explicitView || serverView || storedView || 'grid';
         BW.Settings.setViewMode(viewMode);
 
         // View containers (show/hide the active view)
