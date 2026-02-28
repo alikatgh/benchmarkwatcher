@@ -14,6 +14,45 @@ BW.SettingsModal = {
     // Stable handler reference for proper removeEventListener
     _boundHandleKeydown: function (e) { BW.SettingsModal.handleKeydown(e); },
 
+    bindControlHandlers: function () {
+        const modal = document.getElementById('settings-modal');
+        if (!modal) return;
+
+        const bindClick = (element, handler) => {
+            if (!element) return;
+            if (element.getAttribute('data-settings-bound') === 'true') return;
+            if (element.hasAttribute('onclick')) {
+                element.removeAttribute('onclick');
+            }
+            element.addEventListener('click', function (event) {
+                event.preventDefault();
+                handler(event);
+            });
+            element.setAttribute('data-settings-bound', 'true');
+        };
+
+        bindClick(document.getElementById('settings-button'), () => this.toggle());
+
+        bindClick(modal, (event) => {
+            if (event.target === modal) this.toggle();
+        });
+
+        bindClick(modal.querySelector('button[aria-label="Close settings"]'), () => this.toggle());
+        bindClick(modal.querySelector('.mt-6.flex.justify-end button'), () => this.toggle());
+
+        ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach((theme) => {
+            bindClick(document.getElementById(`theme-${theme}`), () => this.setTheme(theme));
+        });
+
+        ['western', 'asian', 'monochrome'].forEach((market) => {
+            bindClick(document.getElementById(`market-${market}`), () => this.setMarketTheme(market));
+        });
+
+        ['grid', 'compact'].forEach((view) => {
+            bindClick(document.getElementById(`view-${view}`), () => this.setView(view));
+        });
+    },
+
     resolveSettingKey: function (settingsKeyName, fallbackKey) {
         if (window.BW && BW.Settings && BW.Settings.KEYS && BW.Settings.KEYS[settingsKeyName]) {
             return BW.Settings.KEYS[settingsKeyName];
@@ -312,6 +351,7 @@ BW.SettingsModal = {
     // Initialize on page load
     init: function (force) {
         if (this._initialized && !force) return;
+        this.bindControlHandlers();
         this.applyTheme();
         this.updateUI();
         this._initialized = true;
@@ -323,6 +363,13 @@ function toggleSettings() { BW.SettingsModal.toggle(); }
 function setTheme(m) { BW.SettingsModal.setTheme(m); }
 function setMarketTheme(m) { BW.SettingsModal.setMarketTheme(m); }
 function setView(m) { BW.SettingsModal.setView(m); }
+
+// Explicit window exports for environments where function declarations
+// are not promoted to window (e.g., strict/module wrapping).
+window.toggleSettings = toggleSettings;
+window.setTheme = setTheme;
+window.setMarketTheme = setMarketTheme;
+window.setView = setView;
 
 // Auto-initialize on DOM ready (bind once even if script is evaluated multiple times)
 if (!window.__bwSettingsModalDomReadyBound) {
