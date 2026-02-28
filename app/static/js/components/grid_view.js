@@ -906,6 +906,8 @@ function updateGridSettings() { BW.GridView.updateSettings(); }
 
 // Auto-initialize on DOM ready (defer to ensure elements exist)
 document.addEventListener('DOMContentLoaded', function () {
+    if (window.__bwGridViewDomReadyBound) return;
+    window.__bwGridViewDomReadyBound = true;
     // Only init if grid view elements exist
     if (document.getElementById('grid-cards-container') || document.getElementById('grid-range-1W')) {
         BW.GridView.init();
