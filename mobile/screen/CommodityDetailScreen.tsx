@@ -148,7 +148,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                 history,
             }]);
         } catch {
-            // silently fail
+            Alert.alert('Compare failed', 'Unable to load selected commodity for comparison. Please try again.');
         }
     }, [comparisons, colorIndex]);
 
