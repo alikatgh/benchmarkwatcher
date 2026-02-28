@@ -112,8 +112,20 @@ if (blockers.length) {
   if (detectedApiUrl) {
     console.log(`- Detected .env API URL: ${detectedApiUrl}`);
     console.log(`- Apply it everywhere: npm run api:set -- ${detectedApiUrl}`);
+    console.log('- Quick unblock commands:');
+    console.log('  cd mobile');
+    console.log(`  npm run api:set -- ${detectedApiUrl}`);
+    console.log('  npm run eas:login');
+    console.log(`  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value ${detectedApiUrl}`);
+    console.log('  npm run preflight:release');
   } else {
     console.log('- Set production API URL in app.json/.env.example and EAS secret');
+    console.log('- Quick unblock commands:');
+    console.log('  cd mobile');
+    console.log('  npm run api:set -- https://YOUR_REAL_API_DOMAIN');
+    console.log('  npm run eas:login');
+    console.log('  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value https://YOUR_REAL_API_DOMAIN');
+    console.log('  npm run preflight:release');
   }
   console.log('- Authenticate Expo maintainer account');
   console.log('- Re-run: npm run preflight:release');
