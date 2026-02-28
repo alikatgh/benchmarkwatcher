@@ -1,4 +1,8 @@
-<a href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}" class="block group">
+<a href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}" class="block group"
+   data-name="{{ commodity.name }}"
+   data-price="{{ commodity.price }}"
+   data-change-pct="{{ commodity.change_percent | round(2) }}"
+   data-change-abs="{{ commodity.change | round(3) }}">
     <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden"
         style="box-shadow: var(--card-shadow);">
 

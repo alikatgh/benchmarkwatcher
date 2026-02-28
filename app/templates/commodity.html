@@ -100,59 +100,79 @@
                     </div>
 
                     <!-- Change percentage and badge -->
-                    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mt-4">
-                        <!-- Percentage badge with tooltip -->
-                        {% set trend_color = 'var(--color-up)' if commodity.change >= 0 else 'var(--color-down)' %}
-                        {% set trend_bg = 'var(--color-up-bg)' if commodity.change >= 0 else 'var(--color-down-bg)' %}
-                        {% set style_bg = 'style="background-color: ' ~ trend_bg ~ ';"' %}
-                        {% set style_text = 'style="color: ' ~ trend_color ~ ';"' %}
-                        {% set style_bg_badge = 'style="background-color: ' ~ trend_color ~ ';"' %}
-                        <div class="group relative cursor-help" onclick="this.classList.toggle('tooltip-open')" role="button" tabindex="0">
-                            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all w-fit" {{
-                                style_bg|safe }}>
-                                <span class="text-lg sm:text-xl font-bold font-ui" {{ style_text|safe }}>
-                                    {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
-                                </span>
-                                <span class="text-xs font-bold py-0.5 px-2 rounded-full text-white" {{
-                                    style_bg_badge|safe }}>
-                                    {% if commodity.change >= 0 %}↑{% else %}↓{% endif %}
-                                </span>
+                    {% set ds = commodity.derived_stats or {} %}
+                    {% set _pct1 = commodity.change_percent | default(0) %}
+                    {% set _abs1 = commodity.change | default(0) %}
+                    {% set _pct30 = ds.pct_change_30_obs | default(0) %}
+                    {% set _pct365 = ds.pct_change_365_obs | default(0) %}
+                    {% set _prev_label = 'prev day' if commodity.is_daily else 'prev month' %}
+                    {% set trend_color = 'var(--color-up)' if commodity.change >= 0 else 'var(--color-down)' %}
+                    {% set trend_bg = 'var(--color-up-bg)' if commodity.change >= 0 else 'var(--color-down-bg)' %}
+                    <div class="flex flex-col gap-2.5 mt-4"
+                         id="change-badge-section"
+                         data-pct1="{{ _pct1 }}"
+                         data-abs1="{{ _abs1 }}"
+                         data-pct30="{{ _pct30 }}"
+                         data-pct365="{{ _pct365 }}"
+                         data-currency="{{ commodity.currency }}"
+                         data-date="{{ commodity.date }}"
+                         data-prev-price="{{ commodity.prev_price }}"
+                         data-prev-date="{{ commodity.prev_date }}"
+                         data-prev-label="vs {{ _prev_label }}">
+
+                        <!-- Row 1: badge + label -->
+                        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                            <div class="group relative cursor-help" id="change-badge-wrapper" onclick="this.classList.toggle('tooltip-open')" role="button" tabindex="0">
+                                <div id="change-badge-bg" class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all w-fit" style="background-color: {{ trend_bg }};">
+                                    <span id="change-pct-display" class="text-lg sm:text-xl font-bold font-ui" style="color: {{ trend_color }};">
+                                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
+                                    </span>
+                                    <span id="change-arrow-display" class="text-xs font-bold py-0.5 px-2 rounded-full text-white" style="background-color: {{ trend_color }};">
+                                        {% if commodity.change >= 0 %}↑{% else %}↓{% endif %}
+                                    </span>
+                                </div>
+                                <!-- Tooltip on hover -->
+                                <div id="change-tooltip" class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui tooltip-content">
+                                    <div class="font-bold mb-2" id="change-tooltip-title">Price Change (Prev obs)</div>
+                                    <div class="space-y-1.5 text-brand-black-60">
+                                        <div class="flex justify-between gap-2">
+                                            <span class="shrink-0">Current ({{ commodity.date }}):</span>
+                                            <span class="text-white font-bold text-right">{{ commodity.price }} {{ commodity.currency }}</span>
+                                        </div>
+                                        <div id="tooltip-prev-row" class="flex justify-between gap-2">
+                                            <span class="shrink-0" id="tooltip-prev-label">Previous ({{ commodity.prev_date }}):</span>
+                                            <span class="text-white font-bold text-right" id="tooltip-prev-price">{{ commodity.prev_price }} {{ commodity.currency }}</span>
+                                        </div>
+                                        <div class="pt-2 border-t border-white/20 mt-2 flex justify-between gap-2">
+                                            <span class="shrink-0">Change:</span>
+                                            <span class="font-bold text-right" id="tooltip-change-line" style="color: {{ trend_color }};">
+                                                {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }} {{ commodity.currency }} ({% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%)
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="absolute bottom-0 left-4 transform translate-y-full">
+                                        <div class="border-8 border-transparent border-t-brand-black-80 dark:border-t-terminal-black"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <!-- Tooltip on hover -->
-                            <div
-                                class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui tooltip-content">
-                                <div class="font-bold mb-2">Price Change Calculation</div>
-                                <div class="space-y-1.5 text-brand-black-60">
-                                    <div class="flex justify-between gap-2">
-                                        <span class="shrink-0">Current ({{ commodity.date }}):</span>
-                                        <span class="text-white font-bold text-right">{{ commodity.price }} {{
-                                            commodity.currency
-                                            }}</span>
-                                    </div>
-                                    <div class="flex justify-between gap-2">
-                                        <span class="shrink-0">Previous ({{ commodity.prev_date }}):</span>
-                                        <span class="text-white font-bold text-right">{{ commodity.prev_price }} {{
-                                            commodity.currency }}</span>
-                                    </div>
-                                    <div class="pt-2 border-t border-white/20 mt-2 flex justify-between gap-2">
-                                        <span class="shrink-0">Change:</span>
-                                        <span class="font-bold text-right" {{ style_text|safe }}>
-                                            {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }} {{
-                                            commodity.currency }} ({% if commodity.change >= 0 %}+{% endif %}{{
-                                            commodity.change_percent }}%)
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="absolute bottom-0 left-4 transform translate-y-full">
-                                    <div
-                                        class="border-8 border-transparent border-t-brand-black-80 dark:border-t-terminal-black">
-                                    </div>
-                                </div>
+                            <!-- Context label -->
+                            <div class="text-[11px] sm:text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui" id="change-period-label">
+                                vs {{ _prev_label }} · As of {{ commodity.date }}
                             </div>
                         </div>
-                        <!-- Context: vs what period -->
-                        <div class="text-[11px] sm:text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui">
-                            vs previous {% if commodity.is_daily %}day{% else %}month{% endif %} · As of {{ commodity.date }}
+
+                        <!-- Row 2: period picker -->
+                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-fit font-ui"
+                             role="group" aria-label="Change comparison period">
+                            <button onclick="setChangePeriod('1')" id="period-btn-1"
+                                class="period-btn px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal theme-surface theme-text shadow-sm"
+                                aria-pressed="true">Prev obs</button>
+                            <button onclick="setChangePeriod('30')" id="period-btn-30"
+                                class="period-btn px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5"
+                                aria-pressed="false">~30 obs</button>
+                            <button onclick="setChangePeriod('365')" id="period-btn-365"
+                                class="period-btn px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5"
+                                aria-pressed="false">~1 year</button>
                         </div>
                     </div>
                 </div>

@@ -1396,6 +1396,98 @@ if (!window.__bwCommodityGlobalKeydownBound) {
     });
 }
 
+// Change period picker for commodity detail page header badge
+function setChangePeriod(period) {
+    const section = document.getElementById('change-badge-section');
+    if (!section) return;
+
+    const pctMap = {
+        '1':   parseFloat(section.dataset.pct1)   || 0,
+        '30':  parseFloat(section.dataset.pct30)  || 0,
+        '365': parseFloat(section.dataset.pct365) || 0,
+    };
+    const abs1      = parseFloat(section.dataset.abs1) || 0;
+    const currency  = section.dataset.currency || '';
+    const date      = section.dataset.date || '';
+    const prevPrice = section.dataset.prevPrice || '';
+    const prevDate  = section.dataset.prevDate || '';
+    const prevLabel = section.dataset.prevLabel || 'vs prev obs';
+
+    const pct  = pctMap[period] || 0;
+    const isUp = pct >= 0;
+    const cs   = getComputedStyle(document.documentElement);
+    const color = cs.getPropertyValue(isUp ? '--color-up' : '--color-down').trim();
+    const bg    = cs.getPropertyValue(isUp ? '--color-up-bg' : '--color-down-bg').trim();
+    const sign  = isUp ? '+' : '';
+    const arrow = isUp ? '↑' : '↓';
+
+    // Update badge
+    const badgeBg = document.getElementById('change-badge-bg');
+    const pctDisplay   = document.getElementById('change-pct-display');
+    const arrowDisplay = document.getElementById('change-arrow-display');
+    if (badgeBg)      badgeBg.style.backgroundColor = bg;
+    if (pctDisplay)   { pctDisplay.style.color = color; pctDisplay.textContent = `${sign}${Math.abs(pct).toFixed(2)}%`; }
+    if (arrowDisplay) { arrowDisplay.style.backgroundColor = color; arrowDisplay.textContent = arrow; }
+
+    // Update tooltip-change-line color too
+    const changeLine = document.getElementById('tooltip-change-line');
+    if (changeLine) changeLine.style.color = color;
+
+    // Update context label
+    const labelMap = {
+        '1':   `${prevLabel} · As of ${date}`,
+        '30':  `vs ~30 obs · As of ${date}`,
+        '365': `vs ~1 year · As of ${date}`,
+    };
+    const label = document.getElementById('change-period-label');
+    if (label) label.textContent = labelMap[period] || '';
+
+    // Update tooltip content
+    const tooltipTitle   = document.getElementById('change-tooltip-title');
+    const tooltipPrevRow = document.getElementById('tooltip-prev-row');
+    const tooltipPrevLbl = document.getElementById('tooltip-prev-label');
+    const tooltipPrevPrc = document.getElementById('tooltip-prev-price');
+    const titleMap = { '1': 'Price Change (Prev obs)', '30': 'Price Change (~30 obs)', '365': 'Price Change (~1 year)' };
+    if (tooltipTitle) tooltipTitle.textContent = titleMap[period] || 'Price Change';
+
+    if (period === '1') {
+        if (tooltipPrevRow) tooltipPrevRow.style.display = '';
+        if (tooltipPrevLbl) tooltipPrevLbl.textContent = `Previous (${prevDate}):`;
+        if (tooltipPrevPrc) tooltipPrevPrc.textContent = `${prevPrice} ${currency}`;
+        if (changeLine) changeLine.textContent = `${sign}${abs1} ${currency} (${sign}${Math.abs(pct).toFixed(2)}%)`;
+    } else {
+        if (tooltipPrevRow) tooltipPrevRow.style.display = 'none';
+        if (changeLine) changeLine.textContent = `${sign}${Math.abs(pct).toFixed(2)}%`;
+    }
+
+    // Update button active states
+    ['1', '30', '365'].forEach(p => {
+        const btn = document.getElementById(`period-btn-${p}`);
+        if (!btn) return;
+        const isActive = p === period;
+        btn.className = isActive
+            ? 'period-btn px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal theme-surface theme-text shadow-sm'
+            : 'period-btn px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5';
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
+
+    // Persist selection
+    try { localStorage.setItem('bw-change-period', period); } catch (e) {}
+}
+
+// Restore persisted period selection on page load
+(function () {
+    const saved = (function () { try { return localStorage.getItem('bw-change-period'); } catch (e) { return null; } })();
+    if (saved && saved !== '1') {
+        const run = function () { setChangePeriod(saved); };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', run);
+        } else {
+            run();
+        }
+    }
+})();
+
 // Copy price to clipboard with visual feedback
 function copyPrice(price) {
     const commodity = (window.BW && BW.Commodity) ? BW.Commodity : null;

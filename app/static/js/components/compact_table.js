@@ -24,49 +24,18 @@ BW.CompactTable = {
         updated: { format: 'iso', time: 'no' }
     },
 
-    // Get merged settings
+    // Get merged settings via BW.Settings (includes deep-merge with defaults + localStorage fallback)
     getSettings: function () {
-        if (window.BW && BW.Settings && typeof BW.Settings.getTableSettings === 'function') {
-            return BW.Settings.getTableSettings();
-        }
-
-        let stored = {};
-        try {
-            stored = JSON.parse(localStorage.getItem('table-settings') || '{}') || {};
-        } catch (e) {
-            stored = {};
-        }
-
-        return {
-            ...this.defaultSettings,
-            ...stored,
-            columns: { ...this.defaultSettings.columns, ...(stored.columns || {}) }
-        };
+        return BW.Settings.getTableSettings();
     },
 
-    // Save settings to localStorage
+    // Save settings via BW.Settings (handles safe-stringify + emits change event)
     saveSettings: function (settings) {
-        if (window.BW && BW.Settings && typeof BW.Settings.saveTableSettings === 'function') {
-            BW.Settings.saveTableSettings(settings);
-            return;
-        }
-
-        try {
-            localStorage.setItem('table-settings', JSON.stringify(settings));
-        } catch (e) {
-            // noop
-        }
+        BW.Settings.saveTableSettings(settings);
     },
 
-    // Escape untrusted text before HTML interpolation
-    escapeHtml: function (value) {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    },
+    // Escape untrusted text before HTML interpolation (delegates to shared BW.Utils)
+    escapeHtml: function (value) { return BW.Utils.escapeHtml(value); },
 
     safeDomId: function (value) {
         return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -125,23 +94,43 @@ BW.CompactTable = {
                 if (error.name === 'AbortError') return;
                 console.error('Failed to fetch data:', error);
                 if (tableBody) {
-                    tableBody.innerHTML = `
-                        <tr>
-                            <td colspan="6" class="py-8">
-                                <div class="empty-state">
-                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                    </svg>
-                                    <p class="font-bold text-brand-claret">Failed to load data</p>
-                                    <p class="text-sm text-brand-black-60">Please check your connection and try again</p>
-                                    <button onclick="setDataRange('${range}')" 
-                                        class="mt-4 px-4 py-2 text-sm font-bold text-white bg-brand-oxford dark:bg-brand-teal rounded-lg hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal focus:ring-offset-2">
-                                        Try Again
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+                    tableBody.innerHTML = '';
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.colSpan = 6;
+                    td.className = 'py-8';
+
+                    const state = document.createElement('div');
+                    state.className = 'empty-state';
+
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('fill', 'none');
+                    svg.setAttribute('stroke', 'currentColor');
+                    svg.setAttribute('viewBox', '0 0 24 24');
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('stroke-linecap', 'round');
+                    path.setAttribute('stroke-linejoin', 'round');
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('d', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z');
+                    svg.appendChild(path);
+
+                    const heading = document.createElement('p');
+                    heading.className = 'font-bold text-brand-claret';
+                    heading.textContent = 'Failed to load data';
+
+                    const msg = document.createElement('p');
+                    msg.className = 'text-sm text-brand-black-60';
+                    msg.textContent = 'Please check your connection and try again';
+
+                    const btn = document.createElement('button');
+                    btn.className = 'mt-4 px-4 py-2 text-sm font-bold text-white bg-brand-oxford dark:bg-brand-teal rounded-lg hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal focus:ring-offset-2';
+                    btn.textContent = 'Try Again';
+                    btn.addEventListener('click', () => BW.CompactTable.setDataRange(range));
+
+                    state.append(svg, heading, msg, btn);
+                    td.appendChild(state);
+                    tr.appendChild(td);
+                    tableBody.appendChild(tr);
                 }
             })
             .finally(() => {
@@ -175,15 +164,16 @@ BW.CompactTable = {
 
         const settings = this.getSettings();
         const currentRange = settings.dataRange || 'ALL';
+        // Observation-accurate labels — match grid_view.js wording (not calendar periods)
         const rangeLabels = {
-            '1W': 'past week',
-            '1M': 'past month',
-            '3M': 'past 3 months',
-            '6M': 'past 6 months',
-            '1Y': 'past year',
-            'ALL': 'all time'
+            '1W': 'recent observations',
+            '1M': 'recent observations',
+            '3M': 'extended observations',
+            '6M': 'extended observations',
+            '1Y': 'long-run observations',
+            'ALL': 'full observation history'
         };
-        const rangeLabel = rangeLabels[currentRange] || 'selected period';
+        const rangeLabel = rangeLabels[currentRange] || 'selected observations';
 
         commodities.forEach(commodity => {
             // Use range-based change (first to last in selected range)
