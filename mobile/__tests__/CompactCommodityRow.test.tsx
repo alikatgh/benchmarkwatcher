@@ -3,6 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import CompactCommodityRow from '../components/CompactCommodityRow';
 import { SettingsContext } from '../context/SettingsContext';
 import { Commodity } from '../types/commodity';
+import { createMockSettingsContext } from '../testUtils/settingsContextMock';
 
 describe('CompactCommodityRow', () => {
     const mockCommodity: Commodity = {
@@ -19,62 +20,28 @@ describe('CompactCommodityRow', () => {
 
     const mockOnPress = jest.fn();
 
-    const mockContext = {
-        showCategory: true,
-        showChangePercent: true,
-        showChangeAbs: true,
-        showDate: true,
-        showUnit: true,
-        fontScale: 'medium' as const,
-        density: 'compact' as const,
-        getMarketColors: jest.fn().mockReturnValue({
-            textColor: 'text-rose-500',
-            bgColor: 'bg-rose-500/10'
-        }),
-        isDarkMode: false,
-        setIsDarkMode: jest.fn(),
-        themeFlavor: 'standard' as const,
-        setThemeFlavor: jest.fn(),
-        marketTheme: 'western' as const,
-        setMarketTheme: jest.fn(),
-        syncEnabled: false,
-        setSyncEnabled: jest.fn(),
-        forceSync: jest.fn(),
-        syncTrigger: 0,
-        setShowCategory: jest.fn(),
-        setShowChangePercent: jest.fn(),
-        setShowChangeAbs: jest.fn(),
-        setShowDate: jest.fn(),
-        setShowUnit: jest.fn(),
-        setFontScale: jest.fn(),
-        setDensity: jest.fn(),
-        chartSettings: {
-            chartTheme: 'default' as const,
-            chartLineColor: '59, 130, 246',
-            chartFillColor: '59, 130, 246',
-            chartFillOpacity: 0.3,
-            chartFillEnabled: false,
-            chartGridVisible: true,
-            chartGridColor: 'rgba(148,163,184,0.25)',
-            chartAnimationEnabled: true,
-            chartLineTension: 0.4,
-            chartSmoothCurve: true,
-            chartAutoFitBounds: true,
-        },
-        updateChartSettings: jest.fn(),
-        resetChartSettings: jest.fn()
+    let mockContext = { ...createMockSettingsContext(), density: 'compact' as const };
+
+    const renderRow = (contextOverrides = {}) => {
+        const contextValue = { ...mockContext, ...contextOverrides };
+        return render(
+            <SettingsContext.Provider value={contextValue}>
+                <CompactCommodityRow commodity={mockCommodity} onPress={mockOnPress} />
+            </SettingsContext.Provider>
+        );
     };
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockContext = { ...createMockSettingsContext(), density: 'compact' as const };
+        mockContext.getMarketColors = jest.fn().mockReturnValue({
+            textColor: 'text-rose-500',
+            bgColor: 'bg-rose-500/10'
+        });
     });
 
     it('renders correctly and handles press', () => {
-        const { getByText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompactCommodityRow commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
-        );
+        const { getByText } = renderRow();
 
         expect(getByText('Silver')).toBeTruthy();
         expect(getByText('24.50')).toBeTruthy();
@@ -85,17 +52,10 @@ describe('CompactCommodityRow', () => {
     });
 
     it('hides columns when their display setting is false', () => {
-        const hiddenContext = {
-            ...mockContext,
+        const { queryByText } = renderRow({
             showUnit: false,
             showChangePercent: false
-        };
-
-        const { queryByText } = render(
-            <SettingsContext.Provider value={hiddenContext}>
-                <CompactCommodityRow commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
-        );
+        });
 
         expect(queryByText('USD / oz')).toBeNull(); // Unit hidden
         expect(queryByText('-2.00%')).toBeNull(); // % Change hidden
