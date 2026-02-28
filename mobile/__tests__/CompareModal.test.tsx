@@ -1,9 +1,10 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, waitFor } from '@testing-library/react-native';
 import CompareModal from '../components/features/CompareModal';
 import { SettingsContext } from '../context/SettingsContext';
 import { fetchCommodities } from '../api/commodities';
 import { createMockSettingsContext } from '../testUtils/settingsContextMock';
+import { renderWithSettings } from '../testUtils/renderWithSettings';
 
 jest.mock('../api/commodities', () => ({
     fetchCommodities: jest.fn(),
@@ -57,6 +58,36 @@ describe('CompareModal accessibility interactions', () => {
 
     let mockContext = createMockSettingsContext();
 
+    const createModalProps = (overrides: Partial<React.ComponentProps<typeof CompareModal>> = {}) => ({
+        visible: true,
+        onClose: jest.fn(),
+        currentCommodityId: 'brent_oil',
+        comparisons: [],
+        onToggleCommodity: jest.fn(),
+        onRemoveComparison: jest.fn(),
+        onClearAll: jest.fn(),
+        ...overrides,
+    });
+
+    const renderModal = (
+        propOverrides: Partial<React.ComponentProps<typeof CompareModal>> = {},
+        contextOverrides: Record<string, unknown> = {}
+    ) => {
+        return renderWithSettings(
+            <CompareModal {...createModalProps(propOverrides)} />,
+            { ...mockContext, ...contextOverrides }
+        );
+    };
+
+    const wrapModal = (
+        propOverrides: Partial<React.ComponentProps<typeof CompareModal>> = {},
+        contextOverrides: Record<string, unknown> = {}
+    ) => (
+        <SettingsContext.Provider value={{ ...mockContext, ...contextOverrides }}>
+            <CompareModal {...createModalProps(propOverrides)} />
+        </SettingsContext.Provider>
+    );
+
     beforeEach(() => {
         jest.clearAllMocks();
         mockContext = createMockSettingsContext();
@@ -66,19 +97,10 @@ describe('CompareModal accessibility interactions', () => {
     it('supports removing selected comparison via accessibility-labeled tag', async () => {
         const onRemoveComparison = jest.fn();
 
-        const { getAllByLabelText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={[{ id: 'gold', name: 'Gold', color: '#e11d48', history: [] }]}
-                    onToggleCommodity={jest.fn()}
-                    onRemoveComparison={onRemoveComparison}
-                    onClearAll={jest.fn()}
-                />
-            </SettingsContext.Provider>
-        );
+        const { getAllByLabelText } = renderModal({
+            comparisons: [{ id: 'gold', name: 'Gold', color: '#e11d48', history: [] }],
+            onRemoveComparison,
+        });
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
 
@@ -92,52 +114,23 @@ describe('CompareModal accessibility interactions', () => {
         const onRemoveComparison = jest.fn();
         const onClearAll = jest.fn();
 
-        const { getByLabelText, getByDisplayValue, queryByDisplayValue, rerender } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={onClose}
-                    currentCommodityId="brent_oil"
-                    comparisons={[]}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={onRemoveComparison}
-                    onClearAll={onClearAll}
-                />
-            </SettingsContext.Provider>
-        );
+        const sharedProps = {
+            onClose,
+            onToggleCommodity,
+            onRemoveComparison,
+            onClearAll,
+        };
+
+        const { getByLabelText, getByDisplayValue, queryByDisplayValue, rerender } = renderModal(sharedProps);
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(1));
 
         fireEvent.changeText(getByLabelText('Search commodities'), 'gol');
         expect(getByDisplayValue('gol')).toBeTruthy();
 
-        rerender(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={false}
-                    onClose={onClose}
-                    currentCommodityId="brent_oil"
-                    comparisons={[]}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={onRemoveComparison}
-                    onClearAll={onClearAll}
-                />
-            </SettingsContext.Provider>
-        );
+        rerender(wrapModal({ ...sharedProps, visible: false }));
 
-        rerender(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={onClose}
-                    currentCommodityId="brent_oil"
-                    comparisons={[]}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={onRemoveComparison}
-                    onClearAll={onClearAll}
-                />
-            </SettingsContext.Provider>
-        );
+        rerender(wrapModal({ ...sharedProps, visible: true }));
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(2));
         expect(queryByDisplayValue('gol')).toBeNull();
@@ -148,19 +141,7 @@ describe('CompareModal accessibility interactions', () => {
             .mockRejectedValueOnce(new Error('network'))
             .mockResolvedValueOnce([goldCommodity]);
 
-        const { getByLabelText, findByText, queryByText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={[]}
-                    onToggleCommodity={jest.fn()}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={jest.fn()}
-                />
-            </SettingsContext.Provider>
-        );
+        const { getByLabelText, findByText, queryByText } = renderModal();
 
         expect(await findByText('Unable to load commodity list. Please try again.')).toBeTruthy();
 
@@ -175,19 +156,10 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getByLabelText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={fullComparisons}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={jest.fn()}
-                />
-            </SettingsContext.Provider>
-        );
+        const { getByLabelText } = renderModal({
+            comparisons: fullComparisons,
+            onToggleCommodity,
+        });
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
 
@@ -203,19 +175,10 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getAllByLabelText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={fullComparisons}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={jest.fn()}
-                />
-            </SettingsContext.Provider>
-        );
+        const { getAllByLabelText } = renderModal({
+            comparisons: fullComparisons,
+            onToggleCommodity,
+        });
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
 
@@ -231,38 +194,28 @@ describe('CompareModal accessibility interactions', () => {
         const onToggleCommodity = jest.fn();
         const onClearAll = jest.fn();
 
-        const { getByLabelText, rerender } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={fullComparisons}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={onClearAll}
-                />
-            </SettingsContext.Provider>
-        );
+        const onClose = jest.fn();
+        const onRemoveComparison = jest.fn();
+        const { getByLabelText, rerender } = renderModal({
+            onClose,
+            comparisons: fullComparisons,
+            onToggleCommodity,
+            onRemoveComparison,
+            onClearAll,
+        });
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
 
         fireEvent.press(getByLabelText('Clear all selected comparisons'));
         expect(onClearAll).toHaveBeenCalledTimes(1);
 
-        rerender(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={[]}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={onClearAll}
-                />
-            </SettingsContext.Provider>
-        );
+        rerender(wrapModal({
+            onClose,
+            comparisons: [],
+            onToggleCommodity,
+            onRemoveComparison,
+            onClearAll,
+        }));
 
         const addSilverControl = getByLabelText('Add Silver to comparison');
         expect(addSilverControl.props.accessibilityState?.disabled).toBe(false);
@@ -276,19 +229,10 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getByLabelText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={fullComparisons}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={jest.fn()}
-                />
-            </SettingsContext.Provider>
-        );
+        const { getByLabelText } = renderModal({
+            comparisons: fullComparisons,
+            onToggleCommodity,
+        });
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
 
@@ -306,19 +250,10 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getByLabelText, getAllByLabelText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CompareModal
-                    visible={true}
-                    onClose={jest.fn()}
-                    currentCommodityId="brent_oil"
-                    comparisons={fullComparisons}
-                    onToggleCommodity={onToggleCommodity}
-                    onRemoveComparison={jest.fn()}
-                    onClearAll={jest.fn()}
-                />
-            </SettingsContext.Provider>
-        );
+        const { getByLabelText, getAllByLabelText } = renderModal({
+            comparisons: fullComparisons,
+            onToggleCommodity,
+        });
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
 
