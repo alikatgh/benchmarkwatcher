@@ -488,6 +488,7 @@ BW.GridView = {
         if (previewCard) {
             const nameEl = previewCard.querySelector('h4');
             const priceSection = document.getElementById('preview-price-section');
+            const previewChangeRow = previewChangePct?.parentElement || null;
             const categoryBadge = previewCategory;
 
             if (cardStyle === 'minimal') {
@@ -519,11 +520,10 @@ BW.GridView = {
 
                 // Price and change inline
                 if (priceSection) {
-                    priceSection.style.cssText = 'order: 3; display: contents;';
-                    const priceDiv = priceSection.querySelector('div:first-child');
-                    const changeDiv = priceSection.querySelector('.text-right');
-                    if (priceDiv) priceDiv.style.cssText = 'order: 3; text-align: right;';
-                    if (changeDiv) changeDiv.style.cssText = 'order: 4; text-align: right;';
+                    priceSection.style.cssText = 'order: 3; margin: 0; text-align: right;';
+                }
+                if (previewChangeRow) {
+                    previewChangeRow.style.cssText = 'order: 4; justify-content: flex-end; margin: 0;';
                 }
 
             } else if (cardStyle === 'dense') {
@@ -532,6 +532,7 @@ BW.GridView = {
                 if (nameEl) nameEl.style.cssText = 'font-size: 14px; margin-bottom: 0.5rem;';
                 if (categoryBadge) categoryBadge.style.cssText = '';
                 if (priceSection) priceSection.style.cssText = '';
+                if (previewChangeRow) previewChangeRow.style.cssText = '';
 
             } else {
                 // FULL CARD: Reset to default
@@ -539,6 +540,7 @@ BW.GridView = {
                 if (nameEl) nameEl.style.cssText = '';
                 if (categoryBadge) categoryBadge.style.cssText = '';
                 if (priceSection) priceSection.style.cssText = '';
+                if (previewChangeRow) previewChangeRow.style.cssText = '';
                 const catSpan = categoryBadge?.querySelector('span');
                 if (catSpan) catSpan.style.cssText = '';
                 const upBadge = categoryBadge?.querySelector('div');
@@ -565,6 +567,9 @@ BW.GridView = {
             const card = link.querySelector('div');
             if (!card) return;
 
+            link.onmouseenter = null;
+            link.onmouseleave = null;
+
             // Reset card inline styles
             card.style.cssText = '';
 
@@ -590,7 +595,7 @@ BW.GridView = {
 
                 // Financial terminal row styling
                 const isEven = index % 2 === 0;
-                card.className = '';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/8 relative overflow-hidden';
                 card.style.cssText = `
                     display: grid;
                     grid-template-columns: ${showCategory ? 'minmax(50px,70px)' : ''} 1fr minmax(80px,140px) minmax(60px,100px);
@@ -683,7 +688,6 @@ BW.GridView = {
                             font-family: ui-monospace, SFMono-Regular, monospace;
                             letter-spacing: -0.02em;
                         `;
-                        priceEl.className = '';
                     }
 
                     const unitEl = priceSection.querySelector('.bw-grid-unit') || priceSection.querySelector('.text-sm.font-medium, .text-xs.font-medium');
@@ -694,7 +698,6 @@ BW.GridView = {
                             font-family: system-ui, sans-serif;
                             display: ${showUnit ? 'block' : 'none'};
                         `;
-                        unitEl.className = '';
                     }
                 }
 
@@ -726,7 +729,6 @@ BW.GridView = {
                             font-family: ui-monospace, SFMono-Regular, monospace;
                             display: ${showChangePct ? 'block' : 'none'};
                         `;
-                        changePctEl.className = '';
                     }
 
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs') || changeSection.querySelector('.text-xs, .text-\[10px\]');
@@ -743,7 +745,6 @@ BW.GridView = {
                             opacity: 0.8;
                             display: ${showChangeAbs ? 'block' : 'none'};
                         `;
-                        changeAbsEl.className = '';
                     }
                 }
             });
@@ -787,13 +788,11 @@ BW.GridView = {
 
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = '';
                         priceEl.style.cssText = 'font-size: 18px; font-weight: 800;';
                     }
 
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
                     if (unitEl) {
-                        unitEl.className = '';
                         unitEl.style.cssText = `font-size: 9px; color: var(--theme-text-muted); display: ${showUnit ? 'block' : 'none'};`;
                     }
                 }
@@ -805,11 +804,9 @@ BW.GridView = {
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changePctEl) {
-                        changePctEl.className = '';
                         changePctEl.style.cssText = `font-size: 13px; font-weight: 700; display: ${showChangePct ? 'inline' : 'none'};`;
                     }
                     if (changeAbsEl) {
-                        changeAbsEl.className = '';
                         changeAbsEl.style.cssText = `font-size: 9px; display: ${showChangeAbs ? 'inline' : 'none'};`;
                     }
                 }
@@ -817,7 +814,6 @@ BW.GridView = {
                 // Footer - compact
                 const footer = card.querySelector('.bw-grid-footer') || card.querySelector('.mt-5');
                 if (footer) {
-                    footer.className = '';
                     footer.style.cssText = `display: ${showDate ? 'flex' : 'none'}; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--theme-border);`;
                     const dateEl = footer.querySelector('.bw-grid-date') || footer.querySelector('.text-xs, .text-\[10px\]');
                     if (dateEl) dateEl.style.cssText = 'font-size: 9px;';
