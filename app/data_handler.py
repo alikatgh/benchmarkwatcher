@@ -202,7 +202,9 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
                         item.pop('history', None)
                     
                     _apply_latest_display_point(item, filtered_history)
-                    _hydrate_change_fields(item)
+                    # _set_display_change_fields_from_history overwrites the same change/change_percent
+                    # fields that _hydrate_change_fields would set, so skip the latter here.
+                    # _hydrate_change_fields is still used by get_commodity (no history recalculation).
                     _set_display_change_fields_from_history(item, filtered_history)
                     _set_frequency_fields(item, full_history)
                         

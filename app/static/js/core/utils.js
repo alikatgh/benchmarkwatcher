@@ -153,6 +153,17 @@ BW.Utils = (function () {
             return BW.DAILY_COMMODITY_IDS.includes(String(commodity.id || ''));
         },
 
+        // Escape untrusted string for safe HTML interpolation.
+        // Single source of truth — referenced by GridView and CompactTable.
+        escapeHtml: function (value) {
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        },
+
         // Debounce preserving `this` and arguments
         debounce: function (func, wait = 200) {
             let timeout = null;

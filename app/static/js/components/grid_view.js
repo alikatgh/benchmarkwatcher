@@ -128,15 +128,8 @@ BW.GridView = {
         }, 0);
     },
 
-    // Escape untrusted text before HTML interpolation
-    escapeHtml: function (value) {
-        return String(value)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    },
+    // Escape untrusted text before HTML interpolation (delegates to shared BW.Utils)
+    escapeHtml: function (value) { return BW.Utils.escapeHtml(value); },
 
     // Format numeric values for UI display with max precision and no grouping.
     formatNumber: function (value, maxFractionDigits = 4) {
@@ -975,6 +968,9 @@ BW.GridView = {
                 }
             });
         } else {
+            // Clear inline styles so Tailwind grid-cols classes are not overridden by higher-specificity inline style
+            container.style.gridTemplateColumns = '';
+            container.style.gap = '';
             if (columns === 'auto') {
                 container.classList.add('grid-cols-1', 'md:grid-cols-2', 'xl:grid-cols-3', 'gap-7');
             } else if (columns === '2') {
