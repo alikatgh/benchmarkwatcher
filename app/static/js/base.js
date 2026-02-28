@@ -19,6 +19,7 @@ window.BW = window.BW || {};
 (function (exports, doc) {
     const HTML = doc.documentElement;
     const MARKET_BTN_SELECTOR = '.market-btn';
+    let _scrollHideBound = false;
 
     // Safe localStorage access
     function safeGet(key) {
@@ -121,6 +122,7 @@ window.BW = window.BW || {};
             btns.forEach(btn => {
                 if (!btn.hasAttribute('role')) btn.setAttribute('role', 'button');
                 if (!btn.hasAttribute('tabindex')) btn.setAttribute('tabindex', '0');
+                if (btn.getAttribute('data-market-bound') === 'true') return;
 
                 // attach click handler that uses the public API
                 btn.addEventListener('click', e => {
@@ -128,6 +130,7 @@ window.BW = window.BW || {};
                     const matches = id.match(/^market-(.+)$/);
                     if (matches) setMarketTheme(matches[1]);
                 });
+                btn.setAttribute('data-market-bound', 'true');
             });
         } catch (e) { /* ignore */ }
 
@@ -139,6 +142,8 @@ window.BW = window.BW || {};
     function initScrollHideNav() {
         const strip = doc.getElementById('category-strip');
         if (!strip) return;
+        if (_scrollHideBound) return;
+        _scrollHideBound = true;
 
         let lastScrollY = 0;
         let ticking = false;
