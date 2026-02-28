@@ -177,6 +177,7 @@ export default function HomeScreen() {
                     <IconButton
                         icon="settings"
                         onPress={() => navigation.navigate('Settings')}
+                        ariaLabel="Open app settings"
                         variant="secondary"
                         iconClassName="text-slate-700 dark:text-slate-300"
                     />
@@ -196,6 +197,9 @@ export default function HomeScreen() {
                             <TouchableOpacity
                                 key={category}
                                 onPress={() => setSelectedCategory(category)}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Filter category ${category}`}
+                                accessibilityState={{ selected: isActive }}
                                 className={`px-4 py-2 rounded-full border ${isActive ? 'bg-slate-900 border-slate-900 dark:bg-white dark:border-white' : 'bg-transparent border-slate-300 dark:border-slate-600'}`}
                             >
                                 <Text className={`font-medium ${isActive ? 'text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-300'}`}>
@@ -212,7 +216,12 @@ export default function HomeScreen() {
                     <Text className="text-xs font-bold tracking-wider text-slate-500 uppercase mr-3">
                         Data Range
                     </Text>
-                    <TouchableOpacity onPress={() => setSettingsModalVisible(true)} className="flex-row items-center border-l border-slate-300 dark:border-slate-700 pl-3">
+                    <TouchableOpacity
+                        onPress={() => setSettingsModalVisible(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open visible columns settings"
+                        className="flex-row items-center border-l border-slate-300 dark:border-slate-700 pl-3"
+                    >
                         <Text className="text-xs font-bold text-blue-500">Columns</Text>
                     </TouchableOpacity>
                 </View>
@@ -220,6 +229,8 @@ export default function HomeScreen() {
                     <Text className="text-xs text-slate-500 mr-2">Sort:</Text>
                     <TouchableOpacity
                         onPress={() => setSortModalVisible(true)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open sort options"
                         className="flex-row items-center bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700"
                     >
                         <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -240,6 +251,9 @@ export default function HomeScreen() {
                         <TouchableOpacity
                             key={range}
                             onPress={() => setSelectedRange(range)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Set home data range to ${range}`}
+                            accessibilityState={{ selected: isActive }}
                             className={`min-w-[44px] h-[34px] items-center justify-center rounded-lg ${isActive ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800' : 'bg-slate-100 dark:bg-slate-800 border border-transparent'}`}
                         >
                             <Text className={`text-xs font-bold ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>
@@ -271,6 +285,8 @@ export default function HomeScreen() {
                     <Text className="text-rose-500 font-bold px-4 text-center">{error}</Text>
                     <TouchableOpacity
                         onPress={handleRefresh}
+                        accessibilityRole="button"
+                        accessibilityLabel="Retry loading benchmarks"
                         className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2"
                     >
                         <Text className="font-bold text-white dark:text-slate-900">Retry</Text>

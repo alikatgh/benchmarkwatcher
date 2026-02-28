@@ -339,6 +339,8 @@ export default function CommodityDetailScreen({ route }: Props) {
                                 <TouchableOpacity
                                     key={comp.id}
                                     onPress={() => handleRemoveComparison(comp.id)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`Remove ${comp.name} from active comparison`}
                                     className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
                                 >
                                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: comp.color }} />

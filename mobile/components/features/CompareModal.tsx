@@ -73,7 +73,7 @@ export default function CompareModal({
                 {/* Header */}
                 <View className="flex-row items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700">
                     <Text className="text-lg font-bold text-slate-900 dark:text-white">Compare Commodities</Text>
-                    <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close compare commodities" className="p-2">
+                    <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close compare commodities" hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }} className="p-2">
                         <Icon name="close" size={20} color={isDarkMode ? '#94a3b8' : '#475569'} />
                     </TouchableOpacity>
                 </View>
@@ -88,6 +88,10 @@ export default function CompareModal({
                             placeholder="Search commodities..."
                             placeholderTextColor="#94a3b8"
                             accessibilityLabel="Search commodities"
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            returnKeyType="search"
+                            clearButtonMode="while-editing"
                             className="flex-1 ml-2 text-sm text-slate-900 dark:text-white"
                         />
                     </View>
@@ -105,7 +109,7 @@ export default function CompareModal({
 
                 {/* Active comparison tags */}
                 {comparisons.length > 0 && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5 pb-3">
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" className="px-5 pb-3">
                         <View className="flex-row gap-2">
                             {comparisons.map(comp => (
                                 <TouchableOpacity
@@ -139,7 +143,7 @@ export default function CompareModal({
                         </TouchableOpacity>
                     </View>
                 ) : (
-                    <ScrollView className="flex-1 px-5" contentContainerStyle={{ paddingBottom: 40 }}>
+                    <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
                         {Object.entries(grouped).length === 0 ? (
                             <View className="pt-10 items-center">
                                 <Text className="text-slate-500 dark:text-slate-400 text-center">
