@@ -32,6 +32,7 @@ export default function CommodityDetailScreen({ route }: Props) {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [lastFetchTime, setLastFetchTime] = useState<string | null>(null);
 
     const [selectedPoint, setSelectedPoint] = useState<SelectedChartPoint | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
@@ -59,6 +60,7 @@ export default function CommodityDetailScreen({ route }: Props) {
             const detail = await fetchCommodityDetail(initialCommodity.id);
             setCommodity(detail);
             setError(null);
+            setLastFetchTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         } catch {
             setError('Unable to refresh commodity data. Please try again.');
         } finally {
@@ -300,6 +302,14 @@ export default function CommodityDetailScreen({ route }: Props) {
                     </View>
                 )}
 
+                {(refreshing || lastFetchTime) && (
+                    <View className="mx-5 mt-1 mb-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2">
+                        <Text className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                            {refreshing ? 'Refreshing benchmark data…' : `Last updated ${lastFetchTime}`}
+                        </Text>
+                    </View>
+                )}
+
                 <CommodityHeader
                     commodity={commodity}
                     isUp={selectedChangeIsUp}
@@ -328,7 +338,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                             {comparisons.map(comp => (
                                 <TouchableOpacity
                                     key={comp.id}
-                                    onPress={() => setComparisons(prev => prev.filter(c => c.id !== comp.id))}
+                                    onPress={() => handleRemoveComparison(comp.id)}
                                     className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800"
                                 >
                                     <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: comp.color }} />
