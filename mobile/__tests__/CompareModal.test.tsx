@@ -93,4 +93,61 @@ describe('CompareModal accessibility interactions', () => {
         fireEvent.press(getAllByLabelText('Remove Gold from comparison')[0]);
         expect(onRemoveComparison).toHaveBeenCalledWith('gold');
     });
+
+    it('resets search input when modal is reopened', async () => {
+        const onClose = jest.fn();
+        const onToggleCommodity = jest.fn();
+        const onRemoveComparison = jest.fn();
+        const onClearAll = jest.fn();
+
+        const { getByLabelText, getByDisplayValue, queryByDisplayValue, rerender } = render(
+            <SettingsContext.Provider value={mockContext}>
+                <CompareModal
+                    visible={true}
+                    onClose={onClose}
+                    currentCommodityId="brent_oil"
+                    comparisons={[]}
+                    onToggleCommodity={onToggleCommodity}
+                    onRemoveComparison={onRemoveComparison}
+                    onClearAll={onClearAll}
+                />
+            </SettingsContext.Provider>
+        );
+
+        await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(1));
+
+        fireEvent.changeText(getByLabelText('Search commodities'), 'gol');
+        expect(getByDisplayValue('gol')).toBeTruthy();
+
+        rerender(
+            <SettingsContext.Provider value={mockContext}>
+                <CompareModal
+                    visible={false}
+                    onClose={onClose}
+                    currentCommodityId="brent_oil"
+                    comparisons={[]}
+                    onToggleCommodity={onToggleCommodity}
+                    onRemoveComparison={onRemoveComparison}
+                    onClearAll={onClearAll}
+                />
+            </SettingsContext.Provider>
+        );
+
+        rerender(
+            <SettingsContext.Provider value={mockContext}>
+                <CompareModal
+                    visible={true}
+                    onClose={onClose}
+                    currentCommodityId="brent_oil"
+                    comparisons={[]}
+                    onToggleCommodity={onToggleCommodity}
+                    onRemoveComparison={onRemoveComparison}
+                    onClearAll={onClearAll}
+                />
+            </SettingsContext.Provider>
+        );
+
+        await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(2));
+        expect(queryByDisplayValue('gol')).toBeNull();
+    });
 });
