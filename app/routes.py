@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, abort
+from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory
 from app.data_handler import get_all_commodities, get_commodity
 from app.extensions import cache
 import os
@@ -248,3 +248,13 @@ def api_commodity_detail(commodity_id):
 def changelog():
     """Changelog page with updates and new features."""
     return render_template('changelog.html')
+
+
+@bp.route('/favicon.ico')
+def favicon():
+    """Serve favicon to avoid browser 404 noise in console."""
+    return send_from_directory(
+        os.path.join(bp.root_path, 'static', 'images'),
+        'og-image.png',
+        mimetype='image/png'
+    )
