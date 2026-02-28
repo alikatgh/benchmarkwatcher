@@ -65,16 +65,21 @@ describe('CommodityCard', () => {
         resetChartSettings: jest.fn()
     };
 
+    const renderCard = (contextOverrides = {}) => {
+        const contextValue = { ...mockContext, ...contextOverrides };
+        return render(
+            <SettingsContext.Provider value={contextValue}>
+                <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />
+            </SettingsContext.Provider>
+        );
+    };
+
     beforeEach(() => {
         jest.clearAllMocks();
     });
 
     it('renders basic commodity information', () => {
-        const { getByText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
-        );
+        const { getByText } = renderCard();
 
         expect(getByText('Gold')).toBeTruthy();
         expect(getByText('1,850.50')).toBeTruthy();
@@ -86,11 +91,7 @@ describe('CommodityCard', () => {
     });
 
     it('triggers onPress with correct commodity when pressed', () => {
-        const { getByText } = render(
-            <SettingsContext.Provider value={mockContext}>
-                <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
-        );
+        const { getByText } = renderCard();
 
         fireEvent.press(getByText('Gold'));
         expect(mockOnPress).toHaveBeenCalledWith(mockCommodity);
@@ -98,18 +99,11 @@ describe('CommodityCard', () => {
     });
 
     it('hides fields when disabled in SettingsContext', () => {
-        const hiddenContext = {
-            ...mockContext,
+        const { queryByText } = renderCard({
             showCategory: false,
             showChangeAbs: false,
             showDate: false
-        };
-
-        const { queryByText } = render(
-            <SettingsContext.Provider value={hiddenContext}>
-                <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />
-            </SettingsContext.Provider>
-        );
+        });
 
         expect(queryByText('Precious')).toBeNull(); // Category hidden
         expect(queryByText('+12.5')).toBeNull();    // Abs change hidden

@@ -3,7 +3,7 @@ import { render, fireEvent } from '@testing-library/react-native';
 import CommodityChartControls from '../components/features/CommodityChartControls';
 
 describe('CommodityChartControls', () => {
-    it('exposes accessible actions and triggers callbacks', () => {
+    const setup = () => {
         const setSelectedRange = jest.fn();
         const setViewMode = jest.fn();
         const onExport = jest.fn();
@@ -24,6 +24,26 @@ describe('CommodityChartControls', () => {
                 onOpenCompare={onOpenCompare}
             />
         );
+
+        return {
+            getByLabelText,
+            setSelectedRange,
+            setViewMode,
+            onExport,
+            onOpenSettings,
+            onOpenCompare,
+        };
+    };
+
+    it('exposes accessible actions and triggers callbacks', () => {
+        const {
+            getByLabelText,
+            setSelectedRange,
+            setViewMode,
+            onExport,
+            onOpenSettings,
+            onOpenCompare,
+        } = setup();
 
         fireEvent.press(getByLabelText('Set time range to 3M'));
         expect(setSelectedRange).toHaveBeenCalledWith('3M');
