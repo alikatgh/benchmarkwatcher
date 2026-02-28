@@ -9,6 +9,7 @@ BW.CompactTable = {
     // Internal state
     chartRegistry: {},
     currentRequest: null,  // AbortController for request cancellation
+    requestSeq: 0,
     defaultColumns: ['commodity', 'trend', 'price', 'chg', 'pct', 'updated'],
     defaultSettings: {
         dataRange: 'ALL',
@@ -98,6 +99,8 @@ BW.CompactTable = {
             this.currentRequest.abort();
         }
         this.currentRequest = new AbortController();
+        this.requestSeq += 1;
+        const activeRequestSeq = this.requestSeq;
 
         // Preserve category filter from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -112,21 +115,15 @@ BW.CompactTable = {
         fetch(apiUrl, { signal: this.currentRequest.signal })
             .then(response => response.json())
             .then(response => {
+                if (activeRequestSeq !== this.requestSeq) return;
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 this.updateTableData(commodities);
-                if (loading) loading.classList.add('hidden');
-                if (tableBody) {
-                    tableBody.style.opacity = '1';
-                    tableBody.style.pointerEvents = '';
-                }
             })
             .catch(error => {
+                if (activeRequestSeq !== this.requestSeq) return;
                 if (error.name === 'AbortError') return;
                 console.error('Failed to fetch data:', error);
-                if (loading) loading.classList.add('hidden');
                 if (tableBody) {
-                    tableBody.style.opacity = '1';
-                    tableBody.style.pointerEvents = '';
                     tableBody.innerHTML = `
                         <tr>
                             <td colspan="6" class="py-8">
@@ -145,6 +142,15 @@ BW.CompactTable = {
                         </tr>
                     `;
                 }
+            })
+            .finally(() => {
+                if (activeRequestSeq !== this.requestSeq) return;
+                if (loading) loading.classList.add('hidden');
+                if (tableBody) {
+                    tableBody.style.opacity = '1';
+                    tableBody.style.pointerEvents = '';
+                }
+                this.currentRequest = null;
             });
     },
 
