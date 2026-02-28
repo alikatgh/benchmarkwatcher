@@ -445,10 +445,16 @@ BW.GridView = {
         const showChangeAbs = document.getElementById('grid-show-change-abs')?.checked ?? true;
         const showDate = document.getElementById('grid-show-date')?.checked ?? true;
         const showUnit = document.getElementById('grid-show-unit')?.checked ?? true;
-        const showFreqBadge = document.getElementById('grid-show-freq-badge')?.checked ?? true;
+        const showFreqBadgeInput = document.getElementById('grid-show-freq-badge');
+        const showFreqBadge = showFreqBadgeInput?.checked ?? true;
         const columns = document.getElementById('grid-columns')?.value || 'auto';
         const sort = document.getElementById('grid-sort')?.value || 'name';
         const cardStyle = document.getElementById('grid-card-style')?.value || 'card';
+        const showFreqBadgeLabel = showFreqBadgeInput?.closest('label') || null;
+
+        if (showFreqBadgeLabel) {
+            showFreqBadgeLabel.style.display = cardStyle === 'minimal' ? 'none' : 'flex';
+        }
 
         // Save settings
         settings.showCategory = showCategory;
@@ -494,35 +500,66 @@ BW.GridView = {
                 // MINIMAL ROW: premium compact row
                 previewCard.style.cssText = `
                     display: grid;
-                    grid-template-columns: ${showCategory ? '86px ' : ''}1fr 115px 110px auto;
+                    grid-template-columns: minmax(0, 1fr) minmax(112px, 124px) minmax(104px, 116px)${showDate ? ' minmax(84px, 96px)' : ''};
                     align-items: center;
-                    gap: 0.75rem;
-                    padding: 0.75rem 0.85rem;
+                    gap: 0.9rem;
+                    padding: 0.85rem 0.95rem;
                     border-radius: 0.75rem;
                     background: var(--theme-surface);
                     border: 1px solid var(--theme-border);
                     box-shadow: 0 1px 0 color-mix(in srgb, var(--theme-border) 65%, transparent);
                 `;
-                if (previewFooter) previewFooter.style.display = showDate ? 'flex' : 'none';
+                if (previewFooter) previewFooter.style.cssText = `order:4; margin:0; padding:0; border:0; display:${showDate ? 'flex' : 'none'}; align-items:center; justify-content:flex-end; gap:0.35rem;`;
 
                 // Category inline
                 if (categoryBadge) {
-                    categoryBadge.style.cssText = 'order: 1; display: flex; flex-direction: column; align-items:flex-start; gap: 2px; margin: 0;';
-                    const catSpan = categoryBadge.querySelector('span');
-                    if (catSpan) catSpan.style.cssText = 'font-size: 10px; font-weight: 700; color: var(--theme-text-muted); letter-spacing:0.05em;';
-                    const upBadge = categoryBadge.querySelector('div');
-                    if (upBadge) upBadge.style.cssText = 'font-size:9px; padding:2px 6px;';
+                    categoryBadge.style.cssText = 'display:none;';
                 }
 
                 // Name inline
-                if (nameEl) nameEl.style.cssText = 'order: 2; font-size: 14px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+                if (nameEl) nameEl.style.cssText = 'order: 1; min-width: 0; font-size: 14px; margin: 0; font-weight: 700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
 
                 // Price and change inline
                 if (priceSection) {
-                    priceSection.style.cssText = 'order: 3; margin: 0; text-align: right;';
+                    priceSection.style.cssText = 'order: 2; margin: 0; text-align: right; min-width:0;';
                 }
                 if (previewChangeRow) {
-                    previewChangeRow.style.cssText = 'order: 4; justify-content: flex-end; margin: 0;';
+                    previewChangeRow.style.cssText = 'order: 3; display:flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:0; margin:0; min-height:0; min-width:0;';
+                    if (previewChangePct && previewChangeAbs) {
+                        const pctVisible = showChangePct;
+                        const absVisible = showChangeAbs;
+                        if (pctVisible && absVisible) {
+                            const absText = (previewChangeAbs.textContent || '').trim();
+                            previewChangePct.title = absText ? `Abs change: ${absText}` : '';
+                            previewChangeAbs.style.display = 'none';
+                        } else if (pctVisible) {
+                            previewChangePct.title = '';
+                            previewChangeAbs.style.display = 'none';
+                        } else if (absVisible) {
+                            previewChangePct.style.display = 'none';
+                            previewChangeAbs.style.display = '';
+                        }
+                    }
+                }
+
+                const previewArrowEl = previewFooter?.querySelector('svg')?.parentElement || null;
+                if (previewArrowEl) {
+                    const previewArrowSvg = previewArrowEl.querySelector('svg');
+                    if (previewArrowSvg) previewArrowSvg.style.display = 'none';
+
+                    let overflowMeta = previewArrowEl.querySelector('.bw-minimal-overflow');
+                    if (!overflowMeta) {
+                        overflowMeta = document.createElement('span');
+                        overflowMeta.className = 'bw-minimal-overflow';
+                        overflowMeta.textContent = '⋯';
+                        previewArrowEl.appendChild(overflowMeta);
+                    }
+                    overflowMeta.style.cssText = 'font-size:16px; line-height:1; opacity:0.75;';
+
+                    const previewCategoryText = previewCategory?.querySelector('span')?.textContent?.trim();
+                    const previewFreq = previewCategory?.querySelector('.freq-badge')?.textContent?.trim();
+                    const previewMeta = [previewCategoryText, previewFreq].filter(Boolean).join(' · ');
+                    previewArrowEl.title = previewMeta || 'Details';
                 }
 
             } else if (cardStyle === 'dense') {
@@ -572,6 +609,9 @@ BW.GridView = {
             // Reset card inline styles
             card.style.cssText = '';
 
+            // Remove minimal-only overflow affordances if previously injected
+            card.querySelectorAll('.bw-minimal-overflow').forEach(node => node.remove());
+
             // Reset all child elements' inline styles
             card.querySelectorAll('*').forEach(el => {
                 el.style.cssText = '';
@@ -580,7 +620,7 @@ BW.GridView = {
 
         if (cardStyle === 'minimal') {
             container.classList.add('gap-2');
-            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(min(460px, 100%), 1fr))';
+            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(min(540px, 100%), 1fr))';
 
             container.querySelectorAll('a.block.group').forEach((link, index) => {
                 const card = link.querySelector('div');
@@ -590,10 +630,10 @@ BW.GridView = {
                 card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/15 dark:border-white/8 relative overflow-hidden';
                 card.style.cssText = `
                     display: grid;
-                    grid-template-columns: ${showCategory ? 'minmax(90px, 120px) ' : ''}minmax(180px, 1fr) minmax(140px, 180px) minmax(130px, 170px) auto;
+                    grid-template-columns: minmax(0, 1fr) minmax(112px, 124px) minmax(104px, 116px)${showDate ? ' minmax(84px, 96px)' : ''};
                     align-items: center;
-                    gap: 0.75rem;
-                    padding: 0.75rem 0.9rem;
+                    gap: 0.9rem;
+                    padding: 0.85rem 1rem;
                     background: ${isEven ? 'var(--theme-surface)' : 'color-mix(in srgb, var(--theme-surface) 65%, transparent)'};
                     box-shadow: 0 1px 0 color-mix(in srgb, var(--theme-border) 65%, transparent);
                     transition: transform 0.15s ease, background 0.2s ease;
@@ -615,25 +655,20 @@ BW.GridView = {
 
                 const categoryRow = card.querySelector('.bw-grid-category-row');
                 if (categoryRow) {
-                    categoryRow.style.cssText = showCategory
-                        ? 'display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; margin:0; order:1;'
-                        : 'display:none;';
-                    const catLabel = categoryRow.querySelector('span');
-                    if (catLabel) {
-                        catLabel.style.cssText = 'font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--theme-text-muted);';
-                    }
-                    const badge = categoryRow.querySelector('.bw-grid-direction-badge');
-                    if (badge) badge.style.cssText = 'font-size:9px; padding:2px 6px; border-radius:9999px;';
+                    categoryRow.style.cssText = 'display:none;';
                 }
+                const categoryLabelText = categoryRow?.querySelector('span')?.textContent?.trim() || '';
+                const freqBadgeText = categoryRow?.querySelector('.freq-badge')?.textContent?.trim() || '';
 
                 const title = card.querySelector('.bw-grid-title');
                 if (title) {
                     title.style.cssText = `
-                        order: 2;
+                        order: 1;
                         margin: 0;
                         font-size: 14px;
                         font-weight: 700;
                         line-height: 1.2;
+                        min-width: 0;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
@@ -643,43 +678,51 @@ BW.GridView = {
 
                 const priceSection = card.querySelector('.bw-grid-price-section');
                 if (priceSection) {
-                    priceSection.style.cssText = 'order:3; margin:0; text-align:right;';
+                    priceSection.style.cssText = 'order:2; margin:0; text-align:right; min-width:0;';
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.style.cssText = 'font-size:18px; font-weight:800; line-height:1;';
+                        priceEl.style.cssText = 'font-size:18px; font-weight:800; line-height:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
                     if (unitEl) {
-                        unitEl.style.cssText = `font-size:11px; margin-top:2px; display:${showUnit ? 'block' : 'none'}; color: var(--theme-text-muted);`;
+                        unitEl.style.cssText = `font-size:11px; margin-top:2px; display:${showUnit ? 'block' : 'none'}; color: var(--theme-text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;`;
                     }
                 }
 
                 const changeSection = card.querySelector('.bw-grid-change');
                 if (changeSection) {
                     changeSection.style.cssText = `
-                        order:4;
+                        order:3;
                         display:${(!showChangePct && !showChangeAbs) ? 'none' : 'flex'};
-                        flex-direction:column;
-                        align-items:flex-end;
+                        flex-direction:row;
+                        align-items:center;
                         justify-content:center;
-                        gap:2px;
+                        gap:0;
                         min-height:0;
+                        min-width:0;
                     `;
 
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     if (changePctEl) {
-                        changePctEl.style.cssText = `font-size:16px; line-height:1; font-weight:800; display:${showChangePct ? 'block' : 'none'};`;
+                        changePctEl.style.cssText = `font-size:16px; line-height:1; font-weight:800; display:${showChangePct ? 'block' : 'none'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;`;
                     }
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changeAbsEl) {
-                        changeAbsEl.style.cssText = `font-size:11px; line-height:1.15; display:${showChangeAbs ? 'block' : 'none'}; color:var(--theme-text-muted);`;
+                        const showOnlyAbs = !showChangePct && showChangeAbs;
+                        changeAbsEl.style.cssText = `font-size:12px; line-height:1.1; display:${showOnlyAbs ? 'block' : 'none'}; color:var(--theme-text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;`;
+                        if (showChangePct && showChangeAbs && changePctEl) {
+                            const absText = (changeAbsEl.textContent || '').trim();
+                            changePctEl.title = absText ? `Abs change: ${absText}` : '';
+                        } else if (changePctEl) {
+                            changePctEl.title = '';
+                        }
                     }
                 }
 
                 const footer = card.querySelector('.bw-grid-footer');
                 if (footer) {
                     footer.style.cssText = `
-                        order:5;
+                        order:4;
                         margin:0;
                         padding:0;
                         border:0;
@@ -687,15 +730,29 @@ BW.GridView = {
                         align-items:center;
                         justify-content:flex-end;
                         gap:0.35rem;
-                        min-width:85px;
+                        min-width:96px;
                     `;
                     const dateEl = footer.querySelector('.bw-grid-date');
                     if (dateEl) {
-                        dateEl.style.cssText = 'font-size:10px; white-space:nowrap; color:var(--theme-text-muted);';
+                        dateEl.style.cssText = 'font-size:10px; white-space:nowrap; color:var(--theme-text-muted); text-align:right;';
                     }
                     const arrowEl = footer.querySelector('svg')?.parentElement;
                     if (arrowEl) {
                         arrowEl.style.cssText = 'display:flex; align-items:center; opacity:0.8;';
+                        const arrowSvg = arrowEl.querySelector('svg');
+                        if (arrowSvg) arrowSvg.style.display = 'none';
+
+                        let overflowMeta = arrowEl.querySelector('.bw-minimal-overflow');
+                        if (!overflowMeta) {
+                            overflowMeta = document.createElement('span');
+                            overflowMeta.className = 'bw-minimal-overflow';
+                            overflowMeta.textContent = '⋯';
+                            arrowEl.appendChild(overflowMeta);
+                        }
+                        overflowMeta.style.cssText = 'font-size:16px; line-height:1; opacity:0.75;';
+
+                        const metadata = [categoryLabelText, freqBadgeText].filter(Boolean).join(' · ');
+                        arrowEl.title = metadata || 'Details';
                     }
                 }
             });
