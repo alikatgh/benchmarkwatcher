@@ -380,7 +380,7 @@ BW.GridView = {
 
         // IMMEDIATELY apply freq badge visibility to server-rendered cards
         const freqBadgeVisible = settings.showFreqBadge !== false;
-        document.querySelectorAll('.freq-badge').forEach(badge => {
+        document.querySelectorAll('#grid-cards-container .freq-badge').forEach(badge => {
             badge.style.display = freqBadgeVisible ? '' : 'none';
         });
 
@@ -416,7 +416,7 @@ BW.GridView = {
         this.saveSettings(settings);
 
         // IMMEDIATELY apply freq badge visibility
-        document.querySelectorAll('.freq-badge').forEach(badge => {
+        document.querySelectorAll('#grid-cards-container .freq-badge').forEach(badge => {
             badge.style.display = showFreqBadge ? '' : 'none';
         });
 
