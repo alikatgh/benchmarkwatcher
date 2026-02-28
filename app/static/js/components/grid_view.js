@@ -569,6 +569,13 @@ BW.GridView = {
                 if (priceSection) priceSection.style.cssText = 'margin-bottom:0.3rem;';
                 if (previewChangeRow) previewChangeRow.style.cssText = 'margin:0; gap:0.4rem;';
                 if (previewFooter) previewFooter.style.display = showDate ? 'flex' : 'none';
+                const previewArrowEl = previewFooter?.querySelector('svg')?.parentElement || null;
+                if (previewArrowEl) {
+                    previewArrowEl.querySelectorAll('.bw-minimal-overflow').forEach(node => node.remove());
+                    const previewArrowSvg = previewArrowEl.querySelector('svg');
+                    if (previewArrowSvg) previewArrowSvg.style.display = '';
+                    previewArrowEl.title = '';
+                }
 
             } else {
                 previewCard.style.cssText = 'padding: 1.25rem; border-radius: 1rem; border: 1px solid color-mix(in srgb, var(--theme-border) 75%, transparent); box-shadow: 0 10px 24px color-mix(in srgb, var(--theme-border) 25%, transparent);';
@@ -577,6 +584,13 @@ BW.GridView = {
                 if (priceSection) priceSection.style.cssText = 'margin-bottom:0.65rem;';
                 if (previewChangeRow) previewChangeRow.style.cssText = 'margin:0; gap:0.5rem;';
                 if (previewFooter) previewFooter.style.display = showDate ? 'flex' : 'none';
+                const previewArrowEl = previewFooter?.querySelector('svg')?.parentElement || null;
+                if (previewArrowEl) {
+                    previewArrowEl.querySelectorAll('.bw-minimal-overflow').forEach(node => node.remove());
+                    const previewArrowSvg = previewArrowEl.querySelector('svg');
+                    if (previewArrowSvg) previewArrowSvg.style.display = '';
+                    previewArrowEl.title = '';
+                }
                 const catSpan = categoryBadge?.querySelector('span');
                 if (catSpan) catSpan.style.cssText = '';
                 const upBadge = categoryBadge?.querySelector('div');
