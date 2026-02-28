@@ -157,6 +157,10 @@ export default function CommodityDetailScreen({ route }: Props) {
         setColorIndex(0);
     }, []);
 
+    const handleRemoveComparison = useCallback((commodityId: string) => {
+        setComparisons(prev => prev.filter(c => c.id !== commodityId));
+    }, []);
+
     // Prepare chart data
     const getChartData = () => {
         const history: any[] | undefined = commodity.history;
@@ -411,6 +415,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                 currentCommodityId={commodity.id}
                 comparisons={comparisons}
                 onToggleCommodity={handleToggleCommodity}
+                onRemoveComparison={handleRemoveComparison}
                 onClearAll={handleClearComparisons}
             />
         </SafeAreaView>
