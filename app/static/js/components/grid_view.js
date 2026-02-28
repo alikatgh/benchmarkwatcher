@@ -14,6 +14,7 @@ window.BW = window.BW || {};
 BW.GridView = {
     // AbortController for request cancellation
     currentRequest: null,
+    requestSeq: 0,
 
     // Escape untrusted text before HTML interpolation
     escapeHtml: function (value) {
@@ -94,6 +95,8 @@ BW.GridView = {
             this.currentRequest.abort();
         }
         this.currentRequest = new AbortController();
+        this.requestSeq += 1;
+        const activeRequestSeq = this.requestSeq;
 
         // Show loading state
         const container = document.getElementById('grid-cards-container');
@@ -124,27 +127,12 @@ BW.GridView = {
             .then(response => {
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 self.updateCards(commodities);
-                if (loading) {
-                    loading.classList.add('hidden');
-                    loading.removeAttribute('aria-busy');
-                }
-                if (container) {
-                    container.style.opacity = '1';
-                    container.style.pointerEvents = '';
-                }
             })
             .catch(error => {
                 if (error.name === 'AbortError') return;
 
                 console.error('Failed to fetch data:', error);
-                if (loading) {
-                    loading.classList.add('hidden');
-                    loading.removeAttribute('aria-busy');
-                }
                 if (!container) return;
-
-                container.style.opacity = '1';
-                container.style.pointerEvents = '';
                 container.innerHTML = '';
 
                 container.appendChild(
@@ -156,6 +144,20 @@ BW.GridView = {
                         onAction: () => self.setDataRange(range)
                     })
                 );
+            })
+            .finally(() => {
+                // Only clear loading state for the latest request.
+                if (activeRequestSeq !== self.requestSeq) return;
+
+                if (loading) {
+                    loading.classList.add('hidden');
+                    loading.removeAttribute('aria-busy');
+                }
+                if (container) {
+                    container.style.opacity = '1';
+                    container.style.pointerEvents = '';
+                }
+                self.currentRequest = null;
             });
     },
 

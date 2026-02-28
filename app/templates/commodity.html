@@ -365,7 +365,7 @@
                 <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
                     <span id="date-range-display">Showing all data</span>
                 </div>
-                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+                <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto overflow-y-visible scrollbar-hide -mx-1 px-1">
                     <button onclick="resetZoom()" aria-label="Reset chart zoom to default view"
                         class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,7 +378,7 @@
                     </button>
                     <div class="relative shrink-0" id="download-menu-container">
 
-                        <button onclick="toggleDownloadMenu()" id="download-menu-btn" aria-label="Download options" aria-expanded="false" aria-haspopup="true"
+                        <button onclick="toggleDownloadMenu()" id="download-menu-btn" aria-label="Download options" aria-expanded="false" aria-haspopup="menu" aria-controls="download-menu"
                             class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -389,28 +389,28 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="download-menu" class="hidden absolute right-0 bottom-full mb-1.5 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1.5 w-48 bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
-                            <button onclick="exportDownload('csv')" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                        <div id="download-menu" role="menu" aria-labelledby="download-menu-btn" class="hidden absolute right-0 bottom-full mb-1.5 sm:bottom-auto sm:top-full sm:mb-0 sm:mt-1.5 w-48 bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
+                            <button onclick="exportDownload('csv')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                                 <span>CSV <span class="text-brand-black-60 dark:text-white/50 font-normal">(data)</span></span>
                             </button>
-                            <button onclick="exportDownload('excel')" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                            <button onclick="exportDownload('excel')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                 <span>Excel <span class="text-brand-black-60 dark:text-white/50 font-normal">(data)</span></span>
                             </button>
                             <div class="border-t border-brand-black-60/10 dark:border-white/5 my-1"></div>
-                            <button onclick="exportDownload('image')" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                            <button onclick="exportDownload('image')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                                 <span>Image <span class="text-brand-black-60 dark:text-white/50 font-normal">(graph)</span></span>
                             </button>
-                            <button onclick="exportDownload('pptx')" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
+                            <button onclick="exportDownload('pptx')" role="menuitem" class="w-full text-left px-4 py-2.5 text-xs font-medium text-brand-black-80 dark:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors flex items-center gap-3">
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 <span>PowerPoint <span class="text-brand-black-60 dark:text-white/50 font-normal">(graph)</span></span>
                             </button>
                         </div>
                     </div>
                     <div class="relative shrink-0" id="compare-menu-container">
-                        <button onclick="toggleCompareMenu()" id="compare-menu-btn" aria-label="Compare commodities"
+                        <button onclick="toggleCompareMenu()" id="compare-menu-btn" aria-label="Compare commodities" aria-expanded="false" aria-haspopup="menu" aria-controls="compare-menu"
                             class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -418,7 +418,7 @@
                             </svg>
                             Compare
                         </button>
-                        <div id="compare-menu" class="hidden absolute right-0 bottom-full mb-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 overflow-hidden">
+                        <div id="compare-menu" role="menu" aria-labelledby="compare-menu-btn" class="hidden absolute right-0 bottom-full mb-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/10 rounded-xl shadow-lg z-50 overflow-hidden">
                             <div class="p-2 border-b border-brand-black-60/10 dark:border-white/5">
                                 <input type="text" id="compare-search" placeholder="Search commodities..."
                                     oninput="filterCompareList(this.value)"
