@@ -69,7 +69,7 @@ describe('CompareModal accessibility interactions', () => {
         ...overrides,
     });
 
-    const renderModal = (
+    const renderSubject = (
         propOverrides: Partial<React.ComponentProps<typeof CompareModal>> = {},
         contextOverrides: Record<string, unknown> = {}
     ) => {
@@ -97,7 +97,7 @@ describe('CompareModal accessibility interactions', () => {
     it('supports removing selected comparison via accessibility-labeled tag', async () => {
         const onRemoveComparison = jest.fn();
 
-        const { getAllByLabelText } = renderModal({
+        const { getAllByLabelText } = renderSubject({
             comparisons: [{ id: 'gold', name: 'Gold', color: '#e11d48', history: [] }],
             onRemoveComparison,
         });
@@ -121,7 +121,7 @@ describe('CompareModal accessibility interactions', () => {
             onClearAll,
         };
 
-        const { getByLabelText, getByDisplayValue, queryByDisplayValue, rerender } = renderModal(sharedProps);
+        const { getByLabelText, getByDisplayValue, queryByDisplayValue, rerender } = renderSubject(sharedProps);
 
         await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalledTimes(1));
 
@@ -141,7 +141,7 @@ describe('CompareModal accessibility interactions', () => {
             .mockRejectedValueOnce(new Error('network'))
             .mockResolvedValueOnce([goldCommodity]);
 
-        const { getByLabelText, findByText, queryByText } = renderModal();
+        const { getByLabelText, findByText, queryByText } = renderSubject();
 
         expect(await findByText('Unable to load commodity list. Please try again.')).toBeTruthy();
 
@@ -156,7 +156,7 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getByLabelText } = renderModal({
+        const { getByLabelText } = renderSubject({
             comparisons: fullComparisons,
             onToggleCommodity,
         });
@@ -175,7 +175,7 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getAllByLabelText } = renderModal({
+        const { getAllByLabelText } = renderSubject({
             comparisons: fullComparisons,
             onToggleCommodity,
         });
@@ -196,7 +196,7 @@ describe('CompareModal accessibility interactions', () => {
 
         const onClose = jest.fn();
         const onRemoveComparison = jest.fn();
-        const { getByLabelText, rerender } = renderModal({
+        const { getByLabelText, rerender } = renderSubject({
             onClose,
             comparisons: fullComparisons,
             onToggleCommodity,
@@ -229,7 +229,7 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getByLabelText } = renderModal({
+        const { getByLabelText } = renderSubject({
             comparisons: fullComparisons,
             onToggleCommodity,
         });
@@ -250,7 +250,7 @@ describe('CompareModal accessibility interactions', () => {
 
         const onToggleCommodity = jest.fn();
 
-        const { getByLabelText, getAllByLabelText } = renderModal({
+        const { getByLabelText, getAllByLabelText } = renderSubject({
             comparisons: fullComparisons,
             onToggleCommodity,
         });
