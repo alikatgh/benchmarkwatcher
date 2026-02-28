@@ -79,3 +79,13 @@ EXPO_PUBLIC_API_URL=https://your-api-domain.example eas build -p android --profi
 	- Run `npm run eas:login` (developer/maintainer only, not app users).
 - Preflight still failing
 	- Re-run `npm run preflight:release` and follow each printed `Fix:` line.
+
+## Quick unblock (current state)
+
+```bash
+cd mobile
+npm run api:set -- https://YOUR_REAL_API_DOMAIN
+npm run eas:login
+npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value https://YOUR_REAL_API_DOMAIN
+npm run preflight:release
+```
