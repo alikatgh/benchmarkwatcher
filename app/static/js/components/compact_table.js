@@ -24,7 +24,17 @@ BW.CompactTable = {
 
     // Get merged settings
     getSettings: function () {
-        const stored = JSON.parse(localStorage.getItem('table-settings') || '{}');
+        if (window.BW && BW.Settings && typeof BW.Settings.getTableSettings === 'function') {
+            return BW.Settings.getTableSettings();
+        }
+
+        let stored = {};
+        try {
+            stored = JSON.parse(localStorage.getItem('table-settings') || '{}') || {};
+        } catch (e) {
+            stored = {};
+        }
+
         return {
             ...this.defaultSettings,
             ...stored,
@@ -34,7 +44,16 @@ BW.CompactTable = {
 
     // Save settings to localStorage
     saveSettings: function (settings) {
-        localStorage.setItem('table-settings', JSON.stringify(settings));
+        if (window.BW && BW.Settings && typeof BW.Settings.saveTableSettings === 'function') {
+            BW.Settings.saveTableSettings(settings);
+            return;
+        }
+
+        try {
+            localStorage.setItem('table-settings', JSON.stringify(settings));
+        } catch (e) {
+            // noop
+        }
     },
 
     // Escape untrusted text before HTML interpolation
@@ -955,7 +974,15 @@ BW.CompactTable = {
         if (!confirm('Reset all table settings to defaults? This cannot be undone.')) {
             return;
         }
-        localStorage.removeItem('table-settings');
+        if (window.BW && BW.Settings && typeof BW.Settings.resetTableSettings === 'function') {
+            BW.Settings.resetTableSettings();
+        } else {
+            try {
+                localStorage.removeItem('table-settings');
+            } catch (e) {
+                // noop
+            }
+        }
         location.reload();
     },
 
@@ -1092,12 +1119,10 @@ document.addEventListener('DOMContentLoaded', function () {
 function toggleFreqBadge() {
     const checkbox = document.getElementById('table-show-freq-badge');
     const showBadge = checkbox?.checked ?? true;
-    // Save to localStorage
-    try {
-        const settings = JSON.parse(localStorage.getItem('table-settings') || '{}');
-        settings.showFreqBadge = showBadge;
-        localStorage.setItem('table-settings', JSON.stringify(settings));
-    } catch (e) { }
+    const settings = BW.CompactTable.getSettings();
+    settings.showFreqBadge = showBadge;
+    BW.CompactTable.saveSettings(settings);
+
     // Toggle visibility of all freq badges in table
     document.querySelectorAll('#table-body .freq-badge').forEach(badge => {
         badge.style.display = showBadge ? '' : 'none';

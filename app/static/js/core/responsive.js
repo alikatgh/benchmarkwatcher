@@ -62,6 +62,11 @@ BW.Responsive = (function () {
 
     function isFirstVisit() {
         // First visit = no stored view-mode preference
+        if (window.BW && BW.Settings && typeof BW.Settings._getRaw === 'function') {
+            const key = (BW.Settings.KEYS && BW.Settings.KEYS.VIEW_MODE) || 'view-mode';
+            return BW.Settings._getRaw(key) === null;
+        }
+
         try {
             return localStorage.getItem('view-mode') === null;
         } catch (e) {
