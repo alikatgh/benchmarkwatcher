@@ -15,6 +15,98 @@ BW.GridView = {
     // AbortController for request cancellation
     currentRequest: null,
     requestSeq: 0,
+    activeMinimalPopover: null,
+    activeMinimalPopoverTrigger: null,
+    minimalPopoverDocPointerHandler: null,
+    minimalPopoverDocKeyHandler: null,
+
+    closeMinimalMetaPopover: function () {
+        if (this.activeMinimalPopover) {
+            this.activeMinimalPopover.remove();
+            this.activeMinimalPopover = null;
+        }
+        if (this.minimalPopoverDocPointerHandler) {
+            document.removeEventListener('pointerdown', this.minimalPopoverDocPointerHandler, true);
+            this.minimalPopoverDocPointerHandler = null;
+        }
+        if (this.minimalPopoverDocKeyHandler) {
+            document.removeEventListener('keydown', this.minimalPopoverDocKeyHandler, true);
+            this.minimalPopoverDocKeyHandler = null;
+        }
+        this.activeMinimalPopoverTrigger = null;
+    },
+
+    openMinimalMetaPopover: function (triggerEl, metadataText) {
+        if (!triggerEl || !metadataText) return;
+
+        const isSameTriggerOpen = this.activeMinimalPopover && this.activeMinimalPopoverTrigger === triggerEl;
+        this.closeMinimalMetaPopover();
+        if (isSameTriggerOpen) return;
+
+        const popover = document.createElement('div');
+        popover.className = 'bw-minimal-meta-popover';
+        popover.setAttribute('role', 'dialog');
+        popover.setAttribute('aria-label', 'Benchmark metadata');
+        popover.style.cssText = `
+            position: fixed;
+            z-index: 60;
+            max-width: 220px;
+            padding: 0.45rem 0.55rem;
+            border-radius: 0.55rem;
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            box-shadow: 0 8px 18px color-mix(in srgb, var(--theme-border) 35%, transparent);
+            color: var(--theme-text);
+            font-size: 11px;
+            line-height: 1.35;
+            pointer-events: auto;
+        `;
+        popover.textContent = metadataText;
+
+        document.body.appendChild(popover);
+
+        const triggerRect = triggerEl.getBoundingClientRect();
+        const popoverRect = popover.getBoundingClientRect();
+        const margin = 8;
+        let left = triggerRect.right - popoverRect.width;
+        let top = triggerRect.bottom + margin;
+
+        if (left < margin) left = margin;
+        if (left + popoverRect.width > window.innerWidth - margin) {
+            left = window.innerWidth - popoverRect.width - margin;
+        }
+        if (top + popoverRect.height > window.innerHeight - margin) {
+            top = triggerRect.top - popoverRect.height - margin;
+        }
+        if (top < margin) top = margin;
+
+        popover.style.left = `${left}px`;
+        popover.style.top = `${top}px`;
+
+        this.activeMinimalPopover = popover;
+        this.activeMinimalPopoverTrigger = triggerEl;
+
+        this.minimalPopoverDocPointerHandler = (event) => {
+            const clickTarget = event.target;
+            const inPopover = this.activeMinimalPopover?.contains(clickTarget);
+            const inTrigger = this.activeMinimalPopoverTrigger?.contains(clickTarget);
+            if (!inPopover && !inTrigger) {
+                this.closeMinimalMetaPopover();
+            }
+        };
+
+        this.minimalPopoverDocKeyHandler = (event) => {
+            if (event.key === 'Escape') {
+                this.closeMinimalMetaPopover();
+            }
+        };
+
+        setTimeout(() => {
+            if (!this.activeMinimalPopover) return;
+            document.addEventListener('pointerdown', this.minimalPopoverDocPointerHandler, true);
+            document.addEventListener('keydown', this.minimalPopoverDocKeyHandler, true);
+        }, 0);
+    },
 
     // Escape untrusted text before HTML interpolation
     escapeHtml: function (value) {
@@ -438,6 +530,7 @@ BW.GridView = {
     // Update grid settings from controls - REAL DATA VISIBILITY CHANGES
     updateSettings: function () {
         const settings = this.getSettings();
+        this.closeMinimalMetaPopover();
 
         // Read all visibility toggles
         const showCategory = document.getElementById('grid-show-category')?.checked ?? true;
@@ -764,9 +857,27 @@ BW.GridView = {
                             arrowEl.appendChild(overflowMeta);
                         }
                         overflowMeta.style.cssText = 'font-size:16px; line-height:1; opacity:0.75;';
+                        overflowMeta.tabIndex = 0;
+                        overflowMeta.setAttribute('role', 'button');
+                        overflowMeta.setAttribute('aria-label', 'Show metadata');
+                        overflowMeta.style.cursor = 'pointer';
 
                         const metadata = [categoryLabelText, freqBadgeText].filter(Boolean).join(' · ');
                         arrowEl.title = metadata || 'Details';
+                        overflowMeta.onclick = (event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            BW.GridView.openMinimalMetaPopover(overflowMeta, metadata || 'Details');
+                        };
+                        overflowMeta.onkeydown = (event) => {
+                            if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                BW.GridView.openMinimalMetaPopover(overflowMeta, metadata || 'Details');
+                            } else if (event.key === 'Escape') {
+                                BW.GridView.closeMinimalMetaPopover();
+                            }
+                        };
                     }
                 }
             });
