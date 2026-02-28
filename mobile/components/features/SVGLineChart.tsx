@@ -39,6 +39,7 @@ interface SVGLineChartProps {
     fillColor?: string;       // RGB override for the fill
     fillOpacity?: number;
     gridColor?: string;
+    currency?: string;
 }
 
 function formatYLabel(v: number): string {
@@ -103,6 +104,7 @@ export default function SVGLineChart({
     fillColor,
     fillOpacity,
     gridColor,
+    currency,
 }: SVGLineChartProps) {
     if (!data || data.length === 0) return null;
 
@@ -226,6 +228,34 @@ export default function SVGLineChart({
         }
         return point.price;
     };
+
+    const formatDateDisplay = (rawDate?: string): string => {
+        if (!rawDate) return '';
+        const parsed = new Date(rawDate);
+        if (Number.isNaN(parsed.getTime())) return rawDate;
+        return parsed.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+        });
+    };
+
+    const formatValueDisplay = (value: number): string => {
+        if (viewMode === 'percent') return `${value.toFixed(2)}%`;
+        const valueLabel = formatYLabel(value);
+        return currency ? `${valueLabel} ${currency}` : valueLabel;
+    };
+
+    const selectedPrimaryDelta = selectedPoint ? (() => {
+        const idx = selectedPoint.index;
+        if (idx <= 0) return null;
+        const previous = data[idx - 1]?.value;
+        const current = data[idx]?.value;
+        if (previous === undefined || current === undefined) return null;
+        const change = current - previous;
+        const changePct = previous !== 0 ? (change / previous) * 100 : null;
+        return { change, changePct };
+    })() : null;
 
     // Selection info bar data
     const selectionInfo = selectedPoint ? (() => {
@@ -428,10 +458,25 @@ export default function SVGLineChart({
                         pointerEvents="none"
                     >
                         <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
-                            {formatYLabel(selectedPoint.value)}
+                            {formatValueDisplay(selectedPoint.value)}
                         </Text>
+                        {selectedPrimaryDelta && (
+                            <Text
+                                style={{
+                                    color: selectedPrimaryDelta.change >= 0 ? '#34d399' : '#f87171',
+                                    fontSize: 10,
+                                    marginTop: 1,
+                                }}
+                            >
+                                {selectedPrimaryDelta.change >= 0 ? '+' : ''}
+                                {viewMode === 'percent'
+                                    ? `${selectedPrimaryDelta.change.toFixed(2)}pp`
+                                    : `${formatYLabel(selectedPrimaryDelta.change)}${currency ? ` ${currency}` : ''}`}
+                                {selectedPrimaryDelta.changePct !== null && ` (${selectedPrimaryDelta.changePct >= 0 ? '+' : ''}${selectedPrimaryDelta.changePct.toFixed(1)}%)`}
+                            </Text>
+                        )}
                         <Text style={{ color: 'rgba(203,213,225,0.9)', fontSize: 10, marginTop: 1 }}>
-                            {selectedPoint.date}
+                            {formatDateDisplay(selectedPoint.date)}
                         </Text>
                     </View>
                 )}
@@ -468,7 +513,7 @@ export default function SVGLineChart({
             ) : (
                 <View style={{ paddingHorizontal: 16, paddingVertical: 6 }}>
                     <Text style={{ fontSize: 11, color: 'rgba(148,163,184,0.7)', textAlign: 'center' }}>
-                        Touch chart to select a data point
+                        Tap chart to inspect a point
                     </Text>
                 </View>
             )}

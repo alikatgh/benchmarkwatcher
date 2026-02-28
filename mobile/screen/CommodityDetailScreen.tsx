@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
-import { View, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -214,6 +214,10 @@ export default function CommodityDetailScreen({ route }: Props) {
     };
     const stats = getStats();
 
+    useEffect(() => {
+        setSelectedPoint(null);
+    }, [selectedRange, viewMode, comparisons.length]);
+
     const handleCopyPrice = async () => {
         await Clipboard.setStringAsync(`${commodity.price} ${commodity.currency}`);
     };
@@ -222,10 +226,17 @@ export default function CommodityDetailScreen({ route }: Props) {
         if (format === 'image') {
             if (chartRef.current && chartRef.current.capture) {
                 try {
+                    const canShare = await Sharing.isAvailableAsync();
+                    if (!canShare) {
+                        Alert.alert('Sharing unavailable', 'Sharing is not available on this device.');
+                        return;
+                    }
                     const uri = await chartRef.current.capture();
                     await Sharing.shareAsync(uri, { dialogTitle: 'Share Chart', mimeType: 'image/png' });
+                    Alert.alert('Share opened', 'The native share sheet has been opened.');
                 } catch (err) {
                     console.error('Failed to capture and share chart:', err);
+                    Alert.alert('Export failed', 'Unable to prepare chart image for sharing.');
                 }
             }
         } else if (format === 'csv') {
@@ -233,7 +244,12 @@ export default function CommodityDetailScreen({ route }: Props) {
             const header = `Date,Price (${commodity.currency || 'USD'})`;
             const rows = rawSlice.map((p: any) => `${p.date},${p.price}`);
             const csv = [header, ...rows].join('\n');
-            await Clipboard.setStringAsync(csv);
+            try {
+                await Clipboard.setStringAsync(csv);
+                Alert.alert('CSV copied', 'Chart data CSV has been copied to your clipboard.');
+            } catch {
+                Alert.alert('Export failed', 'Unable to copy CSV data to clipboard.');
+            }
         }
     };
 
@@ -302,6 +318,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                     fillColor={chartSettings.chartFillColor}
                     fillOpacity={chartSettings.chartFillOpacity}
                     gridColor={chartSettings.chartGridColor}
+                    currency={commodity.currency}
                 />
 
                 <CommodityChartControls

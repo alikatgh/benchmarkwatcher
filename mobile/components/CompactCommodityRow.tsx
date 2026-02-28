@@ -11,7 +11,7 @@ interface Props {
 export default function CompactCommodityRow({ commodity, onPress }: Props) {
     const {
         showCategory, showChangePercent, showChangeAbs,
-        showUnit, fontScale, density,
+        showUnit, showDate, fontScale, density,
         getMarketColors
     } = useContext(SettingsContext);
 
@@ -25,6 +25,24 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
     // Style adjustments based on Font Scale
     const titleText = fontScale === 'small' ? 'text-xs' : fontScale === 'large' ? 'text-base' : 'text-sm';
     const metaText = fontScale === 'small' ? 'text-[9px]' : fontScale === 'large' ? 'text-xs' : 'text-[10px]';
+
+    const isDaily = commodity.is_daily === true;
+    const frequencyTag = isDaily ? 'D' : 'M';
+
+    const trendDirection = (() => {
+        const history = commodity.history;
+        if (!history || history.length < 2) {
+            if (commodity.change > 0) return { icon: '▲', label: 'Up' };
+            if (commodity.change < 0) return { icon: '▼', label: 'Down' };
+            return { icon: '→', label: 'Flat' };
+        }
+        const last = history[history.length - 1]?.price;
+        const prev = history[history.length - 2]?.price;
+        if (typeof last !== 'number' || typeof prev !== 'number') return { icon: '→', label: 'Flat' };
+        if (last > prev) return { icon: '▲', label: 'Up' };
+        if (last < prev) return { icon: '▼', label: 'Down' };
+        return { icon: '→', label: 'Flat' };
+    })();
 
     return (
         <TouchableOpacity
@@ -43,9 +61,14 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
                         {commodity.name}
                     </Text>
                     {showCategory && (
-                        <Text className={`text-slate-500 dark:text-slate-400 mt-0.5 ${metaText}`}>
-                            {commodity.category}
-                        </Text>
+                        <View className="flex-row items-center mt-0.5 gap-1.5">
+                            <Text className={`text-slate-500 dark:text-slate-400 ${metaText}`}>
+                                {commodity.category}
+                            </Text>
+                            <Text className={`font-bold text-slate-400 dark:text-slate-500 ${metaText}`}>
+                                {frequencyTag}
+                            </Text>
+                        </View>
                     )}
                 </View>
             </View>
@@ -60,6 +83,14 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
                         {commodity.currency} / {commodity.unit}
                     </Text>
                 )}
+                {showDate && (
+                    <Text className={`text-slate-400 dark:text-slate-500 mt-0.5 ${metaText}`}>
+                        {commodity.date}
+                    </Text>
+                )}
+                <Text className={`mt-0.5 ${metaText} ${isUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
+                    {trendDirection.icon} Trend {trendDirection.label}
+                </Text>
             </View>
 
             {/* Right Box: Change */}
