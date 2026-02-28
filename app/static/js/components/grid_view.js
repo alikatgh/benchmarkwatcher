@@ -36,8 +36,15 @@ BW.GridView = {
         this.activeMinimalPopoverTrigger = null;
     },
 
-    openMinimalMetaPopover: function (triggerEl, metadataText) {
-        if (!triggerEl || !metadataText) return;
+    openMinimalMetaPopover: function (triggerEl, metadata) {
+        if (!triggerEl || !metadata) return;
+
+        const category = typeof metadata === 'object' ? String(metadata.category || '').trim() : '';
+        const frequency = typeof metadata === 'object' ? String(metadata.frequency || '').trim() : '';
+        const fallbackText = typeof metadata === 'object'
+            ? String(metadata.fallback || '').trim()
+            : metadata.trim();
+        if (!category && !frequency && !fallbackText) return;
 
         const isSameTriggerOpen = this.activeMinimalPopover && this.activeMinimalPopoverTrigger === triggerEl;
         this.closeMinimalMetaPopover();
@@ -61,7 +68,20 @@ BW.GridView = {
             line-height: 1.35;
             pointer-events: auto;
         `;
-        popover.textContent = metadataText;
+        if (category || frequency) {
+            const categoryLine = document.createElement('div');
+            categoryLine.style.cssText = 'font-weight:700; font-size:11px;';
+            categoryLine.textContent = category || 'Unknown category';
+
+            const freqLine = document.createElement('div');
+            freqLine.style.cssText = 'margin-top:2px; opacity:0.85;';
+            freqLine.textContent = `Frequency: ${frequency || 'Unknown'}`;
+
+            popover.appendChild(categoryLine);
+            popover.appendChild(freqLine);
+        } else {
+            popover.textContent = fallbackText;
+        }
 
         document.body.appendChild(popover);
 
@@ -867,13 +887,21 @@ BW.GridView = {
                         overflowMeta.onclick = (event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            BW.GridView.openMinimalMetaPopover(overflowMeta, metadata || 'Details');
+                            BW.GridView.openMinimalMetaPopover(overflowMeta, {
+                                category: categoryLabelText,
+                                frequency: freqBadgeText,
+                                fallback: metadata || 'Details'
+                            });
                         };
                         overflowMeta.onkeydown = (event) => {
                             if (event.key === 'Enter' || event.key === ' ') {
                                 event.preventDefault();
                                 event.stopPropagation();
-                                BW.GridView.openMinimalMetaPopover(overflowMeta, metadata || 'Details');
+                                BW.GridView.openMinimalMetaPopover(overflowMeta, {
+                                    category: categoryLabelText,
+                                    frequency: freqBadgeText,
+                                    fallback: metadata || 'Details'
+                                });
                             } else if (event.key === 'Escape') {
                                 BW.GridView.closeMinimalMetaPopover();
                             }
