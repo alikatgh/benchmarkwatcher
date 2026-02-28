@@ -1136,7 +1136,8 @@ BW.Commodity = {
                 self.allCommoditiesList = (Array.isArray(data) ? data : [])
                     .filter(function (c) { return c.id !== self.commodityId; })
                     .map(function (c) { return { id: c.id, name: c.name, category: c.category }; });
-                self.renderCompareList('');
+                var liveQuery = document.getElementById('compare-search')?.value || '';
+                self.renderCompareList(liveQuery);
             })
             .catch(function () { self.allCommoditiesList = []; });
     },
