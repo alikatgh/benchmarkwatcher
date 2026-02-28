@@ -1,19 +1,15 @@
 <a href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}" class="block group">
-    <div class="bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden"
+    <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden"
         style="box-shadow: var(--card-shadow);">
 
-        <!-- Subtle gradient overlay on hover -->
-        <div
-            class="absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <div class="bw-grid-gradient absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         </div>
 
-        <!-- Category badge -->
-        <div class="flex items-center justify-between mb-3">
+        <div class="bw-grid-category-row flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
                 <span
                     class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">{{
                     commodity.category|upper }}</span>
-                <!-- D/M frequency badge -->
                 {% set is_daily = commodity.is_daily %}
                 <span
                     class="text-[9px] font-bold px-1.5 py-0.5 rounded font-ui freq-badge
@@ -22,46 +18,43 @@
                     {% if is_daily %}D{% else %}M{% endif %}
                 </span>
             </div>
-            <div class="text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui"
+            <div class="bw-grid-direction-badge text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui"
                 style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.change >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %}); border: 1px solid var({% if commodity.change >= 0 %}--color-up-border{% else %}--color-down-border{% endif %});"
                 aria-label="{% if commodity.change >= 0 %}Price up{% else %}Price down{% endif %}">
                 {% if commodity.change >= 0 %}▲{% else %}▼{% endif %} {{ commodity.change_percent | round(2) | abs }}%
             </div>
         </div>
 
-        <!-- Commodity name -->
         <h3
-            class="text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2">
+            class="bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2">
             {{ commodity.name }}</h3>
 
-        <!-- Price display -->
-        <div class="flex items-end justify-between gap-4 font-ui">
+        <div class="bw-grid-price-section flex items-end justify-between gap-4 font-ui">
             <div>
-                <div class="text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
+                <div class="bw-grid-price text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none">
                     {{ commodity.price | round(2) }}
                 </div>
-                <div class="text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
+                <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
                     {{ commodity.currency }} / {{ commodity.unit }}
                 </div>
             </div>
-            <div class="text-right">
-                <div class="text-sm font-bold"
+            <div class="bw-grid-change text-right">
+                <div class="bw-grid-change-pct text-sm font-bold"
                     style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
                     title="Observation-to-observation percentage change">
                     {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
                     commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
                 </div>
-                <div class="text-[10px] text-brand-black-60 dark:text-brand-black-60/60 mt-0.5">
+                <div class="bw-grid-change-abs text-[10px] text-brand-black-60 dark:text-brand-black-60/60 mt-0.5">
                     {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
                     commodity.daily_change|default(commodity.change) | round(2) }} {{ commodity.currency }}
                 </div>
             </div>
         </div>
 
-        <!-- Footer with date -->
         <div
-            class="mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
-            <div class="text-[10px] text-brand-black-60 dark:text-brand-black-60/80">
+            class="bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
+            <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-brand-black-60/80">
                 {{ commodity.date }}
             </div>
             <div
