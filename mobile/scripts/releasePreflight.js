@@ -6,6 +6,10 @@ const root = process.cwd();
 const blockers = [];
 const warnings = [];
 
+function addBlocker(message, fix) {
+  blockers.push({ message, fix });
+}
+
 function runCheck(label, cmd) {
   try {
     execSync(cmd, { stdio: 'pipe' });
@@ -28,7 +32,10 @@ function checkPlaceholders(filePath, patterns) {
   const content = readFileSync(abs, 'utf8');
   for (const pattern of patterns) {
     if (pattern.test(content)) {
-      blockers.push(`Placeholder value detected in ${filePath}`);
+      addBlocker(
+        `Placeholder value detected in ${filePath}`,
+        "Replace placeholder values with your production values before building"
+      );
       return;
     }
   }
@@ -38,13 +45,13 @@ console.log('=== Mobile Release Preflight ===');
 
 // 1) Build/test checks
 if (!runCheck('TypeScript check', 'npx tsc --noEmit')) {
-  blockers.push('TypeScript check failed');
+  addBlocker('TypeScript check failed', 'Run: npm run typecheck');
 }
 if (!runCheck('Jest test suite', 'npm run test:ci --silent')) {
-  blockers.push('Test suite failed');
+  addBlocker('Test suite failed', 'Run: npm run test:ci');
 }
 if (!runCheck('Expo public config resolves', 'npx expo config --type public')) {
-  blockers.push('Expo config failed to resolve');
+  addBlocker('Expo config failed to resolve', 'Run: npx expo config --type public');
 }
 
 // 2) Placeholder checks
@@ -57,13 +64,19 @@ checkPlaceholders('PLAY_STORE_METADATA_TEMPLATE.md', [/your-domain\.example/i, /
 try {
   const whoami = execSync('npx eas whoami', { stdio: 'pipe' }).toString().trim();
   if (!whoami || /not logged in/i.test(whoami)) {
-    blockers.push('EAS CLI is not logged in (developer publishing account)');
+    addBlocker(
+      'EAS CLI is not logged in (developer publishing account)',
+      'Run: npm run eas:login'
+    );
     console.log('❌ EAS login status');
   } else {
     console.log(`✅ EAS login status (${whoami})`);
   }
 } catch {
-  blockers.push('EAS CLI is not logged in (developer publishing account)');
+  addBlocker(
+    'EAS CLI is not logged in (developer publishing account)',
+    'Run: npm run eas:login'
+  );
   console.log('❌ EAS login status');
 }
 
@@ -75,7 +88,14 @@ if (warnings.length) {
 
 if (blockers.length) {
   console.log('Blockers:');
-  for (const blocker of blockers) console.log(`- ${blocker}`);
+  for (const blocker of blockers) {
+    console.log(`- ${blocker.message}`);
+    if (blocker.fix) console.log(`  Fix: ${blocker.fix}`);
+  }
+  console.log('\nNext steps:');
+  console.log('- Set production API URL in app.json/.env.example and EAS secret');
+  console.log('- Authenticate Expo maintainer account');
+  console.log('- Re-run: npm run preflight:release');
   process.exitCode = 1;
 } else {
   console.log('No blockers found. Ready for build/submit.');
