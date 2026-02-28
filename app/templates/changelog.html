@@ -13,6 +13,46 @@
         </p>
     </header>
 
+    <!-- Version 1.2.1 -->
+    <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
+        <div class="flex items-center gap-3 mb-4">
+            <span
+                class="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold font-ui">
+                UPDATE
+            </span>
+            <time class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">
+                February 28, 2026
+            </time>
+        </div>
+
+        <h2 class="text-xl font-bold text-brand-black-80 dark:text-white font-serif mb-4">
+            v1.2.1 — Detail Change-Period Controls &amp; Stability Updates
+        </h2>
+
+        <div class="prose prose-sm dark:prose-invert font-ui text-brand-black-60 dark:text-brand-black-60/90">
+            <p class="mb-4">
+                Improved commodity detail insights with selectable return windows, persisted preferences, and targeted
+                test stability fixes.
+            </p>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">Added</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Commodity detail change-period selector: <strong>Prev obs</strong>, <strong>~30 obs</strong>, <strong>~1 year</strong></li>
+                <li>Context label showing selected comparison window and as-of date</li>
+                <li>Persisted detail change-period preference via AsyncStorage</li>
+                <li>New mobile test coverage for detail header period switching</li>
+            </ul>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">Improved</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Period-aware change calculations now use derived stats when available</li>
+                <li>Absolute change display remains anchored to base observation direction</li>
+                <li>Commodity typing expanded for derived stats and frequency metadata</li>
+                <li>Web test harness stability improved by stubbing shared <code>escapeHtml</code> utility</li>
+            </ul>
+        </div>
+    </article>
+
     <!-- Version 1.2.0 -->
     <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
         <div class="flex items-center gap-3 mb-4">
