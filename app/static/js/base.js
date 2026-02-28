@@ -19,7 +19,6 @@ window.BW = window.BW || {};
 (function (exports, doc) {
     const HTML = doc.documentElement;
     const MARKET_BTN_SELECTOR = '.market-btn';
-    let _scrollHideBound = false;
 
     // Safe localStorage access
     function safeGet(key) {
@@ -142,8 +141,8 @@ window.BW = window.BW || {};
     function initScrollHideNav() {
         const strip = doc.getElementById('category-strip');
         if (!strip) return;
-        if (_scrollHideBound) return;
-        _scrollHideBound = true;
+        if (window.__bwBaseScrollHideBound) return;
+        window.__bwBaseScrollHideBound = true;
 
         let lastScrollY = 0;
         let ticking = false;
@@ -185,12 +184,15 @@ window.BW = window.BW || {};
     initTheme();
     initMarketTheme();
 
-    // Run DOM-ready initialization
-    if (doc.readyState === 'loading') {
-        doc.addEventListener('DOMContentLoaded', initOnReady);
-    } else {
-        // already ready
-        initOnReady();
+    // Run DOM-ready initialization (bind once across duplicate script loads)
+    if (!window.__bwBaseDomReadyBound) {
+        window.__bwBaseDomReadyBound = true;
+        if (doc.readyState === 'loading') {
+            doc.addEventListener('DOMContentLoaded', initOnReady);
+        } else {
+            // already ready
+            initOnReady();
+        }
     }
 })(window.BW, document);
 

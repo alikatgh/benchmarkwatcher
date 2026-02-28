@@ -23,6 +23,9 @@ describe('BW.Base initOnReady lifecycle idempotency', () => {
       get: () => 'complete'
     });
 
+    delete window.__bwBaseDomReadyBound;
+    delete window.__bwBaseScrollHideBound;
+
     jest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => {
       cb();
       return 1;
@@ -52,5 +55,22 @@ describe('BW.Base initOnReady lifecycle idempotency', () => {
     // One click should persist exactly once (no duplicated click listeners)
     const writes = setItemSpy.mock.calls.filter(([key]) => key === 'market-theme');
     expect(writes.length).toBe(1);
+  });
+
+  test('binds DOM-ready init only once across duplicate script loads', () => {
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
+
+    const addEventSpy = jest.spyOn(window, 'addEventListener');
+
+    loadBaseScript();
+    loadBaseScript();
+
+    document.dispatchEvent(new Event('DOMContentLoaded'));
+
+    const scrollAdds = addEventSpy.mock.calls.filter(([eventName]) => eventName === 'scroll');
+    expect(scrollAdds.length).toBe(1);
   });
 });
