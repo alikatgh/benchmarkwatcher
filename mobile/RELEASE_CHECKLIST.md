@@ -22,6 +22,7 @@
 - [ ] Complete Apple App Privacy questionnaire
 - [ ] Complete Google Play Data Safety form
 - [ ] Confirm third-party SDK disclosures (Expo/React Native libraries)
+- [ ] Confirm store listing states: no end-user account/login required
 
 ## 4) Technical Validation
 - [ ] `npm run typecheck` passes
