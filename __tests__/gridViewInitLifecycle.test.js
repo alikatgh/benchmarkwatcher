@@ -20,6 +20,11 @@ describe('Grid view bootstrap lifecycle', () => {
 
     delete window.__bwGridViewDomReadyBound;
 
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'loading'
+    });
+
     global.BW = {
       GridView: undefined,
       Settings: {
@@ -43,5 +48,16 @@ describe('Grid view bootstrap lifecycle', () => {
     document.dispatchEvent(new Event('DOMContentLoaded'));
 
     expect(initSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('initializes immediately when script loads after DOM is ready', () => {
+    Object.defineProperty(document, 'readyState', {
+      configurable: true,
+      get: () => 'complete'
+    });
+
+    loadGridViewScript();
+
+    expect(document.getElementById('grid-range-1W').getAttribute('role')).toBe('radio');
   });
 });
