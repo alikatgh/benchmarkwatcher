@@ -141,6 +141,10 @@ BW.Responsive = (function () {
     function setupResizeObserver() {
         if (typeof ResizeObserver === 'undefined') return;
 
+        if (_resizeObserver && typeof _resizeObserver.disconnect === 'function') {
+            _resizeObserver.disconnect();
+        }
+
         _resizeObserver = new ResizeObserver(() => {
             updateDeviceClass();
             applyColumnPriority();
