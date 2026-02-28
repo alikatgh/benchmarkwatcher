@@ -22,7 +22,7 @@ describe('CommodityCard', () => {
 
     let mockContext = createMockSettingsContext();
 
-    const renderCard = (contextOverrides = {}) => {
+    const renderSubject = (contextOverrides = {}) => {
         return renderWithSettings(
             <CommodityCard commodity={mockCommodity} onPress={mockOnPress} />,
             { ...mockContext, ...contextOverrides }
@@ -35,7 +35,7 @@ describe('CommodityCard', () => {
     });
 
     it('renders basic commodity information', () => {
-        const { getByText } = renderCard();
+        const { getByText } = renderSubject();
 
         expect(getByText('Gold')).toBeTruthy();
         expect(getByText('1,850.50')).toBeTruthy();
@@ -47,7 +47,7 @@ describe('CommodityCard', () => {
     });
 
     it('triggers onPress with correct commodity when pressed', () => {
-        const { getByText } = renderCard();
+        const { getByText } = renderSubject();
 
         fireEvent.press(getByText('Gold'));
         expect(mockOnPress).toHaveBeenCalledWith(mockCommodity);
@@ -55,7 +55,7 @@ describe('CommodityCard', () => {
     });
 
     it('hides fields when disabled in SettingsContext', () => {
-        const { queryByText } = renderCard({
+        const { queryByText } = renderSubject({
             showCategory: false,
             showChangeAbs: false,
             showDate: false

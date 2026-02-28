@@ -22,7 +22,7 @@ describe('CompactCommodityRow', () => {
 
     let mockContext = { ...createMockSettingsContext(), density: 'compact' as const };
 
-    const renderRow = (contextOverrides = {}) => {
+    const renderSubject = (contextOverrides = {}) => {
         return renderWithSettings(
             <CompactCommodityRow commodity={mockCommodity} onPress={mockOnPress} />,
             { ...mockContext, ...contextOverrides }
@@ -39,7 +39,7 @@ describe('CompactCommodityRow', () => {
     });
 
     it('renders correctly and handles press', () => {
-        const { getByText } = renderRow();
+        const { getByText } = renderSubject();
 
         expect(getByText('Silver')).toBeTruthy();
         expect(getByText('24.50')).toBeTruthy();
@@ -50,7 +50,7 @@ describe('CompactCommodityRow', () => {
     });
 
     it('hides columns when their display setting is false', () => {
-        const { queryByText } = renderRow({
+        const { queryByText } = renderSubject({
             showUnit: false,
             showChangePercent: false
         });
