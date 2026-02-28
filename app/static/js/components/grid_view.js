@@ -492,31 +492,31 @@ BW.GridView = {
             const categoryBadge = previewCategory;
 
             if (cardStyle === 'minimal') {
-                // MINIMAL ROW: Horizontal layout like dashboard
+                // MINIMAL ROW: premium compact row
                 previewCard.style.cssText = `
                     display: grid;
-                    grid-template-columns: ${showCategory ? '50px' : ''} 1fr 100px 80px;
+                    grid-template-columns: ${showCategory ? '86px ' : ''}1fr 115px 110px;
                     align-items: center;
                     gap: 0.75rem;
-                    padding: 0.5rem 0.75rem;
-                    border-radius: 0.5rem;
+                    padding: 0.75rem 0.85rem;
+                    border-radius: 0.75rem;
                     background: var(--theme-surface);
                     border: 1px solid var(--theme-border);
-                    font-family: ui-monospace, SFMono-Regular, monospace;
+                    box-shadow: 0 1px 0 color-mix(in srgb, var(--theme-border) 65%, transparent);
                 `;
-                if (previewFooter) previewFooter.style.display = 'none';
+                if (previewFooter) previewFooter.style.display = showDate ? 'flex' : 'none';
 
                 // Category inline
                 if (categoryBadge) {
-                    categoryBadge.style.cssText = 'order: 1; display: flex; flex-direction: column; gap: 2px; margin: 0;';
+                    categoryBadge.style.cssText = 'order: 1; display: flex; flex-direction: column; align-items:flex-start; gap: 2px; margin: 0;';
                     const catSpan = categoryBadge.querySelector('span');
-                    if (catSpan) catSpan.style.cssText = 'font-size: 9px; font-weight: 600; color: var(--theme-text-muted); text-transform: capitalize;';
+                    if (catSpan) catSpan.style.cssText = 'font-size: 10px; font-weight: 700; color: var(--theme-text-muted); letter-spacing:0.05em;';
                     const upBadge = categoryBadge.querySelector('div');
-                    if (upBadge) upBadge.style.display = 'none';
+                    if (upBadge) upBadge.style.cssText = 'font-size:9px; padding:2px 6px;';
                 }
 
                 // Name inline
-                if (nameEl) nameEl.style.cssText = 'order: 2; font-size: 13px; margin: 0; font-weight: 600;';
+                if (nameEl) nameEl.style.cssText = 'order: 2; font-size: 14px; margin: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
 
                 // Price and change inline
                 if (priceSection) {
@@ -527,20 +527,20 @@ BW.GridView = {
                 }
 
             } else if (cardStyle === 'dense') {
-                // DENSE: Compact card
-                previewCard.style.cssText = 'padding: 0.75rem; border-radius: 0.75rem;';
-                if (nameEl) nameEl.style.cssText = 'font-size: 14px; margin-bottom: 0.5rem;';
-                if (categoryBadge) categoryBadge.style.cssText = '';
-                if (priceSection) priceSection.style.cssText = '';
-                if (previewChangeRow) previewChangeRow.style.cssText = '';
+                previewCard.style.cssText = 'padding: 0.75rem; border-radius: 0.75rem; border: 1px solid var(--theme-border); box-shadow:none;';
+                if (nameEl) nameEl.style.cssText = 'font-size: 12px; margin-bottom: 0.35rem; line-height:1.2;';
+                if (categoryBadge) categoryBadge.style.cssText = showCategory ? 'margin-bottom:0.35rem; gap:0.35rem;' : 'display:none;';
+                if (priceSection) priceSection.style.cssText = 'margin-bottom:0.3rem;';
+                if (previewChangeRow) previewChangeRow.style.cssText = 'margin:0; gap:0.4rem;';
+                if (previewFooter) previewFooter.style.display = showDate ? 'flex' : 'none';
 
             } else {
-                // FULL CARD: Reset to default
-                previewCard.style.cssText = '';
-                if (nameEl) nameEl.style.cssText = '';
-                if (categoryBadge) categoryBadge.style.cssText = '';
-                if (priceSection) priceSection.style.cssText = '';
-                if (previewChangeRow) previewChangeRow.style.cssText = '';
+                previewCard.style.cssText = 'padding: 1.25rem; border-radius: 1rem; border: 1px solid color-mix(in srgb, var(--theme-border) 75%, transparent); box-shadow: 0 10px 24px color-mix(in srgb, var(--theme-border) 25%, transparent);';
+                if (nameEl) nameEl.style.cssText = 'font-size: 16px; margin-bottom: 0.8rem; line-height:1.2;';
+                if (categoryBadge) categoryBadge.style.cssText = showCategory ? 'margin-bottom:0.8rem;' : 'display:none;';
+                if (priceSection) priceSection.style.cssText = 'margin-bottom:0.65rem;';
+                if (previewChangeRow) previewChangeRow.style.cssText = 'margin:0; gap:0.5rem;';
+                if (previewFooter) previewFooter.style.display = showDate ? 'flex' : 'none';
                 const catSpan = categoryBadge?.querySelector('span');
                 if (catSpan) catSpan.style.cssText = '';
                 const upBadge = categoryBadge?.querySelector('div');
@@ -580,261 +580,206 @@ BW.GridView = {
         });
 
         if (cardStyle === 'minimal') {
-            // MINIMAL: Dense, terminal-style reference rows
-            container.classList.add('gap-0');
-            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(min(500px, 100%), 1fr))';
-
-            // Add table header style to container
-            container.style.borderRadius = '0.5rem';
-            container.style.overflow = 'hidden';
-            container.style.border = '1px solid var(--theme-border)';
+            container.classList.add('gap-2');
+            container.style.gridTemplateColumns = 'repeat(auto-fit, minmax(min(460px, 100%), 1fr))';
 
             container.querySelectorAll('a.block.group').forEach((link, index) => {
                 const card = link.querySelector('div');
                 if (!card) return;
 
-                // Financial terminal row styling
                 const isEven = index % 2 === 0;
-                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface border border-brand-black-60/15 dark:border-white/8 relative overflow-hidden';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/15 dark:border-white/8 relative overflow-hidden';
                 card.style.cssText = `
                     display: grid;
-                    grid-template-columns: ${showCategory ? 'minmax(50px,70px)' : ''} 1fr minmax(80px,140px) minmax(60px,100px);
+                    grid-template-columns: ${showCategory ? 'minmax(90px, 120px) ' : ''}minmax(180px, 1fr) minmax(140px, 180px) minmax(130px, 170px) auto;
                     align-items: center;
-                    gap: 1rem;
-                    padding: 0.625rem 1rem;
-                    background: ${isEven ? 'var(--theme-surface)' : 'transparent'};
-                    border-bottom: 1px solid var(--theme-border);
-                    transition: background 0.15s;
-                    font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+                    gap: 0.75rem;
+                    padding: 0.75rem 0.9rem;
+                    background: ${isEven ? 'var(--theme-surface)' : 'color-mix(in srgb, var(--theme-surface) 65%, transparent)'};
+                    box-shadow: 0 1px 0 color-mix(in srgb, var(--theme-border) 65%, transparent);
+                    transition: transform 0.15s ease, background 0.2s ease;
                 `;
 
-                // Hover effect
-                link.onmouseenter = () => card.style.background = 'color-mix(in srgb, var(--theme-accent) 8%, transparent)';
-                link.onmouseleave = () => card.style.background = isEven ? 'var(--theme-surface)' : 'transparent';
+                link.onmouseenter = () => {
+                    card.style.background = 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))';
+                    card.style.transform = 'translateY(-1px)';
+                };
+                link.onmouseleave = () => {
+                    card.style.background = isEven
+                        ? 'var(--theme-surface)'
+                        : 'color-mix(in srgb, var(--theme-surface) 65%, transparent)';
+                    card.style.transform = '';
+                };
 
-                // Hide footer and overlay
-                const gradientOverlay = card.querySelector('.bw-grid-gradient') || card.querySelector('.absolute');
-                const footer = card.querySelector('.bw-grid-footer') || card.querySelector('.mt-5');
+                const gradientOverlay = card.querySelector('.bw-grid-gradient');
                 if (gradientOverlay) gradientOverlay.style.display = 'none';
-                if (footer) footer.style.display = 'none';
 
-                // CATEGORY - Compact sector tag
-                const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('.flex.items-center.justify-between.mb-3');
+                const categoryRow = card.querySelector('.bw-grid-category-row');
                 if (categoryRow) {
-                    if (!showCategory) {
-                        categoryRow.style.display = 'none';
-                    } else {
-                        categoryRow.style.cssText = `
-                            display: flex;
-                            flex-direction: column;
-                            align-items: flex-start;
-                            gap: 2px;
-                            margin: 0;
-                            order: 1;
-                        `;
-                        // Style the category label
-                        const catLabel = categoryRow.querySelector('span');
-                        if (catLabel) {
-                            catLabel.style.cssText = `
-                                font-size: 9px;
-                                font-weight: 600;
-                                letter-spacing: 0.02em;
-                                text-transform: capitalize;
-                                color: var(--theme-text-muted);
-                                font-family: system-ui, sans-serif;
-                            `;
-                        }
-                        // Hide the UP/DOWN badge in minimal view
-                        const badge = categoryRow.querySelector('.bw-grid-direction-badge');
-                        if (badge) badge.style.display = 'none';
+                    categoryRow.style.cssText = showCategory
+                        ? 'display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:2px; margin:0; order:1;'
+                        : 'display:none;';
+                    const catLabel = categoryRow.querySelector('span');
+                    if (catLabel) {
+                        catLabel.style.cssText = 'font-size:10px; font-weight:700; letter-spacing:0.06em; color:var(--theme-text-muted);';
                     }
+                    const badge = categoryRow.querySelector('.bw-grid-direction-badge');
+                    if (badge) badge.style.cssText = 'font-size:9px; padding:2px 6px; border-radius:9999px;';
                 }
 
-                // TICKER/NAME - Financial style
-                const title = card.querySelector('.bw-grid-title') || card.querySelector('h3');
+                const title = card.querySelector('.bw-grid-title');
                 if (title) {
                     title.style.cssText = `
                         order: 2;
                         margin: 0;
-                        font-size: 13px;
-                        font-weight: 600;
+                        font-size: 14px;
+                        font-weight: 700;
+                        line-height: 1.2;
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        color: var(--theme-text);
-                        font-family: system-ui, -apple-system, sans-serif;
-                        letter-spacing: -0.01em;
+                        min-height: 0;
                     `;
                 }
 
-                // PRICE - Monospace, right-aligned
-                const priceSection = card.querySelector('.bw-grid-price-section') || card.querySelector('.flex.items-end.justify-between');
+                const priceSection = card.querySelector('.bw-grid-price-section');
                 if (priceSection) {
-                    priceSection.style.cssText = `
-                        order: 3;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: flex-end;
-                        gap: 0;
-                        text-align: right;
-                    `;
-
-                    const priceEl = priceSection.querySelector('.bw-grid-price') || priceSection.querySelector('.text-3xl, .text-2xl');
+                    priceSection.style.cssText = 'order:3; margin:0; text-align:right;';
+                    const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.style.cssText = `
-                            font-size: 13px;
-                            font-weight: 700;
-                            color: var(--theme-text);
-                            font-family: ui-monospace, SFMono-Regular, monospace;
-                            letter-spacing: -0.02em;
-                        `;
+                        priceEl.style.cssText = 'font-size:18px; font-weight:800; line-height:1;';
                     }
-
-                    const unitEl = priceSection.querySelector('.bw-grid-unit') || priceSection.querySelector('.text-sm.font-medium, .text-xs.font-medium');
+                    const unitEl = priceSection.querySelector('.bw-grid-unit');
                     if (unitEl) {
-                        unitEl.style.cssText = `
-                            font-size: 9px;
-                            color: var(--theme-text-muted);
-                            font-family: system-ui, sans-serif;
-                            display: ${showUnit ? 'block' : 'none'};
-                        `;
+                        unitEl.style.cssText = `font-size:11px; margin-top:2px; display:${showUnit ? 'block' : 'none'}; color: var(--theme-text-muted);`;
                     }
                 }
 
-                // CHANGE - Color-coded, prominent
-                const changeSection = card.querySelector('.bw-grid-change') || card.querySelector('.text-right');
+                const changeSection = card.querySelector('.bw-grid-change');
                 if (changeSection) {
                     changeSection.style.cssText = `
-                        order: 4;
-                        display: ${(!showChangePct && !showChangeAbs) ? 'none' : 'flex'};
-                        flex-direction: column;
-                        align-items: flex-end;
-                        gap: 0;
-                        text-align: right;
-                        min-width: 80px;
+                        order:4;
+                        display:${(!showChangePct && !showChangeAbs) ? 'none' : 'flex'};
+                        flex-direction:column;
+                        align-items:flex-end;
+                        justify-content:center;
+                        gap:2px;
+                        min-height:0;
                     `;
 
-                    const changePctEl = changeSection.querySelector('.bw-grid-change-pct') || changeSection.querySelector('.text-xl, .text-sm.font-bold');
+                    const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     if (changePctEl) {
-                        // Get the actual value to determine color - use CSS variables for theme support
-                        const text = changePctEl.textContent || '';
-                        const isPositive = text.includes('+') || (!text.includes('-') && parseFloat(text) > 0);
-                        const isNegative = text.includes('-') || parseFloat(text) < 0;
-                        const color = isPositive ? 'var(--color-up)' : isNegative ? 'var(--color-down)' : 'var(--theme-text-muted)';
-
-                        changePctEl.style.cssText = `
-                            font-size: 13px;
-                            font-weight: 700;
-                            color: ${color};
-                            font-family: ui-monospace, SFMono-Regular, monospace;
-                            display: ${showChangePct ? 'block' : 'none'};
-                        `;
+                        changePctEl.style.cssText = `font-size:16px; line-height:1; font-weight:800; display:${showChangePct ? 'block' : 'none'};`;
                     }
-
-                    const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs') || changeSection.querySelector('.text-xs, .text-\[10px\]');
+                    const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changeAbsEl) {
-                        const text = changeAbsEl.textContent || '';
-                        const isPositive = text.includes('+');
-                        const isNegative = text.includes('-');
-                        const color = isPositive ? 'var(--color-up)' : isNegative ? 'var(--color-down)' : 'var(--theme-text-muted)';
+                        changeAbsEl.style.cssText = `font-size:11px; line-height:1.15; display:${showChangeAbs ? 'block' : 'none'}; color:var(--theme-text-muted);`;
+                    }
+                }
 
-                        changeAbsEl.style.cssText = `
-                            font-size: 10px;
-                            color: ${color};
-                            font-family: ui-monospace, SFMono-Regular, monospace;
-                            opacity: 0.8;
-                            display: ${showChangeAbs ? 'block' : 'none'};
-                        `;
+                const footer = card.querySelector('.bw-grid-footer');
+                if (footer) {
+                    footer.style.cssText = `
+                        order:5;
+                        margin:0;
+                        padding:0;
+                        border:0;
+                        display:${showDate ? 'flex' : 'none'};
+                        align-items:center;
+                        justify-content:flex-end;
+                        gap:0.35rem;
+                        min-width:85px;
+                    `;
+                    const dateEl = footer.querySelector('.bw-grid-date');
+                    if (dateEl) {
+                        dateEl.style.cssText = 'font-size:10px; white-space:nowrap; color:var(--theme-text-muted);';
+                    }
+                    const arrowEl = footer.querySelector('svg')?.parentElement;
+                    if (arrowEl) {
+                        arrowEl.style.cssText = 'display:flex; align-items:center; opacity:0.8;';
                     }
                 }
             });
         } else if (cardStyle === 'dense') {
-            // DENSE: Compact grid with smaller cards, more columns
-            container.classList.add('grid-cols-2', 'sm:grid-cols-3', 'md:grid-cols-4', 'lg:grid-cols-5', 'gap-3');
+            container.classList.add('grid-cols-2', 'sm:grid-cols-3', 'lg:grid-cols-4', 'xl:grid-cols-5', 'gap-3');
 
             container.querySelectorAll('a.block.group').forEach(link => {
                 const card = link.querySelector('div');
                 if (!card) return;
 
-                // Compact card styling
-                card.className = 'bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 group-hover:shadow-md group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition-all duration-200';
-                card.style.cssText = 'padding: 0.75rem; height: 100%; display: flex; flex-direction: column;';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface rounded-lg border border-brand-black-60/12 dark:border-white/8 h-full relative overflow-hidden transition-all duration-150';
+                card.style.cssText = 'padding: 0.7rem; box-shadow: none;';
 
-                // Hide gradient overlay
-                const gradientOverlay = card.querySelector('.bw-grid-gradient') || card.querySelector('.absolute');
+                const gradientOverlay = card.querySelector('.bw-grid-gradient');
                 if (gradientOverlay) gradientOverlay.style.display = 'none';
 
-                // Category - compact inline
-                const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('.flex.items-center.justify-between.mb-3');
+                const categoryRow = card.querySelector('.bw-grid-category-row');
                 if (categoryRow) {
-                    categoryRow.style.cssText = `display: ${showCategory ? 'flex' : 'none'}; margin-bottom: 0.5rem; gap: 0.5rem;`;
+                    categoryRow.style.cssText = `display:${showCategory ? 'flex' : 'none'}; margin-bottom:0.35rem; gap:0.35rem; align-items:center;`;
                     const catSpan = categoryRow.querySelector('span');
-                    if (catSpan) catSpan.style.cssText = 'font-size: 9px; text-transform: capitalize;';
+                    if (catSpan) catSpan.style.cssText = 'font-size:9px; letter-spacing:0.05em;';
                     const badge = categoryRow.querySelector('.bw-grid-direction-badge');
-                    if (badge) badge.style.cssText = 'font-size: 8px; padding: 2px 6px;';
+                    if (badge) badge.style.cssText = 'font-size:8px; padding:2px 5px;';
                 }
 
-                // Title - smaller
-                const title = card.querySelector('.bw-grid-title') || card.querySelector('h3');
+                const title = card.querySelector('.bw-grid-title');
                 if (title) {
-                    title.className = 'text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif leading-tight';
-                    title.style.cssText = 'font-size: 14px; margin-bottom: 0.5rem;';
+                    title.className = 'bw-grid-title text-xs font-bold text-brand-black-80 dark:text-white mb-1.5 font-serif leading-tight line-clamp-2 min-h-[2rem]';
+                    title.style.cssText = '';
                 }
 
-                // Price section - compact
                 const priceSection = card.querySelector('.bw-grid-price-section');
                 if (priceSection) {
-                    priceSection.style.cssText = 'display: block; flex: 1;';
-
+                    priceSection.style.cssText = 'margin-bottom:0.3rem;';
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.style.cssText = 'font-size: 18px; font-weight: 800;';
+                        priceEl.className = 'bw-grid-price tabular-nums text-lg font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.style.cssText = '';
                     }
-
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
                     if (unitEl) {
-                        unitEl.style.cssText = `font-size: 9px; color: var(--theme-text-muted); display: ${showUnit ? 'block' : 'none'};`;
+                        unitEl.style.cssText = `font-size:10px; margin-top:2px; display:${showUnit ? 'block' : 'none'};`;
                     }
                 }
 
-                // Change section (sibling of priceSection in new layout)
                 const changeSection = card.querySelector('.bw-grid-change');
                 if (changeSection) {
-                    changeSection.style.cssText = `display: ${(!showChangePct && !showChangeAbs) ? 'none' : 'flex'}; gap: 0.25rem;`;
+                    changeSection.className = 'bw-grid-change flex items-center gap-1 font-ui';
+                    changeSection.style.cssText = (!showChangePct && !showChangeAbs) ? 'display:none;' : 'min-height:0;';
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changePctEl) {
-                        changePctEl.style.cssText = `font-size: 13px; font-weight: 700; display: ${showChangePct ? 'inline' : 'none'};`;
+                        changePctEl.style.cssText = `font-size:12px; font-weight:800; display:${showChangePct ? 'inline' : 'none'};`;
                     }
                     if (changeAbsEl) {
-                        changeAbsEl.style.cssText = `font-size: 9px; display: ${showChangeAbs ? 'inline' : 'none'};`;
+                        changeAbsEl.style.cssText = `font-size:10px; display:${showChangeAbs ? 'inline' : 'none'}; color:var(--theme-text-muted);`;
                     }
                 }
 
-                // Footer - compact
-                const footer = card.querySelector('.bw-grid-footer') || card.querySelector('.mt-5');
+                const footer = card.querySelector('.bw-grid-footer');
                 if (footer) {
-                    footer.style.cssText = `display: ${showDate ? 'flex' : 'none'}; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--theme-border);`;
-                    const dateEl = footer.querySelector('.bw-grid-date') || footer.querySelector('.text-xs, .text-\[10px\]');
-                    if (dateEl) dateEl.style.cssText = 'font-size: 9px;';
+                    footer.style.cssText = `display:${showDate ? 'flex' : 'none'}; margin-top:0.4rem; padding-top:0.35rem; border-top:1px solid var(--theme-border); align-items:center; justify-content:space-between;`;
+                    const dateEl = footer.querySelector('.bw-grid-date');
+                    if (dateEl) dateEl.style.cssText = 'font-size:9px;';
+                    const arrowEl = footer.querySelector('svg')?.parentElement;
+                    if (arrowEl) arrowEl.style.cssText = 'opacity:0.75;';
                 }
             });
         } else {
-            // FULL CARDS: Standard responsive grid
             if (columns === 'auto') {
-                container.classList.add('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'gap-6');
+                container.classList.add('grid-cols-1', 'md:grid-cols-2', 'xl:grid-cols-3', 'gap-7');
             } else if (columns === '2') {
-                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'gap-6');
+                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'gap-7');
             } else if (columns === '3') {
-                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'md:grid-cols-3', 'gap-6');
+                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'xl:grid-cols-3', 'gap-7');
             } else if (columns === '4') {
-                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4', 'gap-6');
+                container.classList.add('grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-6');
             }
             container.querySelectorAll('a.block.group').forEach(link => {
                 const card = link.querySelector('div');
                 if (!card) return;
-                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden';
-                card.style.boxShadow = 'var(--card-shadow)';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden';
+                card.style.boxShadow = '0 10px 24px color-mix(in srgb, var(--theme-border) 25%, transparent)';
 
                 // Restore gradient overlay
                 const gradientOverlay = card.querySelector('.bw-grid-gradient') || card.querySelector('.absolute');
@@ -846,31 +791,31 @@ BW.GridView = {
                 // Restore category row
                 const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('div:nth-child(2)');
                 if (categoryRow && categoryRow.querySelector('span')) {
-                    categoryRow.className = 'flex items-center justify-between mb-3';
+                    categoryRow.className = 'flex items-center justify-between mb-4';
                     categoryRow.style.cssText = showCategory ? '' : 'display: none;';
                 }
 
                 // Restore commodity name
                 const commodityName = card.querySelector('.bw-grid-title') || card.querySelector('h3');
                 if (commodityName) {
-                    commodityName.className = 'bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-3 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[2.5rem]';
+                    commodityName.className = 'bw-grid-title text-lg font-bold text-brand-black-80 dark:text-white mb-4 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[3.1rem]';
                     commodityName.style.cssText = '';
                 }
 
                 // Restore price section
                 const priceSection = card.querySelector('.bw-grid-price-section');
                 if (priceSection) {
-                    priceSection.className = 'bw-grid-price-section font-ui mb-2';
+                    priceSection.className = 'bw-grid-price-section font-ui mb-3';
                     priceSection.style.cssText = '';
 
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = 'bw-grid-price tabular-nums text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.className = 'bw-grid-price tabular-nums text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
                         priceEl.style.cssText = '';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
                     if (unitEl) {
-                        unitEl.className = 'bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5';
+                        unitEl.className = 'bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1';
                         unitEl.style.cssText = showUnit ? '' : 'display: none;';
                     }
                 }
@@ -878,17 +823,17 @@ BW.GridView = {
                 // Restore change row (sibling of priceSection)
                 const changeSection = card.querySelector('.bw-grid-change');
                 if (changeSection) {
-                    changeSection.className = 'bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]';
+                    changeSection.className = 'bw-grid-change flex items-baseline gap-2 font-ui min-h-[1.7rem]';
                     changeSection.style.cssText = (!showChangePct && !showChangeAbs) ? 'display: none;' : '';
 
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     if (changePctEl) {
-                        changePctEl.className = 'bw-grid-change-pct tabular-nums text-sm font-bold';
+                        changePctEl.className = 'bw-grid-change-pct tabular-nums text-lg font-bold';
                         changePctEl.style.cssText = showChangePct ? '' : 'display: none;';
                     }
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changeAbsEl) {
-                        changeAbsEl.className = 'bw-grid-change-abs tabular-nums text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate';
+                        changeAbsEl.className = 'bw-grid-change-abs tabular-nums text-sm text-brand-black-60 dark:text-brand-black-60/60 truncate';
                         changeAbsEl.style.cssText = showChangeAbs ? '' : 'display: none;';
                     }
                 }
@@ -896,7 +841,7 @@ BW.GridView = {
                 // Restore footer
                 const footer = card.querySelector('.bw-grid-footer') || card.lastElementChild;
                 if (footer && footer.querySelector('svg')) {
-                    footer.className = 'bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui';
+                    footer.className = 'bw-grid-footer mt-4 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui';
                     footer.style.cssText = showDate ? '' : 'display: none;';
 
                     const dateEl = footer.querySelector('.bw-grid-date');
