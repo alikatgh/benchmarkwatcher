@@ -828,10 +828,12 @@ BW.Commodity = {
     // Show settings tab
     showChartSettingsTab: function (tabName) {
         this.activeSettingsTab = tabName;
+        const modal = document.getElementById('chart-settings-modal');
+        const scopeRoot = modal || document;
         // Hide all content
-        document.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
+        scopeRoot.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
         // Deactivate all tabs
-        document.querySelectorAll('.chart-settings-tab').forEach(t => {
+        scopeRoot.querySelectorAll('.chart-settings-tab').forEach(t => {
             t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white';
         });
         // Show selected content
@@ -846,7 +848,9 @@ BW.Commodity = {
 
     syncThemePresetUI: function () {
         const activeTheme = String(this.chartSettings.chartTheme || '');
-        document.querySelectorAll('.theme-preset').forEach(btn => {
+        const modal = document.getElementById('chart-settings-modal');
+        const scopeRoot = modal || document;
+        scopeRoot.querySelectorAll('.theme-preset').forEach(btn => {
             const isActive = btn.dataset.theme === activeTheme;
             if (isActive) {
                 btn.classList.add('border-brand-oxford', 'dark:border-brand-teal');
