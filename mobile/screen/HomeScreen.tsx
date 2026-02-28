@@ -129,6 +129,20 @@ export default function HomeScreen() {
         return 'Sort Options';
     };
 
+    const renderErrorBanner = () => {
+        if (!error || data.length === 0) return null;
+        return (
+            <View className="mx-4 mt-2 mb-3 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/30 px-3 py-2">
+                <Text className="text-xs font-semibold text-rose-700 dark:text-rose-300">
+                    {error}
+                </Text>
+                <Text className="text-[11px] mt-1 text-rose-600 dark:text-rose-400">
+                    Showing last available data. Pull to refresh or retry.
+                </Text>
+            </View>
+        );
+    };
+
     const renderHeader = () => (
         <View className="pt-6 pb-2">
             <View className="px-4 mb-4 flex-row justify-between items-center">
@@ -255,6 +269,12 @@ export default function HomeScreen() {
                 {renderHeader()}
                 <View className="flex-1 items-center justify-center">
                     <Text className="text-rose-500 font-bold px-4 text-center">{error}</Text>
+                    <TouchableOpacity
+                        onPress={handleRefresh}
+                        className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2"
+                    >
+                        <Text className="font-bold text-white dark:text-slate-900">Retry</Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
@@ -280,6 +300,14 @@ export default function HomeScreen() {
                     )
                 )}
                 ListHeaderComponent={renderHeader}
+                ListEmptyComponent={
+                    <View className="px-4 pt-10 items-center">
+                        <Text className="text-slate-500 dark:text-slate-400 text-center">
+                            No commodities found for the selected filters.
+                        </Text>
+                    </View>
+                }
+                ListFooterComponent={renderErrorBanner}
                 refreshControl={
                     <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
                 }
