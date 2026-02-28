@@ -56,8 +56,35 @@ function detectApiUrlFromEnv() {
   return value;
 }
 
+function validateEnvFile() {
+  const envPath = join(root, '.env');
+  if (!existsSync(envPath)) {
+    warnings.push('Missing .env file (optional for local dev, recommended for release setup)');
+    return;
+  }
+
+  const content = readFileSync(envPath, 'utf8');
+  const match = content.match(/^EXPO_PUBLIC_API_URL=(.+)$/m);
+  if (!match) {
+    addBlocker(
+      'EXPO_PUBLIC_API_URL is missing in .env',
+      'Add EXPO_PUBLIC_API_URL=https://YOUR_REAL_API_DOMAIN to .env'
+    );
+    return;
+  }
+
+  const value = match[1].trim().replace(/^['"]|['"]$/g, '');
+  if (!/^https:\/\//i.test(value)) {
+    addBlocker(
+      'EXPO_PUBLIC_API_URL in .env must start with https://',
+      'Set EXPO_PUBLIC_API_URL=https://YOUR_REAL_API_DOMAIN in .env'
+    );
+  }
+}
+
 console.log('=== Mobile Release Preflight ===');
 detectedApiUrl = detectApiUrlFromEnv();
+validateEnvFile();
 
 // 1) Build/test checks
 if (!runCheck('TypeScript check', 'npx tsc --noEmit')) {
@@ -132,4 +159,9 @@ if (blockers.length) {
   process.exitCode = 1;
 } else {
   console.log('No blockers found. Ready for build/submit.');
+  console.log('\nReady commands:');
+  console.log('- npm run eas:build:ios');
+  console.log('- npm run eas:build:android');
+  console.log('- npm run eas:submit:ios');
+  console.log('- npm run eas:submit:android');
 }
