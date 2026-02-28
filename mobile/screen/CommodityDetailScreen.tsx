@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useRef, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, Dimensions, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -163,8 +163,7 @@ export default function CommodityDetailScreen({ route }: Props) {
         setComparisons(prev => prev.filter(c => c.id !== commodityId));
     }, []);
 
-    // Prepare chart data
-    const getChartData = () => {
+    const chartDataResult = useMemo(() => {
         const history: any[] | undefined = commodity.history;
         if (!history || history.length === 0) return null;
 
@@ -180,27 +179,26 @@ export default function CommodityDetailScreen({ route }: Props) {
 
         const rawSlice = history
             .slice(-pointsCount)
-            .filter((p: any) => p && typeof p.price === 'number' && !isNaN(p.price));
+            .filter((point: any) => point && typeof point.price === 'number' && !isNaN(point.price));
 
         if (rawSlice.length === 0) return null;
 
         const basePrice = rawSlice[0].price;
         const labelStep = Math.ceil(rawSlice.length / 6);
 
-        const chartPoints: ChartPoint[] = rawSlice.map((p: any, i: number) => ({
+        const chartPoints: ChartPoint[] = rawSlice.map((point: any, index: number) => ({
             value: viewMode === 'percent'
-                ? ((p.price - basePrice) / basePrice) * 100
-                : p.price,
-            date: p.date ?? '',
-            label: (i === 0 || i === rawSlice.length - 1 || i % labelStep === 0)
-                ? (p.date ?? '').substring(5)
+                ? ((point.price - basePrice) / basePrice) * 100
+                : point.price,
+            date: point.date ?? '',
+            label: (index === 0 || index === rawSlice.length - 1 || index % labelStep === 0)
+                ? (point.date ?? '').substring(5)
                 : '',
         }));
 
         return { chartPoints, rawSlice };
-    };
+    }, [commodity.history, selectedRange, viewMode]);
 
-    const chartDataResult = getChartData();
     const chartPoints = chartDataResult?.chartPoints ?? null;
     const rawSlice = chartDataResult?.rawSlice ?? null;
     const chartWidth = chartPoints
@@ -208,7 +206,7 @@ export default function CommodityDetailScreen({ route }: Props) {
         : screenWidth;
 
     // Filter comparison histories to match visible date range
-    const visibleComparisons = comparisons.map(comp => {
+    const visibleComparisons = useMemo(() => comparisons.map(comp => {
         if (!rawSlice || rawSlice.length === 0) return comp;
         const startDate = rawSlice[0].date;
         const endDate = rawSlice[rawSlice.length - 1].date;
@@ -216,17 +214,16 @@ export default function CommodityDetailScreen({ route }: Props) {
             ...comp,
             history: comp.history.filter(h => h.date >= startDate && h.date <= endDate),
         };
-    });
+    }), [comparisons, rawSlice]);
 
-    const getStats = () => {
+    const stats = useMemo(() => {
         if (!rawSlice || rawSlice.length === 0) return null;
-        const prices = rawSlice.map((p: any) => p.price as number);
+        const prices = rawSlice.map((point: any) => point.price as number);
         const high = Math.max(...prices);
         const low = Math.min(...prices);
-        const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+        const avg = prices.reduce((sum, value) => sum + value, 0) / prices.length;
         return { high, low, avg, range: high - low, count: prices.length };
-    };
-    const stats = getStats();
+    }, [rawSlice]);
 
     useEffect(() => {
         setSelectedPoint(null);
