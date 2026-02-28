@@ -9,6 +9,7 @@ BW.SettingsModal = {
     previouslyFocused: null,
     openFocusTimer: null,
     openFocusSeq: 0,
+    _initialized: false,
 
     // Stable handler reference for proper removeEventListener
     _boundHandleKeydown: function (e) { BW.SettingsModal.handleKeydown(e); },
@@ -309,9 +310,11 @@ BW.SettingsModal = {
     },
 
     // Initialize on page load
-    init: function () {
+    init: function (force) {
+        if (this._initialized && !force) return;
         this.applyTheme();
         this.updateUI();
+        this._initialized = true;
     }
 };
 
@@ -321,10 +324,13 @@ function setTheme(m) { BW.SettingsModal.setTheme(m); }
 function setMarketTheme(m) { BW.SettingsModal.setMarketTheme(m); }
 function setView(m) { BW.SettingsModal.setView(m); }
 
-// Auto-initialize on DOM ready
-document.addEventListener('DOMContentLoaded', function () {
-    // Only init if settings modal exists on page
-    if (document.getElementById('settings-modal')) {
-        BW.SettingsModal.init();
-    }
-});
+// Auto-initialize on DOM ready (bind once even if script is evaluated multiple times)
+if (!window.__bwSettingsModalDomReadyBound) {
+    window.__bwSettingsModalDomReadyBound = true;
+    document.addEventListener('DOMContentLoaded', function () {
+        // Only init if settings modal exists on page
+        if (document.getElementById('settings-modal')) {
+            BW.SettingsModal.init();
+        }
+    });
+}
