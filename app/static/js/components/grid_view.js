@@ -258,8 +258,7 @@ BW.GridView = {
             const colorVar = isUp ? '--color-up' : '--color-down';
             const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
             const borderColorVar = isUp ? '--color-up-border' : '--color-down-border';
-            const arrow = isUp ? '+' : '−';
-            const direction = isUp ? '' : '';  // Neutral: no interpretive label
+            const arrowSymbol = isUp ? '▲' : '▼';
             const sign = isUp ? '+' : '';
 
             const commodityId = String(commodity.id || '');
@@ -292,38 +291,38 @@ BW.GridView = {
             card.dataset.changePct = displayChangePercent;
             card.dataset.changeAbs = displayChange;
             card.innerHTML = `
-                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-black-60/15 dark:border-white/8 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-0.5 transition-all duration-200 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
+                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
                     <div class="bw-grid-gradient absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
-                    <div class="bw-grid-category-row flex items-center justify-between mb-3">
+                    <div class="bw-grid-category-row flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
                             ${freqBadgeHtml}
                         </div>
                         <div class="bw-grid-direction-badge text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar}); border: 1px solid var(${borderColorVar});">
-                            ${arrow} ${direction}
+                            ${arrowSymbol} ${Math.abs(displayChangePercent)}%
                         </div>
                     </div>
-                    <h3 class="bw-grid-title text-sm font-bold text-brand-black-80 dark:text-white mb-3 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[2.5rem]">
+                    <h3 class="bw-grid-title text-lg font-bold text-brand-black-80 dark:text-white mb-4 font-serif leading-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors line-clamp-2 min-h-[3.1rem]">
                         ${safeName}
                     </h3>
-                    <div class="bw-grid-price-section font-ui mb-2">
-                        <div class="bw-grid-price tabular-nums text-2xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+                    <div class="bw-grid-price-section font-ui mb-3">
+                        <div class="bw-grid-price tabular-nums text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
                             ${safePrice}
                         </div>
-                        <div class="bw-grid-unit text-xs font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-0.5">
+                        <div class="bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
                             ${safeCurrency} / ${safeUnit}
                         </div>
                     </div>
-                    <div class="bw-grid-change flex items-baseline gap-1.5 font-ui min-h-[1.25rem]">
-                        <span class="bw-grid-change-pct tabular-nums text-sm font-bold" style="color: var(${colorVar});">
+                    <div class="bw-grid-change flex items-baseline gap-2 font-ui min-h-[1.7rem]">
+                        <span class="bw-grid-change-pct tabular-nums text-lg font-bold" style="color: var(${colorVar});">
                             ${safeDisplayChangePercent}%
                         </span>
                         <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
-                        <span class="bw-grid-change-abs tabular-nums text-xs text-brand-black-60 dark:text-brand-black-60/60 truncate">
+                        <span class="bw-grid-change-abs tabular-nums text-sm text-brand-black-60 dark:text-brand-black-60/60 truncate">
                             ${safeDisplayChange} ${safeCurrency}
                         </span>
                     </div>
-                    <div class="bw-grid-footer mt-3 pt-3 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
+                    <div class="bw-grid-footer mt-4 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
                         <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-white/70">
                             As of ${safeDate} · <span class="italic">${safeRangeLabel}</span>
                         </div>
@@ -495,7 +494,7 @@ BW.GridView = {
                 // MINIMAL ROW: premium compact row
                 previewCard.style.cssText = `
                     display: grid;
-                    grid-template-columns: ${showCategory ? '86px ' : ''}1fr 115px 110px;
+                    grid-template-columns: ${showCategory ? '86px ' : ''}1fr 115px 110px auto;
                     align-items: center;
                     gap: 0.75rem;
                     padding: 0.75rem 0.85rem;
