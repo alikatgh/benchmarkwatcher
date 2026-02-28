@@ -659,6 +659,38 @@
         }
 
         /* ============================================================
+           POPUP SYSTEM (modals, popovers, dropdown menus)
+           ============================================================ */
+        .bw-popup-backdrop {
+            background: color-mix(in srgb, var(--theme-text) 35%, transparent);
+            backdrop-filter: blur(8px);
+        }
+
+        .bw-popup-surface {
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .bw-popup-menu {
+            background: var(--theme-surface);
+            border: 1px solid var(--theme-border);
+            border-radius: 0.75rem;
+            box-shadow: 0 14px 26px rgba(0, 0, 0, 0.16), 0 4px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .bw-popup-menu-item {
+            min-height: 40px;
+        }
+
+        .bw-popup-menu-item:focus-visible {
+            outline: 2px solid var(--theme-accent);
+            outline-offset: -2px;
+        }
+
+        /* ============================================================
            ACTIVE STATE STYLES (Tailwind-safe, attribute-based)
            ============================================================ */
 

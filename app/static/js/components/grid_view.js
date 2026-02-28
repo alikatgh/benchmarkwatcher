@@ -225,7 +225,7 @@ BW.GridView = {
             const safeRangeLabel = this.escapeHtml(rangeLabel);
 
             // Determine if daily or monthly data
-            const isDaily = commodity.source_type === 'EIA' || BW.DAILY_COMMODITY_IDS.includes(commodity.id);
+            const isDaily = BW.Utils.isDailyCommodity(commodity);
             const freqBadge = isDaily ? 'D' : 'M';
             const freqTitle = isDaily ? 'Daily data' : 'Monthly data';
             const freqColor = isDaily ? 'bg-brand-teal/20 text-brand-teal' : 'bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal';
