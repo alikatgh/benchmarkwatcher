@@ -19,6 +19,8 @@ BW.Commodity = {
     commodityId: '',
     previouslyFocusedChartControl: null,
     activeSettingsTab: 'appearance',
+    chartSettingsFocusTimer: null,
+    chartSettingsFocusSeq: 0,
 
     // Comparison state
     comparisonData: {},      // { id: { name, history, color } }
@@ -804,6 +806,12 @@ BW.Commodity = {
     openChartSettings: function () {
         const modal = document.getElementById('chart-settings-modal');
         if (modal) {
+            this.chartSettingsFocusSeq += 1;
+            const activeFocusSeq = this.chartSettingsFocusSeq;
+            if (this.chartSettingsFocusTimer) {
+                clearTimeout(this.chartSettingsFocusTimer);
+                this.chartSettingsFocusTimer = null;
+            }
             this.previouslyFocusedChartControl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             modal.classList.remove('hidden');
             modal.removeAttribute('aria-hidden');
@@ -812,7 +820,12 @@ BW.Commodity = {
             this.showChartSettingsTab(tabName);
             const activeTab = document.getElementById('tab-' + tabName);
             if (activeTab) {
-                setTimeout(() => activeTab.focus(), 0);
+                this.chartSettingsFocusTimer = setTimeout(() => {
+                    if (activeFocusSeq !== this.chartSettingsFocusSeq) return;
+                    if (modal.classList.contains('hidden')) return;
+                    activeTab.focus();
+                    this.chartSettingsFocusTimer = null;
+                }, 0);
             }
         }
     },
@@ -821,6 +834,11 @@ BW.Commodity = {
     closeChartSettings: function () {
         const modal = document.getElementById('chart-settings-modal');
         if (modal) {
+            this.chartSettingsFocusSeq += 1;
+            if (this.chartSettingsFocusTimer) {
+                clearTimeout(this.chartSettingsFocusTimer);
+                this.chartSettingsFocusTimer = null;
+            }
             modal.classList.add('hidden');
             modal.setAttribute('aria-hidden', 'true');
             document.body.style.overflow = ''; // Restore scroll
