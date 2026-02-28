@@ -600,10 +600,15 @@ BW.Commodity = {
     updateViewButtons: function () {
         const activeClasses = 'shadow-sm theme-surface theme-text';
         const inactiveClasses = 'text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5';
+        const chartViewButtons = [
+            { id: 'view-price', mode: 'price' },
+            { id: 'view-percent', mode: 'percent' }
+        ];
 
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            const mode = btn.id.replace('view-', '');
-            // Reset classes first
+        chartViewButtons.forEach(({ id, mode }) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+
             btn.className = 'view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5';
             if (mode === this.currentViewMode) {
                 btn.className += ' ' + activeClasses;
