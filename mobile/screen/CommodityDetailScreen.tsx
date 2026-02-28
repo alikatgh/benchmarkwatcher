@@ -265,6 +265,19 @@ export default function CommodityDetailScreen({ route }: Props) {
         }
     };
 
+    const renderDetailsSkeleton = () => (
+        <View className="px-5">
+            <View className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700">
+                {[...Array(5)].map((_, index) => (
+                    <View key={index} className={`flex-row justify-between ${index < 4 ? 'pb-3 mb-3 border-b border-slate-200 dark:border-slate-700' : ''}`}>
+                        <View className="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+                        <View className="h-4 w-28 rounded bg-slate-200 dark:bg-slate-700" />
+                    </View>
+                ))}
+            </View>
+        </View>
+    );
+
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
             <ScrollView
@@ -278,6 +291,12 @@ export default function CommodityDetailScreen({ route }: Props) {
                     <View className="mx-5 mt-4 mb-2 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-3 py-2">
                         <Text className="text-xs font-semibold text-amber-800 dark:text-amber-300">{error}</Text>
                         <Text className="text-[11px] mt-1 text-amber-700 dark:text-amber-400">Pull to refresh or tap retry in the chart section.</Text>
+                    </View>
+                )}
+
+                {loading && (
+                    <View className="mx-5 mt-2 mb-2 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/30 px-3 py-2">
+                        <Text className="text-xs font-semibold text-blue-800 dark:text-blue-300">Fetching latest benchmark data...</Text>
                     </View>
                 )}
 
@@ -361,46 +380,48 @@ export default function CommodityDetailScreen({ route }: Props) {
                 />
 
                 {/* Details Section */}
-                <View className="px-5">
-                    <View className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700 space-y-4">
-                        <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
-                            <Text className="text-slate-500 dark:text-slate-400">Date</Text>
-                            <Text className="font-bold text-slate-900 dark:text-white">{commodity.date}</Text>
+                {loading ? renderDetailsSkeleton() : (
+                    <View className="px-5">
+                        <View className="bg-slate-50 dark:bg-slate-800 rounded-xl p-5 border border-slate-100 dark:border-slate-700 space-y-4">
+                            <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                                <Text className="text-slate-500 dark:text-slate-400">Date</Text>
+                                <Text className="font-bold text-slate-900 dark:text-white">{commodity.date}</Text>
+                            </View>
+                            <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                                <Text className="text-slate-500 dark:text-slate-400">Absolute Change</Text>
+                                <Text className={`font-bold ${changeColor}`}>
+                                    {baseIsUp ? '+' : ''}{commodity.change ?? 0}
+                                </Text>
+                            </View>
+                            <View className="flex-row justify-between">
+                                <Text className="text-slate-500 dark:text-slate-400">Previous Date</Text>
+                                <Text className="font-bold text-slate-900 dark:text-white">{commodity.prev_date || 'N/A'}</Text>
+                            </View>
+                            {commodity.derived_stats && (
+                                <>
+                                    <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+                                        <Text className="text-slate-500 dark:text-slate-400">30D Return</Text>
+                                        <Text className={`font-bold ${commodity.derived_stats.pct_30d != null ? (commodity.derived_stats.pct_30d >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
+                                            {commodity.derived_stats.pct_30d != null ? `${commodity.derived_stats.pct_30d > 0 ? '+' : ''}${commodity.derived_stats.pct_30d.toFixed(2)}%` : 'N/A'}
+                                        </Text>
+                                    </View>
+                                    <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+                                        <Text className="text-slate-500 dark:text-slate-400">1Y Return</Text>
+                                        <Text className={`font-bold ${commodity.derived_stats.pct_1y != null ? (commodity.derived_stats.pct_1y >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
+                                            {commodity.derived_stats.pct_1y != null ? `${commodity.derived_stats.pct_1y > 0 ? '+' : ''}${commodity.derived_stats.pct_1y.toFixed(2)}%` : 'N/A'}
+                                        </Text>
+                                    </View>
+                                    <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+                                        <Text className="text-slate-500 dark:text-slate-400">Direction (30D)</Text>
+                                        <Text className={`font-bold uppercase ${commodity.derived_stats.direction_30_obs === 'up' ? positiveColor : commodity.derived_stats.direction_30_obs === 'down' ? negativeColor : 'text-slate-500 dark:text-slate-400'}`}>
+                                            {commodity.derived_stats.direction_30_obs || 'N/A'}
+                                        </Text>
+                                    </View>
+                                </>
+                            )}
                         </View>
-                        <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
-                            <Text className="text-slate-500 dark:text-slate-400">Absolute Change</Text>
-                            <Text className={`font-bold ${changeColor}`}>
-                                {baseIsUp ? '+' : ''}{commodity.change ?? 0}
-                            </Text>
-                        </View>
-                        <View className="flex-row justify-between">
-                            <Text className="text-slate-500 dark:text-slate-400">Previous Date</Text>
-                            <Text className="font-bold text-slate-900 dark:text-white">{commodity.prev_date || 'N/A'}</Text>
-                        </View>
-                        {commodity.derived_stats && (
-                            <>
-                                <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                    <Text className="text-slate-500 dark:text-slate-400">30D Return</Text>
-                                    <Text className={`font-bold ${commodity.derived_stats.pct_30d != null ? (commodity.derived_stats.pct_30d >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
-                                        {commodity.derived_stats.pct_30d != null ? `${commodity.derived_stats.pct_30d > 0 ? '+' : ''}${commodity.derived_stats.pct_30d.toFixed(2)}%` : 'N/A'}
-                                    </Text>
-                                </View>
-                                <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                    <Text className="text-slate-500 dark:text-slate-400">1Y Return</Text>
-                                    <Text className={`font-bold ${commodity.derived_stats.pct_1y != null ? (commodity.derived_stats.pct_1y >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
-                                        {commodity.derived_stats.pct_1y != null ? `${commodity.derived_stats.pct_1y > 0 ? '+' : ''}${commodity.derived_stats.pct_1y.toFixed(2)}%` : 'N/A'}
-                                    </Text>
-                                </View>
-                                <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                    <Text className="text-slate-500 dark:text-slate-400">Direction (30D)</Text>
-                                    <Text className={`font-bold uppercase ${commodity.derived_stats.direction_30_obs === 'up' ? positiveColor : commodity.derived_stats.direction_30_obs === 'down' ? negativeColor : 'text-slate-500 dark:text-slate-400'}`}>
-                                        {commodity.derived_stats.direction_30_obs || 'N/A'}
-                                    </Text>
-                                </View>
-                            </>
-                        )}
                     </View>
-                </View>
+                )}
 
             </ScrollView>
 
