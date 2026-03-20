@@ -117,8 +117,9 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
                 # Purge simulated data if present
                 if not data.get('simulated', False):
                     existing_history = data.get('history', [])
-        except Exception:
-            pass
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning(f"  Could not read existing data for {commodity['name']}: {e}")
+            # Continue with empty history — new fetch will start fresh
 
     # 2. Fetch New Data
     new_data = fetch_new_data(commodity)

@@ -38,13 +38,20 @@ export function useCommodities({
     const dataRef = useRef<Commodity[]>([]);
     useEffect(() => { dataRef.current = data; }, [data]);
 
+    // Sequence counter to discard stale responses from concurrent requests
+    const requestSeqRef = useRef(0);
+
     const loadData = useCallback(async (isRefresh = false) => {
+        const seq = ++requestSeqRef.current;
         if (!isRefresh) setLoading(true);
         try {
             const apiCat = selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase();
             // On background/pull-to-refresh, only fetch commodities newer than what we have
             const since = isRefresh ? getLatestDate(dataRef.current) : undefined;
             const result = await fetchCommodities(apiCat, sortMethod, sortOrder, selectedRange, since);
+
+            // Discard if a newer request was started while this one was in-flight
+            if (seq !== requestSeqRef.current) return;
 
             if (since && result.length > 0) {
                 // Partial refresh: merge updated commodities into existing list
@@ -62,11 +69,14 @@ export function useCommodities({
             setLastFetchTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
             setError(null);
         } catch (err: any) {
+            if (seq !== requestSeqRef.current) return;
             setError(err.message || 'Failed to fetch data');
         } finally {
-            // Only reset the full loading spinner when it was set (non-refresh path)
-            if (!isRefresh) setLoading(false);
-            setRefreshing(false);
+            if (seq === requestSeqRef.current) {
+                // Only reset the full loading spinner when it was set (non-refresh path)
+                if (!isRefresh) setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, [selectedCategory, sortMethod, sortOrder, selectedRange]);
 

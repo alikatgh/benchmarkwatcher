@@ -9,29 +9,35 @@
 // Extract pure functions for testing
 // ============================================================
 
-// Copy of hexWithAlpha logic for isolated testing
+// Copy of hexWithAlpha logic for isolated testing (mirrors commodity.js)
 function hexWithAlpha(hex, alphaPercent) {
     if (!hex) return null;
     let h = hex.replace('#', '').trim();
     if (!/^[0-9a-fA-F]{6}$/.test(h)) return hex;
-    const a = Math.round(Math.max(0, Math.min(100, alphaPercent)) * 2.55);
+    const pct = Number(alphaPercent);
+    if (!Number.isFinite(pct)) return `#${h}ff`;
+    const a = Math.round(Math.max(0, Math.min(100, pct)) * 2.55);
     const ahex = a.toString(16).padStart(2, '0');
     return `#${h}${ahex}`;
 }
 
-// Copy of filterDataByRange logic for isolated testing
+// Copy of filterDataByRange logic for isolated testing (mirrors commodity.js)
 function filterDataByRange(data, range) {
     if (range === 'ALL' || !data || data.length === 0) return data;
 
-    const latestDataDate = new Date(data[data.length - 1].date);
-    let cutoffDate = new Date(latestDataDate);
+    const d = new Date(data[data.length - 1].date);
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const day = d.getDate();
 
+    let cutoffDate;
     switch (range) {
-        case '1W': cutoffDate.setDate(latestDataDate.getDate() - 7); break;
-        case '1M': cutoffDate.setMonth(latestDataDate.getMonth() - 1); break;
-        case '3M': cutoffDate.setMonth(latestDataDate.getMonth() - 3); break;
-        case '6M': cutoffDate.setMonth(latestDataDate.getMonth() - 6); break;
-        case '1Y': cutoffDate.setFullYear(latestDataDate.getFullYear() - 1); break;
+        case '1W': cutoffDate = new Date(y, m, day - 7); break;
+        case '1M': cutoffDate = new Date(y, m - 1, day); break;
+        case '3M': cutoffDate = new Date(y, m - 3, day); break;
+        case '6M': cutoffDate = new Date(y, m - 6, day); break;
+        case '1Y': cutoffDate = new Date(y - 1, m, day); break;
+        default: return data;
     }
 
     return data.filter(item => new Date(item.date) >= cutoffDate);
@@ -81,6 +87,12 @@ describe('hexWithAlpha', () => {
         // 15% = 38.25 -> 38 -> 0x26
         const result = hexWithAlpha('#0f5499', 15);
         expect(result).toBe('#0f549926');
+    });
+
+    test('defaults to fully opaque for NaN/undefined alphaPercent', () => {
+        expect(hexWithAlpha('#ff0000', undefined)).toBe('#ff0000ff');
+        expect(hexWithAlpha('#ff0000', NaN)).toBe('#ff0000ff');
+        expect(hexWithAlpha('#ff0000', 'abc')).toBe('#ff0000ff');
     });
 });
 

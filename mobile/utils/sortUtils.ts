@@ -1,7 +1,9 @@
-export function sortCommodities(data: any[], sortMethod: string, sortOrder: string): any[] {
+import { Commodity } from '../types/commodity';
+
+export function sortCommodities(data: Commodity[], sortMethod: string, sortOrder: string): Commodity[] {
     return [...data].sort((a, b) => {
-        let valA: any = a.name;
-        let valB: any = b.name;
+        let valA: string | number = a.name;
+        let valB: string | number = b.name;
 
         if (sortMethod === 'change_percent') {
             valA = a.change_percent ?? 0;

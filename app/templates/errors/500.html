@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Server Error - BenchmarkWatcher{% endblock %}
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <h1 class="text-6xl font-bold text-slate-300 dark:text-slate-600">500</h1>
+    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400">Something went wrong</p>
+    <p class="mt-2 text-slate-500 dark:text-slate-500">We're working on it. Please try again later.</p>
+    <a href="/" class="mt-6 inline-block px-5 py-2.5 rounded-lg bg-[var(--brand-teal)] text-white font-medium hover:opacity-90 transition-opacity">
+        Back to Dashboard
+    </a>
+</div>
+{% endblock %}

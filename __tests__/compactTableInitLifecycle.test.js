@@ -82,6 +82,7 @@ describe('Compact table bootstrap lifecycle', () => {
     });
 
     global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
       json: () => Promise.resolve({ data: [] })
     });
 

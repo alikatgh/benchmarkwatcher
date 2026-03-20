@@ -41,19 +41,24 @@ BW.Utils = (function () {
             });
         },
 
-        // Compact format (K / M). Keeps sign. Non-numeric -> empty string.
+        // Compact format (K / M / B / T). Keeps sign. Non-numeric -> empty string.
         formatCompact: function (value, precision = 2) {
             const n = toNumber(value);
             if (!Number.isFinite(n)) return '';
             const sign = n < 0 ? '-' : '';
             const abs = Math.abs(n);
+            const p = Math.max(0, precision);
 
-            if (abs >= 1_000_000) {
-                return sign + (abs / 1_000_000).toFixed(Math.max(0, precision)) + 'M';
+            if (abs >= 1_000_000_000_000) {
+                return sign + (abs / 1_000_000_000_000).toFixed(p) + 'T';
+            } else if (abs >= 1_000_000_000) {
+                return sign + (abs / 1_000_000_000).toFixed(p) + 'B';
+            } else if (abs >= 1_000_000) {
+                return sign + (abs / 1_000_000).toFixed(p) + 'M';
             } else if (abs >= 1_000) {
-                return sign + (abs / 1_000).toFixed(Math.max(0, precision)) + 'K';
+                return sign + (abs / 1_000).toFixed(p) + 'K';
             }
-            return sign + abs.toFixed(Math.max(0, precision));
+            return sign + abs.toFixed(p);
         },
 
         // Parse date-like input (string or Date). Returns Date instance or null.
@@ -88,13 +93,16 @@ BW.Utils = (function () {
         },
 
         // Human-friendly relative date. Handles future/past.
+        // Does NOT mutate the input date.
         getRelativeDate: function (date) {
             const d = this._toDate(date);
             if (!d) return '';
 
             const now = new Date();
-            // Round to nearest day by using floor of difference in ms
-            const diffMs = now.setHours(0, 0, 0, 0) - d.setHours(0, 0, 0, 0);
+            // Work on copies to avoid mutating input or `now`
+            const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const dDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const diffMs = nowDay - dDay;
             const diffDays = Math.round(diffMs / MS_PER_DAY) * -1; // negative if past -> positive days ago
 
             if (diffDays === 0) return 'Today';

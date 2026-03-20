@@ -206,10 +206,13 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
                     # fields that _hydrate_change_fields would set, so skip the latter here.
                     # _hydrate_change_fields is still used by get_commodity (no history recalculation).
                     _set_display_change_fields_from_history(item, filtered_history)
+                    # Expose derived stats for list views (grid tooltips, compact table)
+                    item['derived_stats'] = item.get('derived', {}).get('descriptive_stats', {})
                     _set_frequency_fields(item, full_history)
                         
                     commodities.append(item)
-            except (json.JSONDecodeError, IOError):
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning("Skipping %s: %s", filename, e)
                 continue
     
     # Sort for stable UI display
@@ -217,9 +220,10 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
     return commodities
 
 
+@cache.memoize(timeout=600)
 def get_commodity(commodity_id: str) -> Optional[Dict[str, Any]]:
     """Load single commodity with all data.
-    
+
     Uses pre-computed metrics from derived.descriptive_stats.
     Does NOT recompute financial calculations in the UI layer.
     """
@@ -237,6 +241,7 @@ def get_commodity(commodity_id: str) -> Optional[Dict[str, Any]]:
                 _set_frequency_fields(item, history)
                 
                 return item
-        except (json.JSONDecodeError, IOError):
+        except (json.JSONDecodeError, IOError) as e:
+            logger.warning("Failed to load commodity %s: %s", commodity_id, e)
             return None
     return None

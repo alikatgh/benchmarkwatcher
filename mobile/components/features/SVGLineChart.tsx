@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, useColorScheme } from 'react-native';
 import Svg, { Path, Line, Circle, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { ComparisonSeries } from '../../types/commodity';
 
@@ -40,6 +40,7 @@ interface SVGLineChartProps {
     fillOpacity?: number;
     gridColor?: string;
     currency?: string;
+    showHighLow?: boolean;
 }
 
 function formatYLabel(v: number): string {
@@ -105,6 +106,7 @@ export default function SVGLineChart({
     fillOpacity,
     gridColor,
     currency,
+    showHighLow = false,
 }: SVGLineChartProps) {
     if (!data || data.length === 0) return null;
 
@@ -148,6 +150,16 @@ export default function SVGLineChart({
     const ticks = niceTicks(yMin, yMax, 4);
     const showDots = n <= 60;
 
+    // Find high/low indices for marker annotations
+    const highLowIndices = showHighLow && n >= 2 ? (() => {
+        let highIdx = 0, lowIdx = 0;
+        for (let i = 1; i < n; i++) {
+            if (values[i] > values[highIdx]) highIdx = i;
+            if (values[i] < values[lowIdx]) lowIdx = i;
+        }
+        return highIdx !== lowIdx ? { highIdx, lowIdx } : null;
+    })() : null;
+
     // Build comparison series paths
     const comparisonPaths = comparisons.map(comp => {
         // Align comparison history to primary dates
@@ -158,14 +170,13 @@ export default function SVGLineChart({
         data.forEach((d, i) => {
             const price = priceMap.get(d.date);
             if (price !== undefined) {
-                let val = price;
                 if (viewMode === 'percent') {
                     const firstPrice = comp.history[0]?.price;
-                    if (firstPrice && firstPrice !== 0) {
-                        val = ((price - firstPrice) / firstPrice) * 100;
-                    }
+                    if (!firstPrice || firstPrice === 0) return;
+                    alignedValues.push({ index: i, value: ((price - firstPrice) / firstPrice) * 100 });
+                } else {
+                    alignedValues.push({ index: i, value: price });
                 }
-                alignedValues.push({ index: i, value: val });
             }
         });
 
@@ -405,6 +416,48 @@ export default function SVGLineChart({
                         />
                     )}
 
+                    {/* High/Low markers */}
+                    {highLowIndices && (
+                        <>
+                            <Circle
+                                cx={pts[highLowIndices.highIdx].x}
+                                cy={pts[highLowIndices.highIdx].y}
+                                r={4}
+                                fill="#10b981"
+                                stroke="white"
+                                strokeWidth={1.5}
+                            />
+                            <SvgText
+                                x={pts[highLowIndices.highIdx].x}
+                                y={pts[highLowIndices.highIdx].y - 8}
+                                textAnchor="middle"
+                                fontSize={9}
+                                fontWeight="600"
+                                fill="#10b981"
+                            >
+                                H
+                            </SvgText>
+                            <Circle
+                                cx={pts[highLowIndices.lowIdx].x}
+                                cy={pts[highLowIndices.lowIdx].y}
+                                r={4}
+                                fill="#ef4444"
+                                stroke="white"
+                                strokeWidth={1.5}
+                            />
+                            <SvgText
+                                x={pts[highLowIndices.lowIdx].x}
+                                y={pts[highLowIndices.lowIdx].y + 14}
+                                textAnchor="middle"
+                                fontSize={9}
+                                fontWeight="600"
+                                fill="#ef4444"
+                            >
+                                L
+                            </SvgText>
+                        </>
+                    )}
+
                     {/* Selected vertical line */}
                     {selectedPoint && (
                         <Line
@@ -532,18 +585,21 @@ function InfoChip({ color, name, date, value, change, changePct, viewMode }: {
 }) {
     if (value === null) return null;
 
+    const isDark = useColorScheme() === 'dark';
     const isPositive = (change ?? 0) >= 0;
     const changeColor = isPositive ? '#10b981' : '#ef4444';
+    const valueColor = isDark ? '#e2e8f0' : '#1e293b';
+    const labelColor = isDark ? 'rgba(203,213,225,0.9)' : 'rgba(148,163,184,0.9)';
 
     return (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
             <View>
-                <Text style={{ fontSize: 10, color: 'rgba(148,163,184,0.9)' }} numberOfLines={1}>
+                <Text style={{ fontSize: 10, color: labelColor }} numberOfLines={1}>
                     {name}{date ? ` \u2022 ${date}` : ''}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#1e293b' }}>
+                    <Text style={{ fontSize: 12, fontWeight: 'bold', color: valueColor }}>
                         {viewMode === 'percent' ? `${value.toFixed(2)}%` : formatYLabel(value)}
                     </Text>
                     {change !== null && (

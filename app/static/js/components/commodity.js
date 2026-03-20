@@ -5,6 +5,86 @@
 
 window.BW = window.BW || {};
 
+// ── Custom Chart.js Plugins ──────────────────────────────────────────
+
+/**
+ * Crosshair Plugin — draws a vertical dashed line at the hovered data point.
+ * Inspired by FT.com chart interaction style.
+ */
+const crosshairPlugin = {
+    id: 'crosshairLine',
+    afterDraw(chart) {
+        const tooltip = chart.tooltip;
+        if (!tooltip || !tooltip.getActiveElements().length) return;
+
+        const ctx = chart.ctx;
+        const x = tooltip.getActiveElements()[0].element.x;
+        const topY = chart.scales.y.top;
+        const bottomY = chart.scales.y.bottom;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = chart._bwCrosshairColor || 'rgba(0,0,0,0.25)';
+        ctx.moveTo(x, topY);
+        ctx.lineTo(x, bottomY);
+        ctx.stroke();
+        ctx.restore();
+    }
+};
+
+/**
+ * Zero Line Plugin — draws a prominent horizontal line at y=0 in percent mode.
+ * Makes it immediately clear where break-even is.
+ */
+const zeroLinePlugin = {
+    id: 'zeroLine',
+    afterDraw(chart) {
+        if (!chart._bwShowZeroLine) return;
+        const yScale = chart.scales.y;
+        if (yScale.min > 0 || yScale.max < 0) return; // zero not in view
+
+        const ctx = chart.ctx;
+        const y = yScale.getPixelForValue(0);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = chart._bwZeroLineColor || 'rgba(0,0,0,0.3)';
+        ctx.moveTo(yScale.left, y);
+        ctx.lineTo(yScale.right + chart.width, y);
+        ctx.stroke();
+        ctx.restore();
+    }
+};
+
+/**
+ * Source Watermark Plugin — draws subtle attribution text in the bottom-left.
+ */
+const watermarkPlugin = {
+    id: 'watermark',
+    afterDraw(chart) {
+        if (!chart._bwWatermark) return;
+        const ctx = chart.ctx;
+        const area = chart.chartArea;
+
+        ctx.save();
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillStyle = chart._bwWatermarkColor || 'rgba(0,0,0,0.18)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(chart._bwWatermark, area.left + 6, area.bottom - 6);
+        ctx.restore();
+    }
+};
+
+// Register all custom plugins globally (guarded for test environments without Chart.js)
+if (typeof Chart !== 'undefined' && Chart.register) {
+    Chart.register(crosshairPlugin, zeroLinePlugin, watermarkPlugin);
+}
+
 BW.Commodity = {
     // State
     currentRange: 'ALL',
@@ -98,7 +178,9 @@ BW.Commodity = {
         let h = hex.replace('#', '').trim();
         // If color isn't 6 hex chars, don't try to append alpha — just return original
         if (!/^[0-9a-fA-F]{6}$/.test(h)) return hex;
-        const a = Math.round(Math.max(0, Math.min(100, alphaPercent)) * 2.55);
+        const pct = Number(alphaPercent);
+        if (!Number.isFinite(pct)) return `#${h}ff`; // default to fully opaque
+        const a = Math.round(Math.max(0, Math.min(100, pct)) * 2.55);
         const ahex = a.toString(16).padStart(2, '0');
         return `#${h}${ahex}`;
     },
@@ -202,21 +284,25 @@ BW.Commodity = {
         };
     },
 
-    // Filter data by time range
+    // Filter data by time range (does not mutate inputs)
     filterDataByRange: function (data, range) {
         if (range === 'ALL' || !data || data.length === 0) return data;
 
         // Use the LATEST data point date as reference, not current date
         // This handles datasets that aren't up-to-date
-        const latestDataDate = new Date(data[data.length - 1].date);
-        let cutoffDate = new Date(latestDataDate);
+        const d = new Date(data[data.length - 1].date);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const day = d.getDate();
 
+        let cutoffDate;
         switch (range) {
-            case '1W': cutoffDate.setDate(latestDataDate.getDate() - 7); break;
-            case '1M': cutoffDate.setMonth(latestDataDate.getMonth() - 1); break;
-            case '3M': cutoffDate.setMonth(latestDataDate.getMonth() - 3); break;
-            case '6M': cutoffDate.setMonth(latestDataDate.getMonth() - 6); break;
-            case '1Y': cutoffDate.setFullYear(latestDataDate.getFullYear() - 1); break;
+            case '1W': cutoffDate = new Date(y, m, day - 7); break;
+            case '1M': cutoffDate = new Date(y, m - 1, day); break;
+            case '3M': cutoffDate = new Date(y, m - 3, day); break;
+            case '6M': cutoffDate = new Date(y, m - 6, day); break;
+            case '1Y': cutoffDate = new Date(y - 1, m, day); break;
+            default: return data;
         }
 
         return data.filter(item => new Date(item.date) >= cutoffDate);
@@ -362,7 +448,7 @@ BW.Commodity = {
                     if (compPrices[cb] !== null) { compBase = compPrices[cb]; break; }
                 }
                 compChartData = compPrices.map(function (p) {
-                    return p !== null && compBase ? ((p - compBase) / compBase) * 100 : null;
+                    return p !== null && compBase !== null && compBase !== 0 ? ((p - compBase) / compBase) * 100 : null;
                 });
             } else {
                 compChartData = compPrices;
@@ -426,40 +512,44 @@ BW.Commodity = {
                         bodyColor: this.chartSettings.tooltipText,
                         borderColor: this.chartSettings.lineColor,
                         borderWidth: 1,
-                        titleFont: { size: 11, weight: 'bold', family: 'Inter' },
-                        bodyFont: { size: 13, weight: '600', family: 'Inter' },
-                        padding: this.chartSettings.tooltipPadding,
-                        cornerRadius: this.chartSettings.tooltipRadius,
+                        titleFont: { size: 10, weight: '600', family: 'Inter' },
+                        bodyFont: { size: 13, weight: '700', family: 'Inter' },
+                        footerFont: { size: 10, weight: '500', family: 'Inter' },
+                        footerColor: this.chartSettings.tooltipText,
+                        padding: { top: 10, bottom: 10, left: 14, right: 14 },
+                        cornerRadius: 4,
+                        caretSize: 0,
                         displayColors: compDatasets.length > 0,
                         callbacks: {
                             title: function (context) {
                                 const date = new Date(context[0].label);
-                                return date.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                                return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
                             },
                             label: function (context) {
                                 const val = context.parsed.y;
-                                if (val === null || val === undefined) return null; // skip null values in tooltip
+                                if (val === null || val === undefined) return null;
                                 var prefix = compDatasets.length > 0 ? (context.dataset.label + ': ') : '';
                                 if (self.currentViewMode === 'percent') {
-                                    return prefix + val.toFixed(2) + ' %';
+                                    var sign = val >= 0 ? '+' : '';
+                                    return prefix + sign + val.toFixed(2) + '%';
                                 } else {
-                                    return prefix + val.toLocaleString() + ' ' + self.currency;
+                                    return prefix + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + self.currency;
                                 }
                             },
                             afterLabel: function (context) {
                                 if (context.dataIndex > 0) {
                                     const prev = context.dataset.data[context.dataIndex - 1];
                                     const curr = context.parsed.y;
-                                    // When in percent view, prev and curr are already percentage points.
+                                    if (prev === null || prev === undefined) return '';
                                     if (self.currentViewMode === 'percent') {
                                         const change = curr - prev;
                                         const sign = change >= 0 ? '+' : '';
-                                        return `${sign}${change.toFixed(2)} %`;
+                                        return sign + change.toFixed(2) + 'pp';
                                     } else {
                                         const change = curr - prev;
                                         const changePercent = prev !== 0 ? ((change / prev) * 100).toFixed(2) : 'N/A';
                                         const sign = change >= 0 ? '+' : '';
-                                        return `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
+                                        return sign + change.toFixed(2) + ' (' + sign + changePercent + '%)';
                                     }
                                 }
                                 return '';
@@ -508,7 +598,17 @@ BW.Commodity = {
                             color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
                             padding: 10,
                             maxTicksLimit: this.chartSettings.yMaxTicks,
-                            callback: function (value) { return value.toLocaleString(); }
+                            callback: function (value) {
+                                if (self.currentViewMode === 'percent') {
+                                    return (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
+                                }
+                                var abs = Math.abs(value);
+                                var sign = value < 0 ? '-' : '';
+                                if (abs >= 1e9) return sign + (abs / 1e9).toFixed(1) + 'B';
+                                if (abs >= 1e6) return sign + (abs / 1e6).toFixed(1) + 'M';
+                                if (abs >= 1e4) return sign + (abs / 1e3).toFixed(1) + 'K';
+                                return value.toLocaleString();
+                            }
                         }
                     },
                     y2: {
@@ -584,6 +684,14 @@ BW.Commodity = {
         }
 
         this.priceChart = new Chart(this.ctx, chartConfig);
+
+        // Pass metadata to chart instance for plugins
+        const isDark = document.documentElement.classList.contains('dark');
+        this.priceChart._bwCrosshairColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)';
+        this.priceChart._bwShowZeroLine = this.currentViewMode === 'percent';
+        this.priceChart._bwZeroLineColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
+        this.priceChart._bwWatermark = 'benchmarkwatcher.online';
+        this.priceChart._bwWatermarkColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.15)';
     },
 
     // Set time range

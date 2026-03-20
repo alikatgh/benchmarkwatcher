@@ -21,7 +21,9 @@ export interface Commodity {
     source_type?: string;
     updated_at?: string;
     is_daily?: boolean;
-    derived?: boolean;
+    derived?: {
+        descriptive_stats?: Record<string, number | string>;
+    };
     derived_stats?: {
         abs_change_1_obs?: number;
         pct_change_1_obs?: number;
@@ -41,7 +43,4 @@ export interface ComparisonSeries {
     history: HistoryPoint[];
 }
 
-export interface ApiResponse<T> {
-    data: T;
-    meta?: any;
-}
+export type { ApiResponse } from './api';

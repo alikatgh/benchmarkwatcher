@@ -38,11 +38,22 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
 
+DISCORD_DESCRIPTION_LIMIT = 2048
+DISCORD_FIELD_LIMIT = 1024
+
+
+def _truncate(text: str, limit: int) -> str:
+    """Truncate text to fit Discord's limits, cutting at the last full line."""
+    if len(text) <= limit:
+        return text
+    return text[: limit - 4].rsplit('\n', 1)[0] + '\n…'
+
+
 def create_embed(title: str, description: str, color: int = 0x0d7680) -> discord.Embed:
     """Create a styled embed with branding."""
     embed = discord.Embed(
         title=title,
-        description=description,
+        description=_truncate(description, DISCORD_DESCRIPTION_LIMIT),
         color=color
     )
     embed.set_footer(
@@ -223,8 +234,8 @@ async def top_command(ctx):
         loser_text = "No losers today."
 
     embed = discord.Embed(title="📊 Top Movers", color=0x0d7680)
-    embed.add_field(name="📈 Top Gainers", value=gainer_text, inline=False)
-    embed.add_field(name="📉 Top Losers", value=loser_text, inline=False)
+    embed.add_field(name="📈 Top Gainers", value=_truncate(gainer_text, DISCORD_FIELD_LIMIT), inline=False)
+    embed.add_field(name="📉 Top Losers", value=_truncate(loser_text, DISCORD_FIELD_LIMIT), inline=False)
     embed.set_footer(text="📊 benchmarkwatcher.online")
 
     await ctx.send(embed=embed)

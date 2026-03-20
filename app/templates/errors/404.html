@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Page Not Found - BenchmarkWatcher{% endblock %}
+{% block content %}
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+    <h1 class="text-6xl font-bold text-slate-300 dark:text-slate-600">404</h1>
+    <p class="mt-4 text-xl text-slate-600 dark:text-slate-400">Page not found</p>
+    <p class="mt-2 text-slate-500 dark:text-slate-500">The commodity or page you're looking for doesn't exist.</p>
+    <a href="/" class="mt-6 inline-block px-5 py-2.5 rounded-lg bg-[var(--brand-teal)] text-white font-medium hover:opacity-90 transition-opacity">
+        Back to Dashboard
+    </a>
+</div>
+{% endblock %}

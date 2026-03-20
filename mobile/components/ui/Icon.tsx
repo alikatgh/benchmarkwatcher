@@ -97,7 +97,7 @@ export default function Icon({ name, size = 24, color = 'currentColor', classNam
     };
 
     return (
-        <View style={style} className={className}>
+        <View style={style} className={className} accessible={false}>
             <Svg
                 width={size}
                 height={size}
@@ -107,6 +107,7 @@ export default function Icon({ name, size = 24, color = 'currentColor', classNam
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                accessible={false}
             >
                 {renderPath()}
             </Svg>

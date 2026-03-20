@@ -123,21 +123,21 @@ def format_compact_price(data: Dict) -> str:
     return f"{emoji} {name}: ${price:,.2f} ({sign}{change_pct:.2f}%)"
 
 
+def _get_change_pct(c: Dict) -> float:
+    """Extract percentage change from a commodity dict without mutating it."""
+    derived = c.get('derived', {}).get('descriptive_stats', {})
+    metrics = c.get('metrics', {})
+    return derived.get('pct_change_1_obs', metrics.get('pct_1d', 0))
+
+
 def get_top_movers(limit: int = 5) -> Tuple[List[Dict], List[Dict]]:
     """Get top gainers and losers."""
     commodities = get_all_commodities()
 
-    # Calculate percentage change for each
-    for c in commodities:
-        derived = c.get('derived', {}).get('descriptive_stats', {})
-        metrics = c.get('metrics', {})
-        c['_change_pct'] = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0))
+    sorted_commodities = sorted(commodities, key=_get_change_pct, reverse=True)
 
-    # Sort by change
-    sorted_commodities = sorted(commodities, key=lambda x: x['_change_pct'], reverse=True)
-
-    gainers = [c for c in sorted_commodities if c['_change_pct'] > 0][:limit]
-    losers = [c for c in sorted_commodities if c['_change_pct'] < 0][-limit:][::-1]
+    gainers = [c for c in sorted_commodities if _get_change_pct(c) > 0][:limit]
+    losers = [c for c in sorted_commodities if _get_change_pct(c) < 0][-limit:][::-1]
 
     return gainers, losers
 

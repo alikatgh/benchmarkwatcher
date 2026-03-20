@@ -162,7 +162,7 @@ def internal_api_commodities():
     provided_key = request.headers.get('X-Internal-Key', '')
 
     if not is_valid_internal_key(provided_key, internal_api_key):
-        return jsonify({'error': 'Forbidden: valid API key required'}), 403
+        return jsonify({'data': None, 'error': 'Forbidden: valid API key required'}), 403
 
     date_range = validate_range(request.args.get('range', 'ALL'))
     category = request.args.get('category', None)
@@ -211,7 +211,7 @@ def api_commodity_detail(commodity_id):
     """API Commodity detail endpoint."""
     commodity = get_commodity(commodity_id)
     if not commodity:
-        return jsonify({'error': 'Commodity not found'}), 404
+        return jsonify({'data': None, 'error': 'Commodity not found'}), 404
     return jsonify({'data': commodity})
 
 
