@@ -67,6 +67,7 @@ describe('Compact table sparkline race handling', () => {
     BW.CompactTable.requestSparklineData('1M', null);
 
     first.resolve({
+      ok: true,
       json: () => Promise.resolve({ data: [{ commodity_id: 'old' }] })
     });
     await flushPromises();
@@ -74,6 +75,7 @@ describe('Compact table sparkline race handling', () => {
     expect(BW.CompactTable.initSparklines).not.toHaveBeenCalled();
 
     second.resolve({
+      ok: true,
       json: () => Promise.resolve({ data: [{ commodity_id: 'new' }] })
     });
     await flushPromises();

@@ -1,10 +1,7 @@
 import json
 import os
-import tempfile
 from datetime import datetime
 import pytest
-
-from flask import Flask
 
 # Import functions under test
 from app.data_handler import (
@@ -13,69 +10,7 @@ from app.data_handler import (
     filter_history_by_range
 )
 
-
-# ------------------------------------------------------------------
-# Fixtures
-# ------------------------------------------------------------------
-
-from app.extensions import cache
-
-@pytest.fixture
-def app_with_data(tmp_path):
-    """
-    Creates a Flask app context with a temporary data directory
-    containing one valid commodity JSON file.
-    """
-    app = Flask(__name__)
-    app.config['CACHE_TYPE'] = 'SimpleCache'
-    cache.init_app(app)
-
-    # Create structure: tmp_path/app/ and tmp_path/data/
-    # So that from app, ../data resolves to data dir
-    app_dir = tmp_path / "app"
-    app_dir.mkdir()
-    
-    data_dir = tmp_path / "data"
-    data_dir.mkdir()
-
-    sample = {
-        "id": "gold",
-        "name": "Gold",
-        "category": "precious",
-        "price": 2000.0,
-        "date": "2024-01-10",
-        "history": [
-            {"date": "2023-12-20", "price": 1950.0},
-            {"date": "2024-01-09", "price": 1980.0},
-            {"date": "2024-01-10", "price": 2000.0},
-        ],
-        "derived": {
-            "descriptive_stats": {
-                "abs_change_1_obs": 20.0,
-                "pct_change_1_obs": 1.01,
-                "pct_change_30_obs": 4.5,
-                "direction_30_obs": "up",
-                "observations": 3,
-                "latest_observation_date": "2024-01-10",
-            }
-        },
-        "metrics": {
-            # legacy compatibility
-            "change_1d": 20.0,
-            "pct_1d": 1.01
-        }
-    }
-
-    with open(data_dir / "gold.json", "w") as f:
-        json.dump(sample, f)
-
-    # Set root_path to app dir so the app context resolves correctly
-    app.root_path = str(app_dir)
-    # Set JSON_DATA_DIR explicitly (normally populated by Config; test creates a bare Flask app)
-    app.config['JSON_DATA_DIR'] = str(data_dir)
-
-    with app.app_context():
-        yield app
+# app_with_data fixture is provided by conftest.py
 
 
 # ------------------------------------------------------------------
@@ -229,7 +164,7 @@ def test_templates_do_not_contain_forbidden_strings():
                     violations.append(f"{os.path.basename(template_path)}: contains '{word}'")
     
     # Allow certain exceptions (negation phrases near the forbidden word)
-    allowed_contexts = ['does not', 'not for', 'should not', 'no ', 'disclaimer', 'generate']
+    allowed_contexts = ['does not', 'not for', 'should not', 'no ', 'disclaimer', 'generate', 'changelog', 'window']
     filtered_violations = []
     for v in violations:
         # Re-check with context

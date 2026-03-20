@@ -48,6 +48,8 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
         <TouchableOpacity
             onPress={() => onPress(commodity)}
             className={`flex-row items-center justify-between bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700/50 ${rowPadding}`}
+            accessibilityRole="button"
+            accessibilityLabel={`${commodity.name}, ${commodity.price} ${commodity.currency}, ${isUp ? 'up' : 'down'} ${Math.abs(commodity.change_percent)}%`}
         >
             {/* Left Box: Icon/Name/Category */}
             <View className="flex-row items-center flex-1">
@@ -88,7 +90,10 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
                         {commodity.date}
                     </Text>
                 )}
-                <Text className={`mt-0.5 ${metaText} ${isUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}>
+                <Text
+                    className={`mt-0.5 ${metaText} ${isUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}
+                    accessibilityLabel={`Trend ${trendDirection.label}`}
+                >
                     {trendDirection.icon} Trend {trendDirection.label}
                 </Text>
             </View>

@@ -35,9 +35,24 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+TELEGRAM_MESSAGE_LIMIT = 4096
+
+
 def get_footer() -> str:
     """Standard footer with website link."""
     return f"\n\n📊 [benchmarkwatcher.online]({WEBSITE_URL})"
+
+
+def truncate_message(msg: str, limit: int = TELEGRAM_MESSAGE_LIMIT) -> str:
+    """Truncate message to fit Telegram's character limit, preserving the footer."""
+    if len(msg) <= limit:
+        return msg
+    footer = get_footer()
+    ellipsis = "\n\n… _truncated_"
+    max_body = limit - len(footer) - len(ellipsis)
+    # Cut at last full line within limit
+    cut = msg[:max_body].rsplit('\n', 1)[0]
+    return cut + ellipsis + footer
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -137,10 +152,10 @@ async def prices_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     msg = f"{emoji} **{category.title()} Commodities**\n\n"
     for c in commodities:
         msg += format_compact_price(c) + "\n"
-    
+
     msg += get_footer()
-    
-    await update.message.reply_text(msg, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+
+    await update.message.reply_text(truncate_message(msg), parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 
 async def top_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

@@ -1,4 +1,4 @@
-name: Vocabulary + E2E checks
+name: CI
 
 on:
   pull_request:
@@ -7,52 +7,54 @@ on:
     branches: [main, master]
 
 jobs:
-  preflight:
+  vocab-scan:
     runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Vocabulary scan
-        run: npm run check:vocab
-      
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install Python dependencies
-        run: pip install -r requirements.txt
-      
-      - name: Run unit tests
-        run: npm test
-      
-      - name: Run E2E tests
-        run: npm run test:e2e
-        env:
-          CI: 'true'
-
-  unit-tests:
-    runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      
       - run: npm install
-      - run: npm test
+      - name: Vocabulary scan
+        run: npm run check:vocab
 
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Run unit tests
+        run: npm test
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: npm install
+      - run: pip install -r requirements.txt
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          CI: 'true'
+
+  python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Run Python tests
+        run: python -m pytest tests/ -v

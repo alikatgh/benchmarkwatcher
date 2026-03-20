@@ -310,7 +310,8 @@ BW.CompactTable = {
             const settings = self.getSettings();
             const pointsSetting = settings.trend?.points || '30';
             const useAllPoints = pointsSetting === 'all';
-            const pointsCount = useAllPoints ? Infinity : parseInt(pointsSetting);
+            const rawPoints = parseInt(pointsSetting);
+            const pointsCount = useAllPoints ? Infinity : (Number.isFinite(rawPoints) && rawPoints > 0 ? rawPoints : 30);
             const chartType = settings.trend?.type || 'area';
             const showMA = document.getElementById('trend-ma')?.checked || settings.trend?.showMA || false;
             const showHighLow = document.getElementById('trend-highlow')?.checked || settings.trend?.showHighLow || false;
@@ -469,21 +470,25 @@ BW.CompactTable = {
                 }
 
                 // Create chart
-                self.chartRegistry[canvasId] = new Chart(ctx, {
-                    type: jsChartType,
-                    data: {
-                        labels: dataPoints.map((_, i) => i),
-                        datasets: datasets
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: { duration: 300 },
-                        plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                        scales: { x: { display: false }, y: { display: false } },
-                        interaction: { intersect: false, mode: 'index' }
-                    }
-                });
+                try {
+                    self.chartRegistry[canvasId] = new Chart(ctx, {
+                        type: jsChartType,
+                        data: {
+                            labels: dataPoints.map((_, i) => i),
+                            datasets: datasets
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 300 },
+                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                            scales: { x: { display: false }, y: { display: false } },
+                            interaction: { intersect: false, mode: 'index' }
+                        }
+                    });
+                } catch (e) {
+                    console.warn('BW.CompactTable: Failed to create sparkline chart for', canvasId, e);
+                }
             });
         });
     },
@@ -865,7 +870,8 @@ BW.CompactTable = {
             if (isNaN(rawValue)) return;
 
             const format = settings.price?.format || 'default';
-            const precision = parseInt(settings.price?.precision || '2');
+            const rawPrecision = parseInt(settings.price?.precision || '2');
+            const precision = Number.isFinite(rawPrecision) ? Math.max(0, Math.min(rawPrecision, 10)) : 2;
             let formatted = rawValue.toFixed(precision);
 
             if (format === 'thousands') {
@@ -917,7 +923,8 @@ BW.CompactTable = {
         // Percent style
         scopeRoot.querySelectorAll('.pct-cell').forEach(el => {
             const style = settings.pct?.style || 'badge';
-            const decimals = parseInt(settings.pct?.decimals || '2');
+            const rawDecimals = parseInt(settings.pct?.decimals || '2');
+            const decimals = Number.isFinite(rawDecimals) ? Math.max(0, Math.min(rawDecimals, 10)) : 2;
             const rawValue = parseFloat(el.dataset.value);
             if (isNaN(rawValue)) return;
 
@@ -1078,7 +1085,10 @@ BW.CompactTable = {
         const activeRequestSeq = this.sparklineRequestSeq;
 
         fetch(apiUrl)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
             .then(response => {
                 if (activeRequestSeq !== this.sparklineRequestSeq) return;
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
@@ -1224,6 +1234,12 @@ function sortTable(column) {
             const cmp = aVal.localeCompare(bVal, undefined, { sensitivity: 'base' });
             return sortState.currentSortDirection === 'asc' ? cmp : -cmp;
         } else {
+            // Push NaN values to the end regardless of sort direction
+            const aNaN = isNaN(aVal);
+            const bNaN = isNaN(bVal);
+            if (aNaN && bNaN) return 0;
+            if (aNaN) return 1;
+            if (bNaN) return -1;
             const cmp = aVal - bVal;
             return sortState.currentSortDirection === 'asc' ? cmp : -cmp;
         }

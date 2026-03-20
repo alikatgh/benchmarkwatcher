@@ -131,7 +131,7 @@
             --theme-bg: #0a0c10;
             --theme-surface: #13171f;
             --theme-text: #e8e6e3;
-            --theme-text-muted: #8a8580;
+            --theme-text-muted: #a8a29d;
             --theme-border: rgba(255, 255, 255, 0.10);
             --theme-accent: #0d7680;
             --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.30), 0 1px 6px rgba(0, 0, 0, 0.20);
@@ -498,6 +498,24 @@
             .shadow-sm,
             .shadow-lg {
                 box-shadow: none !important;
+            }
+
+            /* Charts: avoid page breaks inside, ensure canvas renders */
+            canvas {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /* Hide interactive chart controls when printing */
+            #chart-settings-modal,
+            #compare-bar,
+            #reset-zoom-btn,
+            #download-menu-btn,
+            .chart-controls,
+            .range-btn,
+            .type-btn,
+            .view-btn {
+                display: none !important;
             }
         }
 

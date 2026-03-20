@@ -99,7 +99,7 @@ export default function HomeScreen() {
     useEffect(() => {
         if (!hasHydratedHomeState.current) return;
 
-        const persistHomeState = async () => {
+        const timer = setTimeout(async () => {
             try {
                 await AsyncStorage.setItem(HOME_STATE_KEY, JSON.stringify({
                     selectedCategory,
@@ -111,9 +111,9 @@ export default function HomeScreen() {
             } catch {
                 // non-blocking persist failure
             }
-        };
+        }, 500);
 
-        persistHomeState();
+        return () => clearTimeout(timer);
     }, [selectedCategory, selectedRange, sortMethod, sortOrder, isCompactView]);
 
     const {

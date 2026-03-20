@@ -52,7 +52,7 @@ export default function IconButton({
             className={`${baseContainerClass} ${className}`}
             style={style}
             accessibilityRole="button"
-            accessibilityLabel={ariaLabel}
+            accessibilityLabel={ariaLabel || label || icon}
         >
             <Icon name={icon} size={size} color={color} className={iconClassName} />
             {label && (

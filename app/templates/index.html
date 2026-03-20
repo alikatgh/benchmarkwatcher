@@ -11,14 +11,14 @@
     </div>
 
     <!-- Grid View Container -->
-    <div id="grid-view" class="{{ '' if active_view == 'grid' else 'hidden' }}">
+    <div id="grid-view" role="region" aria-label="Commodity cards grid view" class="{{ '' if active_view == 'grid' else 'hidden' }}">
         {% if active_view == 'grid' %}
         {% include 'components/grid_view.html' %}
         {% endif %}
     </div>
 
     <!-- Compact View Container -->
-    <div id="compact-view" class="{{ '' if active_view == 'compact' else 'hidden' }}">
+    <div id="compact-view" role="region" aria-label="Commodity compact table view" class="{{ '' if active_view == 'compact' else 'hidden' }}">
         {% if active_view == 'compact' %}
         <div
             class="bg-card-warm dark:bg-brand-slate border border-brand-black-60/20 dark:border-brand-black-60/40 rounded-xl overflow-hidden shadow-sm">
