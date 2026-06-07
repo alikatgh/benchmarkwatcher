@@ -84,3 +84,4 @@ test-results/
 # Node.js
 node_modules/
 package-lock.json
+passenger_boot_error.log
