@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Commodity } from '../types/commodity';
 import { SettingsContext } from '../context/SettingsContext';
+import { formatChange, formatPercent } from '../utils/format';
 
 interface Props {
     commodity: Commodity;
@@ -103,12 +104,12 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
                 <View className={`items-end px-2 py-1 rounded-md min-w-[64px] ${bgColor}`}>
                     {showChangePercent && (
                         <Text className={`font-bold ${changeColor} ${fontScale === 'small' ? 'text-[10px]' : fontScale === 'large' ? 'text-sm' : 'text-xs'}`}>
-                            {isUp ? '+' : ''}{commodity.change_percent}%
+                            {isUp ? '+' : ''}{formatPercent(commodity.change_percent)}%
                         </Text>
                     )}
                     {showChangeAbs && (
                         <Text className={`${changeColor} mt-0.5 ${metaText}`}>
-                            {isUp ? '+' : ''}{commodity.change}
+                            {isUp ? '+' : ''}{formatChange(commodity.change)}
                         </Text>
                     )}
                 </View>

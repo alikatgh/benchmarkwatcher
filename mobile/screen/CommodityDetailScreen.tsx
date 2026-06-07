@@ -21,6 +21,7 @@ import CommodityChartControls from '../components/features/CommodityChartControl
 import ChartSettingsModal from '../components/features/ChartSettingsModal';
 import CompareModal from '../components/features/CompareModal';
 import { DETAIL_CHANGE_PERIOD_KEY } from '../utils/detailPreferences';
+import { formatChange } from '../utils/format';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CommodityDetail'>;
 
@@ -405,7 +406,7 @@ export default function CommodityDetailScreen({ route }: Props) {
                             <View className="flex-row justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
                                 <Text className="text-slate-500 dark:text-slate-400">Absolute Change</Text>
                                 <Text className={`font-bold ${changeColor}`}>
-                                    {baseIsUp ? '+' : ''}{commodity.change ?? 0}
+                                    {baseIsUp ? '+' : ''}{formatChange(commodity.change ?? 0)}
                                 </Text>
                             </View>
                             <View className="flex-row justify-between">

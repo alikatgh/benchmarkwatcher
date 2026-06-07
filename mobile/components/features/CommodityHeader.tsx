@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import IconButton from '../ui/IconButton';
 import Badge from '../ui/Badge';
+import { formatChange } from '../../utils/format';
 
 interface CommodityHeaderProps {
     commodity: any;
@@ -67,7 +68,7 @@ export default function CommodityHeader({
                 </Text>
                 {selectedChangePeriod === '1' && typeof changeAbs === 'number' && (
                     <Text className={`text-sm ${changeColor}`}>
-                        ({isUp ? '+' : ''}{changeAbs})
+                        ({isUp ? '+' : ''}{formatChange(changeAbs)})
                     </Text>
                 )}
                 <View className="ml-2">
