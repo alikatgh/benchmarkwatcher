@@ -21,7 +21,7 @@
         <div class="space-y-6">
             <!-- Theme Selection -->
             <div>
-                <label class="block text-[10px] font-bold tracking-wide theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-semibold tracking-wide theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -36,7 +36,7 @@
                     <button onclick="setTheme('light')" id="theme-light" aria-label="Light theme with warm cream colors"
                         class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <!-- Swatch preview: 3 color bars -->
-                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                        <div class="flex gap-0.5 mb-2.5 rounded-lg overflow-hidden h-6">
                             <div class="flex-1" style="background:#ede9e3;"></div>
                             <div class="flex-1" style="background:#33302e;"></div>
                             <div class="flex-1" style="background:#0f5499;"></div>
@@ -48,7 +48,7 @@
                     <!-- Dark Theme -->
                     <button onclick="setTheme('dark')" id="theme-dark" aria-label="Dark theme with terminal colors"
                         class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                        <div class="flex gap-0.5 mb-2.5 rounded-lg overflow-hidden h-6">
                             <div class="flex-1" style="background:#0a0c10;"></div>
                             <div class="flex-1" style="background:#e8e6e3;"></div>
                             <div class="flex-1" style="background:#0d7680;"></div>
@@ -60,7 +60,7 @@
                     <!-- Mono Light Theme -->
                     <button onclick="setTheme('mono-light')" id="theme-mono-light" aria-label="Monochrome light theme"
                         class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                        <div class="flex gap-0.5 mb-2.5 rounded-lg overflow-hidden h-6">
                             <div class="flex-1" style="background:#ffffff; border:1px solid #e5e5e5;"></div>
                             <div class="flex-1" style="background:#000000;"></div>
                             <div class="flex-1" style="background:#777777;"></div>
@@ -72,7 +72,7 @@
                     <!-- Mono Dark Theme -->
                     <button onclick="setTheme('mono-dark')" id="theme-mono-dark" aria-label="Monochrome dark theme"
                         class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                        <div class="flex gap-0.5 mb-2.5 rounded-lg overflow-hidden h-6">
                             <div class="flex-1" style="background:#000000;"></div>
                             <div class="flex-1" style="background:#ffffff;"></div>
                             <div class="flex-1" style="background:#aaaaaa;"></div>
@@ -85,7 +85,7 @@
                     <button onclick="setTheme('bloomberg')" id="theme-bloomberg"
                         aria-label="Bloomberg professional theme"
                         class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                        <div class="flex gap-0.5 mb-2.5 rounded-lg overflow-hidden h-6">
                             <div class="flex-1" style="background:#1e1e1e;"></div>
                             <div class="flex-1" style="background:#ff9933;"></div>
                             <div class="flex-1" style="background:#00ff00;"></div>
@@ -97,7 +97,7 @@
                     <!-- FT Theme -->
                     <button onclick="setTheme('ft')" id="theme-ft" aria-label="Financial Times theme"
                         class="theme-btn p-3 rounded-xl border-2 transition-all font-ui text-left group focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                        <div class="flex gap-0.5 mb-2.5 rounded-md overflow-hidden h-6">
+                        <div class="flex gap-0.5 mb-2.5 rounded-lg overflow-hidden h-6">
                             <div class="flex-1" style="background:#fff1e5;"></div>
                             <div class="flex-1" style="background:#33302e;"></div>
                             <div class="flex-1" style="background:#990f3d;"></div>
@@ -110,7 +110,7 @@
 
             <!-- Market Color Theme -->
             <div>
-                <label class="block text-[10px] font-bold tracking-wide theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-semibold tracking-wide theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -127,15 +127,15 @@
                         <div class="text-xs font-bold theme-text mb-2">Western</div>
                         <div class="flex justify-center gap-2 mb-1">
                             <div class="flex items-center gap-1">
-                                <span class="text-[9px] text-[#0d7680] font-bold">▲</span>
+                                <span class="text-[10px] text-[#0d7680] font-bold">▲</span>
                                 <div class="w-4 h-3 rounded-sm bg-[#0d7680]"></div>
                             </div>
                             <div class="flex items-center gap-1">
-                                <span class="text-[9px] text-[#990f3d] font-bold">▼</span>
+                                <span class="text-[10px] text-[#990f3d] font-bold">▼</span>
                                 <div class="w-4 h-3 rounded-sm bg-[#990f3d]"></div>
                             </div>
                         </div>
-                        <div class="text-[9px] theme-text-muted">Green=Up</div>
+                        <div class="text-[10px] theme-text-muted">Green=Up</div>
                     </button>
 
                     <!-- Asian (Red=Up) -->
@@ -145,15 +145,15 @@
                         <div class="text-xs font-bold theme-text mb-2">Asian</div>
                         <div class="flex justify-center gap-2 mb-1">
                             <div class="flex items-center gap-1">
-                                <span class="text-[9px] text-[#990f3d] font-bold">▲</span>
+                                <span class="text-[10px] text-[#990f3d] font-bold">▲</span>
                                 <div class="w-4 h-3 rounded-sm bg-[#990f3d]"></div>
                             </div>
                             <div class="flex items-center gap-1">
-                                <span class="text-[9px] text-[#0d7680] font-bold">▼</span>
+                                <span class="text-[10px] text-[#0d7680] font-bold">▼</span>
                                 <div class="w-4 h-3 rounded-sm bg-[#0d7680]"></div>
                             </div>
                         </div>
-                        <div class="text-[9px] theme-text-muted">Red=Up</div>
+                        <div class="text-[10px] theme-text-muted">Red=Up</div>
                     </button>
 
                     <!-- Monochrome -->
@@ -163,22 +163,22 @@
                         <div class="text-xs font-bold theme-text mb-2">Mono</div>
                         <div class="flex justify-center gap-2 mb-1">
                             <div class="flex items-center gap-1">
-                                <span class="text-[9px] theme-text font-bold">▲</span>
+                                <span class="text-[10px] theme-text font-bold">▲</span>
                                 <div class="w-4 h-3 rounded-sm bg-gray-500"></div>
                             </div>
                             <div class="flex items-center gap-1">
-                                <span class="text-[9px] theme-text font-bold">▼</span>
+                                <span class="text-[10px] theme-text font-bold">▼</span>
                                 <div class="w-4 h-3 rounded-sm bg-gray-500"></div>
                             </div>
                         </div>
-                        <div class="text-[9px] theme-text-muted">No color</div>
+                        <div class="text-[10px] theme-text-muted">No color</div>
                     </button>
                 </div>
             </div>
 
             <!-- View Selection -->
             <div>
-                <label class="block text-[10px] font-bold tracking-wide theme-text-muted mb-3 font-ui">
+                <label class="block text-[10px] font-semibold tracking-wide theme-text-muted mb-3 font-ui">
                     <span class="flex items-center gap-2">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

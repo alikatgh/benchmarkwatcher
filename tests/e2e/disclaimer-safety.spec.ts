@@ -34,8 +34,10 @@ function makeRegex(term: string): RegExp {
 
 test.describe('UI vocabulary safety', () => {
     test('main content does not contain forbidden terms', async ({ page }) => {
-        await page.goto('/');
+        const response = await page.goto('/');
+        expect(response?.ok()).toBeTruthy();
         await page.waitForLoadState('networkidle');
+        await expect(page.locator('main, #grid-view, #compact-view').first()).toBeVisible();
 
         // Get text from main content area only (exclude footer disclaimer)
         const mainContent = await page.evaluate(() => {
@@ -56,9 +58,10 @@ test.describe('UI vocabulary safety', () => {
     });
 
     test('commodity cards use observational language', async ({ page }) => {
-        await page.goto('/');
+        const response = await page.goto('/');
+        expect(response?.ok()).toBeTruthy();
         await page.waitForLoadState('networkidle');
-        await page.waitForSelector('#grid-cards-container', { state: 'visible', timeout: 5000 }).catch(() => { });
+        await page.waitForSelector('#grid-cards-container', { state: 'visible', timeout: 5000 });
 
         const cardText = await page.locator('#grid-cards-container').innerText({ timeout: 5000 }).catch(() => '');
 

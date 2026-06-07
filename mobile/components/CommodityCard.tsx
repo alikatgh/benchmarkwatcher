@@ -25,7 +25,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
         return h.slice(-30).map(p => p.price);
     }, [commodity.history]);
 
-    const sparklineColor = isUp ? '#10b981' : '#ef4444';
+    const sparklineColor = isUp ? '#0d7680' : '#990f3d';
 
     // Style adjustments based on Density
     const cardPadding = density === 'compact' ? 'p-3 mb-2 mx-3' : density === 'roomy' ? 'p-6 mb-5 mx-5' : 'p-4 mb-3 mx-4';
@@ -37,7 +37,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
 
     return (
         <TouchableOpacity
-            className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 ${cardPadding}`}
+            className={`bg-brand-paper dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 ${cardPadding}`}
             activeOpacity={0.7}
             onPress={() => onPress(commodity)}
             accessibilityRole="button"

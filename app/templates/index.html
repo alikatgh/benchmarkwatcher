@@ -10,6 +10,204 @@
         </div>
     </div>
 
+    {% set summary = market_summary or {} %}
+    {% set range_labels = {
+        '1W': 'Recent observations',
+        '1M': 'Recent observations',
+        '3M': 'Extended observations',
+        '6M': 'Extended observations',
+        '1Y': 'Longer observation span',
+        'ALL': 'All observations'
+    } %}
+    {% set biggest_up = summary.biggest_up if summary.biggest_up else none %}
+    {% set biggest_down = summary.biggest_down if summary.biggest_down else none %}
+    <section id="market-pulse" class="mb-5 sm:mb-6 font-ui" aria-label="Market pulse summary">
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] gap-3">
+            <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-4 sm:p-5">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div>
+                        <div class="text-[10px] font-semibold tracking-[0.16em] uppercase text-brand-black-60">Market Pulse</div>
+                        <h2 id="market-pulse-headline" class="mt-1 text-lg sm:text-xl font-bold font-serif text-brand-black-80 dark:text-white">
+                            {{ summary.headline|default('No benchmarks loaded') }}
+                        </h2>
+                    </div>
+                    <div id="market-pulse-range" class="w-fit rounded-lg border border-brand-black-60/15 dark:border-white/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">
+                        {{ range_labels.get(date_range, 'All observations') }}
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div class="rounded-lg bg-brand-black-60/5 dark:bg-white/5 p-3">
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Coverage</div>
+                        <div class="mt-1 text-xl font-bold tabular-nums text-brand-black-80 dark:text-white">
+                            <span id="market-pulse-total">{{ summary.total|default(0) }}</span>
+                        </div>
+                        <div class="text-[10px] text-brand-black-60">benchmarks</div>
+                    </div>
+                    <div class="rounded-lg bg-brand-black-60/5 dark:bg-white/5 p-3">
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Breadth</div>
+                        <div class="mt-1 text-xl font-bold tabular-nums text-brand-black-80 dark:text-white">
+                            <span id="market-pulse-up">{{ summary.up_count|default(0) }}</span>/<span id="market-pulse-down">{{ summary.down_count|default(0) }}</span>
+                        </div>
+                        <div class="text-[10px] text-brand-black-60">
+                            <span id="market-pulse-breadth">{{ summary.breadth_percent|default(0) }}</span>% rising,
+                            <span id="market-pulse-flat">{{ summary.flat_count|default(0) }}</span> flat
+                        </div>
+                    </div>
+                    <div class="rounded-lg bg-brand-black-60/5 dark:bg-white/5 p-3">
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Latest Batch</div>
+                        <div id="market-pulse-latest-date" class="mt-1 text-sm font-bold tabular-nums text-brand-black-80 dark:text-white truncate">
+                            {{ summary.latest_date|default('No date', true) }}
+                        </div>
+                        <div class="text-[10px] text-brand-black-60">
+                            <span id="market-pulse-latest-count">{{ summary.latest_count|default(0) }}</span> series
+                        </div>
+                    </div>
+                    <div class="rounded-lg bg-brand-black-60/5 dark:bg-white/5 p-3">
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Frequency Mix</div>
+                        <div class="mt-1 text-xl font-bold tabular-nums text-brand-black-80 dark:text-white">
+                            <span id="market-pulse-daily">{{ summary.daily_count|default(0) }}</span>/<span id="market-pulse-monthly">{{ summary.monthly_count|default(0) }}</span>
+                        </div>
+                        <div class="text-[10px] text-brand-black-60">daily / monthly</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 border-t border-brand-black-60/10 dark:border-white/10 pt-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Category Breadth</div>
+                        <a id="market-pulse-all-link" href="{{ url_for('main.index', range=date_range, view=active_view) }}"
+                            class="text-[10px] font-semibold text-brand-oxford dark:text-brand-teal hover:underline"
+                            {% if not selected_category %}aria-current="page"{% endif %}>All</a>
+                    </div>
+                    <div id="market-pulse-categories" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {% for category in summary.categories|default([]) %}
+                        <a href="{{ url_for('main.index', category=category.slug, range=date_range, view=active_view) }}"
+                            class="group/category block rounded-lg border p-3 transition-colors {% if selected_category == category.slug %}border-brand-oxford dark:border-brand-teal bg-brand-oxford/5 dark:bg-brand-teal/5{% else %}border-brand-black-60/15 dark:border-white/10 hover:border-brand-oxford dark:hover:border-brand-teal{% endif %}"
+                            data-category="{{ category.slug }}"
+                            {% if selected_category == category.slug %}aria-current="page"{% endif %}>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-xs font-bold text-brand-black-80 dark:text-white truncate">{{ category.name }}</span>
+                                <span class="text-[10px] font-semibold tabular-nums text-brand-black-60">
+                                    {{ category.up_count }} / {{ category.flat_count }} / {{ category.down_count }}
+                                </span>
+                            </div>
+                            <div class="mt-2 flex h-1.5 rounded-full bg-brand-black-60/10 dark:bg-white/10 overflow-hidden"
+                                aria-label="{{ category.name }} distribution: {{ category.up_count }} up, {{ category.flat_count }} flat, {{ category.down_count }} down">
+                                <div class="h-full" style="width: {{ category.breadth_percent }}%; background-color: var(--color-up);"></div>
+                                <div class="h-full" style="width: {{ category.flat_percent }}%; background-color: var(--theme-border);"></div>
+                                <div class="h-full" style="width: {{ category.down_percent }}%; background-color: var(--color-down);"></div>
+                            </div>
+                            <div class="mt-1 flex items-center justify-between gap-2 text-[10px] text-brand-black-60">
+                                <span>{{ category.total }} benchmarks</span>
+                                <span>up / flat / down</span>
+                            </div>
+                        </a>
+                        {% else %}
+                        <div class="rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 text-xs font-bold text-brand-black-60">
+                            No category data
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-4 sm:p-5">
+                <div class="text-[10px] font-semibold tracking-[0.16em] uppercase text-brand-black-60">Largest Moves</div>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+                    <a id="market-pulse-rise-link"
+                        {% if biggest_up %}href="{{ url_for('main.commodity_detail', commodity_id=biggest_up.id) }}"{% else %}aria-disabled="true" tabindex="-1"{% endif %}
+                        class="block rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 hover:border-brand-oxford dark:hover:border-brand-teal transition-colors">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Rise</span>
+                            <span id="market-pulse-rise-value" class="text-sm font-bold tabular-nums" style="color: var(--color-up);">
+                                {% if biggest_up %}+{{ biggest_up.change_percent|round(2) }}%{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        <div id="market-pulse-rise-name" class="mt-1 text-sm font-bold text-brand-black-80 dark:text-white truncate">
+                            {{ biggest_up.name if biggest_up else 'No positive moves' }}
+                        </div>
+                    </a>
+                    <a id="market-pulse-drop-link"
+                        {% if biggest_down %}href="{{ url_for('main.commodity_detail', commodity_id=biggest_down.id) }}"{% else %}aria-disabled="true" tabindex="-1"{% endif %}
+                        class="block rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 hover:border-brand-oxford dark:hover:border-brand-teal transition-colors">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Drop</span>
+                            <span id="market-pulse-drop-value" class="text-sm font-bold tabular-nums" style="color: var(--color-down);">
+                                {% if biggest_down %}{{ biggest_down.change_percent|round(2) }}%{% else %}—{% endif %}
+                            </span>
+                        </div>
+                        <div id="market-pulse-drop-name" class="mt-1 text-sm font-bold text-brand-black-80 dark:text-white truncate">
+                            {{ biggest_down.name if biggest_down else 'No negative moves' }}
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">
+        <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                <label for="quick-find-input" class="sr-only">Search benchmarks</label>
+                <div class="relative flex-1 min-w-0">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
+                    </svg>
+                    <input id="quick-find-input" type="search" autocomplete="off" placeholder="Search benchmarks"
+                        class="w-full min-h-[44px] rounded-lg border border-brand-black-60/20 dark:border-white/10 bg-white dark:bg-terminal-black pl-9 pr-3 text-sm font-medium text-brand-black-80 dark:text-white placeholder:text-brand-black-60 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                </div>
+                <div class="overflow-x-auto scrollbar-hide -mx-1 px-1 lg:mx-0 lg:px-0">
+                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-max" role="group" aria-label="Movement and cadence filters">
+                        <button type="button" data-quick-filter="all"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text"
+                            aria-pressed="true">All</button>
+                        <button type="button" data-quick-filter="up"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all"
+                            aria-pressed="false">Rising</button>
+                        <button type="button" data-quick-filter="down"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all"
+                            aria-pressed="false">Falling</button>
+                        <button type="button" data-quick-filter="flat"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all"
+                            aria-pressed="false">Flat</button>
+                        <button type="button" data-quick-filter="daily"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all"
+                            aria-pressed="false">Daily</button>
+                        <button type="button" data-quick-filter="monthly"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all"
+                            aria-pressed="false">Monthly</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-3 lg:justify-end shrink-0">
+                    <div id="quick-find-count" class="text-xs font-bold text-brand-black-60 tabular-nums" aria-live="polite">
+                        {{ commodities|length }} shown
+                    </div>
+                    <button id="quick-find-reset" type="button"
+                        class="hidden min-h-[44px] px-3 text-xs font-bold text-brand-oxford dark:text-brand-teal hover:underline">
+                        Reset
+                    </button>
+                    <button id="quick-find-export" type="button"
+                        class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold text-brand-oxford dark:text-brand-teal hover:opacity-80 bg-brand-oxford/10 dark:bg-brand-teal/10 border border-brand-oxford/20 dark:border-brand-teal/20 rounded-lg transition-all flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        CSV
+                    </button>
+                </div>
+            </div>
+            <div id="quick-find-summary" class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-brand-black-60" aria-live="polite">
+                <span><span id="quick-find-up">0</span> rising</span>
+                <span><span id="quick-find-down">0</span> falling</span>
+                <span><span id="quick-find-daily">0</span> daily</span>
+                <span><span id="quick-find-monthly">0</span> monthly</span>
+            </div>
+            <div id="quick-find-empty" class="hidden mt-3 rounded-lg border border-brand-black-60/15 dark:border-white/10 bg-brand-black-60/5 dark:bg-white/5 p-3 text-xs font-bold text-brand-black-60">
+                No benchmarks match the current quick find.
+            </div>
+        </div>
+    </section>
+
     <!-- Grid View Container -->
     <div id="grid-view" role="region" aria-label="Commodity cards grid view" class="{{ '' if active_view == 'grid' else 'hidden' }}">
         {% if active_view == 'grid' %}
@@ -21,7 +219,7 @@
     <div id="compact-view" role="region" aria-label="Commodity compact table view" class="{{ '' if active_view == 'compact' else 'hidden' }}">
         {% if active_view == 'compact' %}
         <div
-            class="bg-card-warm dark:bg-brand-slate border border-brand-black-60/20 dark:border-brand-black-60/40 rounded-xl overflow-hidden shadow-sm">
+            class="bg-card-warm dark:bg-brand-slate border border-brand-black-60/20 dark:border-brand-black-60/40 rounded-xl overflow-hidden">
             {% include 'components/compact_table.html' %}
         </div>
         {% endif %}

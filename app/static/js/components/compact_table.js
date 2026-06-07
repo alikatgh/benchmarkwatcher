@@ -56,7 +56,7 @@ BW.CompactTable = {
         window.history.pushState({}, '', url.toString());
 
         // Show loading state
-        const tableBody = document.getElementById('commodities-tbody');
+        const tableBody = document.getElementById('table-body');
         const loading = document.getElementById('table-loading');
         if (loading) loading.classList.remove('hidden');
         if (tableBody) {
@@ -88,6 +88,9 @@ BW.CompactTable = {
                 if (activeRequestSeq !== this.requestSeq) return;
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 this.updateTableData(commodities);
+                if (BW.Index?.updateMarketPulse) {
+                    BW.Index.updateMarketPulse(response?.meta?.summary || commodities, { range });
+                }
             })
             .catch(error => {
                 if (activeRequestSeq !== this.requestSeq) return;
@@ -188,6 +191,7 @@ BW.CompactTable = {
             const lastDate = history.length > 0 ? history[history.length - 1].date : commodity.date;
 
             const isUp = displayChange >= 0;
+            const direction = displayChange > 0 ? 'up' : (displayChange < 0 ? 'down' : 'flat');
             const colorVar = isUp ? '--color-up' : '--color-down';
             const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
             const arrow = isUp ? '▲' : '▼';
@@ -218,12 +222,30 @@ BW.CompactTable = {
             const row = document.createElement('tr');
             row.onclick = () => { window.location = `/commodity/${encodeURIComponent(commodityId)}`; };
             row.className = 'hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition-all duration-200 group';
+            row.tabIndex = 0;
+            row.setAttribute('role', 'link');
+            row.addEventListener('keydown', event => {
+                if (event.key === 'Enter') {
+                    window.location = `/commodity/${encodeURIComponent(commodityId)}`;
+                }
+            });
+            row.dataset.id = commodityId;
+            row.dataset.name = commodity.name || '';
+            row.dataset.category = commodity.category || '';
+            row.dataset.currency = commodity.currency || '';
+            row.dataset.unit = commodity.unit || '';
+            row.dataset.date = commodity.date || '';
+            row.dataset.frequency = isDaily ? 'daily' : 'monthly';
+            row.dataset.direction = direction;
+            row.dataset.price = commodity.price;
+            row.dataset.changePct = displayChangePercent;
+            row.dataset.changeAbs = displayChange;
 
             row.innerHTML = `
                 <td data-col="commodity" class="px-4 py-5">
                     <div class="flex items-center gap-3 commodity-cell">
                         <div class="commodity-icon w-10 h-10 rounded-xl bg-brand-black-60/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-oxford/10 dark:group-hover:bg-brand-teal/10 transition-colors">
-                            <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60">${safeIconText}</span>
+                            <span class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60">${safeIconText}</span>
                         </div>
                         <div>
                             <div class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">${safeName}</div>
@@ -262,7 +284,7 @@ BW.CompactTable = {
                 </td>
                 <td data-col="pct" class="px-4 py-5 text-right">
                     <div class="pct-cell relative group/pct">
-                        <div class="inline-flex px-2 py-1 rounded-md text-sm font-bold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${safeDisplayChangePercent}">
+                        <div class="inline-flex px-2 py-1 rounded-lg text-sm font-bold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${safeDisplayChangePercent}">
                             ${safeDisplayChangePercent}%
                         </div>
                         <!-- Tooltip -->
@@ -277,7 +299,7 @@ BW.CompactTable = {
                     </div>
                 </td>
                 <td data-col="updated" class="px-4 py-5 text-right">
-                    <div class="updated-cell text-xs font-medium text-brand-black-60" data-date="${safeDate}">${safeDate}</div>
+                    <div class="updated-cell text-xs font-medium text-brand-black-60" data-raw="${safeDate}" data-date="${safeDate}">${safeDate}</div>
                 </td>
             `;
             tbody.appendChild(row);
@@ -289,6 +311,9 @@ BW.CompactTable = {
         });
         this.applyVisualSettings(settings);
         this.initSparklines(commodities);
+        if (BW.Index?.applyQuickFind) {
+            BW.Index.applyQuickFind();
+        }
     },
 
     // Initialize sparkline charts
@@ -333,7 +358,7 @@ BW.CompactTable = {
                         let noDataMsg = container.querySelector('.no-data-msg');
                         if (!noDataMsg) {
                             noDataMsg = document.createElement('div');
-                            noDataMsg.className = 'no-data-msg text-[9px] text-brand-black-60 italic flex items-center justify-center h-full';
+                            noDataMsg.className = 'no-data-msg text-[10px] text-brand-black-60 italic flex items-center justify-center h-full';
                             noDataMsg.textContent = 'No data in range';
                             container.appendChild(noDataMsg);
                         }
@@ -546,7 +571,7 @@ BW.CompactTable = {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
                 if (range === activeRange) {
-                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg shadow-sm transition-all theme-surface theme-text';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text';
                 } else {
                     btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
                 }
@@ -652,9 +677,9 @@ BW.CompactTable = {
         const preview = document.getElementById('preview-commodity');
         if (!preview) return;
 
-        const icon = '<div class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center"><span class="text-[9px] font-bold text-brand-black-60">BR</span></div>';
+        const icon = '<div class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center"><span class="text-[10px] font-semibold text-brand-black-60">BR</span></div>';
         const name = '<div class="text-xs font-bold text-brand-black-80 dark:text-white">Brent Crude Oil</div>';
-        const category = '<div class="text-[9px] text-brand-black-60">Energy</div>';
+        const category = '<div class="text-[10px] text-brand-black-60">Energy</div>';
 
         switch (display) {
             case 'full': preview.innerHTML = `<div class="flex items-center gap-2">${icon}<div>${name}${category}</div></div>`; break;
@@ -677,7 +702,7 @@ BW.CompactTable = {
         const lowIdx = 0;
 
         if (type === 'none') {
-            container.innerHTML = '<span class="text-[9px] text-brand-black-60 italic">Hidden</span>';
+            container.innerHTML = '<span class="text-[10px] text-brand-black-60 italic">Hidden</span>';
             return;
         }
 
@@ -742,7 +767,7 @@ BW.CompactTable = {
 
         let html = '';
         switch (currency) {
-            case 'below': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div><div class="text-[9px] text-brand-black-60">USD</div>`; break;
+            case 'below': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div><div class="text-[10px] text-brand-black-60">USD</div>`; break;
             case 'inline': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">USD ${priceText}</div>`; break;
             case 'symbol': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">$${priceText}</div>`; break;
             case 'none': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div>`; break;
@@ -929,12 +954,12 @@ BW.CompactTable = {
             if (isNaN(rawValue)) return;
 
             el.textContent = (rawValue >= 0 ? '+' : '') + rawValue.toFixed(decimals) + '%';
-            el.classList.remove('px-2', 'py-1', 'rounded-md');
+            el.classList.remove('px-2', 'py-1', 'rounded-lg');
             el.style.color = '';
             el.style.backgroundColor = '';
 
             if (style === 'badge') {
-                el.classList.add('px-2', 'py-1', 'rounded-md');
+                el.classList.add('px-2', 'py-1', 'rounded-lg');
                 el.style.color = rawValue >= 0 ? 'var(--color-up)' : 'var(--color-down)';
                 el.style.backgroundColor = rawValue >= 0 ? 'var(--color-up-bg)' : 'var(--color-down-bg)';
             } else {
@@ -984,12 +1009,17 @@ BW.CompactTable = {
         location.reload();
     },
 
-    // Export to CSV
-    exportToCSV: function () {
-        const table = document.getElementById('data-table');
-        if (!table) return;
+    getExportRows: function (table) {
+        return Array.from(table?.querySelectorAll('tbody tr') || [])
+            .filter(row => row.style.display !== 'none' && !row.classList.contains('quick-find-hidden'));
+    },
 
-        const rows = table.querySelectorAll('tbody tr');
+    escapeCsvField: function (value) {
+        const text = String(value ?? '');
+        return `"${text.replace(/"/g, '""')}"`;
+    },
+
+    buildCsvContent: function (rows) {
         const headers = ['Commodity', 'Category', 'Price', 'Currency', 'Change', 'Change %', 'Date'];
         let csvContent = headers.join(',') + '\n';
 
@@ -997,13 +1027,33 @@ BW.CompactTable = {
             const commodity = row.querySelector('.commodity-name')?.textContent?.trim() || '';
             const category = row.querySelector('.commodity-category')?.textContent?.trim() || '';
             const price = row.querySelector('.price-value')?.dataset?.raw || '';
+            const currency = row.querySelector('.price-currency')?.textContent?.trim() || row.dataset.currency || '';
             const change = row.querySelector('.chg-cell')?.dataset?.value || '';
             const changePct = row.querySelector('.pct-cell')?.dataset?.value || '';
-            const date = row.querySelector('.updated-cell')?.dataset?.raw || '';
+            const updatedCell = row.querySelector('.updated-cell');
+            const date = updatedCell?.dataset?.raw || updatedCell?.dataset?.date || row.dataset.date || '';
 
-            csvContent += `"${commodity}","${category}",${price},USD,${change},${changePct},${date}\n`;
+            csvContent += [
+                this.escapeCsvField(commodity),
+                this.escapeCsvField(category),
+                this.escapeCsvField(price),
+                this.escapeCsvField(currency),
+                this.escapeCsvField(change),
+                this.escapeCsvField(changePct),
+                this.escapeCsvField(date)
+            ].join(',') + '\n';
         });
 
+        return csvContent;
+    },
+
+    // Export to CSV
+    exportToCSV: function () {
+        const table = document.getElementById('data-table');
+        if (!table) return;
+
+        const rows = this.getExportRows(table);
+        const csvContent = this.buildCsvContent(rows);
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);

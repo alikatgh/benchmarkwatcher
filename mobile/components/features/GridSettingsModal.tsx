@@ -38,7 +38,7 @@ export default function GridSettingsModal({
             onRequestClose={onClose}
         >
             <View className="flex-1 justify-end bg-black/50">
-                <View className="bg-white dark:bg-slate-900 rounded-t-3xl pt-5 pb-8 px-6 max-h-[80%]">
+                <View className="bg-brand-paper dark:bg-slate-900 rounded-t-3xl pt-5 pb-8 px-6 max-h-[80%]">
                     <View className="flex-row justify-between items-center mb-6">
                         <Text className="text-xl font-bold text-slate-900 dark:text-white">Grid Layout & Columns</Text>
                         <TouchableOpacity onPress={onClose} className="bg-slate-100 dark:bg-slate-800 p-2 rounded-full">
@@ -61,7 +61,7 @@ export default function GridSettingsModal({
                                     <Switch
                                         value={item.value}
                                         onValueChange={item.setter}
-                                        trackColor={{ false: '#cbd5e1', true: '#3b82f6' }}
+                                        trackColor={{ false: '#d8cfc2', true: '#0f5499' }}
                                         thumbColor="#ffffff"
                                     />
                                 </View>
@@ -74,7 +74,7 @@ export default function GridSettingsModal({
                                 <TouchableOpacity
                                     key={scale}
                                     onPress={() => setFontScale(scale)}
-                                    className={`flex-1 items-center py-2 rounded-lg ${fontScale === scale ? 'bg-white dark:bg-slate-700 shadow-sm' : ''}`}
+                                    className={`flex-1 items-center py-2 rounded-lg ${fontScale === scale ? 'bg-brand-paper dark:bg-slate-700 shadow-sm' : ''}`}
                                 >
                                     <Text className={`capitalize font-medium ${fontScale === scale ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{scale}</Text>
                                 </TouchableOpacity>
@@ -87,7 +87,7 @@ export default function GridSettingsModal({
                                 <TouchableOpacity
                                     key={dens}
                                     onPress={() => setDensity(dens)}
-                                    className={`flex-1 items-center py-2 rounded-lg ${density === dens ? 'bg-white dark:bg-slate-700 shadow-sm' : ''}`}
+                                    className={`flex-1 items-center py-2 rounded-lg ${density === dens ? 'bg-brand-paper dark:bg-slate-700 shadow-sm' : ''}`}
                                 >
                                     <Text className={`capitalize font-medium ${density === dens ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{dens}</Text>
                                 </TouchableOpacity>

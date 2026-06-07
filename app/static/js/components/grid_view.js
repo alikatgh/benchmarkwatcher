@@ -267,6 +267,9 @@ BW.GridView = {
             .then(response => {
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
                 self.updateCards(commodities);
+                if (BW.Index?.updateMarketPulse) {
+                    BW.Index.updateMarketPulse(response?.meta?.summary || commodities, { range });
+                }
             })
             .catch(error => {
                 if (error.name === 'AbortError') return;
@@ -317,6 +320,9 @@ BW.GridView = {
                     message: 'No benchmarks match the current filters or range.'
                 })
             );
+            if (BW.Index?.applyQuickFind) {
+                BW.Index.applyQuickFind();
+            }
             return;
         }
 
@@ -360,6 +366,7 @@ BW.GridView = {
             }
 
             const isUp = displayChange >= 0;
+            const direction = displayChange > 0 ? 'up' : (displayChange < 0 ? 'down' : 'flat');
             const colorVar = isUp ? '--color-up' : '--color-down';
             const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
             const borderColorVar = isUp ? '--color-up-border' : '--color-down-border';
@@ -385,25 +392,32 @@ BW.GridView = {
 
             // Check if freq badge should be shown
             const showFreqBadge = settings.showFreqBadge !== false;
-            const freqBadgeHtml = showFreqBadge ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${freqTitle}">${freqBadge}</span>` : '';
+            const freqBadgeHtml = showFreqBadge ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${freqTitle}">${freqBadge}</span>` : '';
 
             const card = document.createElement('a');
             card.href = `/commodity/${encodeURIComponent(commodityId)}`;
             card.className = 'block group';
             // Data attributes for stable sorting (avoids regex scraping rendered text)
+            card.dataset.id = commodityId;
             card.dataset.name = commodity.name;
+            card.dataset.category = commodity.category || '';
+            card.dataset.currency = commodity.currency || '';
+            card.dataset.unit = commodity.unit || '';
+            card.dataset.date = commodity.date || '';
+            card.dataset.frequency = isDaily ? 'daily' : 'monthly';
+            card.dataset.direction = direction;
             card.dataset.price = commodity.price;
             card.dataset.changePct = displayChangePercent;
             card.dataset.changeAbs = displayChange;
             card.innerHTML = `
-                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
+                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition-all duration-300 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
                     <div class="bw-grid-gradient absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
                     <div class="bw-grid-category-row flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
+                            <span class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
                             ${freqBadgeHtml}
                         </div>
-                        <div class="bw-grid-direction-badge text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar}); border: 1px solid var(${borderColorVar});">
+                        <div class="bw-grid-direction-badge text-[10px] font-semibold py-0.5 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar}); border: 1px solid var(${borderColorVar});">
                             ${arrowSymbol} ${Math.abs(displayChangePercent)}%
                         </div>
                     </div>
@@ -411,7 +425,7 @@ BW.GridView = {
                         ${safeName}
                     </h3>
                     <div class="bw-grid-price-section font-ui mb-3">
-                        <div class="bw-grid-price tabular-nums text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+                        <div class="bw-grid-price tabular-nums text-3xl font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
                             ${safePrice}
                         </div>
                         <div class="bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
@@ -441,6 +455,10 @@ BW.GridView = {
             `;
             container.appendChild(card);
         });
+
+        if (BW.Index?.applyQuickFind) {
+            BW.Index.applyQuickFind();
+        }
     },
 
     // Update range button styles and accessibility attributes
@@ -458,7 +476,7 @@ BW.GridView = {
             btn.setAttribute('tabindex', isActive ? '0' : '-1');
 
             btn.className = isActive
-                ? 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg shadow-sm transition-all theme-surface theme-text'
+                ? 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text'
                 : 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
         });
     },
@@ -935,7 +953,7 @@ BW.GridView = {
                     priceSection.style.cssText = 'margin-bottom:0.3rem;';
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = 'bw-grid-price tabular-nums text-lg font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.className = 'bw-grid-price tabular-nums text-lg font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
                         priceEl.style.cssText = '';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
@@ -983,7 +1001,7 @@ BW.GridView = {
             container.querySelectorAll('a.block.group').forEach(link => {
                 const card = link.querySelector('div');
                 if (!card) return;
-                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition-all duration-300 h-full relative overflow-hidden';
                 card.style.boxShadow = '0 10px 24px color-mix(in srgb, var(--theme-border) 25%, transparent)';
 
                 // Restore gradient overlay
@@ -1015,7 +1033,7 @@ BW.GridView = {
 
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = 'bw-grid-price tabular-nums text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.className = 'bw-grid-price tabular-nums text-3xl font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
                         priceEl.style.cssText = '';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');

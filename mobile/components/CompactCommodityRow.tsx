@@ -29,7 +29,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
     const isDaily = commodity.is_daily === true;
     const frequencyTag = isDaily ? 'D' : 'M';
 
-    const trendDirection = (() => {
+    const directionIndicator = (() => {
         const history = commodity.history;
         if (!history || history.length < 2) {
             if (commodity.change > 0) return { icon: '▲', label: 'Up' };
@@ -47,7 +47,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
     return (
         <TouchableOpacity
             onPress={() => onPress(commodity)}
-            className={`flex-row items-center justify-between bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700/50 ${rowPadding}`}
+            className={`flex-row items-center justify-between bg-brand-paper dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700/50 ${rowPadding}`}
             accessibilityRole="button"
             accessibilityLabel={`${commodity.name}, ${commodity.price} ${commodity.currency}, ${isUp ? 'up' : 'down'} ${Math.abs(commodity.change_percent)}%`}
         >
@@ -91,10 +91,10 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
                     </Text>
                 )}
                 <Text
-                    className={`mt-0.5 ${metaText} ${isUp ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500 dark:text-rose-400'}`}
-                    accessibilityLabel={`Trend ${trendDirection.label}`}
+                    className={`mt-0.5 ${metaText} ${changeColor}`}
+                    accessibilityLabel={`Direction ${directionIndicator.label}`}
                 >
-                    {trendDirection.icon} Trend {trendDirection.label}
+                    {directionIndicator.icon}
                 </Text>
             </View>
 

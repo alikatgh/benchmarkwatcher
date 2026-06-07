@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory, current_app
-from app.data_handler import get_all_commodities, get_commodity
+from app.data_handler import build_market_summary, get_all_commodities, get_commodity
 from app.extensions import limiter
 import os
 import secrets
@@ -57,11 +57,20 @@ def parse_bool_flag(value: Optional[str], default: bool = False) -> bool:
 
 
 def validate_since(since_str: Optional[str]) -> Optional[str]:
-    """Validate the since date parameter. Returns None if invalid."""
+    """Validate the since date parameter. Returns None if invalid.
+
+    Rejects future dates and dates before 2000-01-01.
+    """
     if not since_str:
         return None
     try:
-        datetime.strptime(since_str, '%Y-%m-%d')
+        parsed_date = datetime.strptime(since_str, '%Y-%m-%d')
+        # Reject future dates
+        if parsed_date > datetime.now():
+            return None
+        # Reject unreasonably old dates
+        if parsed_date.year < 2000:
+            return None
         return since_str
     except ValueError:
         return None
@@ -79,6 +88,7 @@ def build_commodities_response(
     *,
     since: Optional[str] = None,
     include_history: Optional[bool] = None,
+    summary: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build a consistent commodities API response envelope."""
     meta: Dict[str, Any] = {
@@ -95,6 +105,8 @@ def build_commodities_response(
         meta['partial'] = False
     if include_history is not None:
         meta['include_history'] = include_history
+    if summary is not None:
+        meta['summary'] = summary
     return {'data': commodities, 'meta': meta}
 
 
@@ -126,11 +138,24 @@ def api_commodities():
     """
     date_range = validate_range(request.args.get('range', 'ALL'))
     category = request.args.get('category', None)
-    since = validate_since(request.args.get('since', None))
+    raw_since = request.args.get('since', None)
+    since = validate_since(raw_since)
     include_history = parse_bool_flag(
         request.args.get('include_history'),
         default=False
     )
+    if raw_since and since is None:
+        payload = build_commodities_response(
+            [],
+            date_range,
+            category,
+            since=raw_since,
+            include_history=include_history,
+        )
+        payload['error'] = (
+            'Invalid since parameter. Use YYYY-MM-DD between 2000-01-01 and today.'
+        )
+        return jsonify(payload), 400
 
     commodities = filter_commodities(
         date_range,
@@ -146,6 +171,7 @@ def api_commodities():
             category,
             since=since,
             include_history=include_history,
+            summary=None if since else build_market_summary(commodities),
         )
     )
 
@@ -169,7 +195,14 @@ def internal_api_commodities():
 
     commodities = filter_commodities(date_range, category)
 
-    return jsonify(build_commodities_response(commodities, date_range, category))
+    return jsonify(
+        build_commodities_response(
+            commodities,
+            date_range,
+            category,
+            summary=build_market_summary(commodities),
+        )
+    )
 
 
 @bp.route('/')
@@ -191,6 +224,7 @@ def index():
     return render_template(
         'index.html',
         commodities=commodities,
+        market_summary=build_market_summary(commodities),
         date_range=date_range,
         selected_category=category,
         active_view=active_view

@@ -14,7 +14,7 @@ import HomeModals from '../components/features/HomeModals';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
-const CATEGORIES = ['All', 'Energy', 'Metal', 'Agricultural', 'Precious'];
+const CATEGORIES = ['All', 'Energy', 'Metal', 'Agricultural', 'Precious', 'Indices'];
 const RANGES = ['1W', '1M', '3M', '6M', '1Y', 'ALL'];
 const SORT_METHODS = ['change_percent', 'name', 'price', 'priority'];
 const SORT_ORDERS = ['asc', 'desc'];
@@ -57,13 +57,20 @@ export default function HomeScreen() {
                     return;
                 }
 
-                const parsed = JSON.parse(raw) as {
+                let parsed: {
                     selectedCategory?: string;
                     selectedRange?: string;
                     sortMethod?: string;
                     sortOrder?: string;
                     isCompactView?: boolean;
                 };
+                try {
+                    parsed = JSON.parse(raw);
+                } catch (parseError) {
+                    console.error("Failed to parse home state JSON:", parseError);
+                    hasHydratedHomeState.current = true;
+                    return;
+                }
 
                 if (!isMounted) return;
 
@@ -216,7 +223,7 @@ export default function HomeScreen() {
                                 accessibilityRole="button"
                                 accessibilityLabel={`Filter category ${category}`}
                                 accessibilityState={{ selected: isActive }}
-                                className={`px-4 py-2 rounded-full border ${isActive ? 'bg-slate-900 border-slate-900 dark:bg-white dark:border-white' : 'bg-transparent border-slate-300 dark:border-slate-600'}`}
+                                className={`px-4 py-2 rounded-full border ${isActive ? 'bg-slate-900 border-slate-900 dark:bg-brand-paper dark:border-white' : 'bg-transparent border-slate-300 dark:border-slate-600'}`}
                             >
                                 <Text className={`font-medium ${isActive ? 'text-white dark:text-slate-900' : 'text-slate-600 dark:text-slate-300'}`}>
                                     {category}
@@ -287,7 +294,7 @@ export default function HomeScreen() {
             <SafeAreaView className="flex-1 bg-slate-50 dark:bg-slate-900">
                 {renderHeader()}
                 <View className="flex-1 items-center justify-center">
-                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <ActivityIndicator size="large" color="#0f5499" />
                 </View>
             </SafeAreaView>
         );
@@ -303,7 +310,7 @@ export default function HomeScreen() {
                         onPress={handleRefresh}
                         accessibilityRole="button"
                         accessibilityLabel="Retry loading benchmarks"
-                        className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2"
+                        className="mt-4 bg-slate-900 dark:bg-brand-paper rounded-lg px-4 py-2"
                     >
                         <Text className="font-bold text-white dark:text-slate-900">Retry</Text>
                     </TouchableOpacity>

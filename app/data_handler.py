@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import math
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -91,16 +92,18 @@ def _apply_latest_display_point(item: Dict[str, Any], history: List[Dict[str, An
     """Update top-level display price/date to match the latest entry in provided history."""
     if history:
         latest = history[-1]
-        item['price'] = latest['price']
-        item['date'] = latest['date']
+        if 'price' in latest:
+            item['price'] = latest['price']
+        if 'date' in latest:
+            item['date'] = latest['date']
 
 
 def _set_previous_observation_fields(item: Dict[str, Any], history: List[Dict[str, Any]]) -> None:
     """Set previous observation fields for tooltip display."""
     if len(history) >= 2:
         previous = history[-2]
-        item['prev_price'] = previous['price']
-        item['prev_date'] = previous['date']
+        item['prev_price'] = previous.get('price', item.get('price', 0))
+        item['prev_date'] = previous.get('date', item.get('date', ''))
     else:
         item['prev_price'] = item.get('price', 0)
         item['prev_date'] = item.get('date', '')
@@ -174,6 +177,179 @@ def _set_frequency_fields(item: Dict[str, Any], history: List[Dict[str, Any]]) -
     item['frequency_label'] = 'Daily data' if is_daily else 'Monthly data'
 
 
+def _finite_float(value: Any) -> Optional[float]:
+    """Convert numeric-ish values to finite floats."""
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    return parsed if math.isfinite(parsed) else None
+
+
+def _first_finite_value(item: Dict[str, Any], keys: List[str]) -> float:
+    """Read the first finite numeric field from *item*."""
+    for key in keys:
+        parsed = _finite_float(item.get(key))
+        if parsed is not None:
+            return parsed
+    return 0.0
+
+
+def _parse_date(date_value: Any) -> Optional[datetime]:
+    """Parse the project date format safely."""
+    if not date_value:
+        return None
+    try:
+        return datetime.strptime(str(date_value), '%Y-%m-%d')
+    except ValueError:
+        return None
+
+
+def _movement_payload(item: Dict[str, Any], pct_change: float, abs_change: float) -> Dict[str, Any]:
+    """Build the compact mover object used by API meta and dashboard UI."""
+    return {
+        'id': item.get('id', ''),
+        'name': item.get('name', 'Unknown benchmark'),
+        'category': item.get('category', 'uncategorized'),
+        'change_percent': pct_change,
+        'change': abs_change,
+        'currency': item.get('currency', ''),
+    }
+
+
+def _category_display_name(category_slug: str) -> str:
+    """Return compact labels for category summary UI."""
+    labels = {
+        'agricultural': 'Agriculture',
+        'metal': 'Metals',
+        'index': 'Indices',
+        'precious': 'Precious',
+        'energy': 'Energy',
+    }
+    return labels.get(category_slug, category_slug.replace('_', ' ').title())
+
+
+def build_market_summary(commodities: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Build dashboard-level summary stats from already-loaded commodities.
+
+    The summary is descriptive only: it counts current display-window changes
+    and highlights the largest positive/negative observed moves.
+    """
+    summary: Dict[str, Any] = {
+        'total': 0,
+        'up_count': 0,
+        'down_count': 0,
+        'flat_count': 0,
+        'daily_count': 0,
+        'monthly_count': 0,
+        'latest_date': None,
+        'latest_count': 0,
+        'breadth_percent': 0.0,
+        'net_count': 0,
+        'headline': 'No benchmarks loaded',
+        'biggest_up': None,
+        'biggest_down': None,
+        'categories': [],
+    }
+
+    if not isinstance(commodities, list) or not commodities:
+        return summary
+
+    category_totals: Dict[str, Dict[str, Any]] = {}
+    dated_items: List[tuple[datetime, Dict[str, Any]]] = []
+    biggest_up: Optional[tuple[float, Dict[str, Any]]] = None
+    biggest_down: Optional[tuple[float, Dict[str, Any]]] = None
+
+    for item in commodities:
+        if not isinstance(item, dict):
+            continue
+
+        summary['total'] += 1
+        pct_change = _first_finite_value(item, ['change_percent', 'daily_change_percent'])
+        abs_change = _first_finite_value(item, ['change', 'daily_change'])
+
+        if pct_change > 0:
+            direction = 'up'
+            summary['up_count'] += 1
+        elif pct_change < 0:
+            direction = 'down'
+            summary['down_count'] += 1
+        else:
+            direction = 'flat'
+            summary['flat_count'] += 1
+
+        if item.get('is_daily') is True:
+            summary['daily_count'] += 1
+        else:
+            summary['monthly_count'] += 1
+
+        category = str(item.get('category') or 'uncategorized').strip().lower()
+        category_bucket = category_totals.setdefault(
+            category,
+            {
+                'slug': category,
+                'name': _category_display_name(category),
+                'total': 0,
+                'up_count': 0,
+                'down_count': 0,
+                'flat_count': 0,
+                'breadth_percent': 0.0,
+                'flat_percent': 0.0,
+                'down_percent': 0.0,
+            }
+        )
+        category_bucket['total'] += 1
+        category_bucket[f'{direction}_count'] += 1
+
+        parsed_date = _parse_date(item.get('date'))
+        if parsed_date:
+            dated_items.append((parsed_date, item))
+
+        movement = _movement_payload(item, pct_change, abs_change)
+        if pct_change > 0 and (biggest_up is None or pct_change > biggest_up[0]):
+            biggest_up = (pct_change, movement)
+        if pct_change < 0 and (biggest_down is None or pct_change < biggest_down[0]):
+            biggest_down = (pct_change, movement)
+
+    if summary['total'] == 0:
+        return summary
+
+    active_count = summary['up_count'] + summary['down_count']
+    summary['breadth_percent'] = round((summary['up_count'] / summary['total']) * 100, 1)
+    summary['net_count'] = summary['up_count'] - summary['down_count']
+
+    if summary['up_count'] > summary['down_count']:
+        summary['headline'] = 'More benchmarks rose than fell'
+    elif summary['down_count'] > summary['up_count']:
+        summary['headline'] = 'More benchmarks fell than rose'
+    elif active_count == 0:
+        summary['headline'] = 'Benchmarks were unchanged'
+    else:
+        summary['headline'] = 'Benchmarks were evenly split'
+
+    if dated_items:
+        latest_date = max(date for date, _item in dated_items)
+        latest_date_str = latest_date.strftime('%Y-%m-%d')
+        summary['latest_date'] = latest_date_str
+        summary['latest_count'] = sum(1 for date, _item in dated_items if date == latest_date)
+
+    if biggest_up:
+        summary['biggest_up'] = biggest_up[1]
+    if biggest_down:
+        summary['biggest_down'] = biggest_down[1]
+
+    for category in category_totals.values():
+        category['breadth_percent'] = round((category['up_count'] / category['total']) * 100, 1)
+        category['flat_percent'] = round((category['flat_count'] / category['total']) * 100, 1)
+        category['down_percent'] = round((category['down_count'] / category['total']) * 100, 1)
+
+    summary['categories'] = sorted(
+        category_totals.values(),
+        key=lambda category: (-category['total'], category['name'])
+    )
+    return summary
+
+
 @cache.memoize(timeout=600)
 def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -> List[Dict[str, Any]]:
     """Load all commodities with display-filtered history.
@@ -220,6 +396,24 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
     return commodities
 
 
+def _is_safe_commodity_id(commodity_id: str) -> bool:
+    """Validate commodity ID to prevent path traversal attacks."""
+    if not commodity_id or not isinstance(commodity_id, str):
+        return False
+    # Only allow alphanumeric, underscore, and hyphen
+    return all(c.isalnum() or c in ('_', '-') for c in commodity_id)
+
+
+def _is_path_within_directory(filepath: str, directory: str) -> bool:
+    """Check if filepath is safely within the given directory."""
+    try:
+        real_filepath = os.path.realpath(filepath)
+        real_directory = os.path.realpath(directory)
+        return real_filepath.startswith(real_directory + os.sep)
+    except (OSError, ValueError):
+        return False
+
+
 @cache.memoize(timeout=600)
 def get_commodity(commodity_id: str) -> Optional[Dict[str, Any]]:
     """Load single commodity with all data.
@@ -227,9 +421,19 @@ def get_commodity(commodity_id: str) -> Optional[Dict[str, Any]]:
     Uses pre-computed metrics from derived.descriptive_stats.
     Does NOT recompute financial calculations in the UI layer.
     """
+    # Validate commodity_id to prevent path traversal
+    if not _is_safe_commodity_id(commodity_id):
+        logger.warning("Invalid commodity_id rejected: %s", commodity_id)
+        return None
+
     data_dir = current_app.config['JSON_DATA_DIR']
     filepath = os.path.join(data_dir, f"{commodity_id}.json")
-    
+
+    # Additional path safety check
+    if not _is_path_within_directory(filepath, data_dir):
+        logger.warning("Path traversal attempt blocked: %s", commodity_id)
+        return None
+
     if os.path.exists(filepath):
         try:
             with open(filepath, 'r') as f:

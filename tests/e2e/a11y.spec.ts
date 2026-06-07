@@ -10,8 +10,10 @@ import AxeBuilder from '@axe-core/playwright';
 
 test.describe('Accessibility', () => {
     test('homepage has no critical accessibility violations', async ({ page }) => {
-        await page.goto('/');
+        const response = await page.goto('/');
+        expect(response?.ok()).toBeTruthy();
         await page.waitForLoadState('networkidle');
+        await expect(page.locator('main, #grid-view, #compact-view').first()).toBeVisible();
 
         const results = await new AxeBuilder({ page })
             .withTags(['wcag2a', 'wcag2aa'])
@@ -30,8 +32,9 @@ test.describe('Accessibility', () => {
     });
 
     test('grid view cards are keyboard accessible', async ({ page }) => {
-        await page.goto('/');
-        await page.waitForSelector('#grid-cards-container', { state: 'visible', timeout: 5000 }).catch(() => { });
+        const response = await page.goto('/');
+        expect(response?.ok()).toBeTruthy();
+        await page.waitForSelector('#grid-cards-container', { state: 'visible', timeout: 5000 });
 
         // Check that range buttons exist and are focusable
         const rangeButtons = page.locator('[id^="grid-range-"]');

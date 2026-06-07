@@ -83,7 +83,7 @@ export default function CommodityChartControls({
                     accessibilityLabel="Open compare commodities panel"
                     className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                 >
-                    <Icon name="compare" size={16} color="#6366f1" />
+                    <Icon name="compare" size={16} color="#0f5499" />
                     <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">Compare</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -92,7 +92,7 @@ export default function CommodityChartControls({
                     accessibilityLabel="Open chart settings"
                     className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                 >
-                    <Icon name="settings" size={16} color="#6366f1" />
+                    <Icon name="settings" size={16} color="#0f5499" />
                     <Text className="text-xs font-bold text-slate-700 dark:text-slate-300">Settings</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -101,7 +101,7 @@ export default function CommodityChartControls({
                     accessibilityLabel="Open export and share options"
                     className="flex-1 flex-row items-center justify-center gap-2 px-3 py-3 rounded-lg border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                 >
-                    <Icon name="camera" size={16} color="#3b82f6" />
+                    <Icon name="camera" size={16} color="#0f5499" />
                     <Text className="text-xs font-bold text-blue-600 dark:text-blue-400">Export/Share</Text>
                 </TouchableOpacity>
             </View>
@@ -114,7 +114,7 @@ export default function CommodityChartControls({
                 onRequestClose={() => setShowExportMenu(false)}
             >
                 <Pressable className="flex-1 justify-end bg-black/40" onPress={() => setShowExportMenu(false)}>
-                    <View className="bg-white dark:bg-slate-900 rounded-t-2xl px-5 pt-4 pb-8">
+                    <View className="bg-brand-paper dark:bg-slate-900 rounded-t-2xl px-5 pt-4 pb-8">
                         <Text className="text-sm font-bold text-slate-900 dark:text-white mb-4 text-center">Export or Share</Text>
                         {[
                             { key: 'csv', label: 'Copy CSV', desc: '(to clipboard)', icon: 'list' },

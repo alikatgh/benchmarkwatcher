@@ -28,7 +28,7 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function CommodityDetailScreen({ route }: Props) {
     const { commodity: initialCommodity } = route.params;
-    const [commodity, setCommodity] = useState<Commodity | any>(initialCommodity);
+    const [commodity, setCommodity] = useState<Commodity>(initialCommodity);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -128,6 +128,12 @@ export default function CommodityDetailScreen({ route }: Props) {
     const selectedChange = changeOptions[selectedChangePeriod];
     const selectedChangeIsUp = selectedChange.pct >= 0;
     const { textColor: changeColor, badgeColor } = getMarketColors(selectedChangeIsUp);
+    const detailPct30 = typeof derivedStats.pct_change_30_obs === 'number'
+        ? derivedStats.pct_change_30_obs
+        : (typeof derivedStats.pct_30d === 'number' ? derivedStats.pct_30d : null);
+    const detailPct365 = typeof derivedStats.pct_change_365_obs === 'number'
+        ? derivedStats.pct_change_365_obs
+        : (typeof derivedStats.pct_1y === 'number' ? derivedStats.pct_1y : null);
 
     // Comparison handlers
     const handleToggleCommodity = useCallback(async (comp: Commodity) => {
@@ -140,7 +146,7 @@ export default function CommodityDetailScreen({ route }: Props) {
 
         try {
             const detail = await fetchCommodityDetail(comp.id);
-            const history = (detail as any).history || [];
+            const history = detail.history ?? [];
             const newColor = COMPARISON_COLORS[colorIndex % COMPARISON_COLORS.length];
             setColorIndex(prev => prev + 1);
             setComparisons(prev => [...prev, {
@@ -164,7 +170,7 @@ export default function CommodityDetailScreen({ route }: Props) {
     }, []);
 
     const chartDataResult = useMemo(() => {
-        const history: any[] | undefined = commodity.history;
+        const history = commodity.history;
         if (!history || history.length === 0) return null;
 
         let pointsCount = history.length;
@@ -278,7 +284,7 @@ export default function CommodityDetailScreen({ route }: Props) {
     );
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
+        <SafeAreaView className="flex-1 bg-brand-paper dark:bg-slate-900">
             <ScrollView
                 className="flex-1"
                 contentContainerStyle={{ paddingBottom: 40 }}
@@ -379,8 +385,8 @@ export default function CommodityDetailScreen({ route }: Props) {
                     loading={loading}
                     error={error}
                     chartData={chartPoints}
-                    selectedRange={selectedRange as any}
-                    setSelectedRange={setSelectedRange as any}
+                    selectedRange={selectedRange}
+                    setSelectedRange={setSelectedRange}
                     viewMode={viewMode}
                     setViewMode={setViewMode}
                     onExport={handleExport}
@@ -409,19 +415,19 @@ export default function CommodityDetailScreen({ route }: Props) {
                             {commodity.derived_stats && (
                                 <>
                                     <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                        <Text className="text-slate-500 dark:text-slate-400">30D Return</Text>
-                                        <Text className={`font-bold ${commodity.derived_stats.pct_30d != null ? (commodity.derived_stats.pct_30d >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
-                                            {commodity.derived_stats.pct_30d != null ? `${commodity.derived_stats.pct_30d > 0 ? '+' : ''}${commodity.derived_stats.pct_30d.toFixed(2)}%` : 'N/A'}
+                                        <Text className="text-slate-500 dark:text-slate-400">30-Obs Change</Text>
+                                        <Text className={`font-bold ${detailPct30 != null ? (detailPct30 >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
+                                            {detailPct30 != null ? `${detailPct30 > 0 ? '+' : ''}${detailPct30.toFixed(2)}%` : 'N/A'}
                                         </Text>
                                     </View>
                                     <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                        <Text className="text-slate-500 dark:text-slate-400">1Y Return</Text>
-                                        <Text className={`font-bold ${commodity.derived_stats.pct_1y != null ? (commodity.derived_stats.pct_1y >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
-                                            {commodity.derived_stats.pct_1y != null ? `${commodity.derived_stats.pct_1y > 0 ? '+' : ''}${commodity.derived_stats.pct_1y.toFixed(2)}%` : 'N/A'}
+                                        <Text className="text-slate-500 dark:text-slate-400">365-Obs Change</Text>
+                                        <Text className={`font-bold ${detailPct365 != null ? (detailPct365 >= 0 ? positiveColor : negativeColor) : 'text-slate-900 dark:text-white'}`}>
+                                            {detailPct365 != null ? `${detailPct365 > 0 ? '+' : ''}${detailPct365.toFixed(2)}%` : 'N/A'}
                                         </Text>
                                     </View>
                                     <View className="flex-row justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                                        <Text className="text-slate-500 dark:text-slate-400">Direction (30D)</Text>
+                                        <Text className="text-slate-500 dark:text-slate-400">Direction (30 obs)</Text>
                                         <Text className={`font-bold uppercase ${commodity.derived_stats.direction_30_obs === 'up' ? positiveColor : commodity.derived_stats.direction_30_obs === 'down' ? negativeColor : 'text-slate-500 dark:text-slate-400'}`}>
                                             {commodity.derived_stats.direction_30_obs || 'N/A'}
                                         </Text>

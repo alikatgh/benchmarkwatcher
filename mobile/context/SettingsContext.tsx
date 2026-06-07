@@ -9,8 +9,8 @@ export type Density = 'compact' | 'cozy' | 'roomy';
 
 const DEFAULT_CHART_SETTINGS: ChartSettings = {
     chartTheme: 'default',
-    chartLineColor: '59, 130, 246',
-    chartFillColor: '59, 130, 246',
+    chartLineColor: '15, 84, 153',
+    chartFillColor: '15, 84, 153',
     chartFillOpacity: 0.3,
     chartFillEnabled: false,
     chartGridVisible: true,
@@ -107,7 +107,9 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
                     try {
                         const parsed = JSON.parse(stored['@chart_settings']);
                         setChartSettingsState({ ...DEFAULT_CHART_SETTINGS, ...parsed });
-                    } catch { }
+                    } catch (parseError) {
+                        console.error("Failed to parse chart settings JSON:", parseError);
+                    }
                 }
             } catch (e) {
                 console.error("Failed to load settings from AsyncStorage", e);
@@ -116,42 +118,52 @@ export const SettingsProvider = ({ children }: { children: ReactNode }) => {
         loadSettings();
     }, []);
 
+    // Helper to persist settings with error handling
+    const persistSetting = async (key: string, value: string): Promise<void> => {
+        try {
+            await AsyncStorage.setItem(key, value);
+        } catch (e) {
+            console.error(`Failed to persist setting ${key}:`, e);
+        }
+    };
+
     const setIsDarkMode = async (val: boolean) => {
         setDarkModeState(val);
         setColorScheme(val ? 'dark' : 'light');
-        await AsyncStorage.setItem('@dark_mode', String(val));
+        await persistSetting('@dark_mode', String(val));
     };
 
     const setThemeFlavor = async (val: ThemeFlavor) => {
         setThemeFlavorState(val);
-        await AsyncStorage.setItem('@theme_flavor', val);
+        await persistSetting('@theme_flavor', val);
     };
 
     const setSyncEnabled = async (val: boolean) => {
         setSyncEnabledState(val);
-        await AsyncStorage.setItem('@sync_enabled', String(val));
+        await persistSetting('@sync_enabled', String(val));
     };
 
-    const setShowCategory = async (val: boolean) => { setShowCategoryState(val); await AsyncStorage.setItem('@show_cat', String(val)); };
-    const setShowChangePercent = async (val: boolean) => { setShowChangePercentState(val); await AsyncStorage.setItem('@show_chg_pct', String(val)); };
-    const setShowChangeAbs = async (val: boolean) => { setShowChangeAbsState(val); await AsyncStorage.setItem('@show_chg_abs', String(val)); };
-    const setShowDate = async (val: boolean) => { setShowDateState(val); await AsyncStorage.setItem('@show_date', String(val)); };
-    const setShowUnit = async (val: boolean) => { setShowUnitState(val); await AsyncStorage.setItem('@show_unit', String(val)); };
-    const setFontScale = async (val: FontScale) => { setFontScaleState(val); await AsyncStorage.setItem('@font_scale', val); };
-    const setDensity = async (val: Density) => { setDensityState(val); await AsyncStorage.setItem('@density', val); };
-    const setMarketTheme = async (val: MarketTheme) => { setMarketThemeState(val); await AsyncStorage.setItem('@market_theme', val); };
+    const setShowCategory = async (val: boolean) => { setShowCategoryState(val); await persistSetting('@show_cat', String(val)); };
+    const setShowChangePercent = async (val: boolean) => { setShowChangePercentState(val); await persistSetting('@show_chg_pct', String(val)); };
+    const setShowChangeAbs = async (val: boolean) => { setShowChangeAbsState(val); await persistSetting('@show_chg_abs', String(val)); };
+    const setShowDate = async (val: boolean) => { setShowDateState(val); await persistSetting('@show_date', String(val)); };
+    const setShowUnit = async (val: boolean) => { setShowUnitState(val); await persistSetting('@show_unit', String(val)); };
+    const setFontScale = async (val: FontScale) => { setFontScaleState(val); await persistSetting('@font_scale', val); };
+    const setDensity = async (val: Density) => { setDensityState(val); await persistSetting('@density', val); };
+    const setMarketTheme = async (val: MarketTheme) => { setMarketThemeState(val); await persistSetting('@market_theme', val); };
 
     const updateChartSettings = useCallback(async (updates: Partial<ChartSettings>) => {
         setChartSettingsState(prev => {
             const next = { ...prev, ...updates };
-            AsyncStorage.setItem('@chart_settings', JSON.stringify(next));
+            // Persist asynchronously with error handling
+            persistSetting('@chart_settings', JSON.stringify(next));
             return next;
         });
     }, []);
 
     const resetChartSettings = useCallback(async () => {
         setChartSettingsState(DEFAULT_CHART_SETTINGS);
-        await AsyncStorage.setItem('@chart_settings', JSON.stringify(DEFAULT_CHART_SETTINGS));
+        await persistSetting('@chart_settings', JSON.stringify(DEFAULT_CHART_SETTINGS));
     }, []);
 
     const getMarketColors = (isUp: boolean) => {
