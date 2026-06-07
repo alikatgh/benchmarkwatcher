@@ -136,7 +136,7 @@ def api_commodities():
     - If provided, only commodities with date > since are returned.
     - Mobile clients use this to avoid re-downloading unchanged data.
     """
-    date_range = validate_range(request.args.get('range', 'ALL'))
+    date_range = validate_range(request.args.get('range', '1Y'))
     category = request.args.get('category', None)
     raw_since = request.args.get('since', None)
     since = validate_since(raw_since)
@@ -190,7 +190,7 @@ def internal_api_commodities():
     if not is_valid_internal_key(provided_key, internal_api_key):
         return jsonify({'data': None, 'error': 'Forbidden: valid API key required'}), 403
 
-    date_range = validate_range(request.args.get('range', 'ALL'))
+    date_range = validate_range(request.args.get('range', '1Y'))
     category = request.args.get('category', None)
 
     commodities = filter_commodities(date_range, category)
@@ -208,7 +208,7 @@ def internal_api_commodities():
 @bp.route('/')
 def index():
     """Main index page with commodity grid."""
-    date_range = validate_range(request.args.get('range', 'ALL'))
+    date_range = validate_range(request.args.get('range', '1Y'))
     category = request.args.get('category', None)
     active_view = (
         validate_view(request.args.get('view'))

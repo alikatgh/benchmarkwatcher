@@ -335,7 +335,7 @@ BW.Index = {
             ? this.summarizeMarketPulse(payload)
             : (payload && typeof payload === 'object' ? payload : this.summarizeMarketPulse([]));
 
-        const activeRange = range || new URLSearchParams(window.location.search).get('range') || 'ALL';
+        const activeRange = range || new URLSearchParams(window.location.search).get('range') || '1Y';
 
         this.setText('market-pulse-headline', summary.headline || 'No benchmarks loaded');
         this.setText('market-pulse-range', this.rangeLabels[activeRange] || 'All observations');

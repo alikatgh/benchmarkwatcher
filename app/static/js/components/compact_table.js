@@ -13,7 +13,7 @@ BW.CompactTable = {
     sparklineRequestSeq: 0,
     defaultColumns: ['commodity', 'trend', 'price', 'chg', 'pct', 'updated'],
     defaultSettings: {
-        dataRange: 'ALL',
+        dataRange: '1Y',
         panelOpen: false,
         columns: { commodity: true, trend: true, price: true, chg: true, pct: true, updated: true },
         commodity: { display: 'full', icon: 'initials' },
@@ -166,7 +166,7 @@ BW.CompactTable = {
         tbody.innerHTML = '';
 
         const settings = this.getSettings();
-        const currentRange = settings.dataRange || 'ALL';
+        const currentRange = settings.dataRange || '1Y';
         // Observation-accurate labels — match grid_view.js wording (not calendar periods)
         const rangeLabels = {
             '1W': 'recent observations',
@@ -203,7 +203,7 @@ BW.CompactTable = {
             const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
             const safePrice = this.escapeHtml(String(commodity.price));
             const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
-            const roundedChange = Number.isFinite(displayChange) ? parseFloat(Number(displayChange).toFixed(4)) : 0;
+            const roundedChange = Number.isFinite(displayChange) ? parseFloat(Number(displayChange).toFixed(2)) : 0;
             // Round percent for display too (mirrors roundedChange). applyVisualSettings
             // can't fix this on re-render: it reads data-value off `.pct-cell` (the outer
             // div) where the attr is absent, so it bails on NaN and the innerHTML render
@@ -604,7 +604,7 @@ BW.CompactTable = {
     // Initialize data range on load
     initDataRange: function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const range = urlParams.get('range') || this.getSettings().dataRange || 'ALL';
+        const range = urlParams.get('range') || this.getSettings().dataRange || '1Y';
         this.updateRangeButtons(range);
         this.updateDateRangeDisplay(range);
     },
@@ -866,7 +866,7 @@ BW.CompactTable = {
 
         // Reload charts
         const urlParams = new URLSearchParams(window.location.search);
-        const currentRange = urlParams.get('range') || 'ALL';
+        const currentRange = urlParams.get('range') || '1Y';
         const category = urlParams.get('category');
         this.requestSparklineData(currentRange, category, 'Failed to reload charts:');
 
@@ -932,7 +932,7 @@ BW.CompactTable = {
             const rawValue = parseFloat(valueEl?.dataset.value);
             if (isNaN(rawValue)) return;
 
-            const shown = parseFloat(rawValue.toFixed(4));
+            const shown = parseFloat(rawValue.toFixed(2));
             if (format === 'plain') {
                 el.textContent = Math.abs(shown).toString();
             } else {
@@ -1137,7 +1137,7 @@ BW.CompactTable = {
 
     loadSparklinesForCurrentRange: function () {
         const urlParams = new URLSearchParams(window.location.search);
-        const currentRange = urlParams.get('range') || this.getSettings().dataRange || 'ALL';
+        const currentRange = urlParams.get('range') || this.getSettings().dataRange || '1Y';
         const category = urlParams.get('category');
         this.requestSparklineData(currentRange, category, 'Failed to load sparkline data:');
     },

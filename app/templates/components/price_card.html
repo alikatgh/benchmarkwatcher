@@ -42,7 +42,7 @@
 
         <div class="bw-grid-price-section font-ui mb-3">
             <div class="bw-grid-price tabular-nums text-3xl font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
-                {{ commodity.price | round(4) }}
+                {{ "%.2f"|format(commodity.price) }}
             </div>
             <div class="bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
                 {{ commodity.currency }} / {{ commodity.unit }}
@@ -57,7 +57,7 @@
             </span>
             <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
             <span class="bw-grid-change-abs tabular-nums text-sm text-brand-black-60 dark:text-brand-black-60/60 truncate">
-                {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change|default(commodity.change) | round(3) }} {{ commodity.currency }}
+                {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change|default(commodity.change) | round(2) }} {{ commodity.currency }}
             </span>
         </div>
 

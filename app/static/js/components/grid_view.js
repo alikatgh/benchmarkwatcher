@@ -327,7 +327,7 @@ BW.GridView = {
         }
 
         const settings = this.getSettings();
-        const currentRange = settings.dataRange || 'ALL';
+        const currentRange = settings.dataRange || '1Y';
         // Observation-based labels (not calendar periods)
         const rangeLabels = {
             '1W': 'recent observations',
@@ -360,7 +360,7 @@ BW.GridView = {
                 if (Number.isFinite(first) && Number.isFinite(last)) {
                     const abs = last - first;
                     const pct = first !== 0 ? (abs / first) * 100 : 0;
-                    displayChange = Number(abs.toFixed(3));
+                    displayChange = Number(abs.toFixed(2));
                     displayChangePercent = Number(pct.toFixed(2));
                 }
             }
@@ -376,7 +376,7 @@ BW.GridView = {
             const commodityId = String(commodity.id || '');
             const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
             const safeName = this.escapeHtml(String(commodity.name || ''));
-            const safePrice = this.escapeHtml(this.formatNumber(commodity.price, 4));
+            const safePrice = this.escapeHtml(Number(commodity.price).toFixed(2));
             const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
             const safeUnit = this.escapeHtml(String(commodity.unit || ''));
             const safeDate = this.escapeHtml(String(commodity.date || ''));
@@ -503,7 +503,7 @@ BW.GridView = {
         const urlParams = new URLSearchParams(window.location.search);
         const urlRange = urlParams.get('range');
         const settings = this.getSettings();
-        const activeRange = urlRange || settings.dataRange || 'ALL';
+        const activeRange = urlRange || settings.dataRange || '1Y';
 
         this.updateRangeButtons(activeRange);
         this.updateDateRangeDisplay(activeRange);
