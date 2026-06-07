@@ -34,6 +34,9 @@ P0 #1 (range default), P0 #2 (grid price precision), P1 #3 (absolute-change prec
 
 - **Detail page** — fixed: the hero price rendered raw 4-decimals (`3133.9827`) and the High/Low/Average/Range stats were inconsistent (some 3-dec+commas, some 2-dec no-commas). Now uniform 2-decimals + thousands separators across hero + all four stats, matching the chart tooltip (`commodity.html`, `commodity.js`). Also dropped the redundant "Commodity ID: <slug>" label above the title (UI-16).
 
+## Round 3 — computed-style audit (the best catch)
+- **Grid cards had NO up/down colour on the % change, in every theme** — found by checking `getComputedStyle` (not eyeballing screenshots, which I'd misjudged as teal/claret). The default "Full Card" style handler in `grid_view.js` blanked the inline style (`cssText = ''`), dropping the template's `color: var(--color-up)`; the % inherited plain text (dark in light/dark, amber in Bloomberg — which is what the "UI-19 Bloomberg" symptom actually was). Fixed by re-applying the up/down colour from `link.dataset.changePct`. Verified teal `rgb(13,118,128)` / claret `rgb(153,15,61)` in light + Bloomberg. Method lesson logged in `BUG_JOURNAL.md`: verify colour by computed value, never by screenshot.
+
 ## Deferred (logged in `docs/KNOWN_UI_DEBT.md`)
 - #4 Detail chart x-axis is a category scale (no date adapter) → time looks non-linear. Needs a Chart.js time scale + adapter dependency + crosshair refactor.
 - #7 colliding 2-letter row icons. #8 daily/monthly latest-benchmark vs grid value mismatch (data pipeline).

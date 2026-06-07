@@ -1055,8 +1055,14 @@ BW.GridView = {
 
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     if (changePctEl) {
+                        // Re-apply the up/down colour — clearing cssText would drop the
+                        // template's `color: var(--color-up)` and the % would inherit plain
+                        // text (dark in light, amber in the Bloomberg theme). Mirror the
+                        // Minimal/Dense handlers.
+                        const cpv = parseFloat(link.dataset.changePct || '0');
+                        const cpVar = cpv > 0 ? '--color-up' : cpv < 0 ? '--color-down' : '--theme-text-muted';
                         changePctEl.className = 'bw-grid-change-pct tabular-nums text-lg font-bold';
-                        changePctEl.style.cssText = showChangePct ? '' : 'display: none;';
+                        changePctEl.style.cssText = showChangePct ? `color: var(${cpVar});` : 'display: none;';
                     }
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changeAbsEl) {
