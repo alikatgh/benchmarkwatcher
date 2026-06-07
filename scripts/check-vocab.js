@@ -41,10 +41,36 @@ const SKIP_FILES = [
 ];
 
 // Directories to ignore
-const IGNORE_DIRS = ['node_modules', 'dist', 'build', '.git', 'venv', '__pycache__', '.pytest_cache', 'playwright-report', 'test-results'];
+const IGNORE_DIRS = [
+    'node_modules',
+    'dist',
+    'build',
+    '.git',
+    'venv',
+    '.venv',
+    '__pycache__',
+    '.pytest_cache',
+    'playwright-report',
+    'test-results',
+    'coverage'
+];
 
 // File extensions to check
 const CHECK_EXTENSIONS = ['.js', '.ts', '.jsx', '.tsx', '.html', '.jinja', '.jinja2', '.md', '.py'];
+
+// Default scan scope: user-facing web/mobile sources. Use --all for a broad repo scan.
+const DEFAULT_SCAN_PATHS = [
+    'app/templates',
+    'app/static/js',
+    'mobile/App.tsx',
+    'mobile/app.json',
+    'mobile/components',
+    'mobile/context',
+    'mobile/data',
+    'mobile/hooks',
+    'mobile/screen',
+    'product_copy.md'
+];
 
 // Build word-boundary regex (case-insensitive)
 const pattern = new RegExp(
@@ -54,6 +80,11 @@ const pattern = new RegExp(
 
 const ROOT = process.cwd();
 const matches = [];
+const scanAll = process.argv.includes('--all');
+
+function normalizePath(filePath) {
+    return filePath.split(path.sep).join('/');
+}
 
 // Load allowlist if exists
 let allowlist = [];
@@ -66,13 +97,22 @@ if (fs.existsSync(allowlistPath)) {
 }
 
 function shouldSkip(relativePath) {
+    const normalizedPath = normalizePath(relativePath);
     // Check explicit skip list
-    if (SKIP_FILES.some(skip => relativePath.includes(skip))) return true;
+    if (SKIP_FILES.some(skip => normalizedPath.includes(skip))) return true;
     // Check allowlist
-    if (allowlist.some(allowed => relativePath.includes(allowed))) return true;
+    if (allowlist.some(allowed => normalizedPath.includes(normalizePath(allowed)))) return true;
     // Check ignored directories
-    if (IGNORE_DIRS.some(dir => relativePath.includes(`/${dir}/`) || relativePath.startsWith(`${dir}/`))) return true;
+    if (IGNORE_DIRS.some(dir => normalizedPath.includes(`/${dir}/`) || normalizedPath.startsWith(`${dir}/`))) return true;
     return false;
+}
+
+function shouldScan(relativePath) {
+    if (scanAll) return true;
+    const normalizedPath = normalizePath(relativePath);
+    return DEFAULT_SCAN_PATHS.some(target => (
+        normalizedPath === target || normalizedPath.startsWith(`${target}/`)
+    ));
 }
 
 function walkDir(dir) {
@@ -89,7 +129,7 @@ function walkDir(dir) {
                 }
             } else if (entry.isFile()) {
                 const ext = path.extname(entry.name).toLowerCase();
-                if (CHECK_EXTENSIONS.includes(ext) && !shouldSkip(relativePath)) {
+                if (CHECK_EXTENSIONS.includes(ext) && shouldScan(relativePath) && !shouldSkip(relativePath)) {
                     results.push({ fullPath, relativePath });
                 }
             }

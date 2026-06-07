@@ -87,7 +87,7 @@ export default function CommodityHeader({
                         <TouchableOpacity
                             key={btn.key}
                             onPress={() => onChangePeriod(btn.key)}
-                            className={`px-3 py-1.5 rounded-lg ${isActive ? 'bg-white dark:bg-slate-700' : ''}`}
+                            className={`px-3 py-1.5 rounded-lg ${isActive ? 'bg-brand-paper dark:bg-slate-700' : ''}`}
                             accessibilityRole="button"
                             accessibilityState={{ selected: isActive }}
                         >

@@ -5,6 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 interface Props {
     children: ReactNode;
     fallback?: ReactNode;
+    onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+    onReset?: () => void;
 }
 
 interface State {
@@ -24,10 +26,14 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     componentDidCatch(error: Error, info: React.ErrorInfo) {
         console.error('ErrorBoundary caught:', error, info.componentStack);
+        // Call optional error reporting callback
+        this.props.onError?.(error, info);
     }
 
     reset = () => {
         this.setState({ hasError: false, error: null });
+        // Call optional reset callback for external state cleanup
+        this.props.onReset?.();
     };
 
     render() {

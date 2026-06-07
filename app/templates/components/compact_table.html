@@ -72,23 +72,23 @@
                 <!-- Live Preview -->
                 <div
                     class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-[9px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
                         Preview</div>
                     <div id="preview-commodity" class="flex items-center gap-2">
                         <div
                             class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center">
-                            <span class="text-[9px] font-bold text-brand-black-60">BR</span>
+                            <span class="text-[10px] font-semibold text-brand-black-60">BR</span>
                         </div>
                         <div>
                             <div class="text-xs font-bold text-brand-black-80 dark:text-white">Brent Crude Oil</div>
-                            <div class="text-[9px] text-brand-black-60">Energy</div>
+                            <div class="text-[10px] text-brand-black-60">Energy</div>
                         </div>
                     </div>
                 </div>
                 <div class="space-y-2 text-xs font-ui">
                     <div>
                         <label
-                            class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Display</label>
+                            class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Display</label>
                         <select id="commodity-display" onchange="updatePreview('commodity')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
                             <option value="full">Name + Category + Icon</option>
@@ -117,7 +117,7 @@
                 <!-- Live Preview -->
                 <div
                     class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-[9px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
                         Preview</div>
                     <div id="preview-trend"
                         class="h-8 flex items-center justify-center text-brand-oxford dark:text-brand-teal">
@@ -138,7 +138,7 @@
                 </div>
                 <div class="space-y-2 text-xs font-ui">
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Chart
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Chart
                             Type</label>
                         <select id="trend-type" onchange="updatePreview('trend')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
@@ -151,7 +151,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Data
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Data
                             Points</label>
                         <select id="trend-points" onchange="updatePreview('trend')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
@@ -168,7 +168,7 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="trend-ma" onchange="updatePreview('trend')"
                                 class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                            <span class="text-[10px] font-bold text-brand-black-60 tracking-wider">Show 7-Day
+                            <span class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Show 7-Day
                                 Moving Avg</span>
                         </label>
                     </div>
@@ -176,7 +176,7 @@
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="trend-highlow" onchange="updatePreview('trend')"
                                 class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                            <span class="text-[10px] font-bold text-brand-black-60 tracking-wider">Show
+                            <span class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Show
                                 High/Low Markers</span>
                         </label>
                     </div>
@@ -195,16 +195,16 @@
                 <!-- Live Preview -->
                 <div
                     class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-[9px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
                         Preview</div>
                     <div id="preview-price" class="text-right">
                         <div class="text-sm font-bold text-brand-black-80 dark:text-white">2,328.23</div>
-                        <div class="text-[9px] text-brand-black-60">USD</div>
+                        <div class="text-[10px] text-brand-black-60">USD</div>
                     </div>
                 </div>
                 <div class="space-y-2 text-xs font-ui">
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Number
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Number
                             Format</label>
                         <select id="price-format" onchange="updatePreview('price')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
@@ -215,7 +215,7 @@
                     </div>
                     <div>
                         <label
-                            class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Currency</label>
+                            class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Currency</label>
                         <select id="price-currency" onchange="updatePreview('price')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
                             <option value="below">Below Price</option>
@@ -225,7 +225,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Decimal
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Decimal
                             Precision</label>
                         <select id="price-precision" onchange="updatePreview('price')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
@@ -250,7 +250,7 @@
                 <!-- Live Preview -->
                 <div
                     class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-[9px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
                         Preview</div>
                     <div id="preview-chg" class="flex items-center justify-end gap-1">
                         <span class="text-sm font-bold text-brand-teal">▲ +12.45</span>
@@ -259,7 +259,7 @@
                 <div class="space-y-2 text-xs font-ui">
                     <div>
                         <label
-                            class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Display</label>
+                            class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Display</label>
                         <select id="chg-format" onchange="updatePreview('chg')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
                             <option value="arrow">With Arrow (▲ +0.65)</option>
@@ -268,7 +268,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Color</label>
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Color</label>
                         <select id="chg-color" onchange="updatePreview('chg')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
                             <option value="colored">Green/Red</option>
@@ -290,7 +290,7 @@
                 <!-- Live Preview -->
                 <div
                     class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-[9px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
                         Preview</div>
                     <div id="preview-pct" class="flex justify-end">
                         <span
@@ -299,7 +299,7 @@
                 </div>
                 <div class="space-y-2 text-xs font-ui">
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Style</label>
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Style</label>
                         <select id="pct-style" onchange="updatePreview('pct')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
                             <option value="badge">Badge Style</option>
@@ -308,7 +308,7 @@
                     </div>
                     <div>
                         <label
-                            class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Decimals</label>
+                            class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Decimals</label>
                         <select id="pct-decimals" onchange="updatePreview('pct')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
                             <option value="0">0 (-1%)</option>
@@ -331,7 +331,7 @@
                 <!-- Live Preview -->
                 <div
                     class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-[9px] font-bold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
+                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
                         Preview</div>
                     <div id="preview-updated" class="text-right">
                         <span class="text-xs font-medium text-brand-black-60">2026-01-07</span>
@@ -339,7 +339,7 @@
                 </div>
                 <div class="space-y-2 text-xs font-ui">
                     <div>
-                        <label class="block text-[9px] font-bold tracking-wider text-brand-black-60 mb-1">Date
+                        <label class="block text-[10px] font-semibold tracking-wider text-brand-black-60 mb-1">Date
                             Format</label>
                         <select id="updated-format" onchange="updatePreview('updated')"
                             class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
@@ -355,7 +355,7 @@
 
         <!-- Additional Column Options -->
         <div class="px-4 py-3 border-t border-brand-black-60/10 dark:border-white/5">
-            <div class="text-[9px] font-bold tracking-wider text-brand-black-60 mb-2">Additional Columns</div>
+            <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 mb-2">Additional Columns</div>
             <div class="flex flex-wrap gap-3">
                 <label class="flex items-center gap-2 cursor-pointer">
                     <input type="checkbox" id="col-source" onchange="toggleColumn('source')"
@@ -412,34 +412,34 @@
             <thead class="bg-brand-black-60/5 dark:bg-white/5 border-y border-brand-black-60/20 dark:border-white/10">
                 <tr>
                     <th data-col="commodity" data-sort="name" scope="col" onclick="sortTable('name')"
-                        class="px-4 py-4 text-[10px] font-bold tracking-wider text-brand-black-60 cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
+                        class="px-4 py-4 text-[10px] font-semibold tracking-wider text-brand-black-60 cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
                         <span class="flex items-center gap-1 pointer-events-none">Commodity <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="name"></span></span>
                     </th>
                     <th data-col="trend" scope="col"
-                        class="px-4 py-4 text-[10px] font-bold tracking-wider text-brand-black-60 w-32">Recent
+                        class="px-4 py-4 text-[10px] font-semibold tracking-wider text-brand-black-60 w-32">Recent
                     </th>
                     <th data-col="price" data-sort="price" scope="col" onclick="sortTable('price')"
-                        class="px-4 py-4 text-[10px] font-bold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
+                        class="px-4 py-4 text-[10px] font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
                         <span class="flex items-center justify-end gap-1 pointer-events-none">Price <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="price"></span></span>
                     </th>
                     <th data-col="chg" data-sort="change" scope="col" onclick="sortTable('change')"
-                        class="px-4 py-4 text-[10px] font-bold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
+                        class="px-4 py-4 text-[10px] font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
                         <span class="flex items-center justify-end gap-1 pointer-events-none">Chg <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="change"></span></span>
                     </th>
                     <th data-col="pct" data-sort="pct" scope="col" onclick="sortTable('pct')"
-                        class="px-4 py-4 text-[10px] font-bold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
+                        class="px-4 py-4 text-[10px] font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
                         <span class="flex items-center justify-end gap-1 pointer-events-none">%Chg <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="pct"></span></span>
                     </th>
                     <th data-col="updated" data-sort="date" scope="col" onclick="sortTable('date')"
-                        class="px-4 py-4 text-[10px] font-bold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
+                        class="px-4 py-4 text-[10px] font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
                         <span class="flex items-center justify-end gap-1 pointer-events-none">Updated <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="date"></span></span>
@@ -451,12 +451,23 @@
                 <tr onclick="window.location='{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}'"
                     tabindex="0" role="link"
                     onkeydown="if(event.key==='Enter')window.location='{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}'"
+                    data-id="{{ commodity.id }}"
+                    data-name="{{ commodity.name }}"
+                    data-category="{{ commodity.category }}"
+                    data-currency="{{ commodity.currency }}"
+                    data-unit="{{ commodity.unit }}"
+                    data-date="{{ commodity.date }}"
+                    data-frequency="{% if commodity.is_daily %}daily{% else %}monthly{% endif %}"
+                    data-direction="{% if commodity.daily_change_percent|default(commodity.change_percent) > 0 %}up{% elif commodity.daily_change_percent|default(commodity.change_percent) < 0 %}down{% else %}flat{% endif %}"
+                    data-price="{{ commodity.price }}"
+                    data-change-pct="{{ commodity.daily_change_percent|default(commodity.change_percent) }}"
+                    data-change-abs="{{ commodity.daily_change|default(commodity.change) }}"
                     class="hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition-all duration-200 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-oxford dark:focus:ring-brand-teal">
                     <td data-col="commodity" class="px-4 py-5">
                         <div class="flex items-center gap-3 commodity-cell">
                             <div
                                 class="commodity-icon w-10 h-10 rounded-xl bg-brand-black-60/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-oxford/10 dark:group-hover:bg-brand-teal/10 transition-colors">
-                                <span class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60">{{
+                                <span class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60">{{
                                     commodity.id[:2] }}</span>
                             </div>
                             <div>
@@ -496,7 +507,7 @@
                         </div>
                     </td>
                     <td data-col="pct" class="px-4 py-5 text-right">
-                        <div class="pct-cell inline-flex px-2 py-1 rounded-md text-sm font-bold"
+                        <div class="pct-cell inline-flex px-2 py-1 rounded-lg text-sm font-bold"
                             style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %});"
                             data-value="{{ commodity.daily_change_percent|default(commodity.change_percent) }}">
                             {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{

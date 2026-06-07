@@ -3,6 +3,7 @@
 These tests exercise actual HTTP request/response cycles through the app,
 unlike test_routes_helpers.py which tests helper functions in isolation.
 """
+import re
 
 # app_client fixture is provided by conftest.py
 
@@ -18,14 +19,21 @@ def test_api_commodities_returns_json_envelope(app_client):
     assert "data" in body
     assert "meta" in body
     assert body["meta"]["count"] == 1
+    assert body["meta"]["summary"]["total"] == 1
 
 
 def test_api_commodities_respects_category_filter(app_client):
     resp = app_client.get("/api/commodities?category=precious")
-    assert resp.get_json()["meta"]["count"] == 1
+    body = resp.get_json()
+    assert body["meta"]["count"] == 1
+    assert body["meta"]["summary"]["total"] == 1
+    assert body["meta"]["summary"]["categories"][0]["name"] == "Precious"
 
     resp = app_client.get("/api/commodities?category=energy")
-    assert resp.get_json()["meta"]["count"] == 0
+    body = resp.get_json()
+    assert body["meta"]["count"] == 0
+    assert body["meta"]["summary"]["total"] == 0
+    assert body["meta"]["summary"]["categories"] == []
 
 
 def test_api_commodities_range_param(app_client):
@@ -46,11 +54,25 @@ def test_api_commodities_since_incremental(app_client):
     body = resp.get_json()
     assert body["meta"]["count"] == 0
     assert body["meta"]["partial"] is True
+    assert "summary" not in body["meta"]
 
     # Since date before → returns the commodity
     resp = app_client.get("/api/commodities?since=2023-01-01")
     body = resp.get_json()
     assert body["meta"]["count"] == 1
+
+
+def test_api_commodities_invalid_since_rejects_without_full_payload(app_client):
+    resp = app_client.get("/api/commodities?since=2999-01-01")
+    body = resp.get_json()
+
+    assert resp.status_code == 400
+    assert body["data"] == []
+    assert body["meta"]["count"] == 0
+    assert body["meta"]["since"] == "2999-01-01"
+    assert body["meta"]["partial"] is True
+    assert "summary" not in body["meta"]
+    assert "Invalid since parameter" in body["error"]
 
 
 def test_api_commodities_include_history(app_client):
@@ -139,6 +161,48 @@ def test_index_page_loads(app_client):
     resp = app_client.get("/")
     assert resp.status_code == 200
     assert b"BenchmarkWatcher" in resp.data
+
+
+def test_index_category_nav_preserves_range_and_view(app_client):
+    resp = app_client.get("/?range=1M&view=compact")
+    assert resp.status_code == 200
+    assert b"category=index&amp;range=1M&amp;view=compact" in resp.data
+    assert b"range=1M&amp;view=compact" in resp.data
+    assert b"Indices" in resp.data
+
+
+def test_index_selected_category_marks_active_nav_and_pulse_link(app_client):
+    resp = app_client.get("/?category=precious&range=1M&view=compact")
+    assert resp.status_code == 200
+    assert b'aria-current="page">Precious</a>' in resp.data
+    assert b'aria-current="page">All</a>' not in resp.data
+    assert b'href="/?category=precious&amp;range=1M&amp;view=compact"' in resp.data
+    assert b'id="market-pulse-total">1</span>' in resp.data
+
+
+def test_index_quick_find_controls_and_item_metadata_render(app_client):
+    resp = app_client.get("/")
+    assert resp.status_code == 200
+    assert b'id="quick-find-input"' in resp.data
+    assert b'id="quick-find-export"' in resp.data
+    assert b'id="quick-find-summary"' in resp.data
+    assert b'data-quick-filter="up"' in resp.data
+    assert b'data-id="gold"' in resp.data
+    assert b'data-frequency="daily"' in resp.data
+    assert b'data-direction="up"' in resp.data
+
+
+def test_index_empty_mover_card_is_not_actionable(app_client):
+    resp = app_client.get("/")
+    html = resp.data.decode("utf-8")
+    match = re.search(r'<a id="market-pulse-drop-link"(?P<attrs>[^>]*)>', html)
+
+    assert resp.status_code == 200
+    assert match is not None
+    attrs = match.group("attrs")
+    assert "href=" not in attrs
+    assert 'aria-disabled="true"' in attrs
+    assert 'tabindex="-1"' in attrs
 
 
 def test_commodity_detail_page_loads(app_client):

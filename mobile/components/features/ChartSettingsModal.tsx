@@ -72,12 +72,12 @@ export default function ChartSettingsModal({ visible, onClose }: ChartSettingsMo
 
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-            <View className="flex-1 bg-white dark:bg-slate-900">
+            <View className="flex-1 bg-brand-paper dark:bg-slate-900">
                 {/* Header */}
                 <View className="flex-row items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700">
                     <Text className="text-lg font-bold text-slate-900 dark:text-white">Chart Settings</Text>
                     <TouchableOpacity onPress={onClose} className="p-2">
-                        <Icon name="close" size={20} color={isDarkMode ? '#94a3b8' : '#475569'} />
+                        <Icon name="close" size={20} color={isDarkMode ? '#9b938b' : '#475569'} />
                     </TouchableOpacity>
                 </View>
 
@@ -112,7 +112,7 @@ export default function ChartSettingsModal({ visible, onClose }: ChartSettingsMo
                         <Switch
                             value={chartSettings.chartSmoothCurve}
                             onValueChange={(val) => updateChartSettings({ chartSmoothCurve: val })}
-                            trackColor={{ false: '#cbd5e1', true: '#3b82f6' }}
+                            trackColor={{ false: '#d8cfc2', true: '#0f5499' }}
                         />
                     </View>
 
@@ -123,7 +123,7 @@ export default function ChartSettingsModal({ visible, onClose }: ChartSettingsMo
                         <Switch
                             value={chartSettings.chartFillEnabled}
                             onValueChange={(val) => updateChartSettings({ chartFillEnabled: val })}
-                            trackColor={{ false: '#cbd5e1', true: '#3b82f6' }}
+                            trackColor={{ false: '#d8cfc2', true: '#0f5499' }}
                         />
                     </View>
 
@@ -141,8 +141,8 @@ export default function ChartSettingsModal({ visible, onClose }: ChartSettingsMo
                                 step={0.05}
                                 value={chartSettings.chartFillOpacity}
                                 onValueChange={(val) => updateChartSettings({ chartFillOpacity: val })}
-                                minimumTrackTintColor="#3b82f6"
-                                maximumTrackTintColor={isDarkMode ? '#334155' : '#cbd5e1'}
+                                minimumTrackTintColor="#0f5499"
+                                maximumTrackTintColor={isDarkMode ? '#334155' : '#d8cfc2'}
                             />
                         </>
                     )}
@@ -154,7 +154,7 @@ export default function ChartSettingsModal({ visible, onClose }: ChartSettingsMo
                         <Switch
                             value={chartSettings.chartGridVisible}
                             onValueChange={(val) => updateChartSettings({ chartGridVisible: val })}
-                            trackColor={{ false: '#cbd5e1', true: '#3b82f6' }}
+                            trackColor={{ false: '#d8cfc2', true: '#0f5499' }}
                         />
                     </View>
 
@@ -165,7 +165,7 @@ export default function ChartSettingsModal({ visible, onClose }: ChartSettingsMo
                         <Switch
                             value={chartSettings.chartAutoFitBounds}
                             onValueChange={(val) => updateChartSettings({ chartAutoFitBounds: val })}
-                            trackColor={{ false: '#cbd5e1', true: '#3b82f6' }}
+                            trackColor={{ false: '#d8cfc2', true: '#0f5499' }}
                         />
                     </View>
 

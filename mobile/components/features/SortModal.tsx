@@ -32,7 +32,7 @@ export default function SortModal({ visible, onClose, sortMethod, setSortMethod,
                 activeOpacity={1}
                 onPressOut={onClose}
             >
-                <View className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden p-2">
+                <View className="bg-brand-paper dark:bg-slate-900 rounded-2xl overflow-hidden p-2">
                     <Text className="text-lg font-bold text-slate-900 dark:text-white mb-2 px-4 pt-3 pb-2 text-center border-b border-slate-100 dark:border-slate-800">
                         Sort Commodities
                     </Text>

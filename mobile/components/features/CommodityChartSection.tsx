@@ -41,7 +41,7 @@ export default function CommodityChartSection({
         <View className="mb-6">
             {loading ? (
                 <View className="h-[220px] items-center justify-center">
-                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <ActivityIndicator size="large" color="#0f5499" />
                 </View>
             ) : error ? (
                 <View className="h-[220px] items-center justify-center bg-slate-50 dark:bg-slate-800 mx-5 rounded-xl border border-slate-100 dark:border-slate-700">

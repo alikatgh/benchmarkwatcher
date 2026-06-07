@@ -56,7 +56,7 @@ describe('useCommodities', () => {
 
         await waitFor(() => expect(result.current.loading).toBe(false));
 
-        expect(result.current.error).toBe('Network error');
+        expect(result.current.error).toBe('Network error. Please check your connection.');
         expect(result.current.data).toEqual([]);
         expect(result.current.loading).toBe(false);
     });
@@ -68,14 +68,14 @@ describe('useCommodities', () => {
         await waitFor(() => expect(result.current.loading).toBe(false));
 
         // Refresh fails
-        mockFetch.mockRejectedValueOnce(new Error('Timeout'));
+        mockFetch.mockRejectedValueOnce(new Error('Request timeout'));
         act(() => { result.current.handleRefresh(); });
 
         expect(result.current.refreshing).toBe(true);
 
         await waitFor(() => expect(result.current.refreshing).toBe(false));
 
-        expect(result.current.error).toBe('Timeout');
+        expect(result.current.error).toBe('Request timed out. Please check your connection.');
         // Data is preserved from initial load
         expect(result.current.data).toEqual(mockCommodities);
     });
@@ -121,6 +121,14 @@ describe('useCommodities', () => {
 
         await waitFor(() => expect(mockFetch).toHaveBeenCalled());
         expect(mockFetch).toHaveBeenCalledWith('', 'name', 'asc', '1M', undefined);
+    });
+
+    it('passes index slug for the Indices category', async () => {
+        mockFetch.mockResolvedValue([]);
+        renderHook(() => useCommodities({ ...defaultParams, selectedCategory: 'Indices' }));
+
+        await waitFor(() => expect(mockFetch).toHaveBeenCalled());
+        expect(mockFetch).toHaveBeenCalledWith('index', 'name', 'asc', '1M', undefined);
     });
 
     it('re-fetches when filter params change', async () => {

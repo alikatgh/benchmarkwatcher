@@ -9,12 +9,33 @@ from typing import Dict, List, Optional, Tuple
 from config import DATA_DIR, CATEGORIES, ALIASES
 
 
+def _is_safe_path(filepath: str) -> bool:
+    """Check if filepath is safely within DATA_DIR (prevent directory traversal)."""
+    try:
+        real_filepath = os.path.realpath(filepath)
+        real_data_dir = os.path.realpath(DATA_DIR)
+        return real_filepath.startswith(real_data_dir + os.sep) or real_filepath == real_data_dir
+    except (OSError, ValueError):
+        return False
+
+
 def get_commodity_data(commodity_id: str) -> Optional[Dict]:
     """Load a single commodity's data from JSON file."""
+    if not isinstance(commodity_id, str):
+        return None
+
     # Resolve aliases
     commodity_id = ALIASES.get(commodity_id.lower(), commodity_id.lower())
 
+    # Sanitize: only allow alphanumeric, underscore, hyphen
+    if not commodity_id or not all(c.isalnum() or c in ('_', '-') for c in commodity_id):
+        return None
+
     filepath = os.path.join(DATA_DIR, f"{commodity_id}.json")
+
+    # Validate path is within DATA_DIR (prevent directory traversal)
+    if not _is_safe_path(filepath):
+        return None
 
     if not os.path.exists(filepath):
         return None

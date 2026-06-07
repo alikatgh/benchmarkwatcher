@@ -55,7 +55,11 @@ export default function CompareModal({
     const filtered = useMemo(() => {
         const normalizedSearch = search.trim().toLowerCase();
         if (!normalizedSearch) return commodities;
-        return commodities.filter(c => c.name.toLowerCase().includes(normalizedSearch));
+        return commodities.filter(c => {
+            const name = c.name?.toLowerCase() ?? '';
+            const category = c.category?.toLowerCase() ?? '';
+            return name.includes(normalizedSearch) || category.includes(normalizedSearch);
+        });
     }, [search, commodities]);
 
     // Group by category
@@ -80,24 +84,24 @@ export default function CompareModal({
 
     return (
         <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-            <View className="flex-1 bg-white dark:bg-slate-900">
+            <View className="flex-1 bg-brand-paper dark:bg-slate-900">
                 {/* Header */}
                 <View className="flex-row items-center justify-between px-5 pt-4 pb-3 border-b border-slate-200 dark:border-slate-700">
                     <Text className="text-lg font-bold text-slate-900 dark:text-white">Compare Commodities</Text>
                     <TouchableOpacity onPress={onClose} accessibilityRole="button" accessibilityLabel="Close compare commodities" hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }} className="p-2">
-                        <Icon name="close" size={20} color={isDarkMode ? '#94a3b8' : '#475569'} />
+                        <Icon name="close" size={20} color={isDarkMode ? '#9b938b' : '#475569'} />
                     </TouchableOpacity>
                 </View>
 
                 {/* Search */}
                 <View className="px-5 pt-3 pb-2">
                     <View className="flex-row items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-4 py-2.5">
-                        <Icon name="search" size={16} color="#94a3b8" />
+                        <Icon name="search" size={16} color="#9b938b" />
                         <TextInput
                             value={search}
                             onChangeText={setSearch}
                             placeholder="Search commodities..."
-                            placeholderTextColor="#94a3b8"
+                            placeholderTextColor="#9b938b"
                             accessibilityLabel="Search commodities"
                             autoCapitalize="none"
                             autoCorrect={false}
@@ -144,12 +148,12 @@ export default function CompareModal({
                 {/* Commodity List */}
                 {loading ? (
                     <View className="flex-1 items-center justify-center">
-                        <ActivityIndicator size="large" color="#3b82f6" />
+                        <ActivityIndicator size="large" color="#0f5499" />
                     </View>
                 ) : loadError ? (
                     <View className="flex-1 items-center justify-center px-6">
                         <Text className="text-sm text-rose-500 font-semibold text-center">{loadError}</Text>
-                        <TouchableOpacity onPress={loadCommodities} accessibilityRole="button" accessibilityLabel="Retry loading commodities" className="mt-4 bg-slate-900 dark:bg-white rounded-lg px-4 py-2">
+                        <TouchableOpacity onPress={loadCommodities} accessibilityRole="button" accessibilityLabel="Retry loading commodities" className="mt-4 bg-slate-900 dark:bg-brand-paper rounded-lg px-4 py-2">
                             <Text className="font-bold text-white dark:text-slate-900">Retry</Text>
                         </TouchableOpacity>
                     </View>
@@ -192,7 +196,7 @@ export default function CompareModal({
                                                     {commodity.price} {commodity.currency}
                                                 </Text>
                                                 {selected && (
-                                                    <Icon name="check" size={16} color="#3b82f6" />
+                                                    <Icon name="check" size={16} color="#0f5499" />
                                                 )}
                                             </View>
                                         </TouchableOpacity>

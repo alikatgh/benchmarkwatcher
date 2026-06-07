@@ -45,7 +45,12 @@ export function useCommodities({
         const seq = ++requestSeqRef.current;
         if (!isRefresh) setLoading(true);
         try {
-            const apiCat = selectedCategory.toLowerCase() === 'all' ? '' : selectedCategory.toLowerCase();
+            const normalizedCategory = selectedCategory.trim().toLowerCase();
+            const apiCat = normalizedCategory === 'all'
+                ? ''
+                : normalizedCategory === 'indices'
+                    ? 'index'
+                    : normalizedCategory;
             // On background/pull-to-refresh, only fetch commodities newer than what we have
             const since = isRefresh ? getLatestDate(dataRef.current) : undefined;
             const result = await fetchCommodities(apiCat, sortMethod, sortOrder, selectedRange, since);
@@ -68,9 +73,21 @@ export function useCommodities({
 
             setLastFetchTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
             setError(null);
-        } catch (err: any) {
+        } catch (err: unknown) {
             if (seq !== requestSeqRef.current) return;
-            setError(err.message || 'Failed to fetch data');
+            let message = 'Failed to fetch data';
+            if (err instanceof Error) {
+                if (err.name === 'AbortError' || err.message.includes('timeout')) {
+                    message = 'Request timed out. Please check your connection.';
+                } else if (err.message.includes('Network') || err.message.includes('fetch')) {
+                    message = 'Network error. Please check your connection.';
+                } else if (err.message.includes('HTTP error')) {
+                    message = 'Server error. Please try again later.';
+                } else {
+                    message = err.message;
+                }
+            }
+            setError(message);
         } finally {
             if (seq === requestSeqRef.current) {
                 // Only reset the full loading spinner when it was set (non-refresh path)

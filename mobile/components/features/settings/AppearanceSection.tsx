@@ -11,7 +11,7 @@ export default function AppearanceSection() {
     } = useContext(SettingsContext);
 
     return (
-        <View className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 mb-6 space-y-4">
+        <View className="bg-brand-paper dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 mb-6 space-y-4">
             <Text className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                 Appearance
             </Text>
@@ -21,7 +21,7 @@ export default function AppearanceSection() {
                 <Switch
                     value={isDarkMode}
                     onValueChange={setIsDarkMode}
-                    trackColor={{ false: '#cbd5e1', true: '#3b82f6' }}
+                    trackColor={{ false: '#d8cfc2', true: '#0f5499' }}
                 />
             </View>
 

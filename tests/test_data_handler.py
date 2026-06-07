@@ -5,6 +5,7 @@ import pytest
 
 # Import functions under test
 from app.data_handler import (
+    build_market_summary,
     get_all_commodities,
     get_commodity,
     filter_history_by_range
@@ -62,6 +63,61 @@ def test_derived_stats_exposed(app_with_data):
 
     assert derived["direction_30_obs"] == "up"
     assert derived["observations"] == 3
+
+
+def test_build_market_summary_counts_breadth_and_movers():
+    """Market summary describes the current display set without extra data sources."""
+    commodities = [
+        {
+            "id": "gold",
+            "name": "Gold",
+            "category": "precious",
+            "change_percent": 2.5,
+            "change": 50.0,
+            "currency": "USD",
+            "date": "2024-01-10",
+            "is_daily": True,
+        },
+        {
+            "id": "corn",
+            "name": "Corn",
+            "category": "agricultural",
+            "change_percent": -4.0,
+            "change": -0.2,
+            "currency": "USD",
+            "date": "2024-01-09",
+            "is_daily": False,
+        },
+        {
+            "id": "wheat",
+            "name": "Wheat",
+            "category": "agricultural",
+            "change_percent": 0.0,
+            "change": 0.0,
+            "currency": "USD",
+            "date": "2024-01-10",
+            "is_daily": False,
+        },
+    ]
+
+    summary = build_market_summary(commodities)
+
+    assert summary["total"] == 3
+    assert summary["up_count"] == 1
+    assert summary["down_count"] == 1
+    assert summary["flat_count"] == 1
+    assert summary["daily_count"] == 1
+    assert summary["monthly_count"] == 2
+    assert summary["latest_date"] == "2024-01-10"
+    assert summary["latest_count"] == 2
+    assert summary["headline"] == "Benchmarks were evenly split"
+    assert summary["biggest_up"]["id"] == "gold"
+    assert summary["biggest_down"]["id"] == "corn"
+    assert summary["categories"][0]["slug"] == "agricultural"
+    assert summary["categories"][0]["name"] == "Agriculture"
+    assert summary["categories"][0]["breadth_percent"] == 0.0
+    assert summary["categories"][0]["flat_percent"] == 50.0
+    assert summary["categories"][0]["down_percent"] == 50.0
 
 
 def test_date_range_changes_display_metrics(app_with_data):

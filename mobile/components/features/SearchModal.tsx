@@ -21,10 +21,12 @@ export default function SearchModal({ visible, onClose, data, navigation, search
         setSearchQuery('');
     };
 
-    const filtered = data.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.category.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const normalizedQuery = searchQuery.toLowerCase();
+    const filtered = data.filter(c => {
+        const name = c.name?.toLowerCase() ?? '';
+        const category = c.category?.toLowerCase() ?? '';
+        return name.includes(normalizedQuery) || category.includes(normalizedQuery);
+    });
 
     return (
         <Modal
@@ -47,7 +49,7 @@ export default function SearchModal({ visible, onClose, data, navigation, search
                         <TextInput
                             className="flex-1 text-slate-900 dark:text-white text-base"
                             placeholder="Search commodities..."
-                            placeholderTextColor="#94a3b8"
+                            placeholderTextColor="#9b938b"
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             autoFocus
@@ -70,7 +72,7 @@ export default function SearchModal({ visible, onClose, data, navigation, search
                         <CompactCommodityRow
                             commodity={item}
                             onPress={(commodity) => {
-                                onClose();
+                                handleClose();
                                 navigation.navigate('CommodityDetail', { commodity });
                             }}
                         />

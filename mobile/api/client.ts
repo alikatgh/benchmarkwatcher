@@ -51,7 +51,17 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
             const response = await fetchWithTimeout(url, { ...options, headers }, REQUEST_TIMEOUT_MS);
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const statusText = response.statusText || 'Unknown error';
+                if (response.status >= 500) {
+                    throw new Error(`Server error (${response.status}): ${statusText}`);
+                } else if (response.status === 404) {
+                    throw new Error('Resource not found');
+                } else if (response.status === 403) {
+                    throw new Error('Access denied');
+                } else if (response.status === 429) {
+                    throw new Error('Too many requests. Please wait and try again.');
+                }
+                throw new Error(`HTTP error (${response.status}): ${statusText}`);
             }
 
             const json = await response.json();
@@ -76,5 +86,9 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     }
 
     console.error(`API Client Error (${endpoint}):`, lastError);
-    throw lastError;
+    // Ensure we throw a proper Error object
+    if (lastError instanceof Error) {
+        throw lastError;
+    }
+    throw new Error(lastError ? String(lastError) : `Request to ${endpoint} failed`);
 }

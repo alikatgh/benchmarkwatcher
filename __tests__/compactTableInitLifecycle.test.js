@@ -15,7 +15,7 @@ describe('Compact table bootstrap lifecycle', () => {
   beforeEach(() => {
     document.body.innerHTML = `
       <table id="data-table">
-        <tbody id="commodities-tbody"></tbody>
+        <tbody id="table-body"></tbody>
       </table>
       <div id="table-loading" class="hidden"></div>
     `;

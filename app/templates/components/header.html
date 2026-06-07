@@ -5,8 +5,7 @@
 </a>
 
 <header
-    class="bg-brand-pink dark:bg-terminal-black sticky top-0 z-40 border-b border-brand-black-60/15 dark:border-white/10 transition-colors duration-500 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95"
-    style="box-shadow: 0 1px 8px color-mix(in srgb, var(--theme-text) 6%, transparent);">
+    class="bg-brand-pink dark:bg-terminal-black sticky top-0 z-40 border-b border-brand-black-60/15 dark:border-white/10 transition-colors duration-500 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
     <!-- Primary nav row -->
     <nav class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group" aria-label="BenchmarkWatcher home">
@@ -41,21 +40,25 @@
         style="max-height: 36px;">
         <div class="max-w-6xl mx-auto px-4 overflow-x-auto scrollbar-hide">
             {% set cat = selected_category|default('') %}
-            {% set base_cls = "px-3 py-1 text-[11px] font-semibold rounded-md transition-colors font-ui" %}
+            {% set nav_range = date_range|default('ALL') %}
+            {% set nav_view = active_view|default('grid') %}
+            {% set base_cls = "px-3 py-1 text-[11px] font-semibold rounded-lg transition-colors font-ui" %}
             {% set idle_cls = "text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white
             hover:bg-brand-black-60/8 dark:hover:bg-white/8" %}
             {% set active_cls = "text-brand-black-80 dark:text-white bg-brand-black-60/10 dark:bg-white/10" %}
             <nav class="flex items-center gap-0.5 h-9 whitespace-nowrap" aria-label="Category filters">
-                <a href="{{ url_for('main.index') }}"
-                    class="{{ base_cls }} {{ active_cls if not cat else idle_cls }}">All</a>
-                <a href="{{ url_for('main.index', category='energy') }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'energy' else idle_cls }}">Energy</a>
-                <a href="{{ url_for('main.index', category='metal') }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'metal' else idle_cls }}">Metals</a>
-                <a href="{{ url_for('main.index', category='precious') }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'precious' else idle_cls }}">Precious</a>
-                <a href="{{ url_for('main.index', category='agricultural') }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'agricultural' else idle_cls }}">Agriculture</a>
+                <a href="{{ url_for('main.index', range=nav_range, view=nav_view) }}"
+                    class="{{ base_cls }} {{ active_cls if not cat else idle_cls }}" {% if not cat %}aria-current="page"{% endif %}>All</a>
+                <a href="{{ url_for('main.index', category='energy', range=nav_range, view=nav_view) }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'energy' else idle_cls }}" {% if cat == 'energy' %}aria-current="page"{% endif %}>Energy</a>
+                <a href="{{ url_for('main.index', category='metal', range=nav_range, view=nav_view) }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'metal' else idle_cls }}" {% if cat == 'metal' %}aria-current="page"{% endif %}>Metals</a>
+                <a href="{{ url_for('main.index', category='precious', range=nav_range, view=nav_view) }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'precious' else idle_cls }}" {% if cat == 'precious' %}aria-current="page"{% endif %}>Precious</a>
+                <a href="{{ url_for('main.index', category='agricultural', range=nav_range, view=nav_view) }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'agricultural' else idle_cls }}" {% if cat == 'agricultural' %}aria-current="page"{% endif %}>Agriculture</a>
+                <a href="{{ url_for('main.index', category='index', range=nav_range, view=nav_view) }}"
+                    class="{{ base_cls }} {{ active_cls if cat == 'index' else idle_cls }}" {% if cat == 'index' %}aria-current="page"{% endif %}>Indices</a>
                 <span class="w-px h-4 bg-brand-black-60/20 dark:bg-white/15 mx-1 self-center flex-shrink-0"></span>
                 <a href="{{ url_for('main.changelog') }}" class="{{ base_cls }} {{ idle_cls }}">Changelog</a>
             </nav>

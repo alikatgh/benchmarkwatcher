@@ -52,6 +52,29 @@ function formatYLabel(v: number): string {
     return v.toFixed(2);
 }
 
+function formatDateDisplay(rawDate?: string): string {
+    if (!rawDate) return '';
+    const parsed = new Date(rawDate);
+    if (Number.isNaN(parsed.getTime())) return rawDate;
+    return parsed.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
+function formatSeriesValue(value: number, viewMode: string, currency?: string): string {
+    if (viewMode === 'percent') return `${value.toFixed(2)}%`;
+    const valueLabel = formatYLabel(value);
+    return currency ? `${valueLabel} ${currency}` : valueLabel;
+}
+
+function formatSeriesChange(change: number, viewMode: string, currency?: string): string {
+    if (viewMode === 'percent') return `${change.toFixed(2)}pp`;
+    const valueLabel = formatYLabel(change);
+    return currency ? `${valueLabel} ${currency}` : valueLabel;
+}
+
 function niceTicks(min: number, max: number, count = 4): number[] {
     const step = (max - min) / count;
     return Array.from({ length: count + 1 }, (_, i) => min + i * step);
@@ -160,25 +183,33 @@ export default function SVGLineChart({
         return highIdx !== lowIdx ? { highIdx, lowIdx } : null;
     })() : null;
 
-    // Build comparison series paths
-    const comparisonPaths = comparisons.map(comp => {
+    const buildAlignedComparisonValues = (comp: ComparisonSeries) => {
         // Align comparison history to primary dates
         const priceMap = new Map<string, number>();
         comp.history.forEach(h => priceMap.set(h.date, h.price));
 
-        const alignedValues: { index: number; value: number }[] = [];
+        const alignedPrices: { index: number; price: number }[] = [];
         data.forEach((d, i) => {
             const price = priceMap.get(d.date);
             if (price !== undefined) {
-                if (viewMode === 'percent') {
-                    const firstPrice = comp.history[0]?.price;
-                    if (!firstPrice || firstPrice === 0) return;
-                    alignedValues.push({ index: i, value: ((price - firstPrice) / firstPrice) * 100 });
-                } else {
-                    alignedValues.push({ index: i, value: price });
-                }
+                alignedPrices.push({ index: i, price });
             }
         });
+
+        if (alignedPrices.length === 0) return [];
+
+        const firstVisiblePrice = alignedPrices[0].price;
+        return alignedPrices.map(({ index, price }) => ({
+            index,
+            value: viewMode === 'percent'
+                ? (firstVisiblePrice !== 0 ? ((price - firstVisiblePrice) / firstVisiblePrice) * 100 : 0)
+                : price,
+        }));
+    };
+
+    // Build comparison series paths
+    const comparisonPaths = comparisons.map(comp => {
+        const alignedValues = buildAlignedComparisonValues(comp);
 
         if (alignedValues.length === 0) return null;
 
@@ -228,33 +259,8 @@ export default function SVGLineChart({
 
     // Get comparison values at selected index
     const getComparisonValueAtIndex = (comp: ComparisonSeries, index: number): number | null => {
-        const date = data[index]?.date;
-        if (!date) return null;
-        const point = comp.history.find(h => h.date === date);
-        if (!point) return null;
-        if (viewMode === 'percent') {
-            const first = comp.history[0]?.price;
-            if (!first || first === 0) return null;
-            return ((point.price - first) / first) * 100;
-        }
-        return point.price;
-    };
-
-    const formatDateDisplay = (rawDate?: string): string => {
-        if (!rawDate) return '';
-        const parsed = new Date(rawDate);
-        if (Number.isNaN(parsed.getTime())) return rawDate;
-        return parsed.toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-        });
-    };
-
-    const formatValueDisplay = (value: number): string => {
-        if (viewMode === 'percent') return `${value.toFixed(2)}%`;
-        const valueLabel = formatYLabel(value);
-        return currency ? `${valueLabel} ${currency}` : valueLabel;
+        const alignedValues = buildAlignedComparisonValues(comp);
+        return alignedValues.find(point => point.index === index)?.value ?? null;
     };
 
     const selectedPrimaryDelta = selectedPoint ? (() => {
@@ -264,7 +270,9 @@ export default function SVGLineChart({
         const current = data[idx]?.value;
         if (previous === undefined || current === undefined) return null;
         const change = current - previous;
-        const changePct = previous !== 0 ? (change / previous) * 100 : null;
+        const changePct = viewMode === 'percent'
+            ? null
+            : (previous !== 0 ? (change / previous) * 100 : null);
         return { change, changePct };
     })() : null;
 
@@ -275,7 +283,9 @@ export default function SVGLineChart({
         const currentVal = data[idx].value;
         const prevVal = prevIdx !== null ? data[prevIdx].value : null;
         const change = prevVal !== null ? currentVal - prevVal : null;
-        const changePct = prevVal !== null && prevVal !== 0 ? (change! / prevVal) * 100 : null;
+        const changePct = viewMode === 'percent'
+            ? null
+            : (prevVal !== null && prevVal !== 0 ? (change! / prevVal) * 100 : null);
 
         const primary = {
             name: primaryName || 'Primary',
@@ -290,7 +300,9 @@ export default function SVGLineChart({
             const val = getComparisonValueAtIndex(comp, idx);
             const prevCompVal = prevIdx !== null ? getComparisonValueAtIndex(comp, prevIdx) : null;
             const compChange = val !== null && prevCompVal !== null ? val - prevCompVal : null;
-            const compChangePct = prevCompVal !== null && prevCompVal !== 0 && compChange !== null ? (compChange / prevCompVal) * 100 : null;
+            const compChangePct = viewMode === 'percent'
+                ? null
+                : (prevCompVal !== null && prevCompVal !== 0 && compChange !== null ? (compChange / prevCompVal) * 100 : null);
             return {
                 name: comp.name,
                 color: comp.color,
@@ -423,7 +435,7 @@ export default function SVGLineChart({
                                 cx={pts[highLowIndices.highIdx].x}
                                 cy={pts[highLowIndices.highIdx].y}
                                 r={4}
-                                fill="#10b981"
+                                fill="#0d7680"
                                 stroke="white"
                                 strokeWidth={1.5}
                             />
@@ -433,7 +445,7 @@ export default function SVGLineChart({
                                 textAnchor="middle"
                                 fontSize={9}
                                 fontWeight="600"
-                                fill="#10b981"
+                                fill="#0d7680"
                             >
                                 H
                             </SvgText>
@@ -441,7 +453,7 @@ export default function SVGLineChart({
                                 cx={pts[highLowIndices.lowIdx].x}
                                 cy={pts[highLowIndices.lowIdx].y}
                                 r={4}
-                                fill="#ef4444"
+                                fill="#990f3d"
                                 stroke="white"
                                 strokeWidth={1.5}
                             />
@@ -451,7 +463,7 @@ export default function SVGLineChart({
                                 textAnchor="middle"
                                 fontSize={9}
                                 fontWeight="600"
-                                fill="#ef4444"
+                                fill="#990f3d"
                             >
                                 L
                             </SvgText>
@@ -511,20 +523,18 @@ export default function SVGLineChart({
                         pointerEvents="none"
                     >
                         <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>
-                            {formatValueDisplay(selectedPoint.value)}
+                            {formatSeriesValue(selectedPoint.value, viewMode, currency)}
                         </Text>
                         {selectedPrimaryDelta && (
                             <Text
                                 style={{
-                                    color: selectedPrimaryDelta.change >= 0 ? '#34d399' : '#f87171',
+                                    color: selectedPrimaryDelta.change >= 0 ? '#1aa3b0' : '#b3325a',
                                     fontSize: 10,
                                     marginTop: 1,
                                 }}
                             >
                                 {selectedPrimaryDelta.change >= 0 ? '+' : ''}
-                                {viewMode === 'percent'
-                                    ? `${selectedPrimaryDelta.change.toFixed(2)}pp`
-                                    : `${formatYLabel(selectedPrimaryDelta.change)}${currency ? ` ${currency}` : ''}`}
+                                {formatSeriesChange(selectedPrimaryDelta.change, viewMode, currency)}
                                 {selectedPrimaryDelta.changePct !== null && ` (${selectedPrimaryDelta.changePct >= 0 ? '+' : ''}${selectedPrimaryDelta.changePct.toFixed(1)}%)`}
                             </Text>
                         )}
@@ -548,6 +558,7 @@ export default function SVGLineChart({
                             change={selectionInfo.primary.change}
                             changePct={selectionInfo.primary.changePct}
                             viewMode={viewMode}
+                            currency={currency}
                         />
                         {/* Comparison series info */}
                         {selectionInfo.comparisons.map((comp, i) => (
@@ -559,6 +570,7 @@ export default function SVGLineChart({
                                 change={comp.change}
                                 changePct={comp.changePct}
                                 viewMode={viewMode}
+                                currency={currency}
                             />
                         ))}
                     </View>
@@ -574,7 +586,7 @@ export default function SVGLineChart({
     );
 }
 
-function InfoChip({ color, name, date, value, change, changePct, viewMode }: {
+function InfoChip({ color, name, date, value, change, changePct, viewMode, currency }: {
     color: string;
     name: string;
     date?: string;
@@ -582,13 +594,14 @@ function InfoChip({ color, name, date, value, change, changePct, viewMode }: {
     change: number | null;
     changePct: number | null;
     viewMode: string;
+    currency?: string;
 }) {
     if (value === null) return null;
 
     const isDark = useColorScheme() === 'dark';
     const isPositive = (change ?? 0) >= 0;
-    const changeColor = isPositive ? '#10b981' : '#ef4444';
-    const valueColor = isDark ? '#e2e8f0' : '#1e293b';
+    const changeColor = isPositive ? '#0d7680' : '#990f3d';
+    const valueColor = isDark ? '#e7e0d6' : '#13171f';
     const labelColor = isDark ? 'rgba(203,213,225,0.9)' : 'rgba(148,163,184,0.9)';
 
     return (
@@ -596,15 +609,15 @@ function InfoChip({ color, name, date, value, change, changePct, viewMode }: {
             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />
             <View>
                 <Text style={{ fontSize: 10, color: labelColor }} numberOfLines={1}>
-                    {name}{date ? ` \u2022 ${date}` : ''}
+                    {name}{date ? ` \u2022 ${formatDateDisplay(date)}` : ''}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={{ fontSize: 12, fontWeight: 'bold', color: valueColor }}>
-                        {viewMode === 'percent' ? `${value.toFixed(2)}%` : formatYLabel(value)}
+                        {formatSeriesValue(value, viewMode, currency)}
                     </Text>
                     {change !== null && (
                         <Text style={{ fontSize: 10, color: changeColor, fontWeight: '600' }}>
-                            {isPositive ? '+' : ''}{viewMode === 'percent' ? `${change.toFixed(2)}pp` : formatYLabel(change)}
+                            {isPositive ? '+' : ''}{formatSeriesChange(change, viewMode, currency)}
                             {changePct !== null && ` (${isPositive ? '+' : ''}${changePct.toFixed(1)}%)`}
                         </Text>
                     )}

@@ -33,6 +33,8 @@ def test_validate_since_iso_date_only():
     assert validate_since('2026-02-28') == '2026-02-28'
     assert validate_since('2026/02/28') is None
     assert validate_since('') is None
+    assert validate_since('1999-12-31') is None
+    assert validate_since('2999-01-01') is None
 
 
 def test_is_valid_internal_key_requires_both_and_match():

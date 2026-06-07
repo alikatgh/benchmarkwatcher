@@ -245,6 +245,23 @@ describe('CompareModal accessibility interactions', () => {
         expect(onToggleCommodity).not.toHaveBeenCalled();
     });
 
+    it('filters comparison candidates by category as well as name', async () => {
+        mockedFetchCommodities.mockResolvedValueOnce([
+            goldCommodity,
+            { ...silverCommodity, category: 'Precious' },
+            { ...platinumCommodity, category: 'Metal' },
+        ]);
+
+        const { getByLabelText, queryByLabelText } = renderSubject();
+
+        await waitFor(() => expect(mockedFetchCommodities).toHaveBeenCalled());
+
+        fireEvent.changeText(getByLabelText('Search commodities'), 'metal');
+
+        expect(getByLabelText('Add Platinum to comparison')).toBeTruthy();
+        expect(queryByLabelText('Add Gold to comparison')).toBeNull();
+    });
+
     it('keeps selected filtered item removable while non-selected filtered item stays disabled at max limit', async () => {
         mockedFetchCommodities.mockResolvedValueOnce([goldCommodity, silverCommodity]);
 

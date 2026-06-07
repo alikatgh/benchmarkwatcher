@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 TELEGRAM_MESSAGE_LIMIT = 4096
+DATA_READ_TIMEOUT = 10  # seconds
 
 
 def get_footer() -> str:
@@ -65,7 +66,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     help_text = f"""
 🛢️ **{BOT_NAME}**
 
-Get real-time commodity benchmark prices.
+Get latest available commodity benchmark prices.
 
 **Commands:**
 • `/price <commodity>` - Get a commodity price
@@ -97,11 +98,27 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
     
     query = ' '.join(context.args)
-    # Run blocking I/O in thread to avoid blocking event loop
-    data = await asyncio.to_thread(search_commodity, query)
+    # Run blocking I/O in thread with timeout to avoid hanging
+    try:
+        data = await asyncio.wait_for(
+            asyncio.to_thread(search_commodity, query),
+            timeout=DATA_READ_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        await update.message.reply_text(
+            "⏱️ Request timed out. Please try again.",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        return
     
     if not data:
-        available = await asyncio.to_thread(get_available_commodities)
+        try:
+            available = await asyncio.wait_for(
+                asyncio.to_thread(get_available_commodities),
+                timeout=DATA_READ_TIMEOUT
+            )
+        except asyncio.TimeoutError:
+            available = []
         await update.message.reply_text(
             f"❓ Commodity '{query}' not found.\n\n"
             f"Try: `{', '.join(available[:5])}`...\n\n"
@@ -139,7 +156,17 @@ async def prices_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return
     
-    commodities = await asyncio.to_thread(get_commodities_by_category, category)
+    try:
+        commodities = await asyncio.wait_for(
+            asyncio.to_thread(get_commodities_by_category, category),
+            timeout=DATA_READ_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        await update.message.reply_text(
+            "⏱️ Request timed out. Please try again.",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        return
     
     if not commodities:
         await update.message.reply_text(f"No data available for {category}.")
@@ -160,7 +187,17 @@ async def prices_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 async def top_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /top command - show top movers."""
-    gainers, losers = await asyncio.to_thread(get_top_movers, 5)
+    try:
+        gainers, losers = await asyncio.wait_for(
+            asyncio.to_thread(get_top_movers, 5),
+            timeout=DATA_READ_TIMEOUT
+        )
+    except asyncio.TimeoutError:
+        await update.message.reply_text(
+            "⏱️ Request timed out. Please try again.",
+            parse_mode=ParseMode.MARKDOWN
+        )
+        return
     
     msg = "📈 **Top Gainers**\n"
     if gainers:
@@ -201,8 +238,32 @@ async def list_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Log errors."""
-    logger.error(f"Update {update} caused error {context.error}")
+    """Handle errors with appropriate logging and user notification."""
+    error = context.error
+
+    # Log the full error with traceback for debugging
+    logger.error(f"Update {update} caused error: {error}", exc_info=error)
+
+    # Attempt to notify the user if possible
+    if update and update.effective_message:
+        try:
+            if isinstance(error, asyncio.TimeoutError):
+                await update.effective_message.reply_text(
+                    "⏱️ Request timed out. Please try again.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+            elif isinstance(error, (ConnectionError, OSError)):
+                await update.effective_message.reply_text(
+                    "🔌 Connection error. Please try again later.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+            else:
+                await update.effective_message.reply_text(
+                    "⚠️ An unexpected error occurred. Please try again.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+        except Exception as notify_error:
+            logger.warning(f"Failed to notify user of error: {notify_error}")
 
 
 async def run_bot() -> None:

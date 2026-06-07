@@ -27,7 +27,7 @@ describe('CompactTable race handling', () => {
     });
     document.body.innerHTML = `
       <div id="table-loading" class="hidden"></div>
-      <table id="data-table"><tbody id="commodities-tbody"></tbody></table>
+      <table id="data-table"><tbody id="table-body"></tbody></table>
       <button class="range-btn" data-range="1W"></button>
       <button class="range-btn" data-range="1M"></button>
       <div id="date-range-display"></div>
@@ -90,6 +90,9 @@ describe('CompactTable race handling', () => {
     const updateSpy = jest.spyOn(window.BW.CompactTable, 'updateTableData').mockImplementation(() => {});
 
     window.BW.CompactTable.setDataRange('1W');
+    expect(document.getElementById('table-body').style.opacity).toBe('0.5');
+    expect(document.getElementById('table-body').style.pointerEvents).toBe('none');
+
     window.BW.CompactTable.setDataRange('1M');
 
     first.resolve({

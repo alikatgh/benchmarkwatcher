@@ -60,6 +60,33 @@ describe('api/commodities', () => {
         expect(commodities[2].id).toBe('oil'); // 80
     });
 
+    it('omits category when fetching all commodities', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: mockData })
+        });
+
+        await fetchCommodities('all', 'name', 'asc', '1M');
+
+        const url = (global.fetch as jest.Mock).mock.calls[0][0];
+        expect(url).not.toContain('category=all');
+        expect(url).not.toContain('category=');
+        expect(url).toContain('range=1M');
+    });
+
+    it('normalizes display category labels to backend slugs', async () => {
+        (global.fetch as jest.Mock).mockResolvedValue({
+            ok: true,
+            json: async () => ({ data: mockData })
+        });
+
+        await fetchCommodities('Indices', 'name', 'asc', '1M');
+
+        const url = (global.fetch as jest.Mock).mock.calls[0][0];
+        expect(url).toContain('category=index');
+        expect(url).not.toContain('category=indices');
+    });
+
     it('sorts correctly by highest % gain', async () => {
         (global.fetch as jest.Mock).mockResolvedValue({
             ok: true,
@@ -79,6 +106,6 @@ describe('api/commodities', () => {
             status: 404
         });
 
-        await expect(fetchCommodities()).rejects.toThrow('HTTP error! status: 404');
+        await expect(fetchCommodities()).rejects.toThrow('Resource not found');
     });
 });

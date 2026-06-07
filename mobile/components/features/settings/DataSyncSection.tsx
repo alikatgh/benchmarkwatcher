@@ -10,7 +10,7 @@ export default function DataSyncSection({ onNavigateChangelog }: DataSyncSection
     const { syncEnabled, setSyncEnabled, forceSync } = useContext(SettingsContext);
 
     return (
-        <View className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 space-y-4">
+        <View className="bg-brand-paper dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 space-y-4">
             <Text className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                 Data Sync
             </Text>
@@ -23,7 +23,7 @@ export default function DataSyncSection({ onNavigateChangelog }: DataSyncSection
                 <Switch
                     value={syncEnabled}
                     onValueChange={setSyncEnabled}
-                    trackColor={{ false: '#cbd5e1', true: '#10b981' }}
+                    trackColor={{ false: '#d8cfc2', true: '#0d7680' }}
                 />
             </View>
 

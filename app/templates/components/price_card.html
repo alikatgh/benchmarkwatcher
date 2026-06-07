@@ -1,9 +1,16 @@
 <a href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}" class="block group"
+   data-id="{{ commodity.id }}"
    data-name="{{ commodity.name }}"
+   data-category="{{ commodity.category }}"
+   data-currency="{{ commodity.currency }}"
+   data-unit="{{ commodity.unit }}"
+   data-date="{{ commodity.date }}"
+   data-frequency="{% if commodity.is_daily %}daily{% else %}monthly{% endif %}"
+   data-direction="{% if commodity.change_percent > 0 %}up{% elif commodity.change_percent < 0 %}down{% else %}flat{% endif %}"
    data-price="{{ commodity.price }}"
    data-change-pct="{{ commodity.change_percent | round(2) }}"
    data-change-abs="{{ commodity.change | round(3) }}">
-    <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-2xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal group-hover:-translate-y-1 transition-all duration-300 h-full relative overflow-hidden"
+    <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition-all duration-300 h-full relative overflow-hidden"
         style="box-shadow: var(--card-shadow);">
 
         <div class="bw-grid-gradient absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
@@ -12,17 +19,17 @@
         <div class="bw-grid-category-row flex items-center justify-between mb-4">
             <div class="flex items-center gap-2">
                 <span
-                    class="text-[10px] font-bold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">{{
+                    class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">{{
                     commodity.category|upper }}</span>
                 {% set is_daily = commodity.is_daily %}
                 <span
-                    class="text-[9px] font-bold px-1.5 py-0.5 rounded font-ui freq-badge
+                    class="text-[10px] font-semibold px-1.5 py-0.5 rounded font-ui freq-badge
                     {% if is_daily %}bg-brand-teal/20 text-brand-teal{% else %}bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal{% endif %}"
                     title="{% if is_daily %}Daily data{% else %}Monthly data{% endif %}">
                     {% if is_daily %}D{% else %}M{% endif %}
                 </span>
             </div>
-            <div class="bw-grid-direction-badge text-[10px] font-bold py-0.5 px-2.5 rounded-full font-ui"
+            <div class="bw-grid-direction-badge text-[10px] font-semibold py-0.5 px-2.5 rounded-full font-ui"
                 style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.change >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %}); border: 1px solid var({% if commodity.change >= 0 %}--color-up-border{% else %}--color-down-border{% endif %});"
                 aria-label="{% if commodity.change >= 0 %}Price up{% else %}Price down{% endif %}">
                 {% if commodity.change >= 0 %}▲{% else %}▼{% endif %} {{ commodity.change_percent | round(2) | abs }}%
@@ -34,7 +41,7 @@
             {{ commodity.name }}</h3>
 
         <div class="bw-grid-price-section font-ui mb-3">
-            <div class="bw-grid-price tabular-nums text-3xl font-extrabold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+            <div class="bw-grid-price tabular-nums text-3xl font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
                 {{ commodity.price | round(4) }}
             </div>
             <div class="bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">

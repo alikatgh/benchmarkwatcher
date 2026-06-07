@@ -67,7 +67,7 @@
             <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- DATA VISIBILITY TOGGLES -->
                 <div class="space-y-2">
-                    <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-2">Show/Hide</div>
+                    <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">Show/Hide</div>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="grid-show-category" checked onchange="updateGridSettings()"
                             class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
@@ -103,7 +103,7 @@
                 <!-- Columns -->
                 <div class="space-y-2">
                     <label for="grid-columns"
-                        class="text-[10px] font-bold text-brand-black-60 tracking-wider">Columns</label>
+                        class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Columns</label>
                     <select id="grid-columns" onchange="updateGridSettings()"
                         class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
                         <option value="auto" selected>Auto</option>
@@ -115,7 +115,7 @@
 
                 <!-- Sort By -->
                 <div class="space-y-2">
-                    <label for="grid-sort" class="text-[10px] font-bold text-brand-black-60 tracking-wider">Sort</label>
+                    <label for="grid-sort" class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Sort</label>
                     <select id="grid-sort" onchange="updateGridSettings()"
                         class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
                         <option value="name" selected>Name (A-Z)</option>
@@ -130,7 +130,7 @@
                 <!-- Card Style -->
                 <div class="space-y-2">
                     <label for="grid-card-style"
-                        class="text-[10px] font-bold text-brand-black-60 tracking-wider">Style</label>
+                        class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Style</label>
                     <select id="grid-card-style" onchange="updateGridSettings()"
                         class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
                         <option value="card" selected>Full Card</option>
@@ -142,13 +142,13 @@
 
             <!-- RIGHT: Live Preview Card -->
             <div class="lg:col-span-1">
-                <div class="text-[10px] font-bold text-brand-black-60 tracking-wider mb-2">Preview</div>
+                <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">Preview</div>
                 <div id="grid-preview-card"
-                    class="bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border-2 border-dashed border-brand-oxford/30 dark:border-brand-teal/30">
+                    class="bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-oxford/30 dark:border-brand-teal/30">
                     <!-- Category Badge -->
                     <div id="preview-category" class="flex items-center justify-between mb-2">
-                        <span class="text-[9px] font-bold text-brand-black-60 tracking-wider">Energy</span>
-                        <div class="text-[9px] font-bold py-0.5 px-2 rounded-full"
+                        <span class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Energy</span>
+                        <div class="text-[10px] font-semibold py-0.5 px-2 rounded-full"
                             style="color: var(--color-up); background-color: var(--color-up-bg);">+ Change</div>
                     </div>
                     <!-- Name -->
@@ -156,7 +156,7 @@
                     </h4>
                     <!-- Price -->
                     <div id="preview-price-section" class="mb-2">
-                        <div class="tabular-nums text-xl font-extrabold text-brand-black-80 dark:text-white">123.45</div>
+                        <div class="tabular-nums text-xl font-bold text-brand-black-80 dark:text-white">123.45</div>
                         <div id="preview-unit" class="text-[10px] text-brand-black-60 mt-0.5">USD / barrel</div>
                     </div>
                     <div class="flex items-baseline gap-1.5">
@@ -191,7 +191,7 @@
         {% include 'components/price_card.html' %}
         {% else %}
         <div
-            class="col-span-full bg-card-warm dark:bg-brand-slate p-12 rounded-2xl border-2 border-dashed border-brand-black-60/20 dark:border-brand-black-60/40 text-center text-brand-black-60">
+            class="col-span-full bg-card-warm dark:bg-brand-slate p-12 rounded-xl border border-brand-black-60/20 dark:border-brand-black-60/40 text-center text-brand-black-60">
             <p class="font-bold">No benchmark data available.</p>
             <p class="text-xs mt-1">Please initialize the data feed.</p>
         </div>

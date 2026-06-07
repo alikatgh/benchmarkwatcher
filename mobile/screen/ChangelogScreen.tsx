@@ -11,7 +11,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Changelog'>;
 export default function ChangelogScreen({ navigation }: Props) {
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-slate-900">
+        <SafeAreaView className="flex-1 bg-brand-paper dark:bg-slate-900">
             {/* Header */}
             <View className="px-5 pt-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex-row items-center">
                 <TouchableOpacity onPress={() => navigation.goBack()} className="mr-4">
