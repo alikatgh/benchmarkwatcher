@@ -475,7 +475,7 @@
                 class="px-4 sm:px-5 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 border-b border-brand-black-60/10 dark:border-white/5 flex items-start justify-between gap-3 shrink-0 bg-card-warm dark:bg-terminal-surface">
                 <div>
                     <h3 id="chart-settings-title" class="text-sm sm:text-base font-bold text-brand-black-80 dark:text-white">Chart Settings</h3>
-                    <p class="text-[11px] text-brand-black-60 dark:text-brand-black-60 mt-0.5">Tune style, scales, stats, tooltip, and interaction behavior.</p>
+                    <p class="text-[11px] text-brand-black-60 dark:text-brand-black-60 mt-0.5">Tune the chart's style, axes, stats, tooltip, and controls.</p>
                 </div>
                 <button onclick="closeChartSettings()"
                     class="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors"
@@ -496,7 +496,7 @@
                     </button>
                     <button onclick="showChartSettingsTab('scales')" id="tab-scales"
                         class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
-                        Axes
+                        Axes &amp; Grid
                     </button>
                     <button onclick="showChartSettingsTab('statusline')" id="tab-statusline"
                         class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
@@ -504,11 +504,11 @@
                     </button>
                     <button onclick="showChartSettingsTab('tooltip')" id="tab-tooltip"
                         class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
-                        Tips
+                        Tooltip
                     </button>
                     <button onclick="showChartSettingsTab('interaction')" id="tab-interaction"
                         class="chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
-                        Zoom
+                        Controls
                     </button>
                 </div>
             </div>
@@ -544,7 +544,7 @@
                                 <div class="w-6 h-6 mx-auto mb-1 rounded-lg bg-black border border-orange-500 flex items-center justify-center">
                                     <div class="w-3 h-0.5 bg-orange-500 rounded"></div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">BBG</span>
+                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">Bloomberg</span>
                             </button>
                             <button onclick="applyChartTheme('ocean')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
@@ -623,37 +623,21 @@
                         </div>
                     </div>
 
-                    <!-- Grid -->
+                    <!-- Animation -->
                     <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">GRID</div>
+                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ANIMATION</div>
                         <div class="space-y-3">
-                            <div class="flex gap-4">
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="setting-showHGrid" checked
-                                        onchange="updateChartSetting('showHGrid', this.checked)"
-                                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                                    <span class="text-xs text-brand-black-80 dark:text-white">Horizontal</span>
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer">
-                                    <input type="checkbox" id="setting-showVGrid"
-                                        onchange="updateChartSetting('showVGrid', this.checked)"
-                                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                                    <span class="text-xs text-brand-black-80 dark:text-white">Vertical</span>
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs text-brand-black-60 mb-1">Grid Color</label>
-                                    <input type="color" id="setting-gridColor" value="#33302e"
-                                        onchange="updateChartSetting('gridColor', this.value)"
-                                        class="w-full h-9 rounded-lg cursor-pointer border border-brand-black-60/20">
-                                </div>
-                                <div>
-                                    <label class="block text-xs text-brand-black-60 mb-1">Opacity: <span id="gridOpacity-value">10</span>%</label>
-                                    <input type="range" id="setting-gridOpacity" min="0" max="30" value="10"
-                                        onchange="updateChartSetting('gridOpacity', this.value); document.getElementById('gridOpacity-value').textContent=this.value"
-                                        class="w-full h-9 accent-brand-oxford">
-                                </div>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="setting-enableAnimation" checked
+                                    onchange="updateChartSetting('enableAnimation', this.checked)"
+                                    class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford">
+                                <span class="text-xs text-brand-black-80 dark:text-white">Enable Animation</span>
+                            </label>
+                            <div>
+                                <label class="block text-xs text-brand-black-60 mb-1">Duration: <span id="animationDuration-value">300</span>ms</label>
+                                <input type="range" id="setting-animationDuration" min="0" max="1000" step="50" value="300"
+                                    onchange="updateChartSetting('animationDuration', this.value); document.getElementById('animationDuration-value').textContent=this.value"
+                                    class="w-full h-9 accent-brand-oxford">
                             </div>
                         </div>
                     </div>
@@ -696,6 +680,40 @@
                             <input type="range" id="setting-xMaxTicks" min="4" max="12" value="8"
                                 onchange="updateChartSetting('xMaxTicks', this.value); document.getElementById('xMaxTicks-value').textContent=this.value"
                                 class="w-full h-9 accent-brand-oxford">
+                        </div>
+                    </div>
+                    <!-- Grid -->
+                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">GRID</div>
+                        <div class="space-y-3">
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="setting-showHGrid" checked
+                                        onchange="updateChartSetting('showHGrid', this.checked)"
+                                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                                    <span class="text-xs text-brand-black-80 dark:text-white">Horizontal</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" id="setting-showVGrid"
+                                        onchange="updateChartSetting('showVGrid', this.checked)"
+                                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
+                                    <span class="text-xs text-brand-black-80 dark:text-white">Vertical</span>
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-brand-black-60 mb-1">Grid Color</label>
+                                    <input type="color" id="setting-gridColor" value="#33302e"
+                                        onchange="updateChartSetting('gridColor', this.value)"
+                                        class="w-full h-9 rounded-lg cursor-pointer border border-brand-black-60/20">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-brand-black-60 mb-1">Opacity: <span id="gridOpacity-value">10</span>%</label>
+                                    <input type="range" id="setting-gridOpacity" min="0" max="30" value="10"
+                                        onchange="updateChartSetting('gridOpacity', this.value); document.getElementById('gridOpacity-value').textContent=this.value"
+                                        class="w-full h-9 accent-brand-oxford">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -846,23 +864,6 @@
                                     <option value="shift">Shift</option>
                                     <option value="none">None (Free scroll)</option>
                                 </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ANIMATION</div>
-                        <div class="space-y-3">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="setting-enableAnimation" checked
-                                    onchange="updateChartSetting('enableAnimation', this.checked)"
-                                    class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford">
-                                <span class="text-xs text-brand-black-80 dark:text-white">Enable Animation</span>
-                            </label>
-                            <div>
-                                <label class="block text-xs text-brand-black-60 mb-1">Duration: <span id="animationDuration-value">300</span>ms</label>
-                                <input type="range" id="setting-animationDuration" min="0" max="1000" step="50" value="300"
-                                    onchange="updateChartSetting('animationDuration', this.value); document.getElementById('animationDuration-value').textContent=this.value"
-                                    class="w-full h-9 accent-brand-oxford">
                             </div>
                         </div>
                     </div>
