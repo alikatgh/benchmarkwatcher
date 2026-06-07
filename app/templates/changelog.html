@@ -13,6 +13,50 @@
         </p>
     </header>
 
+    <!-- Version 1.3.0 -->
+    <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
+        <div class="flex items-center gap-3 mb-4">
+            <span
+                class="px-3 py-1 bg-brand-teal/10 text-brand-teal dark:text-brand-teal rounded-full text-xs font-bold font-ui">
+                NEW
+            </span>
+            <time class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">
+                June 8, 2026
+            </time>
+        </div>
+
+        <h2 class="text-xl font-bold text-brand-black-80 dark:text-white font-serif mb-4">
+            v1.3.0 — Dense Data Board &amp; Reliability
+        </h2>
+
+        <div class="prose prose-sm dark:prose-invert font-ui text-brand-black-60 dark:text-brand-black-60/90">
+            <p class="mb-4">
+                A faster, more scannable home view — and a more reliable site under the hood.
+            </p>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">New</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>The <strong>compact data board</strong> is now the default home view — a dense, scannable table with per-row price sparklines, sortable columns, right-aligned figures, and CSV export</li>
+                <li>Prefer the cards? The <strong>grid view</strong> is one click away in settings, and your choice is remembered</li>
+            </ul>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">Improved</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Charts now use a true <strong>time axis</strong> with evenly spaced dates</li>
+                <li>Consistent <strong>two-decimal</strong> prices and percentages across every view</li>
+                <li>Faster first paint — non-blocking chart scripts and longer caching on static assets</li>
+                <li>More accurate &ldquo;today / yesterday&rdquo; relative dates across time zones</li>
+            </ul>
+
+            <h4 class="font-bold text-brand-black-80 dark:text-white mt-6 mb-2">Reliability</h4>
+            <ul class="list-disc list-inside space-y-1">
+                <li>Hardened the server against the load spikes behind occasional &ldquo;service unavailable&rdquo; errors — pages now serve from a shared cache that survives restarts</li>
+                <li>Pinned dependencies so production deploys are deterministic and can&rsquo;t break on a surprise update</li>
+                <li>Added security headers and a <code>/health</code> endpoint for uptime monitoring</li>
+            </ul>
+        </div>
+    </article>
+
     <!-- Version 1.2.1 -->
     <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
         <div class="flex items-center gap-3 mb-4">
