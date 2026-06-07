@@ -3,12 +3,14 @@
 **Goal:** Level up ALL UI (web + mobile) on the FT-editorial concept, then keep
 fixing real defects autonomously ("keep going"). All work landed + pushed.
 
-**Where things stand:** `origin/main` @ `3a8e1f4` (pushed, working tree clean).
+**Where things stand:** local `main` @ `3a19914`, **1 commit ahead of
+`origin/main` (`4caa679`) — needs push.** Working tree clean.
 
 **Latest pass (hardening + polish goal):** mobile bug review (5 number-format
 fixes), UI-17 icons (name-sourced), UI-18 gold stale price (`scripts/resync_derived.py`),
 UI-15b (non-bug, verified), **security headers** (CSP + 4 more, `app/__init__.py`),
-**perf** (font `@import`→`<link>`+preconnect; PERF-1 Chart.js logged), `/health`
+**perf** (font `@import`→`<link>`+preconnect; **PERF-1 closed** — all Chart.js
+scripts now `defer`, no longer render-blocking, ordering verified safe via e2e), `/health`
 probe, `docs/DEPLOY_RECOVERY.md`. UI-15 chart now uses a real time x-axis.
 **🔴 Prod is DOWN** (Namecheap host-500 = Passenger can't boot; needs cPanel — see DEPLOY_RECOVERY).
 
