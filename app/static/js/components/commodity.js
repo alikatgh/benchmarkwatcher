@@ -571,18 +571,27 @@ BW.Commodity = {
                 },
                 scales: {
                     x: {
+                        // Real time axis (not data-index) so non-uniform-density history
+                        // isn't visually warped. Labels are ISO date strings, parsed by
+                        // the date-fns adapter; Chart.js auto-picks the unit + format.
+                        type: 'time',
+                        time: {
+                            tooltipFormat: 'MMM d, yyyy',
+                            displayFormats: {
+                                day: 'MMM d',
+                                week: 'MMM d',
+                                month: 'MMM yyyy',
+                                quarter: 'MMM yyyy',
+                                year: 'yyyy'
+                            }
+                        },
                         grid: { display: this.chartSettings.showVGrid, color: (gridHexAlpha || this.chartSettings.gridColor) },
                         ticks: {
                             maxTicksLimit: this.chartSettings.xMaxTicks,
                             font: { size: this.chartSettings.axisFontSize, weight: '600', family: 'Inter' },
                             color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
-                            callback: function (value) {
-                                const date = new Date(this.getLabelForValue(value));
-                                if (self.currentRange === '1W' || self.currentRange === '1M') {
-                                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                                }
-                                return date.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
-                            }
+                            autoSkip: true,
+                            maxRotation: 0
                         }
                     },
                     y: {
