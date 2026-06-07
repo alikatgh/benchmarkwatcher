@@ -77,8 +77,7 @@ describe('Index market pulse summary', () => {
       <span id="market-pulse-daily"></span>
       <span id="market-pulse-monthly"></span>
       <a id="market-pulse-all-link"></a>
-      <a id="market-pulse-rise-link"><span id="market-pulse-rise-value"></span><span id="market-pulse-rise-name"></span></a>
-      <a id="market-pulse-drop-link"><span id="market-pulse-drop-value"></span><span id="market-pulse-drop-name"></span></a>
+      <div id="market-pulse-movers"></div>
       <div id="market-pulse-categories"></div>
     `;
 
@@ -130,11 +129,14 @@ describe('Index market pulse summary', () => {
     expect(document.getElementById('market-pulse-latest-date').textContent).toBe('2024-01-10');
     expect(document.getElementById('market-pulse-daily').textContent).toBe('1');
     expect(document.getElementById('market-pulse-monthly').textContent).toBe('1');
-    expect(document.getElementById('market-pulse-rise-value').textContent).toBe('+2.35%');
-    expect(document.getElementById('market-pulse-rise-name').textContent).toBe('Gold');
-    expect(document.getElementById('market-pulse-rise-link').getAttribute('href')).toBe('/commodity/gold');
-    expect(document.getElementById('market-pulse-drop-value').textContent).toBe('-1.20%');
-    expect(document.getElementById('market-pulse-drop-name').textContent).toBe('Corn');
+    const riseLink = document.getElementById('market-pulse-rise-link');
+    expect(riseLink.getAttribute('href')).toBe('/commodity/gold');
+    expect(riseLink.textContent).toContain('Gold');
+    expect(riseLink.textContent).toContain('+2.35%');
+    const dropLink = document.getElementById('market-pulse-drop-link');
+    expect(dropLink.getAttribute('href')).toBe('/commodity/corn');
+    expect(dropLink.textContent).toContain('Corn');
+    expect(dropLink.textContent).toContain('-1.2%');
     expect(document.querySelectorAll('#market-pulse-categories a')).toHaveLength(2);
     expect(document.querySelector('#market-pulse-categories a').textContent).toContain('Agriculture');
     expect(document.querySelector('#market-pulse-categories a').textContent).toContain('0 / 0 / 1');
@@ -174,10 +176,9 @@ describe('Index market pulse summary', () => {
     expect(document.getElementById('market-pulse-headline').textContent).toBe('More benchmarks rose than fell');
     expect(document.getElementById('market-pulse-total').textContent).toBe('7');
     expect(document.getElementById('market-pulse-breadth').textContent).toBe('71.4');
-    expect(document.getElementById('market-pulse-rise-name').textContent).toBe('No positive moves');
-    expect(document.getElementById('market-pulse-rise-link').getAttribute('aria-disabled')).toBe('true');
-    expect(document.getElementById('market-pulse-rise-link').hasAttribute('href')).toBe(false);
-    expect(document.getElementById('market-pulse-rise-link').getAttribute('tabindex')).toBe('-1');
+    expect(document.getElementById('market-pulse-movers').textContent).toContain('No positive moves');
+    expect(document.getElementById('market-pulse-movers').textContent).toContain('No negative moves');
+    expect(document.getElementById('market-pulse-rise-link')).toBeNull();
     expect(document.querySelector('#market-pulse-categories a').getAttribute('href')).toBe('/?category=energy&range=ALL&view=grid');
   });
 

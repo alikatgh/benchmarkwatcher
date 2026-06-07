@@ -118,6 +118,32 @@ def test_build_market_summary_counts_breadth_and_movers():
     assert summary["categories"][0]["breadth_percent"] == 0.0
     assert summary["categories"][0]["flat_percent"] == 50.0
     assert summary["categories"][0]["down_percent"] == 50.0
+    assert [m["id"] for m in summary["top_movers_up"]] == ["gold"]
+    assert [m["id"] for m in summary["top_movers_down"]] == ["corn"]
+    assert summary["top_movers_up"][0]["id"] == summary["biggest_up"]["id"]
+
+
+def test_build_market_summary_top_movers_sorted_and_capped():
+    """top_movers_up/down are sorted by magnitude and capped at 5 each."""
+    commodities = (
+        [
+            {"id": f"up{i}", "name": f"Up {i}", "category": "x",
+             "change_percent": float(i), "change": 1.0, "date": "2024-01-01"}
+            for i in range(1, 8)
+        ]
+        + [
+            {"id": f"dn{i}", "name": f"Dn {i}", "category": "x",
+             "change_percent": -float(i), "change": -1.0, "date": "2024-01-01"}
+            for i in range(1, 8)
+        ]
+    )
+
+    summary = build_market_summary(commodities)
+
+    assert [m["id"] for m in summary["top_movers_up"]] == ["up7", "up6", "up5", "up4", "up3"]
+    assert [m["id"] for m in summary["top_movers_down"]] == ["dn7", "dn6", "dn5", "dn4", "dn3"]
+    assert summary["biggest_up"]["id"] == "up7"
+    assert summary["biggest_down"]["id"] == "dn7"
 
 
 def test_date_range_changes_display_metrics(app_with_data):

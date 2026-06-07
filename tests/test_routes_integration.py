@@ -195,14 +195,12 @@ def test_index_quick_find_controls_and_item_metadata_render(app_client):
 def test_index_empty_mover_card_is_not_actionable(app_client):
     resp = app_client.get("/")
     html = resp.data.decode("utf-8")
-    match = re.search(r'<a id="market-pulse-drop-link"(?P<attrs>[^>]*)>', html)
 
     assert resp.status_code == 200
-    assert match is not None
-    attrs = match.group("attrs")
-    assert "href=" not in attrs
-    assert 'aria-disabled="true"' in attrs
-    assert 'tabindex="-1"' in attrs
+    # With no movers, the leaderboard shows a non-actionable empty state
+    # (plain text, no commodity link) rather than a clickable mover row.
+    assert "No negative moves" in html
+    assert '<a id="market-pulse-drop-link"' not in html
 
 
 def test_commodity_detail_page_loads(app_client):
