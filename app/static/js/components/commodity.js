@@ -1537,7 +1537,7 @@ function setChangePeriod(period) {
     const color = cs.getPropertyValue(isUp ? '--color-up' : '--color-down').trim();
     const bg    = cs.getPropertyValue(isUp ? '--color-up-bg' : '--color-down-bg').trim();
     const sign  = isUp ? '+' : '';
-    const arrow = isUp ? '↑' : '↓';
+    const arrow = isUp ? '▲' : '▼';
 
     // Update badge
     const badgeBg = document.getElementById('change-badge-bg');
