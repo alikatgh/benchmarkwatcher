@@ -941,7 +941,10 @@ BW.GridView = {
                     const catSpan = categoryRow.querySelector('span');
                     if (catSpan) catSpan.style.cssText = 'font-size:9px; letter-spacing:0.05em;';
                     const badge = categoryRow.querySelector('.bw-grid-direction-badge');
-                    if (badge) badge.style.cssText = 'font-size:8px; padding:2px 5px;';
+                    if (badge) {
+                        const s = parseFloat(link.dataset.changePct || '0') >= 0 ? 'up' : 'down';
+                        badge.style.cssText = `font-size:8px; padding:2px 5px; color: var(--color-${s}); background-color: var(--color-${s}-bg); border: 1px solid var(--color-${s}-border);`;
+                    }
                 }
 
                 const title = card.querySelector('.bw-grid-title');
@@ -1020,6 +1023,14 @@ BW.GridView = {
                 if (categoryRow && categoryRow.querySelector('span')) {
                     categoryRow.className = 'bw-grid-category-row flex items-center justify-between mb-4';
                     categoryRow.style.cssText = showCategory ? '' : 'display: none;';
+                    // Re-apply the direction-badge colour — the reset above blanks every
+                    // child inline style, and no handler restored the badge's colour
+                    // (mirror price_card.html: change >= 0 → up).
+                    const badge = categoryRow.querySelector('.bw-grid-direction-badge');
+                    if (badge) {
+                        const s = parseFloat(link.dataset.changePct || '0') >= 0 ? 'up' : 'down';
+                        badge.style.cssText = `color: var(--color-${s}); background-color: var(--color-${s}-bg); border: 1px solid var(--color-${s}-border);`;
+                    }
                 }
 
                 // Restore commodity name

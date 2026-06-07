@@ -17,8 +17,8 @@
 
 ### 2026-06-07 · Grid cards lost up/down colour on the % change (every theme)
 - Symptom: the grid card `%` change rendered as plain text — dark in light/dark, amber in the Bloomberg theme — instead of teal-up / claret-down. I first screenshot-audited it as "teal/claret, fine".
-- Cause: the **Full Card** style handler (the default) in `grid_view.js` did `changePctEl.style.cssText = ''`, wiping the template's inline `color: var(--color-up)`; the `%` then inherited plain text colour. (Minimal/Dense handlers re-apply the colour; Full Card was missed.)
-- Fix: re-apply `color: var(--color-up|--color-down)` from `link.dataset.changePct` in the Full Card handler. Verified via `getComputedStyle`: teal `rgb(13,118,128)` / claret `rgb(153,15,61)` in light AND Bloomberg.
+- Cause: `updateSettings` wipes EVERY card child's inline style up-front (`card.querySelectorAll('*').forEach(el => el.style.cssText = '')`, ~line 755), then each card-style handler is supposed to re-apply what it needs. The re-apply was incomplete: the **Full Card** % handler blanked it again (`cssText = ''`), and the direction-badge colour was re-applied by NO handler (Full Card didn't, Dense set only font/padding). So both the `%` and the ▲/▼ badge inherited plain text — dark in light/dark, amber in Bloomberg.
+- Fix: re-apply `color/background/border: var(--color-up|--color-down...)` from `link.dataset.changePct` in the Full Card handler (% + badge) and the Dense handler (badge). Minimal hides the category row, so its badge is moot. Verified via `getComputedStyle`: teal `rgb(13,118,128)` / claret `rgb(153,15,61)` for % AND badge, in Full Card + Dense, light + Bloomberg.
 - Lesson: **verify COLOUR with `getComputedStyle`, not a screenshot eyeball** — I misjudged dark-as-teal and amber-as-up twice this session; the computed value is the only truth (same spirit as "read the rendered DOM, not curl"). And a `style.cssText = ''` reset silently drops template-set inline styling — re-apply, never blank.
 
 ### 2026-06-07 · Compact display settings silently stopped applying after a range refresh
