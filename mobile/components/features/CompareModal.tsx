@@ -193,7 +193,7 @@ export default function CompareModal({
                                             </View>
                                             <View className="flex-row items-center gap-2">
                                                 <Text className="text-xs text-slate-400 dark:text-slate-500">
-                                                    {commodity.price} {commodity.currency}
+                                                    {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {commodity.currency}
                                                 </Text>
                                                 {selected && (
                                                     <Icon name="check" size={16} color="#0f5499" />

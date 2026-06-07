@@ -50,7 +50,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
             onPress={() => onPress(commodity)}
             className={`flex-row items-center justify-between bg-brand-paper dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700/50 ${rowPadding}`}
             accessibilityRole="button"
-            accessibilityLabel={`${commodity.name}, ${commodity.price} ${commodity.currency}, ${isUp ? 'up' : 'down'} ${Math.abs(commodity.change_percent)}%`}
+            accessibilityLabel={`${commodity.name}, ${commodity.price} ${commodity.currency}, ${isUp ? 'up' : 'down'} ${formatPercent(Math.abs(commodity.change_percent))}%`}
         >
             {/* Left Box: Icon/Name/Category */}
             <View className="flex-row items-center flex-1">
@@ -79,7 +79,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
             {/* Middle Box: Price */}
             <View className="items-end mr-4">
                 <Text className={`${titleText} font-bold text-slate-900 dark:text-white`}>
-                    {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                    {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
                 {showUnit && (
                     <Text className={`text-slate-500 dark:text-slate-400 mt-0.5 ${metaText}`}>
