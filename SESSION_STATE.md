@@ -3,10 +3,17 @@
 **Goal:** Level up ALL UI (web + mobile) on the FT-editorial concept, then keep
 fixing real defects autonomously ("keep going"). All work landed + pushed.
 
-**Where things stand:** `origin/main` @ `2629694` (pushed, working tree clean).
+**Where things stand:** `origin/main` @ `3a8e1f4` (pushed, working tree clean).
+
+**Latest pass (hardening + polish goal):** mobile bug review (5 number-format
+fixes), UI-17 icons (name-sourced), UI-18 gold stale price (`scripts/resync_derived.py`),
+UI-15b (non-bug, verified), **security headers** (CSP + 4 more, `app/__init__.py`),
+**perf** (font `@import`→`<link>`+preconnect; PERF-1 Chart.js logged), `/health`
+probe, `docs/DEPLOY_RECOVERY.md`. UI-15 chart now uses a real time x-axis.
+**🔴 Prod is DOWN** (Namecheap host-500 = Passenger can't boot; needs cPanel — see DEPLOY_RECOVERY).
 
 ## Verification — comprehensively GREEN
-- **Web:** `check:vocab` ✓ · `jest` 151 ✓ · `pytest` 69 ✓ · **`e2e` 14/14 ✓**
+- **Web:** `check:vocab` ✓ · `jest` 151 ✓ · `pytest` 71 ✓ · **`e2e` 14/14 ✓**
   (market-pulse, axe-core a11y on home + detail = 0 critical, disclaimer vocab,
   raw-float guard ×3, commodity-detail smoke = chart + settings tabs + no JS errors).
 - **Mobile:** `tsc` 0 ✓ · `jest` 39 ✓. Rendered on iOS Simulator (real data,
