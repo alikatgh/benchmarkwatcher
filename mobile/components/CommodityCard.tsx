@@ -2,6 +2,7 @@ import React, { useContext, useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Commodity } from '../types/commodity';
 import { SettingsContext } from '../context/SettingsContext';
+import { formatChange, formatPercent } from '../utils/format';
 import MiniSparkline from './ui/MiniSparkline';
 
 interface Props {
@@ -80,9 +81,9 @@ export default function CommodityCard({ commodity, onPress }: Props) {
                     {(showChangePercent || showChangeAbs) && (
                         <View className={`px-2 py-1 rounded-md flex-row items-center ${changeBg}`}>
                             <Text className={`${metaText} font-bold ${changeColor}`}>
-                                {showChangeAbs ? `${isUp ? '+' : ''}${commodity.change}` : ''}
+                                {showChangeAbs ? `${isUp ? '+' : ''}${formatChange(commodity.change)}` : ''}
                                 {showChangeAbs && showChangePercent ? ' (' : ''}
-                                {showChangePercent ? `${isUp ? '+' : ''}${commodity.change_percent}%` : ''}
+                                {showChangePercent ? `${isUp ? '+' : ''}${formatPercent(commodity.change_percent)}%` : ''}
                                 {showChangeAbs && showChangePercent ? ')' : ''}
                             </Text>
                         </View>
