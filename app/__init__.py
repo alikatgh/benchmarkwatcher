@@ -67,4 +67,33 @@ def create_app(config_class=Config):
             return jsonify({'error': 'Internal server error'}), 500
         return render_template('errors/500.html'), 500
 
+    # --- Security headers ----------------------------------------------
+    @app.after_request
+    def _set_security_headers(response):
+        """Defence-in-depth response headers (the app previously set none).
+
+        The CSP is permissive — 'unsafe-inline' is required by the inline
+        <script>, inline <style>, and ~40 inline style= attributes, and the
+        CDN origins are allow-listed (jsdelivr for Chart.js/zoom/date-fns,
+        Google Fonts for Inter). It still blocks arbitrary external script/
+        connect/frame origins, base-tag hijacking, and cross-origin form posts.
+        Tightening to per-request nonces is a worthwhile follow-up.
+        """
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=(), payment=()'
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com data:; "
+            "img-src 'self' data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'self'; "
+            "base-uri 'self'; "
+            "form-action 'self'"
+        )
+        return response
+
     return app

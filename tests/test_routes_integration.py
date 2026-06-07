@@ -19,6 +19,22 @@ def test_health_returns_ok(app_client):
 
 
 # ------------------------------------------------------------------
+# Security headers
+# ------------------------------------------------------------------
+
+def test_security_headers_present(app_client):
+    resp = app_client.get("/")
+    assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+    assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
+    assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
+    csp = resp.headers.get("Content-Security-Policy", "")
+    assert "default-src 'self'" in csp
+    # the chart CDN + Google Fonts must stay allow-listed or the app breaks
+    assert "https://cdn.jsdelivr.net" in csp
+    assert "https://fonts.googleapis.com" in csp
+
+
+# ------------------------------------------------------------------
 # Public list endpoint
 # ------------------------------------------------------------------
 
