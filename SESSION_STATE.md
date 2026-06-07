@@ -6,7 +6,7 @@ fixing real defects autonomously ("keep going"). All work landed + pushed.
 **Where things stand:** `origin/main` @ `2629694` (pushed, working tree clean).
 
 ## Verification — comprehensively GREEN
-- **Web:** `check:vocab` ✓ · `jest` 147 ✓ · `pytest` 69 ✓ · **`e2e` 14/14 ✓**
+- **Web:** `check:vocab` ✓ · `jest` 151 ✓ · `pytest` 69 ✓ · **`e2e` 14/14 ✓**
   (market-pulse, axe-core a11y on home + detail = 0 critical, disclaimer vocab,
   raw-float guard ×3, commodity-detail smoke = chart + settings tabs + no JS errors).
 - **Mobile:** `tsc` 0 ✓ · `jest` 39 ✓. Rendered on iOS Simulator (real data,

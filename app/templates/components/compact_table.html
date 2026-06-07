@@ -511,7 +511,7 @@
                             style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %});"
                             data-value="{{ commodity.daily_change_percent|default(commodity.change_percent) }}">
                             {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
-                            commodity.daily_change_percent|default(commodity.change_percent) }}%
+                            commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
                         </div>
                     </td>
                     <td data-col="updated" class="px-4 py-5 text-right">

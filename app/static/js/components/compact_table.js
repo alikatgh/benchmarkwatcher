@@ -926,8 +926,10 @@ BW.CompactTable = {
 
         scopeRoot.querySelectorAll('.chg-value').forEach(el => {
             const format = settings.chg?.format || 'arrow';
-            const parent = el.closest('.chg-cell');
-            const rawValue = parseFloat(parent?.dataset.value);
+            // data-value is on .chg-cell (server render) OR on an inner div (JS
+            // re-render); resolve it from whichever ancestor actually carries it.
+            const valueEl = el.closest('[data-value]');
+            const rawValue = parseFloat(valueEl?.dataset.value);
             if (isNaN(rawValue)) return;
 
             const shown = parseFloat(rawValue.toFixed(4));
@@ -939,9 +941,13 @@ BW.CompactTable = {
         });
 
         // Change color
-        scopeRoot.querySelectorAll('.chg-cell').forEach(el => {
+        scopeRoot.querySelectorAll('.chg-cell').forEach(cell => {
             const color = settings.chg?.color || 'colored';
+            // Colour the element that shows the value: the cell itself (server)
+            // or its [data-value] descendant (JS re-render).
+            const el = cell.matches('[data-value]') ? cell : (cell.querySelector('[data-value]') || cell);
             const rawValue = parseFloat(el.dataset.value);
+            if (isNaN(rawValue)) return;
             el.classList.remove('text-brand-teal', 'text-brand-claret', 'text-brand-black-80');
             el.style.color = '';
 
@@ -953,10 +959,14 @@ BW.CompactTable = {
         });
 
         // Percent style
-        scopeRoot.querySelectorAll('.pct-cell').forEach(el => {
+        scopeRoot.querySelectorAll('.pct-cell').forEach(cell => {
             const style = settings.pct?.style || 'badge';
             const rawDecimals = parseInt(settings.pct?.decimals || '2');
             const decimals = Number.isFinite(rawDecimals) ? Math.max(0, Math.min(rawDecimals, 10)) : 2;
+            // The value/text element is the cell itself (server) or its
+            // [data-value] descendant (JS re-render). Setting textContent on the
+            // inner value div is safe — the tooltip is a sibling, not a child.
+            const el = cell.matches('[data-value]') ? cell : (cell.querySelector('[data-value]') || cell);
             const rawValue = parseFloat(el.dataset.value);
             if (isNaN(rawValue)) return;
 
