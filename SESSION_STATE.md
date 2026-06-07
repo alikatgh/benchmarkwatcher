@@ -33,6 +33,11 @@ fixing real defects autonomously ("keep going"). All work landed + pushed.
      "Axes & Grid"→"Axes".
   3. Detail page: hero + High/Low/Avg/Range stats → uniform 2-dec + thousands
      separators; removed redundant "Commodity ID" label.
+  4. **Grid cards had NO up/down colour** on the % change AND the ▲/▼ badge — the
+     `updateSettings` reset wipes every child inline style and the re-apply was
+     incomplete, so they inherited plain text (dark in light/dark, amber in
+     Bloomberg). Caught via `getComputedStyle` (screenshots looked fine). Re-applied
+     teal/claret in the Full Card + Dense handlers. Verified computed in light + Bloomberg.
   Audited home (light/dark/mobile), detail (desktop/mobile, Price & %Change),
   compact, changelog, chart-settings + card-options panels — all clean or fixed.
   Deferred → `docs/KNOWN_UI_DEBT.md`: UI-15 chart x-axis time scale (needs a
