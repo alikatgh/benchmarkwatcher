@@ -332,10 +332,11 @@ BW.Commodity = {
         const statPoints = document.getElementById('stat-points');
         const dateRangeDisplay = document.getElementById('date-range-display');
 
-        if (statHigh) statHigh.textContent = high.toLocaleString() + ' ' + this.currency;
-        if (statLow) statLow.textContent = low.toLocaleString() + ' ' + this.currency;
-        if (statAvg) statAvg.textContent = avg.toFixed(2) + ' ' + this.currency;
-        if (statRange) statRange.textContent = range.toFixed(2) + ' ' + this.currency;
+        const fmt2 = (n) => Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (statHigh) statHigh.textContent = fmt2(high) + ' ' + this.currency;
+        if (statLow) statLow.textContent = fmt2(low) + ' ' + this.currency;
+        if (statAvg) statAvg.textContent = fmt2(avg) + ' ' + this.currency;
+        if (statRange) statRange.textContent = fmt2(range) + ' ' + this.currency;
         if (statPoints) statPoints.textContent = data.length;
 
         if (dateRangeDisplay && data.length > 0) {

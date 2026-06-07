@@ -8,10 +8,8 @@
         <div>
             <div class="flex flex-col font-ui mb-2">
                 <span
-                    class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.2em] mb-1 capitalize">{{
+                    class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.2em] capitalize">{{
                     commodity.category }}</span>
-                <span class="text-xs text-brand-black-60/60 dark:text-brand-black-60 font-medium">Commodity ID: {{
-                    commodity.id }}</span>
             </div>
             <h1 class="text-2xl sm:text-4xl font-bold text-brand-black-80 dark:text-white font-ui">{{ commodity.name
                 }}</h1>
@@ -72,8 +70,7 @@
                     <!-- Price + unit: stacked on mobile, baseline-aligned on sm+ -->
                     <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 font-ui">
                         <span
-                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-bold text-brand-black-80 dark:text-white tracking-tighter leading-none">{{
-                            commodity.price }}</span>
+                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-bold text-brand-black-80 dark:text-white tracking-tighter leading-none">{{ "{:,.2f}".format(commodity.price) }}</span>
                         <div class="flex items-center gap-2">
                             <span
                                 class="text-xs sm:text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{

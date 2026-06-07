@@ -92,6 +92,6 @@ Fixed this round: default range ALL→1Y (sensible % everywhere), grid prices 4�
 
 Still open:
 - **UI-15 · Detail chart x-axis is non-linear in time** — Chart.js category scale (date strings as labels, equal-index ticks) makes sparse-early/dense-recent data look time-warped ("1985·1995·2006·2016·Apr2024·Sep2024"). Fix needs a time scale + `chartjs-adapter-date-fns` + crosshair/tooltip refactor (they index by label). `commodity.js`.
-- **UI-16 · "Commodity ID: gold"** technical label in the detail breadcrumb — drop or fold into the title. `commodity.html`.
+- **UI-16 · "Commodity ID: gold"** technical label in the detail breadcrumb — ✅ Fixed (removed; the id is the URL slug, and category + breadcrumb already identify the benchmark). Also fixed same round: detail hero + stats now uniform 2-dec + thousands separators (`commodity.html`, `commodity.js`).
 - **UI-17 · Colliding row icons** — 2-letter lowercase abbreviations collide (Bananas & Barley both "ba"). Decorative only; consider category glyphs or first-letter+kind.
 - **UI-18 · Data: latest-benchmark vs grid value mismatch** — detail "Latest Benchmark" (daily, older as-of) disagrees with the grid's latest monthly value. Data-pipeline (daily/monthly merge), not UI.
