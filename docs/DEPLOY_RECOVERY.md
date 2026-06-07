@@ -1,8 +1,33 @@
 # Production Recovery Runbook — benchmarkwatcher.online
 
-**Status (2026-06-07): PROD IS DOWN.** Every route returns the **Namecheap host
-500 page** (`/systemerror/500/…`, namecheap-icon) — *not* the app's own error
-page. That distinction is the whole diagnosis:
+## ✅ RESOLVED 2026-06-07 — site is live (HTTP 200)
+
+The outage below was **fixed via SSH**. Root cause: the cPanel Passenger
+virtualenv (`~/virtualenv/benchmarkwatcher/3.13/`, the interpreter named in
+`.htaccess` `PassengerPython`) was missing `flask_caching` (had Flask 3.0.3, no
+Flask-Caching) — `stderr.log` showed `ModuleNotFoundError: No module named
+'flask_caching'` on repeat. Prod was also months-stale at `8cc3165`. The exact
+recipe that worked, run from the app root (`~/benchmarkwatcher`):
+
+```bash
+git pull --ff-only origin main                  # deploy latest (clean tree → fast-forward 8cc3165..c821b32)
+/home/alikvdct/virtualenv/benchmarkwatcher/3.13/bin/python -m pip install -r requirements.txt   # install into the PASSENGER venv (NOT repo venv/)
+touch tmp/restart.txt                           # restart Passenger
+curl -sI https://benchmarkwatcher.online/ | head -1   # → HTTP/2 200
+```
+
+Verified: `/`, `/health`, `/api/commodities` all returned **200**. The dependency
+pins held — every version resolved inside its cap (Flask 3.1.3, Flask-Caching
+2.4.0, Flask-Limiter 4.1.1), so the install was deterministic with no surprise
+major. **The trap to avoid:** install into the venv named in `.htaccess`
+(`~/virtualenv/<app>/<ver>/`), NOT the repo's local `venv/` — they're different.
+**The diagnostic history below is kept verbatim for the next outage.**
+
+---
+
+**Status (HISTORICAL — the outage, now resolved):** Every route returned the
+**Namecheap host 500 page** (`/systemerror/500/…`, namecheap-icon) — *not* the
+app's own error page. That distinction was the whole diagnosis:
 
 - The app boots **cleanly locally** (Flask dev server + full test gate green),
   so the code is fine. This is a **deploy-environment** failure.
