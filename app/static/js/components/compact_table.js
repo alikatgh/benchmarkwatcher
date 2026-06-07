@@ -925,10 +925,11 @@ BW.CompactTable = {
             const rawValue = parseFloat(parent?.dataset.value);
             if (isNaN(rawValue)) return;
 
+            const shown = parseFloat(rawValue.toFixed(4));
             if (format === 'plain') {
-                el.textContent = Math.abs(rawValue).toString();
+                el.textContent = Math.abs(shown).toString();
             } else {
-                el.textContent = (rawValue >= 0 ? '+' : '') + rawValue;
+                el.textContent = (rawValue >= 0 ? '+' : '') + shown;
             }
         });
 
