@@ -1,17 +1,40 @@
 # Session State
 
-**Goal:** Level up ALL UI (web + mobile) while keeping the FT-editorial concept. Sequential phases 1→3, then verify+land.
+**Goal:** Level up ALL UI (web + mobile) on the FT-editorial concept, then keep
+fixing real defects autonomously ("keep going"). All work landed + pushed.
 
-**Phases**
-1. ✅ Audit all UI → `docs/SCREEN_INVENTORY.md`, `docs/UI_SYSTEM.md`, `docs/KNOWN_UI_DEBT.md`
-2. ✅ Cascade redesign (faithful-polish) — DONE: flattened shadows (`--card-shadow:none`), tamed weight (extrabold→bold, label bold→semibold), standardized radii, removed hover-lift + dashed borders (web codemod on templates **and** JS); mobile `tailwind.config.js` re-tones slate/blue/indigo to brand + chart hex remap. Verified green + screenshotted (web light/dark/mobile-width). Mobile not screenshotted (no simulator).
-3. ✅ Ralph loop — hero screens (dashboard + commodity detail) pass the faithful-polish rubric at 1280 + 375, light + dark. No P0/P1 found; declared done after 1 verification iteration (no manufactured churn). Deferred P3 nuances: dark-mode chart keeps oxford vs teal; minor active-button treatment variance.
-4. ✅ Landed — branch `redesign/faithful-polish-ui`, commit `cbcd5af` (92 files). Gate green. `main` untouched at `ce9ac5d`. Not pushed.
-5. ✅ Mobile verified on **iOS Simulator** (real render, live data): brand cascade confirmed — warm paper, serif headings, teal-up/claret-down, oxford accents, real commodity cards. Fixed a pre-existing build blocker: `mobile/tailwind.config.js` was missing the NativeWind v4 preset (app couldn't bundle at all) — see `docs/BUG_JOURNAL.md`. Two pre-existing issues observed (out of scope): prod `/api/commodities` returns 500; mobile change values render raw floats (e.g. `+0.09699999999999998`).
+**Where things stand:** `origin/main` @ `2629694` (pushed, working tree clean).
 
-**Test gate:** GREEN — `check:vocab` ✓, `jest` ✓, `pytest` 68 passed ✓, mobile ✓.
-⚠️ Run pytest with **`venv/bin/python -m pytest tests`** — the Homebrew `python3` (3.14) has no pytest and reports a false failure.
+## Verification — comprehensively GREEN
+- **Web:** `check:vocab` ✓ · `jest` 147 ✓ · `pytest` 69 ✓ · **`e2e` 9/9 ✓**
+  (market-pulse leaderboard, axe-core a11y = 0 critical, disclaimer vocab).
+- **Mobile:** `tsc` 0 ✓ · `jest` 39 ✓. Rendered on iOS Simulator (real data,
+  brand cascade confirmed).
+- ⚠️ pytest: run `venv/bin/python -m pytest tests` (Homebrew py3.14 has no pytest → false failure).
+- ⚠️ e2e: run `./scripts/e2e_local.sh` (auto free-port + venv Flask). Do NOT rely
+  on the default 5050-style flow — a foreign server on the port silently fakes failures.
 
-**Working tree:** ~2k-line uncommitted UI diff sitting directly on `main` (verified green). Should land on a feature branch in Phase 4.
+## Landed this work (highlights)
+- Faithful-polish redesign (web + mobile): flat shadows, tamed weights, brand tokens.
+- **Raw-float bug eradicated** (web + mobile): the real fix was in the CLIENT
+  re-render (`compact_table.js applyVisualSettings`), not the template; plus
+  `?v=<mtime>` cache-busting (`app/__init__.py _versioned_url_for`) so fixes reach
+  the browser. Verified in the rendered DOM + e2e — see BUG_JOURNAL.
+- Grid Minimal/Dense overlap + lost up/down color — root-caused + fixed.
+- Chart Settings restructured into logical tabs (Tooltip / Controls / Axes & Grid / Style / Bloomberg).
+- Top Movers leaderboard on the homepage (`#market-pulse-movers`, Risers/Fallers).
+- e2e port footgun fixed (default 5050 → 5781) + `scripts/e2e_local.sh` harness.
 
-**Audit headline:** No P0s. Biggest levers — unify mobile onto web brand tokens (UI-1), tame the 247 blanket `font-bold` (UI-2), flatten shadows (UI-5). Full list in `docs/KNOWN_UI_DEBT.md`.
+## Open / needs the user (cannot do from here)
+- **Production may be down.** Earlier this session prod returned a host-500
+  (Passenger could not boot the app; the code boots fine locally). Could NOT
+  re-verify this turn — external network egress is blocked from this environment.
+  Likely cause: prod virtualenv deps not installed. Recovery: in cPanel, reinstall
+  `requirements.txt` into the app's Python venv and restart the app
+  (or `touch tmp/restart.txt`); then read `passenger_boot_error.log` (added to
+  `passenger_wsgi.py`) for the exact boot traceback if it still 500s.
+- **Mobile visual QA** of the latest changes needs the Expo simulator.
+
+**Headline:** Code-level defect surface is exhaustively verified clean (incl. the
+strongest signal, e2e). No invented work remaining — the next real lever is the
+production deploy, which needs server access.
