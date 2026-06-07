@@ -42,7 +42,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
             activeOpacity={0.7}
             onPress={() => onPress(commodity)}
             accessibilityRole="button"
-            accessibilityLabel={`${commodity.name}, ${commodity.price} ${commodity.currency}, ${isUp ? 'up' : 'down'} ${Math.abs(commodity.change_percent)}%`}
+            accessibilityLabel={`${commodity.name}, ${commodity.price} ${commodity.currency}, ${isUp ? 'up' : 'down'} ${formatPercent(Math.abs(commodity.change_percent))}%`}
         >
             <View className="flex-row justify-between items-start mb-2">
                 <View className="flex-1 mr-2">
@@ -59,7 +59,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
                 </View>
                 <View className="items-end shrink-0">
                     <Text className={`${titleText} font-bold text-slate-800 dark:text-white mb-0.5`}>
-                        {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                        {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Text>
                     <Text className={`${metaText} text-slate-500 mt-0.5`}>
                         {commodity.currency}
