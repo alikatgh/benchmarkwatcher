@@ -91,7 +91,9 @@ BW.Index = {
             latest_count: 0,
             headline: 'No benchmarks loaded',
             biggest_up: null,
-            biggest_down: null
+            biggest_down: null,
+            top_movers_up: [],
+            top_movers_down: []
         };
 
         if (!Array.isArray(commodities) || commodities.length === 0) {
@@ -100,6 +102,7 @@ BW.Index = {
 
         const dated = [];
         const categoryTotals = {};
+        const movers = [];
 
         commodities.forEach(commodity => {
             if (!commodity || typeof commodity !== 'object') return;
@@ -118,11 +121,13 @@ BW.Index = {
 
             if (pctChange > 0) {
                 summary.up_count += 1;
+                movers.push(mover);
                 if (!summary.biggest_up || pctChange > summary.biggest_up.change_percent) {
                     summary.biggest_up = mover;
                 }
             } else if (pctChange < 0) {
                 summary.down_count += 1;
+                movers.push(mover);
                 if (!summary.biggest_down || pctChange < summary.biggest_down.change_percent) {
                     summary.biggest_down = mover;
                 }
@@ -173,6 +178,15 @@ BW.Index = {
         }
         summary.breadth_percent = Math.round((summary.up_count / summary.total) * 1000) / 10;
         summary.net_count = summary.up_count - summary.down_count;
+
+        summary.top_movers_up = movers
+            .filter(m => m.change_percent > 0)
+            .sort((a, b) => b.change_percent - a.change_percent)
+            .slice(0, 5);
+        summary.top_movers_down = movers
+            .filter(m => m.change_percent < 0)
+            .sort((a, b) => a.change_percent - b.change_percent)
+            .slice(0, 5);
 
         if (dated.length > 0) {
             const latestTime = Math.max(...dated.map(item => item.date.getTime()));
@@ -337,18 +351,25 @@ BW.Index = {
         this.updateCategoryAllLink(activeRange);
         this.renderCategoryPulse(summary.categories, activeRange);
 
-        this.updateMover({
-            prefix: 'rise',
-            mover: summary.biggest_up,
-            fallback: 'No positive moves',
-            signed: true
-        });
-        this.updateMover({
-            prefix: 'drop',
-            mover: summary.biggest_down,
-            fallback: 'No negative moves',
-            signed: false
-        });
+        this.renderTopMovers(summary.top_movers_up, summary.top_movers_down);
+    },
+
+    renderTopMovers: function (up, down) {
+        const container = document.getElementById('market-pulse-movers');
+        if (!container) return;
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const round2 = (n) => Math.round(Number(n) * 100) / 100;
+        const rowsHtml = (list, colorVar, sign, firstId, emptyLabel) => {
+            if (!Array.isArray(list) || list.length === 0) {
+                return `<div class="text-xs text-brand-black-60 px-2 py-1.5">${emptyLabel}</div>`;
+            }
+            return list.map((m, i) => `<a ${i === 0 ? `id="${firstId}"` : ''} href="/commodity/${encodeURIComponent(m.id || '')}" class="flex items-center justify-between gap-3 py-1.5 px-2 rounded-lg hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors"><span class="text-xs font-bold text-brand-black-80 dark:text-white truncate">${esc(m.name)}</span><span class="text-xs font-bold tabular-nums shrink-0" style="color: var(${colorVar});">${sign}${round2(m.change_percent)}%</span></a>`).join('');
+        };
+        container.innerHTML =
+            `<div><div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Risers</div>` +
+            `<div class="space-y-0.5">${rowsHtml(up, '--color-up', '+', 'market-pulse-rise-link', 'No positive moves')}</div></div>` +
+            `<div><div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Fallers</div>` +
+            `<div class="space-y-0.5">${rowsHtml(down, '--color-down', '', 'market-pulse-drop-link', 'No negative moves')}</div></div>`;
     },
 
     quickFindState: {

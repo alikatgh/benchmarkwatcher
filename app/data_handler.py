@@ -249,6 +249,8 @@ def build_market_summary(commodities: List[Dict[str, Any]]) -> Dict[str, Any]:
         'headline': 'No benchmarks loaded',
         'biggest_up': None,
         'biggest_down': None,
+        'top_movers_up': [],
+        'top_movers_down': [],
         'categories': [],
     }
 
@@ -257,8 +259,7 @@ def build_market_summary(commodities: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     category_totals: Dict[str, Dict[str, Any]] = {}
     dated_items: List[tuple[datetime, Dict[str, Any]]] = []
-    biggest_up: Optional[tuple[float, Dict[str, Any]]] = None
-    biggest_down: Optional[tuple[float, Dict[str, Any]]] = None
+    movers: List[Dict[str, Any]] = []
 
     for item in commodities:
         if not isinstance(item, dict):
@@ -305,11 +306,8 @@ def build_market_summary(commodities: List[Dict[str, Any]]) -> Dict[str, Any]:
         if parsed_date:
             dated_items.append((parsed_date, item))
 
-        movement = _movement_payload(item, pct_change, abs_change)
-        if pct_change > 0 and (biggest_up is None or pct_change > biggest_up[0]):
-            biggest_up = (pct_change, movement)
-        if pct_change < 0 and (biggest_down is None or pct_change < biggest_down[0]):
-            biggest_down = (pct_change, movement)
+        if pct_change != 0:
+            movers.append(_movement_payload(item, pct_change, abs_change))
 
     if summary['total'] == 0:
         return summary
@@ -333,10 +331,19 @@ def build_market_summary(commodities: List[Dict[str, Any]]) -> Dict[str, Any]:
         summary['latest_date'] = latest_date_str
         summary['latest_count'] = sum(1 for date, _item in dated_items if date == latest_date)
 
-    if biggest_up:
-        summary['biggest_up'] = biggest_up[1]
-    if biggest_down:
-        summary['biggest_down'] = biggest_down[1]
+    risers = sorted(
+        (m for m in movers if m['change_percent'] > 0),
+        key=lambda m: m['change_percent'],
+        reverse=True,
+    )
+    fallers = sorted(
+        (m for m in movers if m['change_percent'] < 0),
+        key=lambda m: m['change_percent'],
+    )
+    summary['top_movers_up'] = risers[:5]
+    summary['top_movers_down'] = fallers[:5]
+    summary['biggest_up'] = risers[0] if risers else None
+    summary['biggest_down'] = fallers[0] if fallers else None
 
     for category in category_totals.values():
         category['breadth_percent'] = round((category['up_count'] / category['total']) * 100, 1)

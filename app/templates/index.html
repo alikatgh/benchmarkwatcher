@@ -113,33 +113,35 @@
 
             <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-4 sm:p-5">
                 <div class="text-[10px] font-semibold tracking-[0.16em] uppercase text-brand-black-60">Largest Moves</div>
-                <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
-                    <a id="market-pulse-rise-link"
-                        {% if biggest_up %}href="{{ url_for('main.commodity_detail', commodity_id=biggest_up.id) }}"{% else %}aria-disabled="true" tabindex="-1"{% endif %}
-                        class="block rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 hover:border-brand-oxford dark:hover:border-brand-teal transition-colors">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Rise</span>
-                            <span id="market-pulse-rise-value" class="text-sm font-bold tabular-nums" style="color: var(--color-up);">
-                                {% if biggest_up %}+{{ biggest_up.change_percent|round(2) }}%{% else %}—{% endif %}
-                            </span>
+                <div id="market-pulse-movers" class="mt-3 space-y-3">
+                    <div>
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Risers</div>
+                        <div class="space-y-0.5">
+                            {% for m in (summary.top_movers_up or []) %}
+                            <a {% if loop.first %}id="market-pulse-rise-link"{% endif %} href="{{ url_for('main.commodity_detail', commodity_id=m.id) }}"
+                                class="flex items-center justify-between gap-3 py-1.5 px-2 rounded-lg hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors">
+                                <span class="text-xs font-bold text-brand-black-80 dark:text-white truncate">{{ m.name }}</span>
+                                <span class="text-xs font-bold tabular-nums shrink-0" style="color: var(--color-up);">+{{ m.change_percent|round(2) }}%</span>
+                            </a>
+                            {% else %}
+                            <div class="text-xs text-brand-black-60 px-2 py-1.5">No positive moves</div>
+                            {% endfor %}
                         </div>
-                        <div id="market-pulse-rise-name" class="mt-1 text-sm font-bold text-brand-black-80 dark:text-white truncate">
-                            {{ biggest_up.name if biggest_up else 'No positive moves' }}
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Fallers</div>
+                        <div class="space-y-0.5">
+                            {% for m in (summary.top_movers_down or []) %}
+                            <a {% if loop.first %}id="market-pulse-drop-link"{% endif %} href="{{ url_for('main.commodity_detail', commodity_id=m.id) }}"
+                                class="flex items-center justify-between gap-3 py-1.5 px-2 rounded-lg hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors">
+                                <span class="text-xs font-bold text-brand-black-80 dark:text-white truncate">{{ m.name }}</span>
+                                <span class="text-xs font-bold tabular-nums shrink-0" style="color: var(--color-down);">{{ m.change_percent|round(2) }}%</span>
+                            </a>
+                            {% else %}
+                            <div class="text-xs text-brand-black-60 px-2 py-1.5">No negative moves</div>
+                            {% endfor %}
                         </div>
-                    </a>
-                    <a id="market-pulse-drop-link"
-                        {% if biggest_down %}href="{{ url_for('main.commodity_detail', commodity_id=biggest_down.id) }}"{% else %}aria-disabled="true" tabindex="-1"{% endif %}
-                        class="block rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 hover:border-brand-oxford dark:hover:border-brand-teal transition-colors">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60">Drop</span>
-                            <span id="market-pulse-drop-value" class="text-sm font-bold tabular-nums" style="color: var(--color-down);">
-                                {% if biggest_down %}{{ biggest_down.change_percent|round(2) }}%{% else %}—{% endif %}
-                            </span>
-                        </div>
-                        <div id="market-pulse-drop-name" class="mt-1 text-sm font-bold text-brand-black-80 dark:text-white truncate">
-                            {{ biggest_down.name if biggest_down else 'No negative moves' }}
-                        </div>
-                    </a>
+                    </div>
                 </div>
             </div>
         </div>
