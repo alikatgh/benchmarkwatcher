@@ -204,8 +204,13 @@ BW.CompactTable = {
             const safePrice = this.escapeHtml(String(commodity.price));
             const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
             const roundedChange = Number.isFinite(displayChange) ? parseFloat(Number(displayChange).toFixed(4)) : 0;
+            // Round percent for display too (mirrors roundedChange). applyVisualSettings
+            // can't fix this on re-render: it reads data-value off `.pct-cell` (the outer
+            // div) where the attr is absent, so it bails on NaN and the innerHTML render
+            // below is the only thing the user sees. Raw percent here = float noise on screen.
+            const roundedPercent = Number.isFinite(displayChangePercent) ? parseFloat(Number(displayChangePercent).toFixed(2)) : 0;
             const safeDisplayChange = this.escapeHtml(`${sign}${roundedChange}`);
-            const safeDisplayChangePercent = this.escapeHtml(`${sign}${displayChangePercent}`);
+            const safeDisplayChangePercent = this.escapeHtml(`${sign}${roundedPercent}`);
             const safeFirstPrice = this.escapeHtml(String(firstPrice));
             const safeLastPrice = this.escapeHtml(String(lastPrice));
             const safeFirstDate = this.escapeHtml(String(firstDate));

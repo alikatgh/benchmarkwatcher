@@ -6,8 +6,8 @@ fixing real defects autonomously ("keep going"). All work landed + pushed.
 **Where things stand:** `origin/main` @ `2629694` (pushed, working tree clean).
 
 ## Verification — comprehensively GREEN
-- **Web:** `check:vocab` ✓ · `jest` 147 ✓ · `pytest` 69 ✓ · **`e2e` 9/9 ✓**
-  (market-pulse leaderboard, axe-core a11y = 0 critical, disclaimer vocab).
+- **Web:** `check:vocab` ✓ · `jest` 147 ✓ · `pytest` 69 ✓ · **`e2e` 12/12 ✓**
+  (market-pulse leaderboard, axe-core a11y = 0 critical, disclaimer vocab, raw-float guard).
 - **Mobile:** `tsc` 0 ✓ · `jest` 39 ✓. Rendered on iOS Simulator (real data,
   brand cascade confirmed).
 - ⚠️ pytest: run `venv/bin/python -m pytest tests` (Homebrew py3.14 has no pytest → false failure).
