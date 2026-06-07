@@ -9,8 +9,15 @@
 - **Web styling missing locally** → `app/static/css/tailwind.css` is committed empty (0 bytes) and built by `npm run build:css` (CI/deploy). Rebuild after editing tokens in `tailwind.web.config.js` / `base.html`.
 - **Alternate view modes silently broken** → a passing DEFAULT view does NOT mean alternate modes work. The grid has 3 card styles (Full / Minimal / Dense) × 2 views (grid / compact) × 7 themes, all client-rendered by imperative DOM surgery in `grid_view.js` / `compact_table.js` that depends on hook classes (`bw-grid-category-row`, `bw-grid-change-pct`, …). A `className` reassignment in ONE reset path silently breaks the others. ALWAYS screenshot every card style + view (+ a dark theme), not just the default.
 - **Flask template edits need a server restart to show** → the dev server runs debug-off (no Jinja auto-reload). Static JS/CSS re-fetch on a browser reload, but `.html` template changes only appear after restarting `run.py`. Verify with `curl` against the server (definitive), not the cache-prone preview browser.
+- **A fix is live on the server but the browser still shows the bug** → check BOTH: (1) a CLIENT re-render pass (`compact_table.js applyVisualSettings`, `grid_view.js updateGridSettings`) reads a raw `data-*` attribute and overwrites the server-correct value — fix the re-render path, not just the template/initial render; (2) no static cache-busting → the browser runs stale JS. ALWAYS verify by reading the **rendered DOM** (`querySelectorAll` → check `textContent`), never `curl`/unit-tests alone. Static URLs now carry `?v=<mtime>` (see `app/__init__.py _versioned_url_for`).
 
 ## Chronological log (newest first)
+
+### 2026-06-07 · Compact-table raw floats survived "fixed" server + green tests
+- Symptom: compact Chg showed `+33.667699999999996` in the browser even though `curl` returned `+33.668` and jest/pytest were green. I wrongly reported it fixed twice.
+- Cause: `compact_table.js applyVisualSettings` re-renders `.chg-value` from the raw `data-value` attr (`'+' + rawValue`), overwriting the rounded initial render. Compounded by zero static cache-busting → the browser also ran stale JS.
+- Fix: round in `applyVisualSettings` (`toFixed(4)`); add `?v=<mtime>` cache-busting (`app/__init__.py _versioned_url_for`). Verified in the live rendered DOM (0 raw floats across detail / grid×3 / compact).
+- Lesson: see the pattern above — verify the RENDERED DOM, not the server output.
 
 ### 2026-06-07 · Grid Minimal/Dense overlap + lost up/down color + raw floats
 - Symptom: Minimal Row card style overlapped the direction badge onto the commodity name ("38.Bananas"); Minimal/Dense % rendered neutral instead of teal/claret; compact-table Chg showed raw floats (`+33.667699999999996`).
