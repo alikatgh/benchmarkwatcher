@@ -31,6 +31,31 @@ test.describe('Accessibility', () => {
         ).toEqual([]);
     });
 
+    test('commodity detail page has no critical accessibility violations', async ({ page }) => {
+        // Resolve a real commodity URL from the grid (no hardcoded id).
+        await page.goto('/?view=grid');
+        const href = await page.locator('#grid-cards-container > a').first().getAttribute('href');
+        expect(href).toMatch(/^\/commodity\//);
+
+        const response = await page.goto(href!);
+        expect(response?.ok()).toBeTruthy();
+        await page.waitForLoadState('networkidle');
+        await expect(page.locator('#priceChart')).toBeVisible();
+
+        const results = await new AxeBuilder({ page })
+            .withTags(['wcag2a', 'wcag2aa'])
+            .disableRules(['color-contrast'])
+            .analyze();
+
+        const critical = results.violations.filter(v => v.impact === 'critical');
+
+        expect(
+            critical,
+            `Found ${critical.length} critical a11y violations on the detail page:\n${critical.map(v => `- ${v.id}: ${v.description}`).join('\n')
+            }`
+        ).toEqual([]);
+    });
+
     test('grid view cards are keyboard accessible', async ({ page }) => {
         const response = await page.goto('/');
         expect(response?.ok()).toBeTruthy();
