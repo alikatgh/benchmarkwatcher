@@ -55,7 +55,7 @@ Active category = solid **black** pill (`bg-slate-900`); active range = **blue**
 ## P3 — Polish
 
 - **UI-11 · Dashed borders** on empty/preview states (`border-dashed`×2) read as "unfinished." → solid hairline. (`index.html`, `grid_view.html`)
-- **UI-12 · Double loading affordance** on mobile detail: a blue "Fetching…" banner *and* a skeleton. → pick one. (`CommodityDetailScreen.tsx:302-314,398`)
+- **UI-12 · Double loading affordance** on mobile detail — ✅ Fixed. Removed the "Fetching latest benchmark data…" banner; the skeleton (`renderDetailsSkeleton`) is the sole initial-load affordance, and the refresh/last-updated status stays for the refresh path. `CommodityDetailScreen.tsx`.
 - **UI-13 · Unicode `▲▼` arrows** vary in glyph weight vs. the SVG icon set. → a single shared arrow/icon.
 - **UI-14 · Spacing rhythm** mixes `p-3/4/5/6` and ad-hoc `py/px`. → one 4/8/12/16/24 scale.
 
