@@ -991,10 +991,10 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
 <!-- date-fns adapter: lets the price chart use a real time x-axis (linear in time,
      not in data-index) so non-uniform-density history isn't visually warped. -->
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
 <!-- Data passed via JSON for external JS -->
 <script id="commodity-history" type="application/json">
@@ -1002,8 +1002,8 @@
 </script>
 
 <!-- External JS for commodity detail -->
-<script src="{{ url_for('static', filename='js/core/utils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/components/commodity.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/core/utils.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/components/commodity.js') }}"></script>
 
 <script>
     // Initialize commodity chart with Jinja2 data
