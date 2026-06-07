@@ -187,7 +187,11 @@ describe('getRelativeDate', () => {
     });
 
     test('handles string dates', () => {
-        const today = new Date().toISOString().split('T')[0];
+        // getRelativeDate works on a LOCAL calendar basis (users see their own
+        // "today"), so build today's date from local components — not toISOString(),
+        // which is UTC and can be a different calendar day near midnight.
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         expect(getRelativeDate(today)).toBe('Today');
     });
 });

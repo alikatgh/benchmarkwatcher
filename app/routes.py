@@ -222,7 +222,7 @@ def index():
     category = request.args.get('category', None)
     active_view = (
         validate_view(request.args.get('view'))
-        or 'grid'
+        or 'compact'
     )
 
     commodities = filter_commodities(

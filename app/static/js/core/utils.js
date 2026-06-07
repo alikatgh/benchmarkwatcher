@@ -67,8 +67,17 @@ BW.Utils = (function () {
             if (input instanceof Date) {
                 return isNaN(input.getTime()) ? null : input;
             }
-            // Try ISO/other parse
-            const d = new Date(String(input));
+            const str = String(input);
+            // Date-only ISO (YYYY-MM-DD) parses as UTC midnight per spec, but the rest
+            // of this module reads LOCAL date components — that mismatch renders today's
+            // date as "Yesterday"/"Jun 7" for users behind UTC. Parse date-only strings
+            // as LOCAL midnight so the whole date layer is timezone-consistent.
+            const ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
+            if (ymd) {
+                const dLocal = new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+                return isNaN(dLocal.getTime()) ? null : dLocal;
+            }
+            const d = new Date(str);
             return isNaN(d.getTime()) ? null : d;
         },
 
@@ -78,9 +87,14 @@ BW.Utils = (function () {
             if (!d) return dateInput;
 
             switch (format) {
-                case 'iso':
-                    // Return YYYY-MM-DD (date-only ISO)
-                    return d.toISOString().split('T')[0];
+                case 'iso': {
+                    // Local Y-M-D — NOT toISOString(), which would shift a date-only
+                    // input across the UTC boundary. Consistent with _toDate's local parse.
+                    const y = d.getFullYear();
+                    const mo = String(d.getMonth() + 1).padStart(2, '0');
+                    const da = String(d.getDate()).padStart(2, '0');
+                    return `${y}-${mo}-${da}`;
+                }
                 case 'short':
                     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                 case 'long':

@@ -239,7 +239,7 @@ BW.Settings = (function () {
         // View mode
         getViewMode: function () {
             const val = this._getRaw(this.KEYS.VIEW_MODE);
-            return val === null ? 'grid' : val;
+            return val === null ? 'compact' : val;
         },
 
         setViewMode: function (mode) {
