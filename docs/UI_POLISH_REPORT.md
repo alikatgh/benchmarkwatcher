@@ -32,6 +32,8 @@ P0 #1 (range default), P0 #2 (grid price precision), P1 #3 (absolute-change prec
 - **Changelog page** — audited, clean (status badges, serif headings, monospace inline code, good rhythm). No change.
 - **Chart Settings drawer** — restructured tabs are well-grouped. Found + fixed: the 5-tab row overflowed the drawer so the last tab "Controls" clipped to "Contro". Reduced tab padding (`px-3 sm:px-4 → px-2.5`) AND shortened the one over-long label "Axes & Grid" → "Axes" (it now matches the other tabs' brevity; the panel still holds axis+grid settings). All 5 fit — Style / Axes / Stats / Tooltip / Controls — verified by screenshot. `commodity.html`.
 
+- **Detail page** — fixed: the hero price rendered raw 4-decimals (`3133.9827`) and the High/Low/Average/Range stats were inconsistent (some 3-dec+commas, some 2-dec no-commas). Now uniform 2-decimals + thousands separators across hero + all four stats, matching the chart tooltip (`commodity.html`, `commodity.js`). Also dropped the redundant "Commodity ID: <slug>" label above the title (UI-16).
+
 ## Deferred (logged in `docs/KNOWN_UI_DEBT.md`)
 - #4 Detail chart x-axis is a category scale (no date adapter) → time looks non-linear. Needs a Chart.js time scale + adapter dependency + crosshair refactor.
-- #6 "Commodity ID: gold" technical breadcrumb label. #7 colliding 2-letter row icons. #8 daily/monthly latest-benchmark vs grid value mismatch (data pipeline).
+- #7 colliding 2-letter row icons. #8 daily/monthly latest-benchmark vs grid value mismatch (data pipeline).
