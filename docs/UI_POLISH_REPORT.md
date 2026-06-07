@@ -30,7 +30,7 @@ P0 #1 (range default), P0 #2 (grid price precision), P1 #3 (absolute-change prec
 
 ## Round 2 — deeper audit (changelog, chart-settings drawer)
 - **Changelog page** — audited, clean (status badges, serif headings, monospace inline code, good rhythm). No change.
-- **Chart Settings drawer** — restructured tabs (Style / Axes & Grid / Stats / Tooltip / Controls) are well-grouped. Found + fixed: the 5-tab row overflowed the drawer (`px-3 sm:px-4` × 5 ≈ 160px of padding) so "Controls" clipped to "Contro". Reduced tab padding to `px-2.5` (frees ~60px vs the 31px overflow). `commodity.html`.
+- **Chart Settings drawer** — restructured tabs are well-grouped. Found + fixed: the 5-tab row overflowed the drawer so the last tab "Controls" clipped to "Contro". Reduced tab padding (`px-3 sm:px-4 → px-2.5`) AND shortened the one over-long label "Axes & Grid" → "Axes" (it now matches the other tabs' brevity; the panel still holds axis+grid settings). All 5 fit — Style / Axes / Stats / Tooltip / Controls — verified by screenshot. `commodity.html`.
 
 ## Deferred (logged in `docs/KNOWN_UI_DEBT.md`)
 - #4 Detail chart x-axis is a category scale (no date adapter) → time looks non-linear. Needs a Chart.js time scale + adapter dependency + crosshair refactor.

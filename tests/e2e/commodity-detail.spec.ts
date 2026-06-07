@@ -27,7 +27,7 @@ test.describe('Commodity detail page', () => {
         await expect(page.locator('#chart-settings-modal')).toBeVisible();
         await expect(page.locator('#content-appearance')).toBeVisible(); // default tab (Style)
 
-        await page.locator('#tab-scales').click(); // Axes & Grid
+        await page.locator('#tab-scales').click(); // Axes
         await expect(page.locator('#content-scales')).toBeVisible();
         await expect(page.locator('#content-appearance')).toBeHidden();
 
