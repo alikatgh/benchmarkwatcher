@@ -107,7 +107,7 @@ BW.Settings = (function () {
 
         // Default table settings (unchanged shape, used via deep merge)
         TABLE_DEFAULTS: {
-            dataRange: 'ALL',
+            dataRange: '1Y',
             panelOpen: false,
             columns: {
                 commodity: true,
@@ -178,7 +178,7 @@ BW.Settings = (function () {
         // Get grid settings (safe fallback shape)
         getGridSettings: function () {
             const parsed = this._getParsed(this.KEYS.GRID);
-            if (!parsed) return { dataRange: 'ALL' };
+            if (!parsed) return { dataRange: '1Y' };
             return parsed;
         },
 
