@@ -56,8 +56,8 @@ Active category = solid **black** pill (`bg-slate-900`); active range = **blue**
 
 - **UI-11 · Dashed borders** on empty/preview states (`border-dashed`×2) read as "unfinished." → solid hairline. (`index.html`, `grid_view.html`)
 - **UI-12 · Double loading affordance** on mobile detail — ✅ Fixed. Removed the "Fetching latest benchmark data…" banner; the skeleton (`renderDetailsSkeleton`) is the sole initial-load affordance, and the refresh/last-updated status stays for the refresh path. `CommodityDetailScreen.tsx`.
-- **UI-13 · Unicode `▲▼` arrows** vary in glyph weight vs. the SVG icon set. → a single shared arrow/icon.
-- **UI-14 · Spacing rhythm** mixes `p-3/4/5/6` and ad-hoc `py/px`. → one 4/8/12/16/24 scale.
+- **UI-13 · `▲▼` vs `↑↓` arrows** — ✅ Fixed. The detail change badge + chart crosshair used `↑↓` while the grid/compact change indicators use `▲▼`; standardized the two change-direction spots to `▲▼` (the sort-dropdown `↑↓`, which means sort order, is left as-is). Screenshot-verified.
+- **UI-14 · Spacing rhythm** — ✅ Re-assessed, no action. The classes actually in use (`p-1/2/3/4/5/6` = 4/8/12/16/20/24px) ALREADY sit on a single 4px scale; the dominant are 1–4 with only ~27 `p-5/p-6` uses. That's appropriate per-component variety, not sprawl — a blanket codemod would shift many layouts for no real gain.
 
 ## Risks (not UI debt — verify separately)
 
@@ -74,15 +74,17 @@ Cascade-first redesign applied; verified green (vocab / web-jest / pytest / mobi
 | UI-1 Brand split | ✅ Fixed — mobile `tailwind.config.js` re-tones slate/blue/indigo to the FT brand; hardcoded chart/spinner hexes remapped to claret/teal/oxford |
 | UI-2 Weight collapse | ✅ Fixed — `font-extrabold`→`bold`; micro-label `font-bold`→`semibold` (codemod across templates **and** the JS render layer) |
 | UI-3 Direction microcopy | ✅ Fixed — `CompactCommodityRow` shows the arrow only, colored by the market color |
-| UI-4 Micro-text | ◑ Partial — `text-[9px]` tier removed (→10px); full tokenization deferred |
+| UI-4 Micro-text | ◑ Addressed — worst `text-[9px]` tier removed; remaining `text-[10px]` is consistent (one size, 147×). Fluid-token migration is an enhancement, not a fix (147-instance layout risk) — not worth it. |
 | UI-5 Shadows | ✅ Fixed — `--card-shadow: none` (all themes), `shadow-sm` removed, header inline shadow removed |
 | UI-6 Radius sprawl | ✅ Fixed (web) — `rounded-2xl`→`xl`, `rounded-md`→`lg` |
 | UI-7 Hover geometry | ✅ Fixed — `-translate-y` card lift removed |
 | UI-9 Mobile active states | ✅ Fixed — now brand-toned via the config cascade |
 | UI-11 Dashed borders | ✅ Fixed — solid hairline |
 | UI-8 Busy nested tiles | ◑ Largely mooted by the flattening; no structural rework |
-| UI-10 `!important` theme sprawl | ⬜ Deferred (maintainability, not visual) |
-| UI-12 / UI-13 / UI-14 | ⬜ Deferred P3 polish |
+| UI-10 `!important` theme sprawl | ⬜ Deferred — maintainability only (Bloomberg/FT look identical after a token refactor); regression risk on the two working themes > value. Revisit only if the theme system is reworked. |
+| UI-12 Mobile double-loading | ✅ Fixed — removed the "Fetching…" banner; skeleton is the sole load affordance |
+| UI-13 Arrows | ✅ Fixed — detail ↑↓ → ▲▼ (see above) |
+| UI-14 Spacing | ✅ Re-assessed — already a 4px scale; no action (see above) |
 
 **Web:** screenshotted — clean, editorial, on-brand in light + dark. **Mobile:** verified by typecheck + tests + the deterministic config cascade; not screenshotted (no Expo simulator in this environment).
 
