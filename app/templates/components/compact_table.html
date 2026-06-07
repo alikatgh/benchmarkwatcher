@@ -503,7 +503,7 @@
                                 %}▲{% else %}▼{% endif %}</span>
                             <span class="chg-value">{% if commodity.daily_change|default(commodity.change) >= 0 %}+{%
                                 endif
-                                %}{{ commodity.daily_change|default(commodity.change) }}</span>
+                                %}{{ commodity.daily_change|default(commodity.change) | round(3) }}</span>
                         </div>
                     </td>
                     <td data-col="pct" class="px-4 py-5 text-right">
