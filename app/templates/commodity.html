@@ -458,6 +458,83 @@
         </div>
     </div>
 
+    <!-- Apple-clean Chart Settings controls (scoped; CSP allows 'unsafe-inline' style) -->
+    <style>
+        /* Sliders: thin track + floating circular thumb */
+        #chart-settings-modal input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 26px;
+            background: transparent;
+            cursor: pointer;
+        }
+        #chart-settings-modal input[type="range"]::-webkit-slider-runnable-track {
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.12);
+        }
+        #chart-settings-modal input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            margin-top: -7px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.14);
+        }
+        #chart-settings-modal input[type="range"]::-moz-range-track {
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.12);
+        }
+        #chart-settings-modal input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border: 0;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0.14);
+        }
+        .dark #chart-settings-modal input[type="range"]::-webkit-slider-runnable-track { background: rgba(255, 255, 255, 0.16); }
+        .dark #chart-settings-modal input[type="range"]::-moz-range-track { background: rgba(255, 255, 255, 0.16); }
+
+        /* Checkboxes -> iOS-style toggles */
+        #chart-settings-modal input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            position: relative;
+            flex-shrink: 0;
+            width: 42px;
+            height: 26px;
+            margin: 0;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.18);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        #chart-settings-modal input[type="checkbox"]::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease;
+        }
+        #chart-settings-modal input[type="checkbox"]:checked { background: #0f5499; }
+        #chart-settings-modal input[type="checkbox"]:checked::after { transform: translateX(16px); }
+        .dark #chart-settings-modal input[type="checkbox"] { background: rgba(255, 255, 255, 0.22); }
+        .dark #chart-settings-modal input[type="checkbox"]:checked { background: #2dd4bf; }
+
+        /* Native color wells: borderless, rounded */
+        #chart-settings-modal input[type="color"] { padding: 0; border: 0; background: transparent; cursor: pointer; }
+    </style>
+
     <!-- Chart Settings Panel — full-screen on mobile, side panel on md+ -->
     <div id="chart-settings-modal" role="dialog" aria-modal="true" aria-labelledby="chart-settings-title" aria-hidden="true" class="hidden fixed inset-0 z-50 font-ui bw-popup-backdrop">
         <!-- Overlay (md+ only, click to close) -->
@@ -516,7 +593,7 @@
                 <!-- APPEARANCE TAB -->
                 <div id="content-appearance" class="chart-settings-content space-y-4">
                     <!-- Preset Themes -->
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">PRESET THEMES</div>
                         <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                             <button onclick="applyChartTheme('light')"
@@ -563,7 +640,7 @@
                     </div>
 
                     <!-- Chart Line -->
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">CHART LINE</div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -594,7 +671,7 @@
                     </div>
 
                     <!-- Area Fill -->
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">AREA FILL</div>
                         <div class="space-y-3">
                             <div class="flex items-center gap-3">
@@ -621,7 +698,7 @@
                     </div>
 
                     <!-- Animation -->
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ANIMATION</div>
                         <div class="space-y-3">
                             <label class="flex items-center gap-2 cursor-pointer">
@@ -642,7 +719,7 @@
 
                 <!-- SCALES TAB -->
                 <div id="content-scales" class="chart-settings-content hidden space-y-4">
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">Y-AXIS</div>
                         <div class="space-y-3">
                             <div>
@@ -670,7 +747,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">X-AXIS</div>
                         <div>
                             <label class="block text-xs text-brand-black-60 mb-1">Max Labels: <span id="xMaxTicks-value">8</span></label>
@@ -680,7 +757,7 @@
                         </div>
                     </div>
                     <!-- Grid -->
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">GRID</div>
                         <div class="space-y-3">
                             <div class="flex gap-4">
@@ -717,7 +794,7 @@
 
                 <!-- STATUS LINE TAB -->
                 <div id="content-statusline" class="chart-settings-content hidden space-y-4">
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">STATISTICS VISIBILITY</div>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2.5 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
@@ -758,7 +835,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">COLORS</div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -779,7 +856,7 @@
 
                 <!-- TOOLTIP TAB -->
                 <div id="content-tooltip" class="chart-settings-content hidden space-y-4">
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">CROSSHAIR INFO</div>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2.5 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
@@ -802,7 +879,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">TOOLTIP STYLE</div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -835,7 +912,7 @@
 
                 <!-- INTERACTION TAB -->
                 <div id="content-interaction" class="chart-settings-content hidden space-y-4">
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ZOOM & PAN</div>
                         <div class="space-y-3">
                             <div class="flex gap-4">
@@ -864,7 +941,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ACTION BUTTONS</div>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2.5 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
@@ -881,7 +958,7 @@
                             </label>
                         </div>
                     </div>
-                    <div class="rounded-xl border border-brand-black-60/10 dark:border-white/10 bg-white/60 dark:bg-terminal-black/20 p-3 sm:p-4">
+                    <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
                         <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">CHART SIZE</div>
                         <div>
                             <label class="block text-xs text-brand-black-60 mb-1">Height: <span id="chartHeight-value">400</span>px</label>
