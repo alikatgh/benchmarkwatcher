@@ -68,6 +68,10 @@ logs/
 # Flask
 instance/
 .webassets-cache
+tmp/flask_cache/
+
+# Screenshot harness output (scripts/shoot.mjs)
+artifacts/
 
 # Testing
 .coverage
