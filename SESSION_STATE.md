@@ -25,6 +25,11 @@ fixing real defects autonomously ("keep going"). All work landed + pushed.
 - Chart Settings restructured into logical tabs (Tooltip / Controls / Axes & Grid / Style / Bloomberg).
 - Top Movers leaderboard on the homepage (`#market-pulse-movers`, Risers/Fallers).
 - e2e port footgun fixed (default 5050 → 5781) + `scripts/e2e_local.sh` harness.
+- **Screenshot-driven UI polish** (`docs/UI_POLISH_REPORT.md`): default range ALL→1Y
+  (every benchmark showed absurd all-time % like Gold +1531% → now real YoY moves),
+  grid prices 4→2 decimals + consistent `%.2f`, change →2 decimals, chart-settings
+  tab-row clip fixed. Audited home (light/dark/mobile), detail, compact, changelog,
+  chart-settings drawer. Deferred items → `docs/KNOWN_UI_DEBT.md` (UI-15..18).
 
 ## Open / needs the user (cannot do from here)
 - **Production may be down.** Earlier this session prod returned a host-500

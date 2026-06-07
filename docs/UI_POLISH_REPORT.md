@@ -25,5 +25,13 @@ ranked by how much they hurt the product's credibility at a glance.
 - **Detail page** — clean line chart, sensible "+0.91% vs prev day", good controls, educational frequency card, proper disclaimer.
 - Flat cards (no shadows), hairline borders, serif headings, tabular numbers — brand system holding up well.
 
-## Fixes applied this pass
-P0 #1 (range default), P0 #2 (grid price precision), P1 #3 (absolute-change precision) — across `routes.py`, `price_card.html`, `compact_table.html`, `grid_view.js`, `compact_table.js`. Verified by re-screenshot + the full test gate. Items 4/6/7/8 logged in `docs/KNOWN_UI_DEBT.md`.
+## Fixes applied — round 1
+P0 #1 (range default), P0 #2 (grid price precision), P1 #3 (absolute-change precision) — across `routes.py`, `settings.js`, `price_card.html`, `compact_table.html`, `grid_view.js`, `compact_table.js`, `index.js`. Prices upgraded to consistent 2-decimals (`%.2f` / `toFixed(2)`) matching the compact view. Verified by re-screenshot (grid + compact) + the full test gate.
+
+## Round 2 — deeper audit (changelog, chart-settings drawer)
+- **Changelog page** — audited, clean (status badges, serif headings, monospace inline code, good rhythm). No change.
+- **Chart Settings drawer** — restructured tabs (Style / Axes & Grid / Stats / Tooltip / Controls) are well-grouped. Found + fixed: the 5-tab row overflowed the drawer (`px-3 sm:px-4` × 5 ≈ 160px of padding) so "Controls" clipped to "Contro". Reduced tab padding to `px-2.5` (frees ~60px vs the 31px overflow). `commodity.html`.
+
+## Deferred (logged in `docs/KNOWN_UI_DEBT.md`)
+- #4 Detail chart x-axis is a category scale (no date adapter) → time looks non-linear. Needs a Chart.js time scale + adapter dependency + crosshair refactor.
+- #6 "Commodity ID: gold" technical breadcrumb label. #7 colliding 2-letter row icons. #8 daily/monthly latest-benchmark vs grid value mismatch (data pipeline).
