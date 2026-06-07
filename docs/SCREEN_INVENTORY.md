@@ -10,7 +10,7 @@ _Phase 1 audit · 2026-06-07. Concept to KEEP: FT-style editorial commodity-benc
 | `/` compact | `components/compact_table.html` (532) | Dense table view of all benchmarks + inline column controls | — | Functional — dense |
 | `/commodity/<id>` | `commodity.html` (1013) | Detail: title, change badge, stats bar, Chart.js chart, chart-settings modal, compare | skeleton ✓ · chart error ✓ | Functional — chart-heavy |
 | `/changelog` | `changelog.html` (210) | Release changelog | n/a | Functional |
-| errors | `errors/{404,429,500}.html` | Error pages (12 lines each) | — | Minimal |
+| errors | `errors/{404,429,500}.html` | Error pages: claret serif numeral, brand tokens, forward actions (Back to dashboard / Browse all benchmarks) | — | ✅ Branded + tested (pytest ×3 + e2e 404) |
 
 **Shared web components:** `header.html` (sticky nav + scroll-hiding category strip) · `footer.html` · `price_card.html` (grid card) · `grid_view.html` (range buttons + collapsible Card Options panel + grid) · `settings_modal.html` (theme / market-color / density picker).
 
