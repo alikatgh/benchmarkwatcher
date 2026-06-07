@@ -15,6 +15,12 @@
 
 ## Chronological log (newest first)
 
+### 2026-06-07 · Grid cards lost up/down colour on the % change (every theme)
+- Symptom: the grid card `%` change rendered as plain text — dark in light/dark, amber in the Bloomberg theme — instead of teal-up / claret-down. I first screenshot-audited it as "teal/claret, fine".
+- Cause: the **Full Card** style handler (the default) in `grid_view.js` did `changePctEl.style.cssText = ''`, wiping the template's inline `color: var(--color-up)`; the `%` then inherited plain text colour. (Minimal/Dense handlers re-apply the colour; Full Card was missed.)
+- Fix: re-apply `color: var(--color-up|--color-down)` from `link.dataset.changePct` in the Full Card handler. Verified via `getComputedStyle`: teal `rgb(13,118,128)` / claret `rgb(153,15,61)` in light AND Bloomberg.
+- Lesson: **verify COLOUR with `getComputedStyle`, not a screenshot eyeball** — I misjudged dark-as-teal and amber-as-up twice this session; the computed value is the only truth (same spirit as "read the rendered DOM, not curl"). And a `style.cssText = ''` reset silently drops template-set inline styling — re-apply, never blank.
+
 ### 2026-06-07 · Compact display settings silently stopped applying after a range refresh
 - Symptom: change format/colour + percent style/decimals worked on first load but quietly reverted after clicking a range button in compact view. The raw-percent float (below) was the visible tip of the same root cause.
 - Cause: structural drift between the two renderers. The SERVER template puts `data-value` ON `.chg-cell`/`.pct-cell`; the JS re-render makes those positioning WRAPPERS and moves `data-value` to an inner div (+ a tooltip sibling). `applyVisualSettings` read `data-value` off the wrapper → NaN → bailed (pct) or mis-targeted the colour (chg, then overridden by the inner inline colour).
