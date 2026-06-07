@@ -1,6 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const e2ePort = process.env.PLAYWRIGHT_PORT || '5050';
+// Default to a distinctive, uncommon port. 5050 is a generic dev port that
+// frequently collides with other local servers; because `reuseExistingServer`
+// is enabled below for local (non-CI) runs, a collision makes Playwright
+// silently reuse the *foreign* app already on the port and report phantom
+// failures (every locator misses because it's the wrong app). Override with
+// PLAYWRIGHT_PORT if 5781 is ever taken.
+const e2ePort = process.env.PLAYWRIGHT_PORT || '5781';
 const baseURL = `http://127.0.0.1:${e2ePort}`;
 const flaskCommand = process.env.PLAYWRIGHT_FLASK_COMMAND || `python -m flask --app run:app run --host 127.0.0.1 --port ${e2ePort}`;
 
