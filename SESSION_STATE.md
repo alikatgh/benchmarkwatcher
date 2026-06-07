@@ -25,11 +25,18 @@ fixing real defects autonomously ("keep going"). All work landed + pushed.
 - Chart Settings restructured into logical tabs (Tooltip / Controls / Axes & Grid / Style / Bloomberg).
 - Top Movers leaderboard on the homepage (`#market-pulse-movers`, Risers/Fallers).
 - e2e port footgun fixed (default 5050 → 5781) + `scripts/e2e_local.sh` harness.
-- **Screenshot-driven UI polish** (`docs/UI_POLISH_REPORT.md`): default range ALL→1Y
-  (every benchmark showed absurd all-time % like Gold +1531% → now real YoY moves),
-  grid prices 4→2 decimals + consistent `%.2f`, change →2 decimals, chart-settings
-  tab-row clip fixed. Audited home (light/dark/mobile), detail, compact, changelog,
-  chart-settings drawer. Deferred items → `docs/KNOWN_UI_DEBT.md` (UI-15..18).
+- **Screenshot-driven UI polish** (`docs/UI_POLISH_REPORT.md`), 3 rounds:
+  1. Default range ALL→1Y (every benchmark showed absurd all-time % like Gold
+     +1531% → now real YoY moves; breadth 37/35 vs 62/10). Grid prices 4→2 dec +
+     consistent `%.2f`/`toFixed(2)`, absolute change →2 dec (server + JS, both views).
+  2. Chart-settings drawer tab-row clip ("Controls"→"Contro") — `px-2.5` + label
+     "Axes & Grid"→"Axes".
+  3. Detail page: hero + High/Low/Avg/Range stats → uniform 2-dec + thousands
+     separators; removed redundant "Commodity ID" label.
+  Audited home (light/dark/mobile), detail (desktop/mobile, Price & %Change),
+  compact, changelog, chart-settings + card-options panels — all clean or fixed.
+  Deferred → `docs/KNOWN_UI_DEBT.md`: UI-15 chart x-axis time scale (needs a
+  date-adapter dep + crosshair refactor), UI-17 icon collisions, UI-18 data mismatch.
 
 ## Open / needs the user (cannot do from here)
 - **Production may be down.** Earlier this session prod returned a host-500
