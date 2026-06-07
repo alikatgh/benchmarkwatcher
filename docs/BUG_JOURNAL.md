@@ -7,8 +7,16 @@
 - **Mobile shows "Server error (500)" but the same URL curls 200 locally** → the app reads `EXPO_PUBLIC_API_URL` from `mobile/.env` (prod = `https://benchmarkwatcher.online`) and ignores localhost. To test against local Flask, point `mobile/.env` at `http://localhost:5002`, rebuild with `--clear`, then revert `.env`. An inline `EXPO_PUBLIC_API_URL=...` does NOT win over the `.env` file.
 - **zsh does not word-split unquoted `$VAR`** → `perl ... $FILES` passes the whole newline-joined list as ONE filename ("Can't open …: No such file"). Use `find … -exec perl -pi -e '…' {} +` for codemods.
 - **Web styling missing locally** → `app/static/css/tailwind.css` is committed empty (0 bytes) and built by `npm run build:css` (CI/deploy). Rebuild after editing tokens in `tailwind.web.config.js` / `base.html`.
+- **Alternate view modes silently broken** → a passing DEFAULT view does NOT mean alternate modes work. The grid has 3 card styles (Full / Minimal / Dense) × 2 views (grid / compact) × 7 themes, all client-rendered by imperative DOM surgery in `grid_view.js` / `compact_table.js` that depends on hook classes (`bw-grid-category-row`, `bw-grid-change-pct`, …). A `className` reassignment in ONE reset path silently breaks the others. ALWAYS screenshot every card style + view (+ a dark theme), not just the default.
+- **Flask template edits need a server restart to show** → the dev server runs debug-off (no Jinja auto-reload). Static JS/CSS re-fetch on a browser reload, but `.html` template changes only appear after restarting `run.py`. Verify with `curl` against the server (definitive), not the cache-prone preview browser.
 
 ## Chronological log (newest first)
+
+### 2026-06-07 · Grid Minimal/Dense overlap + lost up/down color + raw floats
+- Symptom: Minimal Row card style overlapped the direction badge onto the commodity name ("38.Bananas"); Minimal/Dense % rendered neutral instead of teal/claret; compact-table Chg showed raw floats (`+33.667699999999996`).
+- Cause: `grid_view.js` 'card' reset (line ~1017) reassigned the category-row `className` WITHOUT the `bw-grid-category-row` hook → Minimal/Dense (which queried only that class, no fallback) couldn't hide the row, so its `justify-between` content overflowed into the title column. Color: the Minimal/Dense `cssText` override wiped the inline `color: var(--color-up/down)`. Floats: `compact_table.html` chg-value + `compact_table.js` rendered raw `commodity.change` (the grid path uses `round(3)`; compact didn't).
+- Fix: preserve `bw-grid-category-row` in the card reset + add the `|| div:nth-child(2)` fallback to Minimal/Dense (which the card path already had); re-apply up/down color from `data-change-pct`; round compact change (`round(3)` in template, `toFixed` in JS).
+- Lesson: see the "Alternate view modes silently broken" pattern above — the default view looking fine hid three bugs in the non-default modes.
 
 ### 2026-06-07 · Mobile app could not bundle (NativeWind preset missing)
 - Symptom: `expo start` → Metro config load fails: "Tailwind CSS has not been configured with the NativeWind preset".

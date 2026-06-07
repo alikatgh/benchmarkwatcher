@@ -791,7 +791,7 @@ BW.GridView = {
                 const gradientOverlay = card.querySelector('.bw-grid-gradient');
                 if (gradientOverlay) gradientOverlay.style.display = 'none';
 
-                const categoryRow = card.querySelector('.bw-grid-category-row');
+                const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('div:nth-child(2)');
                 if (categoryRow) {
                     categoryRow.style.cssText = 'display:none;';
                 }
@@ -842,7 +842,9 @@ BW.GridView = {
 
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     if (changePctEl) {
-                        changePctEl.style.cssText = `font-size:16px; line-height:1; font-weight:800; display:${showChangePct ? 'block' : 'none'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;`;
+                        const cpv = parseFloat(link.dataset.changePct || '0');
+                        const cpVar = cpv > 0 ? '--color-up' : cpv < 0 ? '--color-down' : '--theme-text-muted';
+                        changePctEl.style.cssText = `font-size:16px; line-height:1; font-weight:800; color: var(${cpVar}); display:${showChangePct ? 'block' : 'none'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;`;
                     }
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changeAbsEl) {
@@ -933,7 +935,7 @@ BW.GridView = {
                 const gradientOverlay = card.querySelector('.bw-grid-gradient');
                 if (gradientOverlay) gradientOverlay.style.display = 'none';
 
-                const categoryRow = card.querySelector('.bw-grid-category-row');
+                const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('div:nth-child(2)');
                 if (categoryRow) {
                     categoryRow.style.cssText = `display:${showCategory ? 'flex' : 'none'}; margin-bottom:0.35rem; gap:0.35rem; align-items:center;`;
                     const catSpan = categoryRow.querySelector('span');
@@ -969,7 +971,9 @@ BW.GridView = {
                     const changePctEl = changeSection.querySelector('.bw-grid-change-pct');
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
                     if (changePctEl) {
-                        changePctEl.style.cssText = `font-size:12px; font-weight:800; display:${showChangePct ? 'inline' : 'none'};`;
+                        const cpv = parseFloat(link.dataset.changePct || '0');
+                        const cpVar = cpv > 0 ? '--color-up' : cpv < 0 ? '--color-down' : '--theme-text-muted';
+                        changePctEl.style.cssText = `font-size:12px; font-weight:800; color: var(${cpVar}); display:${showChangePct ? 'inline' : 'none'};`;
                     }
                     if (changeAbsEl) {
                         changeAbsEl.style.cssText = `font-size:10px; display:${showChangeAbs ? 'inline' : 'none'}; color:var(--theme-text-muted);`;
@@ -1014,7 +1018,7 @@ BW.GridView = {
                 // Restore category row
                 const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('div:nth-child(2)');
                 if (categoryRow && categoryRow.querySelector('span')) {
-                    categoryRow.className = 'flex items-center justify-between mb-4';
+                    categoryRow.className = 'bw-grid-category-row flex items-center justify-between mb-4';
                     categoryRow.style.cssText = showCategory ? '' : 'display: none;';
                 }
 
