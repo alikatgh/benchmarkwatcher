@@ -39,6 +39,16 @@ def _internal_rate_limit() -> str:
     return current_app.config.get('INTERNAL_API_RATE_LIMIT', '30 per minute')
 
 
+@bp.route('/health')
+@limiter.exempt
+def health():
+    """Liveness probe. A 200 here means create_app() succeeded and Flask is
+    serving, so a monitor (or a quick curl) can tell an *app* failure apart from
+    the host's generic 500 page (see docs/DEPLOY_RECOVERY.md). Does no data
+    loading and is exempt from rate limiting so it can be polled freely."""
+    return jsonify(status='ok'), 200
+
+
 def validate_range(date_range: str) -> str:
     """Validate and sanitize the date range parameter."""
     return date_range if date_range in VALID_RANGES else 'ALL'
