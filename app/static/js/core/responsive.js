@@ -91,13 +91,9 @@ BW.Responsive = (function () {
     function autoSelectView() {
         if (!_isFirstVisit) return; // respect user's saved preference
 
-        const w = getViewportWidth();
-        const touch = isTouch();
-
-        // Compact on phones/small devices or touch devices ≤ sm breakpoint
-        const preferCompact = (w < BREAKPOINTS.sm) || (touch && w < BREAKPOINTS.md);
-
-        const mode = preferCompact ? 'compact' : 'grid';
+        // R2: the dense compact table is the default board on every device class.
+        // Grid cards remain one click away via the view toggle (saved prefs respected).
+        const mode = 'compact';
 
         // Write via BW.Settings so the emitted event is correct
         if (window.BW && BW.Settings) {

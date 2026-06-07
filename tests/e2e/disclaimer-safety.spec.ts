@@ -58,7 +58,8 @@ test.describe('UI vocabulary safety', () => {
     });
 
     test('commodity cards use observational language', async ({ page }) => {
-        const response = await page.goto('/');
+        // Grid is no longer the default view (compact is) — request it explicitly.
+        const response = await page.goto('/?view=grid');
         expect(response?.ok()).toBeTruthy();
         await page.waitForLoadState('networkidle');
         await page.waitForSelector('#grid-cards-container', { state: 'visible', timeout: 5000 });
