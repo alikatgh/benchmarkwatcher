@@ -60,6 +60,10 @@ probe, `docs/DEPLOY_RECOVERY.md`. UI-15 chart now uses a real time x-axis.
   `requirements.txt` into the app's Python venv and restart the app
   (or `touch tmp/restart.txt`); then read `passenger_boot_error.log` (added to
   `passenger_wsgi.py`) for the exact boot traceback if it still 500s.
+  **Runbook hardened this session** with a *verified* pre-flight: boot deps
+  confirmed complete (`create_app()` imports resolve — flask/flask_caching/
+  flask_limiter/dotenv, all in requirements), Python floor ≥3.9 (Flask 3.1.3),
+  CSS not blank (R-1 moot), known-good pin-set fallback. See `docs/DEPLOY_RECOVERY.md`.
 - **Mobile visual QA** of the latest changes needs the Expo simulator.
 
 **Headline:** Code-level defect surface is exhaustively verified clean (incl. the
