@@ -29,8 +29,10 @@ def test_security_headers_present(app_client):
     assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
     csp = resp.headers.get("Content-Security-Policy", "")
     assert "default-src 'self'" in csp
-    # the chart CDN + Google Fonts must stay allow-listed or the app breaks
-    assert "https://cdn.jsdelivr.net" in csp
+    # Chart.js is self-hosted now → scripts are 'self' only (no third-party CDN);
+    # Google Fonts must stay allow-listed for styles/fonts or the app breaks.
+    assert "script-src 'self'" in csp
+    assert "https://cdn.jsdelivr.net" not in csp
     assert "https://fonts.googleapis.com" in csp
 
 

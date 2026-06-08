@@ -37,7 +37,7 @@
     <!-- defer: non-render-blocking. Chart.js is used by the compact-view
          sparklines + the detail chart, both of which run on DOMContentLoaded
          (after deferred scripts execute), so ordering stays correct. -->
-    <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}"></script>
     <style>
         :root {
             /* Base brand colors */
