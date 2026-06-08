@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory, current_app
 from app.data_handler import build_market_summary, get_all_commodities, get_commodity
-from app.extensions import limiter
+from app.extensions import limiter, cache
 import os
 import secrets
 import warnings
@@ -139,6 +139,7 @@ def filter_commodities(date_range, category, since=None, include_history=True):
 
 @bp.route('/api/commodities')
 @limiter.limit(_public_list_rate_limit)
+@cache.cached(timeout=600, query_string=True)
 def api_commodities():
     """Public API endpoint for browser AJAX and mobile app.
 
@@ -216,6 +217,7 @@ def internal_api_commodities():
 
 
 @bp.route('/')
+@cache.cached(timeout=600, query_string=True)
 def index():
     """Main index page with commodity grid."""
     date_range = validate_range(request.args.get('range', '1Y'))
@@ -242,6 +244,7 @@ def index():
 
 
 @bp.route('/commodity/<string:commodity_id>')
+@cache.cached(timeout=600)
 def commodity_detail(commodity_id):
     """Commodity detail page."""
     commodity = get_commodity(commodity_id)
@@ -251,6 +254,7 @@ def commodity_detail(commodity_id):
 
 @bp.route('/api/commodity/<string:commodity_id>')
 @limiter.limit(_public_detail_rate_limit)
+@cache.cached(timeout=600)
 def api_commodity_detail(commodity_id):
     """API Commodity detail endpoint."""
     commodity = get_commodity(commodity_id)
