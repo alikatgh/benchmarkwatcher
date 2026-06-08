@@ -494,24 +494,25 @@
                         <div class="price-currency text-[10px] text-brand-black-60">{{ commodity.currency }}
                         </div>
                     </td>
+                    {% set _chg = commodity.daily_change|default(commodity.change) %}
+                    {% set _dir = 'up' if _chg > 0 else ('down' if _chg < 0 else 'flat') %}
+                    {% set _cvar = '--color-up' if _dir == 'up' else ('--color-down' if _dir == 'down' else '--color-flat') %}
+                    {% set _cbg = '--color-up-bg' if _dir == 'up' else ('--color-down-bg' if _dir == 'down' else '--color-flat-bg') %}
+                    {% set _arrow = '▲' if _dir == 'up' else ('▼' if _dir == 'down' else '') %}
+                    {% set _sgn = '+' if _dir == 'up' else '' %}
                     <td data-col="chg" class="px-4 py-5 text-right">
                         <div class="chg-cell inline-flex items-center gap-1 text-sm font-bold"
-                            style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
-                            data-value="{{ commodity.daily_change|default(commodity.change) }}">
-                            <span class="chg-arrow text-[10px]">{% if commodity.daily_change|default(commodity.change)
-                                >= 0
-                                %}▲{% else %}▼{% endif %}</span>
-                            <span class="chg-value">{% if commodity.daily_change|default(commodity.change) >= 0 %}+{%
-                                endif
-                                %}{{ commodity.daily_change|default(commodity.change) | round(2) }}</span>
+                            style="color: var({{ _cvar }});"
+                            data-value="{{ _chg }}">
+                            <span class="chg-arrow text-[10px]">{{ _arrow }}</span>
+                            <span class="chg-value">{{ _sgn }}{{ _chg | round(2) }}</span>
                         </div>
                     </td>
                     <td data-col="pct" class="px-4 py-5 text-right">
                         <div class="pct-cell inline-flex px-2 py-1 rounded-lg text-sm font-bold"
-                            style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %});"
+                            style="color: var({{ _cvar }}); background-color: var({{ _cbg }});"
                             data-value="{{ commodity.daily_change_percent|default(commodity.change_percent) }}">
-                            {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{
-                            commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
+                            {{ _sgn }}{{ commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
                         </div>
                     </td>
                     <td data-col="updated" class="px-4 py-5 text-right">
