@@ -365,13 +365,12 @@ BW.GridView = {
                 }
             }
 
-            const isUp = displayChange >= 0;
             const direction = displayChange > 0 ? 'up' : (displayChange < 0 ? 'down' : 'flat');
-            const colorVar = isUp ? '--color-up' : '--color-down';
-            const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
-            const borderColorVar = isUp ? '--color-up-border' : '--color-down-border';
-            const arrowSymbol = isUp ? '▲' : '▼';
-            const sign = isUp ? '+' : '';
+            const colorVar = direction === 'up' ? '--color-up' : (direction === 'down' ? '--color-down' : '--color-flat');
+            const bgColorVar = direction === 'up' ? '--color-up-bg' : (direction === 'down' ? '--color-down-bg' : '--color-flat-bg');
+            const borderColorVar = direction === 'up' ? '--color-up-border' : (direction === 'down' ? '--color-down-border' : '--color-flat-border');
+            const arrowSymbol = direction === 'up' ? '▲' : (direction === 'down' ? '▼' : '');
+            const sign = direction === 'up' ? '+' : '';
 
             const commodityId = String(commodity.id || '');
             const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
