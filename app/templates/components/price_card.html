@@ -1,3 +1,10 @@
+{% set _chg = commodity.daily_change|default(commodity.change) %}
+{% set _dir = 'up' if _chg > 0 else ('down' if _chg < 0 else 'flat') %}
+{% set _cvar = '--color-up' if _dir == 'up' else ('--color-down' if _dir == 'down' else '--color-flat') %}
+{% set _cbg = '--color-up-bg' if _dir == 'up' else ('--color-down-bg' if _dir == 'down' else '--color-flat-bg') %}
+{% set _cborder = '--color-up-border' if _dir == 'up' else ('--color-down-border' if _dir == 'down' else '--color-flat-border') %}
+{% set _arrow = '▲' if _dir == 'up' else ('▼' if _dir == 'down' else '') %}
+{% set _sgn = '+' if _dir == 'up' else '' %}
 <a href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}" class="block group"
    data-id="{{ commodity.id }}"
    data-name="{{ commodity.name }}"
@@ -30,9 +37,9 @@
                 </span>
             </div>
             <div class="bw-grid-direction-badge text-[10px] font-semibold py-0.5 px-2.5 rounded-full font-ui"
-                style="color: var({% if commodity.change >= 0 %}--color-up{% else %}--color-down{% endif %}); background-color: var({% if commodity.change >= 0 %}--color-up-bg{% else %}--color-down-bg{% endif %}); border: 1px solid var({% if commodity.change >= 0 %}--color-up-border{% else %}--color-down-border{% endif %});"
-                aria-label="{% if commodity.change >= 0 %}Price up{% else %}Price down{% endif %}">
-                {% if commodity.change >= 0 %}▲{% else %}▼{% endif %} {{ commodity.change_percent | round(2) | abs }}%
+                style="color: var({{ _cvar }}); background-color: var({{ _cbg }}); border: 1px solid var({{ _cborder }});"
+                aria-label="{% if _dir == 'up' %}Price up{% elif _dir == 'down' %}Price down{% else %}Unchanged{% endif %}">
+                {{ _arrow }} {{ commodity.change_percent | round(2) | abs }}%
             </div>
         </div>
 
@@ -51,13 +58,13 @@
 
         <div class="bw-grid-change flex items-baseline gap-2 font-ui min-h-[1.7rem]">
             <span class="bw-grid-change-pct tabular-nums text-lg font-bold"
-                style="color: var({% if commodity.daily_change|default(commodity.change) >= 0 %}--color-up{% else %}--color-down{% endif %});"
+                style="color: var({{ _cvar }});"
                 title="Period change">
-                {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
+                {{ _sgn }}{{ commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
             </span>
             <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
             <span class="bw-grid-change-abs tabular-nums text-sm text-brand-black-60 dark:text-brand-black-60/60 truncate">
-                {% if commodity.daily_change|default(commodity.change) >= 0 %}+{% endif %}{{ commodity.daily_change|default(commodity.change) | round(2) }} {{ commodity.currency }}
+                {{ _sgn }}{{ commodity.daily_change|default(commodity.change) | round(2) }} {{ commodity.currency }}
             </span>
         </div>
 
