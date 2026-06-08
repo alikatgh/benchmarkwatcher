@@ -190,12 +190,11 @@ BW.CompactTable = {
             const firstDate = history.length > 0 ? history[0].date : '';
             const lastDate = history.length > 0 ? history[history.length - 1].date : commodity.date;
 
-            const isUp = displayChange >= 0;
             const direction = displayChange > 0 ? 'up' : (displayChange < 0 ? 'down' : 'flat');
-            const colorVar = isUp ? '--color-up' : '--color-down';
-            const bgColorVar = isUp ? '--color-up-bg' : '--color-down-bg';
-            const arrow = isUp ? '▲' : '▼';
-            const sign = isUp ? '+' : '';
+            const colorVar = direction === 'up' ? '--color-up' : (direction === 'down' ? '--color-down' : '--color-flat');
+            const bgColorVar = direction === 'up' ? '--color-up-bg' : (direction === 'down' ? '--color-down-bg' : '--color-flat-bg');
+            const arrow = direction === 'up' ? '▲' : (direction === 'down' ? '▼' : '');
+            const sign = direction === 'up' ? '+' : '';
             const commodityId = String(commodity.id || '');
             const safeRangeLabel = this.escapeHtml(rangeLabel);
             const safeIconText = this.escapeHtml(String(commodity.name || '').slice(0, 2).toUpperCase());
@@ -936,7 +935,7 @@ BW.CompactTable = {
             if (format === 'plain') {
                 el.textContent = Math.abs(shown).toString();
             } else {
-                el.textContent = (rawValue >= 0 ? '+' : '') + shown;
+                el.textContent = (rawValue > 0 ? '+' : '') + shown;
             }
         });
 
@@ -954,7 +953,7 @@ BW.CompactTable = {
             if (color === 'neutral') {
                 el.classList.add('text-brand-black-80');
             } else {
-                el.style.color = rawValue >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+                el.style.color = rawValue > 0 ? 'var(--color-up)' : (rawValue < 0 ? 'var(--color-down)' : 'var(--color-flat)');
             }
         });
 
@@ -970,17 +969,17 @@ BW.CompactTable = {
             const rawValue = parseFloat(el.dataset.value);
             if (isNaN(rawValue)) return;
 
-            el.textContent = (rawValue >= 0 ? '+' : '') + rawValue.toFixed(decimals) + '%';
+            el.textContent = (rawValue > 0 ? '+' : '') + rawValue.toFixed(decimals) + '%';
             el.classList.remove('px-2', 'py-1', 'rounded-lg');
             el.style.color = '';
             el.style.backgroundColor = '';
 
             if (style === 'badge') {
                 el.classList.add('px-2', 'py-1', 'rounded-lg');
-                el.style.color = rawValue >= 0 ? 'var(--color-up)' : 'var(--color-down)';
-                el.style.backgroundColor = rawValue >= 0 ? 'var(--color-up-bg)' : 'var(--color-down-bg)';
+                el.style.color = rawValue > 0 ? 'var(--color-up)' : (rawValue < 0 ? 'var(--color-down)' : 'var(--color-flat)');
+                el.style.backgroundColor = rawValue > 0 ? 'var(--color-up-bg)' : (rawValue < 0 ? 'var(--color-down-bg)' : 'var(--color-flat-bg)');
             } else {
-                el.style.color = rawValue >= 0 ? 'var(--color-up)' : 'var(--color-down)';
+                el.style.color = rawValue > 0 ? 'var(--color-up)' : (rawValue < 0 ? 'var(--color-down)' : 'var(--color-flat)');
             }
         });
 

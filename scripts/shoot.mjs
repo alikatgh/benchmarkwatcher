@@ -19,10 +19,9 @@ const outDir = process.argv[3] || 'artifacts/shots';
 mkdirSync(outDir, { recursive: true });
 
 const shots = [
-  { name: 'grid-1y',     path: '/?view=grid',            theme: 'light', w: 1280, h: 1600 },
-  { name: 'compact-1y',  path: '/?view=compact',         theme: 'light', w: 1280, h: 1600 },
-  { name: 'compact-dark',path: '/?view=compact',         theme: 'dark',  w: 1280, h: 1600 },
-  { name: 'compact-mob', path: '/?view=compact',         theme: 'light', w: 390,  h: 1800 },
+  { name: 'compact-1m',      path: '/?range=1M&view=compact', theme: 'light', w: 1280, h: 1600 },
+  { name: 'compact-1m-dark', path: '/?range=1M&view=compact', theme: 'dark',  w: 1280, h: 1600 },
+  { name: 'compact-1y',      path: '/?view=compact',          theme: 'light', w: 1280, h: 1600 },
 ];
 
 const browser = await chromium.launch();
