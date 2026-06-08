@@ -1,4 +1,9 @@
 """Shared fixtures and sample data for the test suite."""
+import os
+# Tests must be deterministic: disable the shared on-disk cache before the app
+# (and its config) are imported. Prod uses FileSystemCache for the response/memoize
+# cache; a stale entry persisting across runs would make route tests flaky.
+os.environ['CACHE_TYPE'] = 'NullCache'
 import json
 import pytest
 from flask import Flask
