@@ -888,8 +888,14 @@ BW.Commodity = {
             pptx.writeFile({ fileName: (self.commodityName || 'commodity') + '-chart.pptx' });
         };
         if (window.PptxGenJS) { run(); return; }
+        // Lazy-load the vendored, same-origin PptxGenJS bundle. The URL (with the
+        // ?v=<mtime> cache-buster) is published by commodity.html on the script tag's
+        // data-pptx-src; loading from a CDN here would be blocked by the CSP
+        // (script-src 'self'). Fall back to the static path if the tag is missing.
+        var tag = document.getElementById('bw-commodity-js');
+        var src = (tag && tag.dataset.pptxSrc) || '/static/js/vendor/pptxgen.bundle.min.js';
         var script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js';
+        script.src = src;
         script.onload = run;
         script.onerror = function () { alert('Failed to load PowerPoint export library. Please try again.'); };
         document.head.appendChild(script);

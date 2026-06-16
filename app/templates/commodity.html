@@ -1080,7 +1080,12 @@
 
 <!-- External JS for commodity detail -->
 <script defer src="{{ url_for('static', filename='js/core/utils.js') }}"></script>
-<script defer src="{{ url_for('static', filename='js/components/commodity.js') }}"></script>
+<!-- data-pptx-src: same-origin, cache-busted URL of the vendored PptxGenJS bundle.
+     PowerPoint export lazy-loads it from here (NOT a CDN) so it satisfies the
+     tightened CSP script-src 'self'. -->
+<script defer id="bw-commodity-js"
+        data-pptx-src="{{ url_for('static', filename='js/vendor/pptxgen.bundle.min.js') }}"
+        src="{{ url_for('static', filename='js/components/commodity.js') }}"></script>
 
 <script>
     // Initialize commodity chart with Jinja2 data
