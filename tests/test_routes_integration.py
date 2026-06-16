@@ -36,6 +36,33 @@ def test_security_headers_present(app_client):
     assert "https://fonts.googleapis.com" in csp
 
 
+def test_no_static_js_injects_a_csp_blocked_cdn_script():
+    """Regression: the CSP is script-src 'self', so any JS that dynamically
+    injects <script src="https://<cdn>/..."> is BLOCKED at runtime and the
+    feature silently dies (this exact bug broke PowerPoint export when Chart.js
+    self-hosting tightened the CSP — pptxgenjs was still loaded from jsdelivr).
+    Scan every shipped .js for a script-element .src assignment to an http(s)
+    origin; vendored bundles must be loaded from a same-origin /static path.
+    """
+    import pathlib
+
+    js_root = pathlib.Path(__file__).resolve().parent.parent / "app" / "static" / "js"
+    # Matches: script.src = 'https://...'  /  .src="http://..."  (any quote)
+    offender = re.compile(r"\.src\s*=\s*['\"]https?://")
+    bad = []
+    for js in js_root.rglob("*.js"):
+        if "vendor" in js.parts:
+            continue  # third-party bundles aren't ours to police
+        for i, line in enumerate(js.read_text(encoding="utf-8").splitlines(), 1):
+            if offender.search(line):
+                bad.append(f"{js.relative_to(js_root)}:{i}: {line.strip()}")
+    assert not bad, (
+        "JS injects a script from an absolute http(s) origin, which "
+        "script-src 'self' blocks. Vendor it under static/js/vendor and load "
+        "from a /static path instead:\n  " + "\n  ".join(bad)
+    )
+
+
 # ------------------------------------------------------------------
 # Public list endpoint
 # ------------------------------------------------------------------

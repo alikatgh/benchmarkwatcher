@@ -28,9 +28,10 @@
 
     <title>{% block title %}BenchmarkWatcher{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
-    <!-- Warm the CDN/font connections early; load the font via <link> (parallel,
-         non-blocking) instead of a render-blocking @import inside <style>. -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <!-- Warm the font connections early; load the font via <link> (parallel,
+         non-blocking) instead of a render-blocking @import inside <style>.
+         No jsdelivr preconnect: all scripts (Chart.js + PptxGenJS) are now
+         self-hosted, so a CDN preconnect would warm an unused connection. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">

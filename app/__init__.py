@@ -73,11 +73,13 @@ def create_app(config_class=Config):
         """Defence-in-depth response headers (the app previously set none).
 
         The CSP is permissive — 'unsafe-inline' is required by the inline
-        <script>, inline <style>, and ~40 inline style= attributes, and the
-        CDN origins are allow-listed (jsdelivr for Chart.js/zoom/date-fns,
-        Google Fonts for Inter). It still blocks arbitrary external script/
-        connect/frame origins, base-tag hijacking, and cross-origin form posts.
-        Tightening to per-request nonces is a worthwhile follow-up.
+        <script>, inline <style>, and ~40 inline style= attributes. All scripts
+        are now same-origin ('self'): Chart.js/zoom/date-fns AND PptxGenJS (the
+        PowerPoint export) are vendored under static/js/vendor, so no CDN origin
+        is allow-listed in script-src. Only Google Fonts (style-src/font-src) is
+        external. It blocks arbitrary external script/connect/frame origins,
+        base-tag hijacking, and cross-origin form posts. Tightening to
+        per-request nonces is a worthwhile follow-up.
         """
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
