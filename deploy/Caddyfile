@@ -1,0 +1,40 @@
+# Caddy reverse proxy for the fleet. One block per site; each app runs on its
+# own loopback port as its own systemd service.
+#
+# Install:
+#   sudo cp deploy/Caddyfile /etc/caddy/Caddyfile   # (merge if you already have one)
+#   sudo systemctl reload caddy
+#
+# Why Caddy: automatic HTTPS and a tiny multi-site config. Behind Cloudflare,
+# the most reliable TLS is a Cloudflare Origin CA certificate (works fully
+# proxied / orange-cloud, 15-yr validity) with Cloudflare SSL mode set to
+# "Full (strict)". See docs/HETZNER_DEPLOY.md for issuing it.
+
+benchmarkwatcher.online {
+	encode zstd gzip
+
+	# Serve /static/* straight off disk so a page view never spends a gunicorn
+	# worker on CSS/JS — this is the one-directive fix for the intermittent
+	# 503s ("Reached max children") that the Namecheap setup needed a symlink
+	# hack to avoid. Flask's ?v=<mtime> cache-busting still works through Caddy.
+	handle_path /static/* {
+		root * /home/deploy/benchmarkwatcher/app/static
+		header X-Content-Type-Options nosniff
+		file_server
+	}
+
+	# Everything else → the Flask app (gunicorn on 127.0.0.1:8001).
+	reverse_proxy 127.0.0.1:8001
+
+	# Cloudflare Origin CA cert. Remove this line to use Caddy's automatic
+	# Let's Encrypt instead (grey-cloud the DNS record for the first issuance,
+	# then re-enable the Cloudflare proxy).
+	tls /etc/caddy/cf-origin/benchmarkwatcher.crt /etc/caddy/cf-origin/benchmarkwatcher.key
+}
+
+# --- Add each sibling app on its own port + service, e.g.: -------------------
+# llms.sciencebo.uk {
+# 	encode zstd gzip
+# 	reverse_proxy 127.0.0.1:8002
+# 	tls /etc/caddy/cf-origin/sciencebo.crt /etc/caddy/cf-origin/sciencebo.key
+# }

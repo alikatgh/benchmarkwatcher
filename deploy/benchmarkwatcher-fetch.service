@@ -1,0 +1,33 @@
+# Oneshot data fetch (EIA / FRED / USDA / Yahoo) → writes JSON into data/.
+# Paired with benchmarkwatcher-fetch.timer (daily). On a VPS the data lives on
+# the box's persistent disk, so the fetcher keeps it fresh in place — no
+# rebuild/redeploy needed (unlike an immutable-image PaaS).
+#
+# Install:
+#   sudo cp deploy/benchmarkwatcher-fetch.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now benchmarkwatcher-fetch.timer
+
+[Unit]
+Description=BenchmarkWatcher data fetch (EIA/FRED/USDA/Yahoo)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/benchmarkwatcher
+
+# API keys (FRED/EIA/USDA) come from .env; '-' makes it optional if the script
+# loads dotenv itself.
+EnvironmentFile=-/home/deploy/benchmarkwatcher/.env
+
+ExecStart=/home/deploy/benchmarkwatcher/venv/bin/python scripts/fetch_daily_data.py
+
+# Drop the rendered-response cache so the next request reflects fresh data
+# immediately (a data-only refresh doesn't change the code version that keys
+# the cache dir, so without this the old renders linger up to the 10-min TTL).
+ExecStartPost=/bin/sh -c 'rm -rf tmp/flask_cache/* || true'
+
+MemoryMax=512M

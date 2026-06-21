@@ -1,0 +1,41 @@
+# systemd unit for BenchmarkWatcher (Flask via gunicorn).
+#
+# Install:
+#   sudo cp deploy/benchmarkwatcher.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now benchmarkwatcher
+#
+# Adjust User/paths if you don't deploy under /home/deploy/benchmarkwatcher.
+
+[Unit]
+Description=BenchmarkWatcher (Flask via gunicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/benchmarkwatcher
+
+# gunicorn from the project venv. run:app loads .env via run.py's load_dotenv(),
+# so secrets/config come from the .env in WorkingDirectory (same as Passenger).
+ExecStart=/home/deploy/benchmarkwatcher/venv/bin/gunicorn -c gunicorn.conf.py run:app
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Auto-restart on crash — the core "always available" lever the shared host lacked.
+Restart=always
+RestartSec=3
+
+# Contain a runaway/leak so one app can't OOM-kill its neighbours on the shared
+# box. Tune up if the app legitimately needs more.
+MemoryMax=512M
+
+Environment=PYTHONUNBUFFERED=1
+
+# Light hardening (the app writes only to its own tmp/flask_cache and data dirs,
+# both under WorkingDirectory, so these are safe).
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

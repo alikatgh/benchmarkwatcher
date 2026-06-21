@@ -14,6 +14,10 @@ Flask-Limiter>=4.1.1,<5  # API rate limiting; tested 4.1.1.
                          # tested 4.1.1 — a resolver could pick 3.x and behave
                          # differently. Pinned to the tested major.
 
+# Production WSGI server (Hetzner/VPS deploy — gunicorn replaces Passenger).
+# Not used on Namecheap (Passenger supplies the WSGI server) and harmless there.
+gunicorn>=23.0,<24       # tested 23.0.0; cap the major like the rest
+
 # Configuration
 python-dotenv>=1.0,<2.0  # tested 1.0.0
 

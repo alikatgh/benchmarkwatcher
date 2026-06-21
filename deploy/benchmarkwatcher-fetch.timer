@@ -1,0 +1,14 @@
+# Daily trigger for benchmarkwatcher-fetch.service.
+# 06:30 local + up to 10 min jitter — after sources publish prior-day values.
+# Persistent=true runs a missed fetch on next boot (e.g. box was down).
+
+[Unit]
+Description=Run BenchmarkWatcher data fetch daily
+
+[Timer]
+OnCalendar=*-*-* 06:30:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

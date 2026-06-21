@@ -1,0 +1,49 @@
+# Push-to-deploy to the Hetzner box. This closes the gap that kept prod
+# months-stale on Namecheap: there, pushing to main did NOT update production
+# (manual SSH only). Here, a merge to main ships automatically.
+#
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   HETZNER_HOST      box IP or hostname
+#   HETZNER_USER      deploy user (e.g. deploy)
+#   HETZNER_SSH_KEY   private key whose public half is in the deploy user's authorized_keys
+#   HETZNER_SSH_PORT  SSH port (22 unless you changed it)
+#
+# Safe to merge before the box exists: with no secrets set the job no-ops via
+# the guard below. Trigger manually anytime from the Actions tab.
+
+name: Deploy to Hetzner
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-hetzner
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip if not configured
+        id: guard
+        run: |
+          if [ -z "${{ secrets.HETZNER_HOST }}" ]; then
+            echo "No HETZNER_HOST secret — skipping deploy."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy over SSH
+        if: steps.guard.outputs.configured == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          port: ${{ secrets.HETZNER_SSH_PORT }}
+          script: |
+            cd ~/benchmarkwatcher
+            ./scripts/deploy_hetzner.sh
