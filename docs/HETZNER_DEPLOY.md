@@ -220,9 +220,27 @@ this migration, so it's a live fallback until you decommission it.
 - **Manual / on the box:** `cd ~/benchmarkwatcher && ./scripts/deploy_hetzner.sh`
   (pulls, reinstalls deps only if `requirements.txt` changed, restarts,
   health-gates).
-- **Automatic (push-to-deploy):** set the four `HETZNER_*` repo secrets (see
-  [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)) and every
-  merge to `main` deploys itself.
+- **Automatic (push-to-deploy):** set the four `HETZNER_*` repo secrets, then
+  every merge to `main` deploys itself (see
+  [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml)). Use a
+  **dedicated deploy keypair**, not your personal key:
+
+  ```bash
+  # on your laptop: make a dedicated CI deploy key
+  ssh-keygen -t ed25519 -f ~/.ssh/bw_deploy_ci -N "" -C "github-actions-deploy"
+
+  # authorise its public half on the box (one time)
+  ssh-copy-id -i ~/.ssh/bw_deploy_ci.pub deploy@<SERVER_IP>
+
+  # store the secrets (run from the repo checkout)
+  gh secret set HETZNER_HOST     --body "<SERVER_IP>"
+  gh secret set HETZNER_USER     --body "deploy"
+  gh secret set HETZNER_SSH_PORT --body "22"
+  gh secret set HETZNER_SSH_KEY  < ~/.ssh/bw_deploy_ci   # the PRIVATE key
+  ```
+
+  Until these are set, the workflow runs green and no-ops (it guards on
+  `HETZNER_HOST`), so it's safe to have merged already.
 
 ## Adding sibling apps (the rest of the €5 box)
 
@@ -231,6 +249,25 @@ Per app: clone it, give it its **own loopback port** (8002, 8003, …) and its o
 [`deploy/Caddyfile`](../deploy/Caddyfile)) and `systemctl reload caddy`. Set
 `MemoryMax=` on each service so one misbehaving app can't OOM-kill the others —
 the per-app resource control Namecheap shared hosting never gave you.
+
+**Suggested port map for the current fleet** (apps from
+`docs/NAMECHEAP_DEPLOY.md`; confirm each unknown type on the old host with
+`grep -o 'PassengerAppType \w*' ~/<app>/.htaccess`):
+
+| App dir | Domain | Port | Type |
+|---|---|---|---|
+| `benchmarkwatcher` | benchmarkwatcher.online | 8001 | Flask/gunicorn ✓ (this guide) |
+| `llms.sciencebo.uk` | llms.sciencebo.uk | 8002 | Node/Express |
+| `api.sciencebo.uk` | api.sciencebo.uk | 8003 | confirm |
+| `aulenor.sciencebo.uk` | aulenor.sciencebo.uk | 8004 | confirm |
+| `bookmarks.sciencebo.uk` | bookmarks.sciencebo.uk | 8005 | confirm |
+| `sciencebo.uk` | sciencebo.uk | 8006 | confirm |
+| `formulas-backend` | (domain TBD) | 8007 | confirm |
+
+Node apps don't use gunicorn — their service `ExecStart` runs the app's own
+entry (`node …` / `npm start`); the Caddy block and `MemoryMax=` pattern are
+identical. Each app keeps its own deploy script in its own repo — only the
+shared `/etc/caddy/Caddyfile` and the per-app `*.service` live on the box.
 
 ---
 
