@@ -1,0 +1,8 @@
+# Development / CI test dependencies — NOT installed on the production server.
+# Kept separate so requirements.txt stays the minimal, tightly-capped PROD set
+# (a fresh prod `pip install` must never pull test tooling — the same boot-safety
+# rule its header describes). CI's python-tests job installs THIS file; the
+# production box installs only requirements.txt.
+-r requirements.txt
+
+pytest>=9.0,<10  # tested 9.0.2; cap the major like the rest
