@@ -29,6 +29,39 @@ Repo artifacts this playbook uses: [`gunicorn.conf.py`](../gunicorn.conf.py),
 
 ---
 
+## Fast path — automated provisioning (recommended)
+
+The manual Steps 0–7 below are collapsed into one idempotent provisioner
+([`scripts/provision_hetzner.sh`](../scripts/provision_hetzner.sh)). Two ways to run it:
+
+- **Cloud-init (zero SSH):** when creating the Hetzner server, paste
+  [`deploy/cloud-init.yaml`](../deploy/cloud-init.yaml) into the *Cloud config* /
+  user-data field. The box self-provisions on first boot; watch
+  `/var/log/bw-provision.log`.
+- **One command over SSH** (fresh Ubuntu 24.04 box):
+
+  ```bash
+  curl -fsSL https://raw.githubusercontent.com/alikatgh/benchmarkwatcher/main/scripts/provision_hetzner.sh | sudo bash
+  ```
+
+- **Create the box from the CLI too** (optional, needs the `hcloud` CLI + token):
+
+  ```bash
+  hcloud server create --name benchmarkwatcher --type cx22 --image ubuntu-24.04 \
+    --ssh-key <your-key> --user-data-from-file deploy/cloud-init.yaml
+  ```
+
+Either path lands at: app running under systemd, Caddy installed and serving
+`http://<IP>/health`, awaiting only your **`.env`**, **`data/`**, and the
+**Cloudflare cert + DNS** — which the provisioner prints as NEXT STEPS. Jump to
+[Step 3](#3-configure-env) (secrets), [Step 4](#4-seed-the-data-directory-the-gitignored-part)
+(data), then [Step 7](#7-caddy--tls-behind-cloudflare)/[Step 8](#8-cloudflare-dns-cutover).
+
+The manual walkthrough below is the fallback / reference for what the
+provisioner automates.
+
+---
+
 ## 0. Provision the box (one-time, ~5 min)
 
 1. Hetzner Cloud Console → create a server: **CX22** (Intel, 2 vCPU / 4 GB) or

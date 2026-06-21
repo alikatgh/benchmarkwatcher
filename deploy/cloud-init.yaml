@@ -1,0 +1,18 @@
+#cloud-config
+# Hetzner "Cloud config" / user-data — paste this when CREATING the server
+# (Cloud Console → Add Server → Cloud config), or pass it with the hcloud CLI:
+#   hcloud server create --name benchmarkwatcher --type cx22 --image ubuntu-24.04 \
+#     --ssh-key <your-key> --user-data-from-file deploy/cloud-init.yaml
+#
+# On first boot the box fetches and runs the provisioner, standing the app up
+# automatically (gunicorn + systemd + Caddy). It then awaits your .env, data/,
+# and the Cloudflare cert/DNS — the provisioner prints those as NEXT STEPS.
+#
+# Requires scripts/provision_hetzner.sh to be on origin/main (i.e. these commits
+# pushed). Provisioning log lands at /var/log/bw-provision.log.
+package_update: true
+packages:
+  - git
+  - curl
+runcmd:
+  - [ bash, -c, "curl -fsSL https://raw.githubusercontent.com/alikatgh/benchmarkwatcher/main/scripts/provision_hetzner.sh -o /root/provision_hetzner.sh && bash /root/provision_hetzner.sh 2>&1 | tee /var/log/bw-provision.log" ]
