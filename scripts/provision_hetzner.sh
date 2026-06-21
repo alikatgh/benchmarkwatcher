@@ -33,7 +33,7 @@ apt-get install -y python3-venv python3-pip git curl ufw gnupg \
 if ! command -v caddy >/dev/null 2>&1; then
 	log "Installing Caddy"
 	curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' \
-		| gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+		| gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
 	curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' \
 		>/etc/apt/sources.list.d/caddy-stable.list
 	apt-get update -y && apt-get install -y caddy
@@ -82,10 +82,17 @@ log "systemd services (app + daily fetch timer)"
 install -m 644 "$APP_DIR/deploy/benchmarkwatcher.service" /etc/systemd/system/
 install -m 644 "$APP_DIR/deploy/benchmarkwatcher-fetch.service" /etc/systemd/system/
 install -m 644 "$APP_DIR/deploy/benchmarkwatcher-fetch.timer" /etc/systemd/system/
-# Let the deploy user restart the app without a password (deploy_hetzner.sh uses it).
-echo "$DEPLOY_USER ALL=(root) NOPASSWD: /usr/bin/systemctl restart benchmarkwatcher" \
-	>/etc/sudoers.d/benchmarkwatcher
-chmod 440 /etc/sudoers.d/benchmarkwatcher
+# Let the deploy user restart the app without a password (deploy_hetzner.sh uses
+# it). Validate with visudo BEFORE installing — a malformed sudoers file can
+# break sudo for every user on the box.
+_sudoers="$(mktemp)"
+echo "$DEPLOY_USER ALL=(root) NOPASSWD: /usr/bin/systemctl restart benchmarkwatcher" >"$_sudoers"
+if visudo -cf "$_sudoers" >/dev/null 2>&1; then
+	install -m 440 "$_sudoers" /etc/sudoers.d/benchmarkwatcher
+else
+	echo "WARN: sudoers validation failed — skipping (deploy will need manual restart perms)" >&2
+fi
+rm -f "$_sudoers"
 systemctl daemon-reload
 systemctl enable --now benchmarkwatcher
 systemctl enable --now benchmarkwatcher-fetch.timer
@@ -108,8 +115,12 @@ EOF
 systemctl reload caddy || systemctl restart caddy
 
 log "Smoke test"
-sleep 1
-app_code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:${APP_PORT}/health" || echo 000)"
+app_code=000
+for _ in $(seq 1 10); do
+	app_code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:${APP_PORT}/health" || echo 000)"
+	if [ "$app_code" = "200" ]; then break; fi
+	sleep 1
+done
 caddy_code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1/health" || echo 000)"
 echo "    gunicorn 127.0.0.1:${APP_PORT}/health -> HTTP ${app_code}"
 echo "    caddy    127.0.0.1:80/health         -> HTTP ${caddy_code}"
