@@ -4,9 +4,34 @@ Shared data access layer for bots - reads from ../data/*.json
 """
 import json
 import os
+import time
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from config import DATA_DIR, CATEGORIES, ALIASES
+
+
+def _coerce_price(price) -> float:
+    """Coerce a possibly null/non-numeric price to a safe float for formatting."""
+    # bool is an int subclass; treat numeric-but-not-bool as a real price.
+    if isinstance(price, (int, float)) and not isinstance(price, bool):
+        return float(price)
+    return 0.0
+
+
+def _coerce_pct(data: Dict) -> float:
+    """Extract the 1-observation percent change, coercing None/missing to 0.0.
+
+    Both `derived.descriptive_stats.pct_change_1_obs` and `metrics.pct_1d` can be
+    present-but-None for a <2-observation commodity; `dict.get(k, default)` does
+    NOT fall back when the stored value is None, so an explicit None check is
+    required to avoid `TypeError` when the pct is later compared/formatted.
+    """
+    derived = data.get('derived', {}).get('descriptive_stats', {})
+    metrics = data.get('metrics', {})
+    v = derived.get('pct_change_1_obs')
+    if v is None:
+        v = metrics.get('pct_1d')
+    return v if v is not None else 0.0
 
 
 def _is_safe_path(filepath: str) -> bool:
@@ -47,11 +72,38 @@ def get_commodity_data(commodity_id: str) -> Optional[Dict]:
         return None
 
 
+# Short-TTL module cache for the full directory scan. A single bot command
+# (e.g. !top) reads every commodity; without a cache each call re-listdir's
+# DATA_DIR and re-reads every JSON file. The TTL keeps data fresh enough for a
+# chat bot while collapsing the repeated full scans within a burst of activity.
+_ALL_COMMODITIES_TTL_SECONDS = 30.0
+_all_commodities_cache: Optional[List[Dict]] = None
+_all_commodities_cache_ts: float = 0.0
+
+
+def _invalidate_all_commodities_cache() -> None:
+    """Drop the cached commodity list (used by tests)."""
+    global _all_commodities_cache, _all_commodities_cache_ts
+    _all_commodities_cache = None
+    _all_commodities_cache_ts = 0.0
+
+
 def get_all_commodities() -> List[Dict]:
-    """Load all commodities."""
+    """Load all commodities (short-TTL cached)."""
+    global _all_commodities_cache, _all_commodities_cache_ts
+
+    now = time.monotonic()
+    if (
+        _all_commodities_cache is not None
+        and (now - _all_commodities_cache_ts) < _ALL_COMMODITIES_TTL_SECONDS
+    ):
+        return _all_commodities_cache
+
     commodities = []
 
     if not os.path.exists(DATA_DIR):
+        _all_commodities_cache = commodities
+        _all_commodities_cache_ts = now
         return commodities
 
     for filename in os.listdir(DATA_DIR):
@@ -64,6 +116,8 @@ def get_all_commodities() -> List[Dict]:
             except (json.JSONDecodeError, IOError):
                 continue
 
+    _all_commodities_cache = commodities
+    _all_commodities_cache_ts = now
     return commodities
 
 
@@ -86,15 +140,11 @@ def get_commodities_by_category(category: str) -> List[Dict]:
 def format_price_message(data: Dict, include_link: bool = True) -> str:
     """Format a commodity price for bot response."""
     name = data.get('name', 'Unknown')
-    price = data.get('price', 0)
+    price = _coerce_price(data.get('price'))
     unit = data.get('unit', 'USD')
 
-    # Get change from derived stats
-    derived = data.get('derived', {}).get('descriptive_stats', {})
-    metrics = data.get('metrics', {})
-
-    change = derived.get('abs_change_1_obs', metrics.get('change_1d', 0))
-    change_pct = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0))
+    # Get change from derived stats (coerced to handle null/missing pct)
+    change_pct = _coerce_pct(data)
 
     # Format date
     date_str = data.get('date', '')
@@ -125,11 +175,8 @@ def format_price_message(data: Dict, include_link: bool = True) -> str:
 def format_compact_price(data: Dict) -> str:
     """Format a commodity price in compact form for lists."""
     name = data.get('name', 'Unknown')
-    price = data.get('price', 0)
-
-    derived = data.get('derived', {}).get('descriptive_stats', {})
-    metrics = data.get('metrics', {})
-    change_pct = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0))
+    price = _coerce_price(data.get('price'))
+    change_pct = _coerce_pct(data)
 
     if change_pct > 0:
         sign = '+'
@@ -145,20 +192,28 @@ def format_compact_price(data: Dict) -> str:
 
 
 def _get_change_pct(c: Dict) -> float:
-    """Extract percentage change from a commodity dict without mutating it."""
-    derived = c.get('derived', {}).get('descriptive_stats', {})
-    metrics = c.get('metrics', {})
-    return derived.get('pct_change_1_obs', metrics.get('pct_1d', 0))
+    """Extract percentage change from a commodity dict without mutating it.
+
+    Routes through the shared coercer so a present-but-None pct (a <2-observation
+    commodity) is treated as 0.0 instead of crashing the sort/comparison.
+    """
+    return _coerce_pct(c)
 
 
 def get_top_movers(limit: int = 5) -> Tuple[List[Dict], List[Dict]]:
     """Get top gainers and losers."""
     commodities = get_all_commodities()
 
-    sorted_commodities = sorted(commodities, key=_get_change_pct, reverse=True)
+    # Compute the pct once per commodity (decorate-sort-undecorate) instead of
+    # re-deriving it inside the sort key AND twice more in the filters.
+    decorated = sorted(
+        ((_get_change_pct(c), c) for c in commodities),
+        key=lambda pair: pair[0],
+        reverse=True,
+    )
 
-    gainers = [c for c in sorted_commodities if _get_change_pct(c) > 0][:limit]
-    losers = [c for c in sorted_commodities if _get_change_pct(c) < 0][-limit:][::-1]
+    gainers = [c for pct, c in decorated if pct > 0][:limit]
+    losers = [c for pct, c in decorated if pct < 0][-limit:][::-1]
 
     return gainers, losers
 

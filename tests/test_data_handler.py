@@ -65,6 +65,25 @@ def test_derived_stats_exposed(app_with_data):
     assert derived["observations"] == 3
 
 
+def test_get_all_commodities_skips_unsafe_id_files(app_with_data):
+    """A *.json with an unsafe id stem must not enter the public list,
+    matching get_commodity's id validation."""
+    from flask import current_app
+
+    data_dir = current_app.config["JSON_DATA_DIR"]
+    # Filename stem 'bad name' contains a space -> fails _is_safe_commodity_id.
+    with open(os.path.join(data_dir, "bad name.json"), "w") as f:
+        json.dump({"id": "bad name", "name": "Bad", "price": 1.0, "history": []}, f)
+
+    commodities = get_all_commodities()
+
+    # Only the safely-named gold file should be present; the unsafe one skipped.
+    ids = {c.get("id") for c in commodities}
+    assert "gold" in ids
+    assert "bad name" not in ids
+    assert "Bad" not in {c.get("name") for c in commodities}
+
+
 def test_build_market_summary_counts_breadth_and_movers():
     """Market summary describes the current display set without extra data sources."""
     commodities = [

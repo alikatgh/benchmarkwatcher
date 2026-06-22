@@ -188,6 +188,16 @@ def test_internal_api_accepts_valid_key(app_client, monkeypatch):
     assert body["meta"]["count"] == 1
 
 
+def test_internal_api_non_ascii_key_returns_403_not_500(app_client, monkeypatch):
+    # A non-ASCII X-Internal-Key must be rejected as 403, never crash with 500.
+    monkeypatch.setenv("INTERNAL_API_KEY", "correct-key")
+    resp = app_client.get(
+        "/internal/api/commodities",
+        headers={"X-Internal-Key": "clé-non-ascii"},
+    )
+    assert resp.status_code == 403
+
+
 # ------------------------------------------------------------------
 # Error handlers
 # ------------------------------------------------------------------

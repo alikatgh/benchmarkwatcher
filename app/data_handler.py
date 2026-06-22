@@ -372,10 +372,16 @@ def get_all_commodities(date_range: str = 'ALL', include_history: bool = True) -
 
     for filename in os.listdir(data_dir):
         if filename.endswith('.json') and filename != 'schema.json':
+            # Only load files whose id passes the same validation as get_commodity,
+            # so a stray/unsafe-named *.json can't enter the public list.
+            cid = filename[:-5]
+            if not _is_safe_commodity_id(cid):
+                logger.warning("Skipping file with unsafe id: %s", filename)
+                continue
             try:
                 with open(os.path.join(data_dir, filename), 'r') as f:
                     item = json.load(f)
-                    
+
                     # Filter history for display only
                     full_history = item.get('history', [])
                     filtered_history = filter_history_by_range(full_history, date_range)

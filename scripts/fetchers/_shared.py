@@ -76,18 +76,46 @@ class SmartDateParser:
 # HTTP Helper
 # =============================================================================
 
+# Cap on a single response body to avoid unbounded memory use from a
+# misbehaving/hostile upstream (10 MB is far above any real fetcher payload).
+MAX_RESPONSE_BYTES = 10 * 1024 * 1024
+
+# Module-level Session: connection pooling + keep-alive across the many GETs a
+# fetch run makes to the same hosts (FRED/EIA/USDA/Yahoo).
+_SESSION = requests.Session()
+_SESSION.headers.update(
+    {'User-Agent': 'BenchmarkWatcher/1.0 (open-source commodity tracker)'}
+)
+
+
 def safe_get(url: str, params: ParamsType = None, retries: int = 3) -> requests.Response:
     """
     Robust HTTP GET with exponential backoff and proper User-Agent.
 
     ``params`` accepts a dict **or** a sequence of (key, value) tuples
     so callers like EIA can send repeated query-string keys.
+
+    Uses a shared pooled ``Session`` and streams the body so an oversized
+    response can be rejected before it is fully buffered into memory.
     """
-    headers = {'User-Agent': 'BenchmarkWatcher/1.0 (open-source commodity tracker)'}
     for attempt in range(retries):
         try:
-            resp = requests.get(url, params=params, headers=headers, timeout=30)
+            resp = _SESSION.get(url, params=params, timeout=30, stream=True)
             resp.raise_for_status()
+            # Guard against an unbounded body: prefer the declared length, then
+            # fall back to measuring the streamed content.
+            declared = resp.headers.get('Content-Length')
+            if declared is not None and declared.isdigit() and int(declared) > MAX_RESPONSE_BYTES:
+                resp.close()
+                raise requests.exceptions.RequestException(
+                    f"Response too large: {declared} bytes > {MAX_RESPONSE_BYTES}"
+                )
+            content = resp.content  # buffers the streamed body
+            if len(content) > MAX_RESPONSE_BYTES:
+                resp.close()
+                raise requests.exceptions.RequestException(
+                    f"Response too large: {len(content)} bytes > {MAX_RESPONSE_BYTES}"
+                )
             return resp
         except requests.exceptions.RequestException as e:
             if attempt == retries - 1:
@@ -131,12 +159,25 @@ def parse_records(
 
 
 def merge_history(existing: List[Observation], new_data: List[Observation]) -> List[Observation]:
-    """Merge new data into existing history (deduplicated by date)."""
+    """Merge new data into existing history (deduplicated by date).
+
+    Observations missing/empty a ``date`` are skipped and logged rather than
+    bucketed under the empty-string key (which would collapse every dateless
+    entry to a single record).
+    """
     seen: Dict[str, Observation] = {}
     for entry in existing:
-        seen[entry.get('date', '')] = entry
+        d = entry.get('date')
+        if not d:
+            logger.warning("  Skipping existing observation with missing date: %s", entry)
+            continue
+        seen[d] = entry
     for entry in new_data:
-        seen[entry.get('date', '')] = entry  # New data overwrites old
+        d = entry.get('date')
+        if not d:
+            logger.warning("  Skipping new observation with missing date: %s", entry)
+            continue
+        seen[d] = entry  # New data overwrites old
 
     merged = sorted(seen.values(), key=lambda x: x.get('date', ''))
     return merged
@@ -183,6 +224,41 @@ def compute_metrics(history: List[Observation]) -> Dict[str, Any]:
     metrics['trend'] = metrics['direction_30_obs']
 
     return metrics
+
+
+# =============================================================================
+# Record building
+# =============================================================================
+
+def build_commodity_record(
+    existing: Dict[str, Any],
+    history: List[Observation],
+    metrics: Dict[str, Any],
+    *,
+    overrides: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build/refresh a commodity record's top-level fields from its history.
+
+    Mirrors the record shape produced by ``fetch_daily_data.update_commodity``
+    so the targeted fetcher cannot leave stale top-level ``price``/``date``/
+    ``derived`` fields while ``history`` advances (the UI-18 stale-headline bug).
+
+    ``existing`` is mutated and returned. ``overrides`` (e.g. id/name/category
+    for a freshly-built record) take precedence over any existing values.
+    """
+    record = dict(existing)
+    if overrides:
+        for key, value in overrides.items():
+            record[key] = value
+
+    latest = history[-1] if history else {}
+    record['history'] = history
+    record['metrics'] = metrics
+    record['derived'] = {'descriptive_stats': metrics}
+    record['price'] = latest.get('price')
+    record['date'] = latest.get('date')
+    record['updated_at'] = datetime.now().isoformat()
+    return record
 
 
 # =============================================================================

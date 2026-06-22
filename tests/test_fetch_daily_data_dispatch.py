@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Any, Dict, List
 
 from pytest import MonkeyPatch
@@ -106,3 +108,33 @@ def test_fetch_new_data_missing_fetcher_returns_none():
     })
 
     assert out is None
+
+
+def test_update_commodity_writes_headline_matching_history_tail(tmp_path, monkeypatch: MonkeyPatch):
+    """The written record's top-level price/date/derived must track history[-1]."""
+    monkeypatch.setattr(fetch_daily_data, 'DATA_DIR', str(tmp_path))
+
+    new_rows: List[Dict[str, Any]] = [
+        {'date': '2026-01-01', 'price': 10.0},
+        {'date': '2026-01-02', 'price': 25.5},
+    ]
+    monkeypatch.setattr(fetch_daily_data, 'fetch_new_data', lambda commodity: new_rows)
+
+    commodity = {
+        'id': 'gold',
+        'name': 'Gold',
+        'category': 'precious',
+        'unit': 'USD/oz',
+        'source_type': 'YAHOO',
+        'api_config': {},
+    }
+
+    assert fetch_daily_data.update_commodity(commodity) is True
+
+    written = json.loads((tmp_path / 'gold.json').read_text())
+    assert written['price'] == new_rows[-1]['price'] == 25.5
+    assert written['date'] == new_rows[-1]['date'] == '2026-01-02'
+    assert written['derived']['descriptive_stats'] == written['metrics']
+    assert written['history'][-1]['price'] == 25.5
+    assert written['id'] == 'gold'
+    assert written['source_class'] == 'public_market_reference'
