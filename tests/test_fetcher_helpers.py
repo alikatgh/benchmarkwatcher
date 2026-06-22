@@ -2,7 +2,19 @@
 
 from typing import Any, Dict, List
 
-from scripts.fetchers._shared import Observation, SmartDateParser, merge_history, parse_records
+import pytest
+import requests
+
+from scripts.fetchers import _shared
+from scripts.fetchers._shared import (
+    Observation,
+    SmartDateParser,
+    build_commodity_record,
+    compute_metrics,
+    merge_history,
+    parse_records,
+    safe_get,
+)
 from scripts.fetchers.eia import _build_eia_params  # pyright: ignore[reportPrivateUsage]
 from scripts.fetchers.usda import _resolve_month, _parse_usda_records  # pyright: ignore[reportPrivateUsage]
 from scripts.fetchers.yahoo import _timestamps_to_observations  # pyright: ignore[reportPrivateUsage]
@@ -85,6 +97,125 @@ class TestMergeHistory:
     def test_empty_existing(self) -> None:
         merged = merge_history([], [{"date": "2026-01-01", "price": 50}])
         assert len(merged) == 1
+
+    def test_skips_dateless_observations_instead_of_collapsing(self) -> None:
+        # Two dateless entries must NOT collapse into a single '' bucket.
+        existing: List[Observation] = [
+            {"date": "2026-01-01", "price": 100},
+            {"date": "", "price": 999},        # missing date -> skipped
+            {"price": 888},                    # absent date -> skipped
+        ]
+        new: List[Observation] = [
+            {"date": None, "price": 777},      # None date -> skipped
+            {"date": "2026-01-02", "price": 120},
+        ]
+        merged = merge_history(existing, new)
+        assert [m["date"] for m in merged] == ["2026-01-01", "2026-01-02"]
+        # None of the dateless prices leaked through.
+        assert {m["price"] for m in merged} == {100, 120}
+
+
+# ---------------------------------------------------------------------------
+# build_commodity_record (shared record builder — UI-18 stale-headline guard)
+# ---------------------------------------------------------------------------
+
+class TestBuildCommodityRecord:
+    def test_top_level_fields_match_history_tail(self) -> None:
+        history: List[Observation] = [
+            {"date": "2026-01-01", "price": 10.0},
+            {"date": "2026-01-02", "price": 20.0},
+            {"date": "2026-01-03", "price": 30.5},
+        ]
+        metrics = compute_metrics(history)
+        # Simulate an existing on-disk record with STALE headline fields.
+        existing = {
+            "id": "gold",
+            "name": "Gold",
+            "price": 10.0,           # stale
+            "date": "2026-01-01",    # stale
+            "derived": {"descriptive_stats": {}},
+        }
+        record = build_commodity_record(existing, history, metrics)
+
+        assert record["price"] == history[-1]["price"] == 30.5
+        assert record["date"] == history[-1]["date"] == "2026-01-03"
+        assert record["derived"] == {"descriptive_stats": metrics}
+        assert record["metrics"] == metrics
+        assert record["history"] is history
+        assert "updated_at" in record
+        # Config fields preserved.
+        assert record["id"] == "gold"
+        assert record["name"] == "Gold"
+
+    def test_overrides_take_precedence(self) -> None:
+        history: List[Observation] = [{"date": "2026-02-01", "price": 5.0}]
+        metrics = compute_metrics(history)
+        record = build_commodity_record(
+            {"name": "old"}, history, metrics,
+            overrides={"name": "new", "category": "energy"},
+        )
+        assert record["name"] == "new"
+        assert record["category"] == "energy"
+
+    def test_does_not_mutate_input(self) -> None:
+        existing = {"id": "x", "price": 1.0}
+        history: List[Observation] = [{"date": "2026-03-01", "price": 9.0}]
+        build_commodity_record(existing, history, compute_metrics(history))
+        # Original dict untouched.
+        assert existing == {"id": "x", "price": 1.0}
+
+
+# ---------------------------------------------------------------------------
+# safe_get (pooled Session + response-size cap)
+# ---------------------------------------------------------------------------
+
+class _FakeResponse:
+    def __init__(self, content: bytes, headers: Dict[str, str] | None = None) -> None:
+        self.content = content
+        self.headers = headers or {}
+        self.closed = False
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class TestSafeGet:
+    def test_uses_module_session(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        seen: Dict[str, Any] = {}
+
+        def fake_get(url, params=None, timeout=None, stream=None):
+            seen["self"] = "called"
+            seen["stream"] = stream
+            return _FakeResponse(b"{}")
+
+        monkeypatch.setattr(_shared._SESSION, "get", fake_get)
+        resp = safe_get("http://example.test")
+        assert seen["self"] == "called"
+        assert seen["stream"] is True
+        assert resp.content == b"{}"
+
+    def test_rejects_oversized_declared_length(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        too_big = str(_shared.MAX_RESPONSE_BYTES + 1)
+
+        def fake_get(url, params=None, timeout=None, stream=None):
+            return _FakeResponse(b"small", headers={"Content-Length": too_big})
+
+        monkeypatch.setattr(_shared._SESSION, "get", fake_get)
+        with pytest.raises(requests.exceptions.RequestException):
+            safe_get("http://example.test", retries=1)
+
+    def test_rejects_oversized_streamed_body(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        big_body = b"x" * (_shared.MAX_RESPONSE_BYTES + 1)
+
+        def fake_get(url, params=None, timeout=None, stream=None):
+            return _FakeResponse(big_body)  # no Content-Length header
+
+        monkeypatch.setattr(_shared._SESSION, "get", fake_get)
+        with pytest.raises(requests.exceptions.RequestException):
+            safe_get("http://example.test", retries=1)
 
 
 # ---------------------------------------------------------------------------

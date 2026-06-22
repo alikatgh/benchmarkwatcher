@@ -12,7 +12,12 @@ sys.path.insert(0, PROJECT_ROOT)
 load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
 
 from scripts.fetchers import FETCHER_REGISTRY
-from scripts.fetchers._shared import merge_history, compute_metrics, save_atomic
+from scripts.fetchers._shared import (
+    merge_history,
+    compute_metrics,
+    save_atomic,
+    build_commodity_record,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,7 +36,8 @@ TARGET_IDS = {
 CONFIG_PATH = os.path.join(PROJECT_ROOT, 'scripts', 'commodities.json')
 DATA_DIR = os.path.join(PROJECT_ROOT, 'data')
 
-config = json.load(open(CONFIG_PATH))
+with open(CONFIG_PATH) as f:
+    config = json.load(f)
 
 for commodity in config:
     cid = commodity.get('id', '')
@@ -65,11 +71,17 @@ for commodity in config:
             continue
 
         fp = os.path.join(DATA_DIR, f'{cid}.json')
-        existing = json.load(open(fp)) if os.path.exists(fp) else {}
+        if os.path.exists(fp):
+            with open(fp) as f:
+                existing = json.load(f)
+        else:
+            existing = {}
         merged = merge_history(existing.get('history', []), new_rows)
-        existing['history'] = merged
-        existing['metrics'] = compute_metrics(merged)
-        save_atomic(fp, existing)
+        metrics = compute_metrics(merged)
+        # Refresh top-level price/date/derived/updated_at too, not just history —
+        # otherwise the UI reads a stale headline price/date (the UI-18 bug).
+        record = build_commodity_record(existing, merged, metrics)
+        save_atomic(fp, record)
         logger.info(f'  Success: {len(merged)} records, latest={merged[-1]["date"]}')
     except Exception as e:
         logger.error(f'  Error updating {cid}: {e}')

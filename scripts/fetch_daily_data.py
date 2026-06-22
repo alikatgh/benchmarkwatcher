@@ -14,7 +14,6 @@ import os
 import sys
 import json
 import logging
-from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -28,7 +27,12 @@ if PROJECT_ROOT not in sys.path:
 load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
 
 from scripts.fetchers import FETCHER_REGISTRY
-from scripts.fetchers._shared import merge_history, compute_metrics, save_atomic
+from scripts.fetchers._shared import (
+    merge_history,
+    compute_metrics,
+    save_atomic,
+    build_commodity_record,
+)
 
 # Re-export for backward compatibility (tests import from here)
 __all__ = ['compute_metrics', 'merge_history', 'main']
@@ -133,17 +137,15 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
     history = merge_history(existing_history, new_data)
     history = history[-1000:]  # Keep last 1000 observations
     metrics = compute_metrics(history)
-    latest = history[-1]
 
-    # 4. Construct Record
-    record = {
+    # 4. Construct Record — config-derived fields, then shared builder sets the
+    # history-derived top-level fields (price/date/derived/metrics/updated_at).
+    config_fields = {
         "id": commodity['id'],
         "name": commodity['name'],
         "category": commodity['category'],
-        "price": latest['price'],
         "currency": "USD",
         "unit": commodity['unit'],
-        "date": latest['date'],
         "source_name": commodity.get('source_name', commodity['source_type']),
         "source_url": conf.get('source_info_url', ''),
         "source_type": commodity['source_type'],
@@ -153,13 +155,10 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
             else "public_market_reference"
         ),
         "simulated": False,
-        "metrics": metrics,
-        "derived": {
-            "descriptive_stats": metrics
-        },
-        "history": history,
-        "updated_at": datetime.now().isoformat()
     }
+    record = build_commodity_record(
+        {}, history, metrics, overrides=config_fields
+    )
 
     if save_atomic(filepath, record):
         logger.info(f"  Success: {len(history)} records saved.")

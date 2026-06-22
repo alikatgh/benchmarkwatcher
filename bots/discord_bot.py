@@ -23,6 +23,8 @@ from data_reader import (
     get_top_movers,
     get_available_commodities,
     search_commodity,
+    _coerce_price,
+    _coerce_pct,
 )
 
 # Logging
@@ -132,16 +134,13 @@ async def price_command(ctx, *, query: str = None):
         await ctx.send(embed=embed)
         return
 
-    # Get data
+    # Get data (coerce price + pct so null/missing values don't crash formatting)
     name = data.get('name', 'Unknown')
-    price = data.get('price', 0)
+    price = _coerce_price(data.get('price'))
     unit = data.get('unit', 'USD')
     date_str = data.get('date', '')
 
-    derived = data.get('derived', {}).get('descriptive_stats', {})
-    metrics = data.get('metrics', {})
-    change = derived.get('abs_change_1_obs', metrics.get('change_1d', 0))
-    change_pct = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0))
+    change_pct = _coerce_pct(data)
 
     # Determine color
     if change_pct > 0:
@@ -267,7 +266,13 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         await ctx.send("❓ Unknown command. Use `!help` for available commands.")
     else:
-        logger.error(f"Error: {error}")
+        # Log for debugging AND notify the user, so failures aren't silently
+        # swallowed (mirrors the Telegram error_handler behaviour).
+        logger.error(f"Error: {error}", exc_info=error)
+        try:
+            await ctx.send("⚠️ An unexpected error occurred. Please try again.")
+        except Exception as notify_error:
+            logger.warning(f"Failed to notify user of error: {notify_error}")
 
 
 def main():

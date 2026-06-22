@@ -87,8 +87,17 @@ def validate_since(since_str: Optional[str]) -> Optional[str]:
 
 
 def is_valid_internal_key(provided_key: str, expected_key: str) -> bool:
-    """Strict check: expected key must exist and provided key must match."""
-    return bool(expected_key and provided_key and secrets.compare_digest(provided_key, expected_key))
+    """Strict check: expected key must exist and provided key must match.
+
+    ``secrets.compare_digest`` raises ``TypeError`` on non-ASCII ``str`` inputs,
+    which would surface as a 500 instead of a 403. A non-ASCII provided key can
+    never match an ASCII expected key, so reject it up front.
+    """
+    if not expected_key or not provided_key:
+        return False
+    if not provided_key.isascii():
+        return False
+    return secrets.compare_digest(provided_key, expected_key)
 
 
 def build_commodities_response(

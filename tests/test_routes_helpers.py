@@ -44,6 +44,14 @@ def test_is_valid_internal_key_requires_both_and_match():
     assert is_valid_internal_key('abc', 'def') is False
 
 
+def test_is_valid_internal_key_rejects_non_ascii_without_raising():
+    # secrets.compare_digest raises TypeError on non-ASCII str; the guard must
+    # return False (-> 403) instead of letting that bubble up as a 500.
+    assert is_valid_internal_key(' key', 'key') is False
+    assert is_valid_internal_key('clé', 'key') is False
+    assert is_valid_internal_key('🔑', 'key') is False
+
+
 def test_build_commodities_response_public_shape():
     payload = build_commodities_response(
         commodities=[{'id': 'gold'}],
