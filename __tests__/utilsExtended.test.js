@@ -149,8 +149,8 @@ function calculateMA(data = [], period = 7) {
             }
         } else {
             const prev = nums[i - period];
-            if (Number.isFinite(prev)) windowSum -= prev;
-            else validCount = Math.max(0, validCount - 1);
+            if (Number.isFinite(prev)) { windowSum -= prev; validCount = Math.max(0, validCount - 1); }
+            // non-finite prev was never counted, so validCount is unchanged
             if (Number.isFinite(val)) { windowSum += val; validCount++; }
             out[i] = (validCount === period) ? windowSum / period : null;
         }
@@ -475,27 +475,24 @@ describe('calculateMA', () => {
         expect(result[2]).toBeCloseTo(2);
     });
 
-    test('positions after period-1 are null due to validCount not decrementing on slide', () => {
-        // The current implementation only produces a non-null MA at exactly
-        // index period-1; subsequent positions are null because the sliding
-        // window does not decrement validCount when a finite value exits,
-        // causing validCount to exceed period.  This test documents the
-        // observed behaviour so regressions are caught.
+    test('sliding window produces correct MA for all positions after period-1', () => {
+        // [1,2,3,4,5] period=3:
+        //   index 2: (1+2+3)/3 = 2
+        //   index 3: (2+3+4)/3 = 3
+        //   index 4: (3+4+5)/3 = 4
         const data = [1, 2, 3, 4, 5];
         const result = calculateMA(data, 3);
-        expect(result[3]).toBeNull();
-        expect(result[4]).toBeNull();
+        expect(result[3]).toBeCloseTo(3);
+        expect(result[4]).toBeCloseTo(4);
     });
 
-    test('period=1 produces non-null only at index 0', () => {
-        // With period=1 the initial window completes at i=0, so out[0] is set.
-        // For i>=1 validCount grows above 1, so the equality check (vc===period)
-        // fails and all later positions are null.
+    test('period=1 returns each value as its own MA', () => {
+        // With period=1 every window is exactly [element], so MA equals the element.
         const data = [10, 20, 30];
         const result = calculateMA(data, 1);
         expect(result[0]).toBe(10);
-        expect(result[1]).toBeNull();
-        expect(result[2]).toBeNull();
+        expect(result[1]).toBe(20);
+        expect(result[2]).toBe(30);
     });
 
     test('null for windows containing non-numeric values', () => {

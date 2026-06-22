@@ -226,8 +226,8 @@ BW.Utils = (function () {
                 } else {
                     // Slide window: remove i-period, add i
                     const prev = nums[i - period];
-                    if (Number.isFinite(prev)) windowSum -= prev;
-                    else validCount = Math.max(0, validCount - 1);
+                    if (Number.isFinite(prev)) { windowSum -= prev; validCount = Math.max(0, validCount - 1); }
+                    // non-finite prev was never counted, so validCount is unchanged
 
                     if (Number.isFinite(val)) {
                         windowSum += val;
