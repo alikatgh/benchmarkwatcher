@@ -20,6 +20,13 @@
 
 ## Chronological log (newest first)
 
+### 2026-06-22 · calculateMA sliding window never decremented validCount for finite values leaving the window
+- Symptom: `BW.Utils.calculateMA([1,2,3,4,5], 3)` returned `[null,null,2,null,null]` — only the first complete window produced a non-null MA; all subsequent positions were null.
+- Cause: `app/static/js/core/utils.js` — in the sliding branch (`i >= period`), the `if (Number.isFinite(prev))` block subtracted `prev` from `windowSum` but never decremented `validCount`; only the `else` (non-finite) branch decremented it. So `validCount` grew monotonically past `period` and `validCount === period` was always false after index `period-1`.
+- Fix: move `validCount = Math.max(0, validCount - 1)` into the `Number.isFinite(prev)` block (finite values leaving the window must be un-counted); the non-finite branch is a no-op (non-finite was never counted).
+- Tests: updated `__tests__/utilsExtended.test.js` to assert correct values `[null,null,2,3,4]` and that `period=1` gives `[10,20,30]`; inline copy in the test file fixed to match.
+- Lesson: sliding-window `validCount` must mirror `windowSum` — if you add when entering, subtract when leaving; the symmetry must hold for both the sum AND the count.
+
 ### 2026-06-08 · Grid overlap NOT reproducible (verified clean) + flat 0% shows as up-teal
 - Chased the "As of [%]date" card overlap reported from prod. **NOT reproducible** — `scripts/shoot_grid_styles.mjs` screenshotted all 3 card styles (card/minimal/dense) × 1Y and 1M; every combo renders cleanly, columns separated. Most likely a misread of a low-res screenshot (a documented weakness this session) or a transient prod font/zoom artifact, not a code bug. The default view (compact) is clean too.
 - Real issue found instead: a flat **0.00%** renders teal with ▲ (up). Binary `change >= 0 ? up : down` puts 0 in "up" — inconsistent with Market Pulse's flat count; visible on the 60/72 monthly commodities at short ranges (1M/3M).
