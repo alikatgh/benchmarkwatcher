@@ -12,28 +12,28 @@
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                     </path>
                 </svg>
-                <span class="text-xs font-bold tracking-wider">Display Range</span>
+                <span class="text-xs font-semibold tracking-wider">Display Range</span>
             </div>
             <!-- Horizontally scrollable range buttons on mobile -->
             <div class="overflow-x-auto scrollbar-hide -mx-1 px-1">
                 <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui w-max">
                     <button onclick="setGridDataRange('1W')" id="grid-range-1W"
                         aria-label="Show last 1 week of available observations"
-                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
                     <button onclick="setGridDataRange('1M')" id="grid-range-1M"
                         aria-label="Show last 1 month of available observations"
-                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
                     <button onclick="setGridDataRange('3M')" id="grid-range-3M"
                         aria-label="Show last 3 months of available observations"
-                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
                     <button onclick="setGridDataRange('6M')" id="grid-range-6M"
                         aria-label="Show last 6 months of available observations"
-                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
                     <button onclick="setGridDataRange('1Y')" id="grid-range-1Y"
                         aria-label="Show last 1 year of available observations"
-                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
                     <button onclick="setGridDataRange('ALL')" id="grid-range-ALL" aria-label="Show all data"
-                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
+                        class="grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
                 </div>
             </div>
         </div>
@@ -45,7 +45,7 @@
                     data</span>
             </div>
             <button onclick="toggleGridSettingsPanel()"
-                class="text-xs font-bold text-brand-oxford dark:text-brand-teal hover:underline font-ui flex items-center gap-1.5"
+                class="text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:underline font-ui flex items-center gap-1.5"
                 aria-expanded="false" aria-controls="grid-settings-panel">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -67,7 +67,7 @@
             <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <!-- DATA VISIBILITY TOGGLES -->
                 <div class="space-y-2">
-                    <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">Show/Hide</div>
+                    <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">Show/Hide</div>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="grid-show-category" checked onchange="updateGridSettings()"
                             class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
@@ -103,9 +103,9 @@
                 <!-- Columns -->
                 <div class="space-y-2">
                     <label for="grid-columns"
-                        class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Columns</label>
+                        class="text-2xs font-semibold text-brand-black-60 tracking-wider">Columns</label>
                     <select id="grid-columns" onchange="updateGridSettings()"
-                        class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
+                        class="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
                         <option value="auto" selected>Auto</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -115,9 +115,9 @@
 
                 <!-- Sort By -->
                 <div class="space-y-2">
-                    <label for="grid-sort" class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Sort</label>
+                    <label for="grid-sort" class="text-2xs font-semibold text-brand-black-60 tracking-wider">Sort</label>
                     <select id="grid-sort" onchange="updateGridSettings()"
-                        class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
+                        class="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
                         <option value="name" selected>Name (A-Z)</option>
                         <option value="name-desc">Name (Z-A)</option>
                         <option value="change-desc">Obs. Change ↓</option>
@@ -130,9 +130,9 @@
                 <!-- Card Style -->
                 <div class="space-y-2">
                     <label for="grid-card-style"
-                        class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Style</label>
+                        class="text-2xs font-semibold text-brand-black-60 tracking-wider">Style</label>
                     <select id="grid-card-style" onchange="updateGridSettings()"
-                        class="w-full px-3 py-2 text-xs font-bold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
+                        class="w-full px-3 py-2 text-xs font-semibold rounded-lg bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 text-brand-black-80 dark:text-white">
                         <option value="card" selected>Full Card</option>
                         <option value="minimal">Minimal Row</option>
                         <option value="dense">Dense Grid</option>
@@ -142,32 +142,32 @@
 
             <!-- RIGHT: Live Preview Card -->
             <div class="lg:col-span-1">
-                <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">Preview</div>
+                <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">Preview</div>
                 <div id="grid-preview-card"
                     class="bg-card-warm dark:bg-terminal-surface p-4 rounded-xl border border-brand-oxford/30 dark:border-brand-teal/30">
                     <!-- Category Badge -->
                     <div id="preview-category" class="flex items-center justify-between mb-2">
-                        <span class="text-[10px] font-semibold text-brand-black-60 tracking-wider">Energy</span>
-                        <div class="text-[10px] font-semibold py-0.5 px-2 rounded-full"
+                        <span class="text-2xs font-semibold text-brand-black-60 tracking-wider">Energy</span>
+                        <div class="text-2xs font-semibold py-0.5 px-2 rounded-full"
                             style="color: var(--color-up); background-color: var(--color-up-bg);">+ Change</div>
                     </div>
                     <!-- Name -->
-                    <h4 class="text-sm font-bold text-brand-black-80 dark:text-white mb-2 font-serif">Example Commodity
+                    <h4 class="text-sm font-semibold text-brand-black-80 dark:text-white mb-2 font-serif">Example Commodity
                     </h4>
                     <!-- Price -->
                     <div id="preview-price-section" class="mb-2">
                         <div class="tabular-nums text-xl font-bold text-brand-black-80 dark:text-white">123.45</div>
-                        <div id="preview-unit" class="text-[10px] text-brand-black-60 mt-0.5">USD / barrel</div>
+                        <div id="preview-unit" class="text-2xs text-brand-black-60 mt-0.5">USD / barrel</div>
                     </div>
                     <div class="flex items-baseline gap-1.5">
-                        <span id="preview-change-pct" class="tabular-nums text-sm font-bold" style="color: var(--color-up);">+2.15%</span>
+                        <span id="preview-change-pct" class="tabular-nums text-sm font-semibold" style="color: var(--color-up);">+2.15%</span>
                         <span class="text-brand-black-60/30 text-xs select-none">·</span>
-                        <span id="preview-change-abs" class="tabular-nums text-[10px] text-brand-black-60 truncate">+2.60 USD</span>
+                        <span id="preview-change-abs" class="tabular-nums text-2xs text-brand-black-60 truncate">+2.60 USD</span>
                     </div>
                     <!-- Footer -->
                     <div id="preview-footer"
                         class="mt-3 pt-2 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center">
-                        <span class="text-[10px] text-brand-black-60 dark:text-white/70">As of 2026-01-05</span>
+                        <span class="text-2xs text-brand-black-60 dark:text-white/70">As of 2026-01-05</span>
                         <svg class="w-3 h-3 text-brand-black-60 dark:text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
                             </path>

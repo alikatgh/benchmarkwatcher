@@ -25,7 +25,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
 
     // Style adjustments based on Font Scale
     const titleText = fontScale === 'small' ? 'text-xs' : fontScale === 'large' ? 'text-base' : 'text-sm';
-    const metaText = fontScale === 'small' ? 'text-[9px]' : fontScale === 'large' ? 'text-xs' : 'text-[10px]';
+    const metaText = fontScale === 'small' ? 'text-2xs' : fontScale === 'large' ? 'text-xs' : 'text-2xs';
 
     const isDaily = commodity.is_daily === true;
     const frequencyTag = isDaily ? 'D' : 'M';
@@ -55,12 +55,12 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
             {/* Left Box: Icon/Name/Category */}
             <View className="flex-row items-center flex-1">
                 <View className={`${iconSize} rounded-lg bg-slate-100 dark:bg-slate-700 items-center justify-center mr-3`}>
-                    <Text className={`font-bold text-slate-500 dark:text-slate-400 ${metaText}`}>
+                    <Text className={`font-semibold text-slate-500 dark:text-slate-400 ${metaText}`}>
                         {commodity.name.substring(0, 2).toUpperCase()}
                     </Text>
                 </View>
                 <View className="flex-1 mr-2">
-                    <Text className={`${titleText} font-bold text-slate-900 dark:text-white`} numberOfLines={1}>
+                    <Text className={`${titleText} font-semibold text-slate-900 dark:text-white`} numberOfLines={1}>
                         {commodity.name}
                     </Text>
                     {showCategory && (
@@ -68,7 +68,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
                             <Text className={`text-slate-500 dark:text-slate-400 ${metaText}`}>
                                 {commodity.category}
                             </Text>
-                            <Text className={`font-bold text-slate-400 dark:text-slate-500 ${metaText}`}>
+                            <Text className={`font-semibold text-slate-400 dark:text-slate-500 ${metaText}`}>
                                 {frequencyTag}
                             </Text>
                         </View>
@@ -78,7 +78,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
 
             {/* Middle Box: Price */}
             <View className="items-end mr-4">
-                <Text className={`${titleText} font-bold text-slate-900 dark:text-white`}>
+                <Text className={`${titleText} font-semibold text-slate-900 dark:text-white`}>
                     {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Text>
                 {showUnit && (
@@ -103,7 +103,7 @@ export default function CompactCommodityRow({ commodity, onPress }: Props) {
             {(showChangePercent || showChangeAbs) && (
                 <View className={`items-end px-2 py-1 rounded-md min-w-[64px] ${bgColor}`}>
                     {showChangePercent && (
-                        <Text className={`font-bold ${changeColor} ${fontScale === 'small' ? 'text-[10px]' : fontScale === 'large' ? 'text-sm' : 'text-xs'}`}>
+                        <Text className={`font-semibold ${changeColor} ${fontScale === 'small' ? 'text-2xs' : fontScale === 'large' ? 'text-sm' : 'text-xs'}`}>
                             {isUp ? '+' : ''}{formatPercent(commodity.change_percent)}%
                         </Text>
                     )}

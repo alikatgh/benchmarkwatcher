@@ -8,10 +8,10 @@
         <div>
             <div class="flex flex-col font-ui mb-2">
                 <span
-                    class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.2em] capitalize">{{
+                    class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.2em] capitalize">{{
                     commodity.category }}</span>
             </div>
-            <h1 class="text-2xl sm:text-4xl font-bold text-brand-black-80 dark:text-white font-ui">{{ commodity.name
+            <h1 class="text-2xl sm:text-4xl font-bold text-brand-black-80 dark:text-white font-serif">{{ commodity.name
                 }}</h1>
         </div>
 
@@ -31,7 +31,7 @@
                 </ol>
             </nav>
             <a href="{{ url_for('main.index') }}"
-                class="inline-flex items-center gap-2 px-3 py-1.5 min-h-[44px] text-xs font-bold text-brand-oxford dark:text-brand-teal border border-brand-oxford dark:border-brand-teal rounded-lg hover:bg-brand-oxford/10 dark:hover:bg-brand-teal/10 transition-all">
+                class="inline-flex items-center gap-1.5 min-h-[44px] text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:underline transition-colors">
                 ← Back to Market
             </a>
         </div>
@@ -52,7 +52,7 @@
                             Latest Benchmark
                         </div>
                         <!-- Frequency indicator badge -->
-                        <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit
+                        <span class="text-2xs font-semibold px-2 py-0.5 rounded-full w-fit
                             {% if commodity.is_daily %}
                                 bg-brand-teal/20 text-brand-teal
                             {% else %}
@@ -70,7 +70,7 @@
                     <!-- Price + unit: stacked on mobile, baseline-aligned on sm+ -->
                     <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 font-ui">
                         <span
-                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-bold text-brand-black-80 dark:text-white tracking-tighter leading-none">{{ "{:,.2f}".format(commodity.price) }}</span>
+                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-semibold tabular-nums text-brand-black-80 dark:text-white tracking-tighter leading-none">{{ "{:,.2f}".format(commodity.price) }}</span>
                         <div class="flex items-center gap-2">
                             <span
                                 class="text-xs sm:text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
@@ -120,16 +120,16 @@
                         <!-- Row 1: badge + label -->
                         <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                             <div class="group relative cursor-help" id="change-badge-wrapper" onclick="this.classList.toggle('tooltip-open')" role="button" tabindex="0">
-                                <div id="change-badge-bg" class="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all w-fit" style="background-color: {{ trend_bg }};">
-                                    <span id="change-pct-display" class="text-lg sm:text-xl font-bold font-ui" style="color: {{ trend_color }};">
-                                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
-                                    </span>
-                                    <span id="change-arrow-display" class="text-xs font-bold py-0.5 px-2 rounded-full text-white" style="background-color: {{ trend_color }};">
+                                <div id="change-badge-bg" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition w-fit" style="background-color: {{ trend_bg }};">
+                                    <span id="change-arrow-display" class="text-xs font-semibold" style="color: {{ trend_color }};">
                                         {% if commodity.change >= 0 %}▲{% else %}▼{% endif %}
+                                    </span>
+                                    <span id="change-pct-display" class="text-lg sm:text-xl font-semibold font-ui tabular-nums" style="color: {{ trend_color }};">
+                                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
                                     </span>
                                 </div>
                                 <!-- Tooltip on hover -->
-                                <div id="change-tooltip" class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 font-ui tooltip-content">
+                                <div id="change-tooltip" class="absolute bottom-full left-0 mb-2 w-72 max-w-[calc(100vw-4rem)] p-3 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-xs opacity-0 invisible group-hover:opacity-100 group-hover:visible transition z-50 font-ui tooltip-content">
                                     <div class="font-bold mb-2" id="change-tooltip-title">Price Change (Prev obs)</div>
                                     <div class="space-y-1.5 text-brand-black-60">
                                         <div class="flex justify-between gap-2">
@@ -153,7 +153,7 @@
                                 </div>
                             </div>
                             <!-- Context label -->
-                            <div class="text-[11px] sm:text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui" id="change-period-label">
+                            <div class="text-xs sm:text-xs text-brand-black-60 dark:text-brand-black-60/80 font-ui" id="change-period-label">
                                 vs {{ _prev_label }} · As of {{ commodity.date }}
                             </div>
                         </div>
@@ -162,13 +162,13 @@
                         <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-fit font-ui"
                              role="group" aria-label="Change comparison period">
                             <button onclick="setChangePeriod('1')" id="period-btn-1"
-                                class="period-btn px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal theme-surface theme-text"
+                                class="period-btn px-2.5 py-1 text-2xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal theme-surface theme-text"
                                 aria-pressed="true">Prev obs</button>
                             <button onclick="setChangePeriod('30')" id="period-btn-30"
-                                class="period-btn px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5"
+                                class="period-btn px-2.5 py-1 text-2xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5"
                                 aria-pressed="false">~30 obs</button>
                             <button onclick="setChangePeriod('365')" id="period-btn-365"
-                                class="period-btn px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5"
+                                class="period-btn px-2.5 py-1 text-2xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5"
                                 aria-pressed="false">~1 year</button>
                         </div>
                     </div>
@@ -179,9 +179,9 @@
                     class="shrink-0 border-t md:border-t-0 md:border-l border-brand-black-60/10 dark:border-white/10 pt-4 md:pt-0 md:pl-6 flex flex-row md:flex-col gap-4 md:gap-3 md:ml-auto md:text-right">
                     <div>
                         <div
-                            class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
+                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
                             DATA SOURCE</div>
-                        <div class="text-sm font-bold text-brand-black-80 dark:text-white font-ui">{{
+                        <div class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">{{
                             commodity.source_name }}</div>
                         {% if commodity.source_url %}
                         <a href="{{ commodity.source_url }}" target="_blank" rel="noopener noreferrer"
@@ -197,7 +197,7 @@
                     </div>
                     <div>
                         <div
-                            class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
+                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
                             UPDATED</div>
                         <div class="text-sm font-medium text-brand-black-80 dark:text-white font-ui">{{
                             commodity.updated_at[:10] }}</div>
@@ -219,7 +219,7 @@
                     <h3
                         class="text-base sm:text-lg md:text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-ui">
                         Price History</h3>
-                    <p class="text-[11px] sm:text-xs md:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-0.5 sm:mt-1">
+                    <p class="text-xs sm:text-xs md:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-0.5 sm:mt-1">
                         Daily benchmark price (end-of-day)
                     </p>
                 </div>
@@ -230,23 +230,23 @@
                         <!-- Time Range Selector -->
                         <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
                             <button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
                             <button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
                             <button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
                             <button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
                             <button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
                             <button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
                         </div>
 
                         <!-- Chart Type Selector -->
                         <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
                             <button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
-                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M7 12l3-3 3 3 4-4"></path>
@@ -254,7 +254,7 @@
                                 <span class="hidden sm:inline">Line</span>
                             </button>
                             <button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
-                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
                                     <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
@@ -267,7 +267,7 @@
                         <!-- View Mode Selector (Price vs Percent) -->
                         <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
                             <button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
-                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-white dark:bg-white text-brand-black-80 dark:text-terminal-black">
+                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 bg-white dark:bg-white text-brand-black-80 dark:text-terminal-black">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
@@ -277,7 +277,7 @@
                             </button>
                             <button onclick="setViewMode('percent')" id="view-percent"
                                 aria-label="Show percentage change"
-                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
+                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
@@ -295,33 +295,33 @@
         <!-- Price Statistics Bar -->
         <div id="stats-bar"
             class="px-4 sm:px-6 py-3 sm:py-4 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
-            <div class="text-[10px] text-brand-black-60 font-ui mb-2 text-center">Based on selected historical window
+            <div class="text-2xs text-brand-black-60 font-ui mb-2 text-center">Based on selected historical window
             </div>
             <div class="flex overflow-x-auto scrollbar-hide gap-3 sm:gap-4 sm:grid sm:grid-cols-5 font-ui text-center">
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
-                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         High</div>
-                    <div id="stat-high" class="text-xs sm:text-sm font-bold whitespace-nowrap" style="color: var(--color-up);">--</div>
+                    <div id="stat-high" class="text-xs sm:text-sm font-semibold text-brand-black-80 dark:text-white whitespace-nowrap tabular-nums">--</div>
                 </div>
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
-                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Low</div>
-                    <div id="stat-low" class="text-xs sm:text-sm font-bold whitespace-nowrap" style="color: var(--color-down);">--</div>
+                    <div id="stat-low" class="text-xs sm:text-sm font-semibold text-brand-black-80 dark:text-white whitespace-nowrap tabular-nums">--</div>
                 </div>
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
-                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Average</div>
-                    <div id="stat-avg" class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
+                    <div id="stat-avg" class="text-xs sm:text-sm font-semibold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
                 </div>
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
-                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Range</div>
-                    <div id="stat-range" class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
+                    <div id="stat-range" class="text-xs sm:text-sm font-semibold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
                 </div>
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
-                    <div class="text-[10px] font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
+                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         Points</div>
-                    <div id="stat-points" class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
+                    <div id="stat-points" class="text-xs sm:text-sm font-semibold text-brand-black-80 dark:text-white whitespace-nowrap">--</div>
                 </div>
             </div>
         </div>
@@ -335,23 +335,23 @@
                     <!-- Date -->
                     <div class="flex flex-col min-w-0 shrink-0">
                         <span
-                            class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Date</span>
+                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Date</span>
                         <span id="crosshair-date"
-                            class="text-xs sm:text-sm font-bold text-brand-black-80 dark:text-white tabular-nums whitespace-nowrap">--</span>
+                            class="text-xs sm:text-sm font-semibold text-brand-black-80 dark:text-white tabular-nums whitespace-nowrap">--</span>
                     </div>
                     <!-- Price -->
                     <div class="flex flex-col min-w-0 shrink-0">
                         <span
-                            class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Price</span>
+                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Price</span>
                         <span id="crosshair-price"
-                            class="text-xs sm:text-sm font-bold text-brand-oxford dark:text-brand-teal tabular-nums whitespace-nowrap">--</span>
+                            class="text-xs sm:text-sm font-semibold text-brand-oxford dark:text-brand-teal tabular-nums whitespace-nowrap">--</span>
                     </div>
                     <!-- Daily Change -->
                     <div class="flex flex-col min-w-0 shrink-0">
                         <span
-                            class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider whitespace-nowrap">Change
+                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider whitespace-nowrap">Change
                             (prev)</span>
-                        <span id="crosshair-change" class="text-xs sm:text-sm font-bold tabular-nums whitespace-nowrap">--</span>
+                        <span id="crosshair-change" class="text-xs sm:text-sm font-semibold tabular-nums whitespace-nowrap">--</span>
                     </div>
                 </div>
             </div>
@@ -370,7 +370,7 @@
             <!-- Compare Commodities Bar -->
             <div id="compare-bar" class="hidden mt-3 sm:mt-4 p-2.5 sm:p-3 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui overflow-x-auto scrollbar-hide">
                 <div class="flex items-center gap-2 min-w-max">
-                    <span class="text-[10px] font-semibold text-brand-black-60 tracking-wider shrink-0">COMPARING:</span>
+                    <span class="text-2xs font-semibold text-brand-black-60 tracking-wider shrink-0">COMPARING:</span>
                     <div id="compare-tags" class="flex items-center gap-1.5"></div>
                 </div>
             </div>
@@ -382,7 +382,7 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <button id="reset-zoom-btn" onclick="resetZoom()" aria-label="Reset chart zoom to default view"
-                        class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                        class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
@@ -394,7 +394,7 @@
                     <div class="relative shrink-0" id="download-menu-container">
 
                         <button onclick="toggleDownloadMenu()" id="download-menu-btn" aria-label="Download options" aria-expanded="false" aria-haspopup="menu" aria-controls="download-menu"
-                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -426,7 +426,7 @@
                     </div>
                     <div class="relative shrink-0" id="compare-menu-container">
                         <button onclick="toggleCompareMenu()" id="compare-menu-btn" aria-label="Compare commodities" aria-expanded="false" aria-haspopup="menu" aria-controls="compare-menu"
-                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -443,7 +443,7 @@
                         </div>
                     </div>
                     <button onclick="openChartSettings()" id="chart-settings-btn"
-                        class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
+                        class="shrink-0 px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
                         title="Chart Settings (S)">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -549,7 +549,7 @@
                 class="px-4 sm:px-5 pt-[max(0.9rem,env(safe-area-inset-top))] pb-3 border-b border-brand-black-60/10 dark:border-white/5 flex items-start justify-between gap-3 shrink-0 bg-card-warm dark:bg-terminal-surface">
                 <div>
                     <h3 id="chart-settings-title" class="text-sm sm:text-base font-bold text-brand-black-80 dark:text-white">Chart Settings</h3>
-                    <p class="text-[11px] text-brand-black-60 dark:text-brand-black-60 mt-0.5">Tune the chart's style, axes, stats, tooltip, and controls.</p>
+                    <p class="text-xs text-brand-black-60 dark:text-brand-black-60 mt-0.5">Tune the chart's style, axes, stats, tooltip, and controls.</p>
                 </div>
                 <button onclick="closeChartSettings()"
                     class="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors"
@@ -565,23 +565,23 @@
             <div class="px-4 sm:px-5 py-3 shrink-0 border-b border-brand-black-60/10 dark:border-white/5 bg-brand-black-60/5 dark:bg-white/5">
                 <div class="flex gap-1 p-1 rounded-xl overflow-x-auto scrollbar-hide bg-white/70 dark:bg-terminal-black/40 border border-brand-black-60/10 dark:border-white/10">
                     <button onclick="showChartSettingsTab('appearance')" id="tab-appearance"
-                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all theme-surface theme-text">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition theme-surface theme-text">
                         Style
                     </button>
                     <button onclick="showChartSettingsTab('scales')" id="tab-scales"
-                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
                         Axes
                     </button>
                     <button onclick="showChartSettingsTab('statusline')" id="tab-statusline"
-                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
                         Stats
                     </button>
                     <button onclick="showChartSettingsTab('tooltip')" id="tab-tooltip"
-                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
                         Tooltip
                     </button>
                     <button onclick="showChartSettingsTab('interaction')" id="tab-interaction"
-                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
+                        class="chart-settings-tab flex-1 min-h-[44px] px-2.5 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white">
                         Controls
                     </button>
                 </div>
@@ -594,7 +594,7 @@
                 <div id="content-appearance" class="chart-settings-content space-y-4">
                     <!-- Preset Themes -->
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">PRESET THEMES</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">PRESET THEMES</div>
                         <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                             <button onclick="applyChartTheme('light')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
@@ -602,7 +602,7 @@
                                 <div class="w-6 h-6 mx-auto mb-1 rounded-lg bg-gradient-to-br from-white to-gray-100 border border-gray-200 flex items-center justify-center">
                                     <div class="w-3 h-0.5 bg-brand-oxford rounded"></div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">Light</span>
+                                <span class="text-2xs font-semibold text-brand-black-60 group-hover:text-brand-oxford">Light</span>
                             </button>
                             <button onclick="applyChartTheme('dark')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
@@ -610,7 +610,7 @@
                                 <div class="w-6 h-6 mx-auto mb-1 rounded-lg bg-gradient-to-br from-gray-800 to-black border border-gray-700 flex items-center justify-center">
                                     <div class="w-3 h-0.5 bg-brand-teal rounded"></div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">Dark</span>
+                                <span class="text-2xs font-semibold text-brand-black-60 group-hover:text-brand-oxford">Dark</span>
                             </button>
                             <button onclick="applyChartTheme('bloomberg')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
@@ -618,7 +618,7 @@
                                 <div class="w-6 h-6 mx-auto mb-1 rounded-lg bg-black border border-orange-500 flex items-center justify-center">
                                     <div class="w-3 h-0.5 bg-orange-500 rounded"></div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">Bloomberg</span>
+                                <span class="text-2xs font-semibold text-brand-black-60 group-hover:text-brand-oxford">Bloomberg</span>
                             </button>
                             <button onclick="applyChartTheme('ocean')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
@@ -626,7 +626,7 @@
                                 <div class="w-6 h-6 mx-auto mb-1 rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 border border-sky-200 flex items-center justify-center">
                                     <div class="w-3 h-0.5 bg-sky-500 rounded"></div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">Ocean</span>
+                                <span class="text-2xs font-semibold text-brand-black-60 group-hover:text-brand-oxford">Ocean</span>
                             </button>
                             <button onclick="applyChartTheme('forest')"
                                 class="theme-preset p-2 rounded-xl border-2 border-brand-black-60/10 hover:border-brand-oxford transition-colors text-center group"
@@ -634,14 +634,14 @@
                                 <div class="w-6 h-6 mx-auto mb-1 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200 flex items-center justify-center">
                                     <div class="w-3 h-0.5 bg-green-600 rounded"></div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-brand-black-60 group-hover:text-brand-oxford">Forest</span>
+                                <span class="text-2xs font-semibold text-brand-black-60 group-hover:text-brand-oxford">Forest</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- Chart Line -->
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">CHART LINE</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">CHART LINE</div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Color</label>
@@ -672,7 +672,7 @@
 
                     <!-- Area Fill -->
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">AREA FILL</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">AREA FILL</div>
                         <div class="space-y-3">
                             <div class="flex items-center gap-3">
                                 <input type="checkbox" id="setting-enableFill" checked
@@ -699,7 +699,7 @@
 
                     <!-- Animation -->
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ANIMATION</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">ANIMATION</div>
                         <div class="space-y-3">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="setting-enableAnimation" checked
@@ -720,7 +720,7 @@
                 <!-- SCALES TAB -->
                 <div id="content-scales" class="chart-settings-content hidden space-y-4">
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">Y-AXIS</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">Y-AXIS</div>
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Position</label>
@@ -748,7 +748,7 @@
                         </div>
                     </div>
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">X-AXIS</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">X-AXIS</div>
                         <div>
                             <label class="block text-xs text-brand-black-60 mb-1">Max Labels: <span id="xMaxTicks-value">8</span></label>
                             <input type="range" id="setting-xMaxTicks" min="4" max="12" value="8"
@@ -758,7 +758,7 @@
                     </div>
                     <!-- Grid -->
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">GRID</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">GRID</div>
                         <div class="space-y-3">
                             <div class="flex gap-4">
                                 <label class="flex items-center gap-2 cursor-pointer">
@@ -795,7 +795,7 @@
                 <!-- STATUS LINE TAB -->
                 <div id="content-statusline" class="chart-settings-content hidden space-y-4">
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">STATISTICS VISIBILITY</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">STATISTICS VISIBILITY</div>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2.5 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
                                 <input type="checkbox" id="setting-showStatHigh" checked
@@ -836,7 +836,7 @@
                         </div>
                     </div>
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">COLORS</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">COLORS</div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Up Color (High)</label>
@@ -857,7 +857,7 @@
                 <!-- TOOLTIP TAB -->
                 <div id="content-tooltip" class="chart-settings-content hidden space-y-4">
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">CROSSHAIR INFO</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">CROSSHAIR INFO</div>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2.5 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
                                 <input type="checkbox" id="setting-showCrosshairDate" checked
@@ -880,7 +880,7 @@
                         </div>
                     </div>
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">TOOLTIP STYLE</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">TOOLTIP STYLE</div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs text-brand-black-60 mb-1">Background</label>
@@ -913,7 +913,7 @@
                 <!-- INTERACTION TAB -->
                 <div id="content-interaction" class="chart-settings-content hidden space-y-4">
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ZOOM & PAN</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">ZOOM & PAN</div>
                         <div class="space-y-3">
                             <div class="flex gap-4">
                                 <label class="flex items-center gap-2 cursor-pointer">
@@ -942,7 +942,7 @@
                         </div>
                     </div>
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">ACTION BUTTONS</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">ACTION BUTTONS</div>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center gap-2 p-2.5 rounded-lg bg-brand-black-60/5 dark:bg-white/5 cursor-pointer">
                                 <input type="checkbox" id="setting-showResetBtn" checked
@@ -959,7 +959,7 @@
                         </div>
                     </div>
                     <div class="rounded-xl bg-brand-black-60/5 dark:bg-white/5 p-4">
-                        <div class="text-[10px] font-semibold text-brand-black-60 tracking-wider mb-2">CHART SIZE</div>
+                        <div class="text-2xs font-semibold text-brand-black-60 tracking-wider mb-2">CHART SIZE</div>
                         <div>
                             <label class="block text-xs text-brand-black-60 mb-1">Height: <span id="chartHeight-value">400</span>px</label>
                             <input type="range" id="setting-chartHeight" min="250" max="600" step="50" value="400"
@@ -974,11 +974,11 @@
             <!-- Modal Footer -->
             <div class="px-4 sm:px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-brand-black-60/10 dark:border-white/5 flex items-center justify-between shrink-0 bg-card-warm dark:bg-terminal-surface">
                 <button onclick="resetChartSettings()"
-                    class="min-h-[44px] px-3 py-2 text-xs font-bold text-brand-claret hover:bg-brand-claret/10 rounded-lg transition-colors">
+                    class="min-h-[44px] px-3 py-2 text-xs font-semibold text-brand-claret hover:bg-brand-claret/10 rounded-lg transition-colors">
                     Reset
                 </button>
                 <button onclick="closeChartSettings()"
-                    class="min-h-[44px] px-4 py-2 text-xs font-bold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-all">
+                    class="min-h-[44px] px-4 py-2 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition">
                     Close
                 </button>
             </div>
@@ -1005,15 +1005,15 @@
                 <div class="p-4 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/20">
                     <div class="flex items-center gap-2 mb-2">
                         <span
-                            class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-teal/20 text-brand-teal font-ui uppercase tracking-wider">Daily</span>
-                        <span class="text-xs font-bold text-brand-black-80 dark:text-white font-ui">Exchange-Traded
+                            class="text-2xs font-semibold px-2 py-0.5 rounded-full bg-brand-teal/20 text-brand-teal font-ui uppercase tracking-wider">Daily</span>
+                        <span class="text-xs font-semibold text-brand-black-80 dark:text-white font-ui">Exchange-Traded
                             Benchmarks</span>
                     </div>
                     <p class="text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed mb-2">
                         Updated every business day from public data sources. Reflects end-of-day benchmark
                         prices.
                     </p>
-                    <div class="text-[10px] text-brand-black-60 font-medium font-ui">
+                    <div class="text-2xs text-brand-black-60 font-medium font-ui">
                         <span class="font-bold">Includes:</span> Crude Oil (Brent, WTI), Natural Gas, Heating Oil, Jet
                         Fuel, Propane, Gold
                     </div>
@@ -1023,15 +1023,15 @@
                 <div class="p-4 rounded-xl bg-brand-oxford/5 dark:bg-brand-oxford/10 border border-brand-oxford/20">
                     <div class="flex items-center gap-2 mb-2">
                         <span
-                            class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal font-ui uppercase tracking-wider">Monthly</span>
-                        <span class="text-xs font-bold text-brand-black-80 dark:text-white font-ui">Global
+                            class="text-2xs font-semibold px-2 py-0.5 rounded-full bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal font-ui uppercase tracking-wider">Monthly</span>
+                        <span class="text-xs font-semibold text-brand-black-80 dark:text-white font-ui">Global
                             Benchmarks</span>
                     </div>
                     <p class="text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed mb-2">
                         IMF/World Bank global commodity price indices. Published monthly with 1-2 month lag. Provides
                         historical context over longer periods.
                     </p>
-                    <div class="text-[10px] text-brand-black-60 font-medium font-ui">
+                    <div class="text-2xs text-brand-black-60 font-medium font-ui">
                         <span class="font-bold">Includes:</span> Industrial Metals (Copper, Aluminum, Zinc, etc.),
                         Agricultural (Wheat, Corn, Coffee, etc.)
                     </div>
@@ -1051,7 +1051,7 @@
     <div
         class="mt-6 sm:mt-8 p-4 sm:p-6 border-l-4 border-brand-claret/50 bg-brand-black-60/5 dark:bg-white/5 rounded-r-xl transition-colors duration-500">
         <h4
-            class="text-brand-black-80 dark:text-white font-bold mb-2 tracking-wider text-[11px] font-ui flex items-center gap-2">
+            class="text-brand-black-80 dark:text-white font-bold mb-2 tracking-wider text-xs font-ui flex items-center gap-2">
             <svg class="w-4 h-4 text-brand-claret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">

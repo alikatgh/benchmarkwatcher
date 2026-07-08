@@ -15,9 +15,9 @@ Financial-Times-style editorial commodity-benchmark **reference** (not advice). 
 3. **Build:** `npm run build:css` → compiles `tailwind.input.css` → `app/static/css/tailwind.css`. The file is committed **empty (0 bytes)** and built in CI/deploy. **After editing tokens you must rebuild** to see changes locally.
 
 ## Mobile cascade layers
-1. **`mobile/tailwind.config.js`** — currently `theme: { extend: {} }` → **EMPTY**, so the app renders with stock Tailwind `slate/blue/emerald/rose`. **This is the primary lever:** add brand tokens (paper / ink / ink-muted / claret / teal / oxford / surfaces) + a serif display font here, then swap utility classes.
-2. **`mobile/context/SettingsContext.tsx`** — `getMarketColors(isUp)` already themes up/down text + chart colors (good, reusable). Neutrals/surfaces are NOT themed (hardcoded slate).
+1. **`mobile/tailwind.config.js`** — populated (2026-07-08): brand tokens (paper/wheat/claret/teal/oxford/ink) + **re-toned stock ramps** — `slate` → warm FT neutrals, `blue`/`indigo` → oxford/teal, `emerald` → teal ramp, `rose` → claret ramp — so existing utility classes (and `getMarketColors`) render on-brand with zero per-file edits. Also `fontSize['2xs']` (10px), the micro-label token (twin of web `--text-2xs`); no arbitrary `text-[Npx]`.
+2. **`mobile/context/SettingsContext.tsx`** — `getMarketColors(isUp)` themes up/down text + chart colors via emerald/rose classes, which the ramp remap lands on teal/claret.
 3. **`mobile/global.css`** — NativeWind entry.
 
 ## The biggest single "level up"
-Web ships the full FT brand; mobile ships **stock Tailwind**. They look like two different products. Unifying mobile onto the web's brand tokens (claret/teal/oxford + paper + serif display) is the highest-leverage change in the whole effort — and it's a cascade edit (config + token swap), not a per-screen rewrite.
+✅ Done (2026-07-08 ralph wave): mobile now shares the FT brand via the config-level ramp remap + serif display titles; web/mobile read as one product. See `docs/KNOWN_UI_DEBT.md` UI-1/UI-9 resolutions.

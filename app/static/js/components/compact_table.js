@@ -126,7 +126,7 @@ BW.CompactTable = {
                     msg.textContent = 'Please check your connection and try again';
 
                     const btn = document.createElement('button');
-                    btn.className = 'mt-4 px-4 py-2 text-sm font-bold text-white bg-brand-oxford dark:bg-brand-teal rounded-lg hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal focus:ring-offset-2';
+                    btn.className = 'mt-4 px-4 py-2 text-sm font-semibold text-white bg-brand-oxford dark:bg-brand-teal rounded-lg hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal focus:ring-offset-2';
                     btn.textContent = 'Try Again';
                     btn.addEventListener('click', () => BW.CompactTable.setDataRange(range));
 
@@ -226,7 +226,7 @@ BW.CompactTable = {
 
             const row = document.createElement('tr');
             row.onclick = () => { window.location = `/commodity/${encodeURIComponent(commodityId)}`; };
-            row.className = 'hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition-all duration-200 group';
+            row.className = 'hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition duration-200 group';
             row.tabIndex = 0;
             row.setAttribute('role', 'link');
             row.addEventListener('keydown', event => {
@@ -250,12 +250,12 @@ BW.CompactTable = {
                 <td data-col="commodity" class="px-4 py-5">
                     <div class="flex items-center gap-3 commodity-cell">
                         <div class="commodity-icon w-10 h-10 rounded-xl bg-brand-black-60/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-oxford/10 dark:group-hover:bg-brand-teal/10 transition-colors">
-                            <span class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60">${safeIconText}</span>
+                            <span class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60">${safeIconText}</span>
                         </div>
                         <div>
-                            <div class="commodity-name text-sm font-bold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">${safeName}</div>
+                            <div class="commodity-name text-sm font-semibold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">${safeName}</div>
                             <div class="flex items-center gap-1.5">
-                                <span class="commodity-category text-[10px] text-brand-black-60 tracking-wide uppercase">${safeCategory}</span>
+                                <span class="commodity-category text-2xs text-brand-black-60 tracking-wide uppercase">${safeCategory}</span>
                                 <span class="text-[8px] font-bold px-1 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${safeFreqTitle}">${freqBadge}</span>
                             </div>
                         </div>
@@ -267,17 +267,17 @@ BW.CompactTable = {
                     </div>
                 </td>
                 <td data-col="price" class="px-4 py-5 text-right">
-                    <div class="price-value text-sm font-bold text-brand-black-80 dark:text-white" data-raw="${safePrice}">${safePrice}</div>
-                    <div class="price-currency text-[10px] text-brand-black-60">${safeCurrency}</div>
+                    <div class="price-value text-sm font-semibold text-brand-black-80 dark:text-white" data-raw="${safePrice}">${safePrice}</div>
+                    <div class="price-currency text-2xs text-brand-black-60">${safeCurrency}</div>
                 </td>
                 <td data-col="chg" class="px-4 py-5 text-right">
                     <div class="chg-cell relative group/chg">
-                        <div class="inline-flex items-center gap-1 text-sm font-bold cursor-help" style="color: var(${colorVar});" data-value="${safeDisplayChange}">
-                            <span class="chg-arrow text-[10px]">${arrow}</span>
+                        <div class="inline-flex items-center gap-1 text-sm font-semibold cursor-help" style="color: var(${colorVar});" data-value="${safeDisplayChange}">
+                            <span class="chg-arrow text-2xs">${arrow}</span>
                             <span class="chg-value">${safeDisplayChange}</span>
                         </div>
                         <!-- Tooltip -->
-                        <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-[10px] opacity-0 invisible group-hover/chg:opacity-100 group-hover/chg:visible transition-all z-50 font-ui text-left">
+                        <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-2xs opacity-0 invisible group-hover/chg:opacity-100 group-hover/chg:visible transition z-50 font-ui text-left">
                             <div class="font-bold mb-1">Price Change (${safeRangeLabel})</div>
                             <div class="space-y-0.5 text-brand-black-60">
                                 <div>Start: <span class="text-white">${safeFirstPrice} ${safeCurrency}</span></div>
@@ -289,11 +289,11 @@ BW.CompactTable = {
                 </td>
                 <td data-col="pct" class="px-4 py-5 text-right">
                     <div class="pct-cell relative group/pct">
-                        <div class="inline-flex px-2 py-1 rounded-lg text-sm font-bold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${safeDisplayChangePercent}">
+                        <div class="inline-flex px-2 py-1 rounded-lg text-sm font-semibold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${safeDisplayChangePercent}">
                             ${safeDisplayChangePercent}%
                         </div>
                         <!-- Tooltip -->
-                        <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-[10px] opacity-0 invisible group-hover/pct:opacity-100 group-hover/pct:visible transition-all z-50 font-ui text-left">
+                        <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-2xs opacity-0 invisible group-hover/pct:opacity-100 group-hover/pct:visible transition z-50 font-ui text-left">
                             <div class="font-bold mb-1">% Change (${safeRangeLabel})</div>
                             <div class="space-y-0.5 text-brand-black-60">
                                 <div>${safeFirstDate} → ${safeLastDate}</div>
@@ -363,7 +363,7 @@ BW.CompactTable = {
                         let noDataMsg = container.querySelector('.no-data-msg');
                         if (!noDataMsg) {
                             noDataMsg = document.createElement('div');
-                            noDataMsg.className = 'no-data-msg text-[10px] text-brand-black-60 italic flex items-center justify-center h-full';
+                            noDataMsg.className = 'no-data-msg text-2xs text-brand-black-60 italic flex items-center justify-center h-full';
                             noDataMsg.textContent = 'No data in range';
                             container.appendChild(noDataMsg);
                         }
@@ -576,9 +576,9 @@ BW.CompactTable = {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
                 if (range === activeRange) {
-                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text';
                 } else {
-                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition';
                 }
             }
         });
@@ -682,9 +682,9 @@ BW.CompactTable = {
         const preview = document.getElementById('preview-commodity');
         if (!preview) return;
 
-        const icon = '<div class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center"><span class="text-[10px] font-semibold text-brand-black-60">BR</span></div>';
-        const name = '<div class="text-xs font-bold text-brand-black-80 dark:text-white">Brent Crude Oil</div>';
-        const category = '<div class="text-[10px] text-brand-black-60">Energy</div>';
+        const icon = '<div class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center"><span class="text-2xs font-semibold text-brand-black-60">BR</span></div>';
+        const name = '<div class="text-xs font-semibold text-brand-black-80 dark:text-white">Brent Crude Oil</div>';
+        const category = '<div class="text-2xs text-brand-black-60">Energy</div>';
 
         switch (display) {
             case 'full': preview.innerHTML = `<div class="flex items-center gap-2">${icon}<div>${name}${category}</div></div>`; break;
@@ -707,7 +707,7 @@ BW.CompactTable = {
         const lowIdx = 0;
 
         if (type === 'none') {
-            container.innerHTML = '<span class="text-[10px] text-brand-black-60 italic">Hidden</span>';
+            container.innerHTML = '<span class="text-2xs text-brand-black-60 italic">Hidden</span>';
             return;
         }
 
@@ -772,10 +772,10 @@ BW.CompactTable = {
 
         let html = '';
         switch (currency) {
-            case 'below': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div><div class="text-[10px] text-brand-black-60">USD</div>`; break;
-            case 'inline': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">USD ${priceText}</div>`; break;
-            case 'symbol': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">$${priceText}</div>`; break;
-            case 'none': html = `<div class="text-sm font-bold text-brand-black-80 dark:text-white">${priceText}</div>`; break;
+            case 'below': html = `<div class="text-sm font-semibold text-brand-black-80 dark:text-white">${priceText}</div><div class="text-2xs text-brand-black-60">USD</div>`; break;
+            case 'inline': html = `<div class="text-sm font-semibold text-brand-black-80 dark:text-white">USD ${priceText}</div>`; break;
+            case 'symbol': html = `<div class="text-sm font-semibold text-brand-black-80 dark:text-white">$${priceText}</div>`; break;
+            case 'none': html = `<div class="text-sm font-semibold text-brand-black-80 dark:text-white">${priceText}</div>`; break;
         }
         preview.innerHTML = html;
     },
@@ -794,7 +794,7 @@ BW.CompactTable = {
             case 'sign': text = '+12.45'; break;
             case 'plain': text = '12.45'; break;
         }
-        preview.innerHTML = `<span class="text-sm font-bold ${color === 'neutral' ? 'text-brand-black-80 dark:text-white' : ''}" style="${colorStyle}">${text}</span>`;
+        preview.innerHTML = `<span class="text-sm font-semibold ${color === 'neutral' ? 'text-brand-black-80 dark:text-white' : ''}" style="${colorStyle}">${text}</span>`;
     },
 
     // Percent preview
@@ -806,9 +806,9 @@ BW.CompactTable = {
 
         const pctValue = '+' + (0.7234).toFixed(decimals) + '%';
         if (style === 'badge') {
-            preview.innerHTML = `<span class="px-2 py-0.5 rounded text-xs font-bold" style="color: var(--color-up); background-color: var(--color-up-bg)">${pctValue}</span>`;
+            preview.innerHTML = `<span class="px-2 py-0.5 rounded text-xs font-semibold" style="color: var(--color-up); background-color: var(--color-up-bg)">${pctValue}</span>`;
         } else {
-            preview.innerHTML = `<span class="text-xs font-bold" style="color: var(--color-up)">${pctValue}</span>`;
+            preview.innerHTML = `<span class="text-xs font-semibold" style="color: var(--color-up)">${pctValue}</span>`;
         }
     },
 

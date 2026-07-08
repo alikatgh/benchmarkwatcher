@@ -12,7 +12,7 @@ export default function ChangelogItem({ release, isLast }: ChangelogItemProps) {
         <View className={`mb-10 pb-10 ${!isLast ? 'border-b border-slate-100 dark:border-slate-800' : ''}`}>
             <View className="flex-row items-center gap-3 mb-3">
                 <View className={`px-2.5 py-1 rounded-full ${release.tagColor}`}>
-                    <Text className="text-[10px] font-bold tracking-wider">{release.tag}</Text>
+                    <Text className="text-2xs font-bold tracking-wider">{release.tag}</Text>
                 </View>
                 <Text className="text-sm text-slate-400 dark:text-slate-500 font-medium">{release.date}</Text>
             </View>

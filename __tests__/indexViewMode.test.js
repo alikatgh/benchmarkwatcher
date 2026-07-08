@@ -236,7 +236,7 @@ describe('Index market pulse summary', () => {
       expect(allLink.getAttribute('href')).toBe('/?range=1M&view=compact');
       expect(allLink.hasAttribute('aria-current')).toBe(false);
       expect(categoryLink.getAttribute('aria-current')).toBe('page');
-      expect(categoryLink.className).toContain('border-brand-oxford');
+      expect(categoryLink.className).toContain('bg-brand-oxford/5');
     } finally {
       window.history.pushState({}, '', originalHref);
     }

@@ -723,17 +723,15 @@
            ACTIVE STATE STYLES (Tailwind-safe, attribute-based)
            ============================================================ */
 
-        /* Theme buttons - active state */
+        /* Theme buttons - active state (color only — UI rules §1: no shadow on state) */
         .theme-btn[data-active="true"] {
             border-color: var(--theme-accent) !important;
-            box-shadow: 0 0 0 1px var(--theme-accent), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             background-color: rgba(128, 128, 128, 0.15) !important;
         }
 
         /* Market buttons - active state */
         .market-btn[data-active="true"] {
             border-color: var(--theme-accent) !important;
-            box-shadow: 0 0 0 1px var(--theme-accent), 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             background-color: rgba(128, 128, 128, 0.15) !important;
         }
 
@@ -741,7 +739,6 @@
         .view-btn[data-active="true"] {
             background-color: var(--theme-surface, #ffffff) !important;
             color: var(--theme-text) !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
         }
 
         .dark .view-btn[data-active="true"] {
