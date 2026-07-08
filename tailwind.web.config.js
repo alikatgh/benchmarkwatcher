@@ -28,6 +28,10 @@ module.exports = {
         serif: ['Georgia', 'serif'],
         sans: ['Inter', 'sans-serif'],
         ui: ['Inter', 'sans-serif']
+      },
+      fontSize: {
+        // Fluid micro-label token (base.html --text-2xs); replaces ad-hoc text-[9/10px]
+        '2xs': ['var(--text-2xs)', { lineHeight: '1.1' }]
       }
     }
   }

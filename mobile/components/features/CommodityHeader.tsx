@@ -40,13 +40,13 @@ export default function CommodityHeader({
             <Text className="text-xl text-slate-500 dark:text-slate-400 font-medium mb-1 uppercase tracking-wider">
                 {commodity.category}
             </Text>
-            <Text className="text-4xl font-bold text-slate-900 dark:text-white mb-6">
+            <Text className="text-4xl font-bold font-serif text-slate-900 dark:text-white mb-6">
                 {commodity.name}
             </Text>
 
             <View className="mb-6 flex-row items-center justify-between">
                 <View>
-                    <Text className="text-5xl font-bold text-slate-900 dark:text-white" numberOfLines={1} adjustsFontSizeToFit>
+                    <Text className="text-5xl font-semibold text-slate-900 dark:text-white" numberOfLines={1} adjustsFontSizeToFit>
                         {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                     </Text>
                     <Text className="text-lg text-slate-500 dark:text-slate-400 mt-1">
@@ -63,7 +63,7 @@ export default function CommodityHeader({
             </View>
 
             <View className="flex-row items-center flex-wrap gap-3 mb-6">
-                <Text className={`text-xl font-bold ${changeColor}`}>
+                <Text className={`text-xl font-semibold ${changeColor}`}>
                     {isUp ? '+' : ''}{Math.abs(changePercent).toFixed(2)}%
                 </Text>
                 {selectedChangePeriod === '1' && typeof changeAbs === 'number' && (
@@ -92,7 +92,7 @@ export default function CommodityHeader({
                             accessibilityRole="button"
                             accessibilityState={{ selected: isActive }}
                         >
-                            <Text className={`text-[11px] font-bold ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                            <Text className={`text-xs font-semibold ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                                 {btn.label}
                             </Text>
                         </TouchableOpacity>

@@ -4,45 +4,45 @@ _Phase 1 audit · 2026-06-07. Severity = visual-quality impact (no P0 broken-UI 
 
 ## P1 — Serious (quality / consistency)
 
-### UI-1 · Brand split between web and mobile
+### UI-1 · Brand split between web and mobile — ✅ Fixed 2026-07-08 (ralph wave). `mobile/tailwind.config.js` carries brand tokens + re-toned slate/blue/indigo/emerald/rose ramps (cascade), serif display on Home/Detail titles; `getMarketColors` now lands on claret/teal via the ramp remap.
 Mobile renders in stock Tailwind `slate/blue/emerald/rose`; web uses the FT brand (claret/teal/oxford on paper, Georgia serif). They read as two different products.
 - Where: `mobile/tailwind.config.js` (`extend:{}` empty) · `HomeScreen.tsx`, `CommodityDetailScreen.tsx`, `CompactCommodityRow.tsx` (slate/blue throughout).
 - **Cascade fix:** add brand tokens + serif display to `mobile/tailwind.config.js`; swap `slate/blue/emerald/rose` → brand tokens. Market up/down already comes from `getMarketColors()`.
 
-### UI-2 · Weight hierarchy has collapsed
+### UI-2 · Weight hierarchy has collapsed — ✅ Fixed 2026-07-08. 3-role convention applied: display = serif bold, values = semibold tabular, labels = semibold/medium (codemod demoted all small-text `font-bold` across web templates + JS renderers + key mobile components).
 **247 `font-bold` + 9 `font-extrabold`** across web templates (mobile similar). When nearly everything is bold, nothing leads the eye.
 - **Cascade fix:** adopt a 3-role type convention — *display* (serif, bold), *value* (semibold, tabular-nums), *label* (medium, uppercase, muted). Set sane element defaults in `base.html`; reduce blanket `font-bold` on labels via a codemod.
 
-### UI-3 · Redundant / clunky microcopy on the compact row
+### UI-3 · Redundant / clunky microcopy on the compact row — ✅ Fixed (earlier wave). "Direction {label}" survives only as an `accessibilityLabel` (correct a11y), not visible text.
 `CompactCommodityRow` renders the literal string **"▲ Direction Up"** right next to the already-colored, signed `%` change — saying the same thing three ways (arrow + word + colored number).
 - Where: `mobile/components/CompactCommodityRow.tsx:93-98`.
 - **Fix:** drop the "Direction {label}" text; the colored signed % already encodes direction. (Removes copy → vocab-safe.)
 
 ## P2 — Quality
 
-### UI-4 · Micro-text overload
+### UI-4 · Micro-text overload — ✅ Fixed 2026-07-08. `text-2xs` token added to both Tailwind configs (web: fluid `--text-2xs`; mobile: 10px); all `text-[9/10/11px]` arbitrary utilities codemodded to `text-2xs`/`text-xs` (web templates + JS renderers + mobile).
 **129 sub-12px labels** (41×`text-[9px]`, 82×`text-[10px]`, 6×`text-[11px]`). Hard to scan; reads as busy.
 - **Cascade fix:** collapse to two label sizes via tokens (`--text-2xs`, `--text-xs`) with one tracking value; codemod the arbitrary `text-[Npx]` to the tokens.
 
-### UI-5 · Shadows vs. flat/hairline aesthetic
+### UI-5 · Shadows vs. flat/hairline aesthetic — ✅ Fixed 2026-07-08. `--card-shadow: none` everywhere; removed the density-restore hardcoded card shadow + Card Options preview shadow (`grid_view.js`), active-state button shadows (`base.html`), mobile `shadow-sm` (`CommodityCard`). Popups/tooltips keep shadows (exempt overlays).
 **18 shadow instances** (8 inline `box-shadow` + 10 `shadow-*`) plus the `--card-shadow` token. Cards float instead of sitting on hairlines.
 - **Cascade fix:** set `--card-shadow: none` (or remove), drop inline `box-shadow`, lean on `--theme-border`. One token change flattens every card.
 
-### UI-6 · Corner-radius sprawl
+### UI-6 · Corner-radius sprawl — ✅ Re-assessed + fixed 2026-07-08. Live sprawl was smaller than the audit count (mostly settings-modal color swatches); normalized the Card Options preview radius to 12px. Scale now: 8px controls / 12px cards / full pills.
 **9 distinct radii** in use: `rounded-lg`×118, `xl`×57, `md`×13, `full`×11, `sm`×6, `2xl`×5, `r`×1, `none`×1.
 - **Cascade fix:** standardize to 3 steps — chips/controls 8px, cards 12px, pills `full`. Codemod the outliers (`md/2xl/sm`).
 
-### UI-7 · Hover changes geometry (price card)
+### UI-7 · Hover changes geometry (price card) — ✅ Fixed 2026-07-08. Removed gradient overlay, arrow `translate-x`, list-density `translateY(-1px)` JS hover, and `transition-all` (→ curated `transition`) in `price_card.html` + `grid_view.js`. Hover = border/text color only.
 Grid card hover fires **5 effects at once**: `-translate-y-1` lift + gradient fade-in + border color + arrow translate + title color.
 - Where: `app/templates/components/price_card.html:13-16,70`.
 - **Fix:** keep border-tint (and maybe arrow) only; remove `-translate-y` and gradient. (UI rule: interactive state must not move/resize geometry.)
 
-### UI-8 · Busy nested tiles in Market Pulse
+### UI-8 · Busy nested tiles in Market Pulse — ✅ Fixed 2026-07-08. Stat tiles flattened to editorial top-rule stats (no fills/boxes); category rows flattened to bg-tint hover/selected rows (no border boxes) in `index.html` + `index.js`.
 Card-in-card: a `card-warm` panel holds four `bg-black/5` tinted sub-tiles, each bordered.
 - Where: `app/templates/index.html:39-72`.
 - **Fix:** flatten to hairline-separated rows; drop the inner fills.
 
-### UI-9 · Mobile active states are off-brand
+### UI-9 · Mobile active states are off-brand — ✅ Fixed 2026-07-08. Category pill: brand bg-tint + brand text (no solid black, no border flip); range chips land on oxford/teal via the blue-ramp remap. `HomeScreen.tsx`.
 Active category = solid **black** pill (`bg-slate-900`); active range = **blue** chip (`bg-blue-100`).
 - Where: `HomeScreen.tsx:226,280`.
 - **Fix:** brand bg-tint + brand text, matching the web `[data-active]` convention (bg-tint + brand secondary text, no geometry change).

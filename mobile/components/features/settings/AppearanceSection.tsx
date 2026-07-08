@@ -63,21 +63,21 @@ export default function AppearanceSection() {
                         className={`flex-1 items-center py-2 rounded-lg border-2 ${marketTheme === 'western' ? 'bg-slate-200 dark:bg-slate-600 border-slate-400 dark:border-slate-400' : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-500'}`}
                     >
                         <Text className="text-sm text-slate-800 dark:text-white font-medium">Western</Text>
-                        <Text className="text-[10px] text-slate-500 mt-1">Green Up, Red Down</Text>
+                        <Text className="text-2xs text-slate-500 mt-1">Green Up, Red Down</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => setMarketTheme('asian')}
                         className={`flex-1 items-center py-2 rounded-lg border-2 ${marketTheme === 'asian' ? 'bg-slate-200 dark:bg-slate-600 border-slate-400 dark:border-slate-400' : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-500'}`}
                     >
                         <Text className="text-sm text-slate-800 dark:text-white font-medium">Asian</Text>
-                        <Text className="text-[10px] text-slate-500 mt-1">Red Up, Green Down</Text>
+                        <Text className="text-2xs text-slate-500 mt-1">Red Up, Green Down</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         onPress={() => setMarketTheme('monochrome')}
                         className={`flex-1 items-center py-2 rounded-lg border-2 ${marketTheme === 'monochrome' ? 'bg-slate-200 dark:bg-slate-600 border-slate-400 dark:border-slate-400' : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-500'}`}
                     >
                         <Text className="text-sm text-slate-800 dark:text-white font-medium">Mono</Text>
-                        <Text className="text-[10px] text-slate-500 mt-1">Black & Slate</Text>
+                        <Text className="text-2xs text-slate-500 mt-1">Black & Slate</Text>
                     </TouchableOpacity>
                 </View>
             </View>

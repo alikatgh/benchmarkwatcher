@@ -207,7 +207,7 @@ BW.GridView = {
         if (actionLabel && onAction) {
             const btn = document.createElement('button');
             btn.className =
-                'mt-4 px-4 py-2 text-sm font-bold text-white bg-brand-oxford dark:bg-brand-teal rounded-lg hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal';
+                'mt-4 px-4 py-2 text-sm font-semibold text-white bg-brand-oxford dark:bg-brand-teal rounded-lg hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal';
             btn.textContent = actionLabel;
             btn.addEventListener('click', onAction);
             wrapper.appendChild(btn);
@@ -391,7 +391,7 @@ BW.GridView = {
 
             // Check if freq badge should be shown
             const showFreqBadge = settings.showFreqBadge !== false;
-            const freqBadgeHtml = showFreqBadge ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${freqTitle}">${freqBadge}</span>` : '';
+            const freqBadgeHtml = showFreqBadge ? `<span class="text-2xs font-semibold px-1.5 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${freqTitle}">${freqBadge}</span>` : '';
 
             const card = document.createElement('a');
             card.href = `/commodity/${encodeURIComponent(commodityId)}`;
@@ -409,14 +409,13 @@ BW.GridView = {
             card.dataset.changePct = displayChangePercent;
             card.dataset.changeAbs = displayChange;
             card.innerHTML = `
-                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition-all duration-300 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
-                    <div class="bw-grid-gradient absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                <div class="bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition duration-300 h-full relative overflow-hidden" style="box-shadow: var(--card-shadow);">
                     <div class="bw-grid-category-row flex items-center justify-between mb-4">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
+                            <span class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.15em] font-ui uppercase">${safeCategory}</span>
                             ${freqBadgeHtml}
                         </div>
-                        <div class="bw-grid-direction-badge text-[10px] font-semibold py-0.5 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar}); border: 1px solid var(${borderColorVar});">
+                        <div class="bw-grid-direction-badge text-2xs font-semibold py-0.5 px-2.5 rounded-full font-ui" style="color: var(${colorVar}); background-color: var(${bgColorVar}); border: 1px solid var(${borderColorVar});">
                             ${arrowSymbol} ${Math.abs(displayChangePercent)}%
                         </div>
                     </div>
@@ -424,7 +423,7 @@ BW.GridView = {
                         ${safeName}
                     </h3>
                     <div class="bw-grid-price-section font-ui mb-3">
-                        <div class="bw-grid-price tabular-nums text-3xl font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
+                        <div class="bw-grid-price tabular-nums text-3xl font-semibold text-brand-black-80 dark:text-white tracking-tight leading-none truncate">
                             ${safePrice}
                         </div>
                         <div class="bw-grid-unit text-sm font-medium text-brand-black-60 dark:text-brand-black-60/80 mt-1">
@@ -432,7 +431,7 @@ BW.GridView = {
                         </div>
                     </div>
                     <div class="bw-grid-change flex items-baseline gap-2 font-ui min-h-[1.7rem]">
-                        <span class="bw-grid-change-pct tabular-nums text-lg font-bold" style="color: var(${colorVar});">
+                        <span class="bw-grid-change-pct tabular-nums text-lg font-semibold" style="color: var(${colorVar});">
                             ${safeDisplayChangePercent}%
                         </span>
                         <span class="text-brand-black-60/30 dark:text-white/20 text-xs select-none">·</span>
@@ -441,10 +440,10 @@ BW.GridView = {
                         </span>
                     </div>
                     <div class="bw-grid-footer mt-4 pt-4 border-t border-brand-black-60/10 dark:border-white/5 flex justify-between items-center font-ui">
-                        <div class="bw-grid-date text-[10px] text-brand-black-60 dark:text-white/70">
+                        <div class="bw-grid-date text-2xs text-brand-black-60 dark:text-white/70">
                             As of ${safeDate} · <span class="italic">${safeRangeLabel}</span>
                         </div>
-                        <div class="text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all">
+                        <div class="text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                             </svg>
@@ -475,8 +474,8 @@ BW.GridView = {
             btn.setAttribute('tabindex', isActive ? '0' : '-1');
 
             btn.className = isActive
-                ? 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text'
-                : 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                ? 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text'
+                : 'grid-range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition';
         });
     },
 
@@ -701,7 +700,7 @@ BW.GridView = {
                 }
 
             } else {
-                previewCard.style.cssText = 'padding: 1.25rem; border-radius: 1rem; border: 1px solid color-mix(in srgb, var(--theme-border) 75%, transparent); box-shadow: 0 10px 24px color-mix(in srgb, var(--theme-border) 25%, transparent);';
+                previewCard.style.cssText = 'padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--theme-border); box-shadow: var(--card-shadow);';
                 if (nameEl) nameEl.style.cssText = 'font-size: 16px; margin-bottom: 0.8rem; line-height:1.2;';
                 if (categoryBadge) categoryBadge.style.cssText = showCategory ? 'margin-bottom:0.8rem;' : 'display:none;';
                 if (priceSection) priceSection.style.cssText = 'margin-bottom:0.65rem;';
@@ -773,18 +772,16 @@ BW.GridView = {
                     padding: 0.85rem 1rem;
                     background: ${isEven ? 'var(--theme-surface)' : 'color-mix(in srgb, var(--theme-surface) 65%, transparent)'};
                     box-shadow: 0 1px 0 color-mix(in srgb, var(--theme-border) 65%, transparent);
-                    transition: transform 0.15s ease, background 0.2s ease;
+                    transition: background 0.2s ease;
                 `;
 
                 link.onmouseenter = () => {
                     card.style.background = 'color-mix(in srgb, var(--theme-accent) 10%, var(--theme-surface))';
-                    card.style.transform = 'translateY(-1px)';
                 };
                 link.onmouseleave = () => {
                     card.style.background = isEven
                         ? 'var(--theme-surface)'
                         : 'color-mix(in srgb, var(--theme-surface) 65%, transparent)';
-                    card.style.transform = '';
                 };
 
                 const gradientOverlay = card.querySelector('.bw-grid-gradient');
@@ -928,7 +925,7 @@ BW.GridView = {
                 const card = link.querySelector('div');
                 if (!card) return;
 
-                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface rounded-lg border border-brand-black-60/12 dark:border-white/8 h-full relative overflow-hidden transition-all duration-150';
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface rounded-lg border border-brand-black-60/12 dark:border-white/8 h-full relative overflow-hidden transition duration-150';
                 card.style.cssText = 'padding: 0.7rem; box-shadow: none;';
 
                 const gradientOverlay = card.querySelector('.bw-grid-gradient');
@@ -948,7 +945,7 @@ BW.GridView = {
 
                 const title = card.querySelector('.bw-grid-title');
                 if (title) {
-                    title.className = 'bw-grid-title text-xs font-bold text-brand-black-80 dark:text-white mb-1.5 font-serif leading-tight line-clamp-2 min-h-[2rem]';
+                    title.className = 'bw-grid-title text-xs font-semibold text-brand-black-80 dark:text-white mb-1.5 font-serif leading-tight line-clamp-2 min-h-[2rem]';
                     title.style.cssText = '';
                 }
 
@@ -957,7 +954,7 @@ BW.GridView = {
                     priceSection.style.cssText = 'margin-bottom:0.3rem;';
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = 'bw-grid-price tabular-nums text-lg font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.className = 'bw-grid-price tabular-nums text-lg font-semibold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
                         priceEl.style.cssText = '';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
@@ -1007,15 +1004,8 @@ BW.GridView = {
             container.querySelectorAll('a.block.group').forEach(link => {
                 const card = link.querySelector('div');
                 if (!card) return;
-                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition-all duration-300 h-full relative overflow-hidden';
-                card.style.boxShadow = '0 10px 24px color-mix(in srgb, var(--theme-border) 25%, transparent)';
-
-                // Restore gradient overlay
-                const gradientOverlay = card.querySelector('.bw-grid-gradient') || card.querySelector('.absolute');
-                if (gradientOverlay) {
-                    gradientOverlay.className = 'absolute inset-0 bg-gradient-to-br from-brand-oxford/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none';
-                    gradientOverlay.style.cssText = '';
-                }
+                card.className = 'bw-grid-card bg-card-warm dark:bg-terminal-surface p-6 rounded-xl border border-brand-black-60/15 dark:border-white/10 group-hover:border-brand-oxford dark:group-hover:border-brand-teal transition duration-300 h-full relative overflow-hidden';
+                card.style.boxShadow = 'var(--card-shadow)';
 
                 // Restore category row
                 const categoryRow = card.querySelector('.bw-grid-category-row') || card.querySelector('div:nth-child(2)');
@@ -1047,7 +1037,7 @@ BW.GridView = {
 
                     const priceEl = priceSection.querySelector('.bw-grid-price');
                     if (priceEl) {
-                        priceEl.className = 'bw-grid-price tabular-nums text-3xl font-bold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
+                        priceEl.className = 'bw-grid-price tabular-nums text-3xl font-semibold text-brand-black-80 dark:text-white tracking-tight leading-none truncate';
                         priceEl.style.cssText = '';
                     }
                     const unitEl = priceSection.querySelector('.bw-grid-unit');
@@ -1071,7 +1061,7 @@ BW.GridView = {
                         // Minimal/Dense handlers.
                         const cpv = parseFloat(link.dataset.changePct || '0');
                         const cpVar = cpv > 0 ? '--color-up' : cpv < 0 ? '--color-down' : '--theme-text-muted';
-                        changePctEl.className = 'bw-grid-change-pct tabular-nums text-lg font-bold';
+                        changePctEl.className = 'bw-grid-change-pct tabular-nums text-lg font-semibold';
                         changePctEl.style.cssText = showChangePct ? `color: var(${cpVar});` : 'display: none;';
                     }
                     const changeAbsEl = changeSection.querySelector('.bw-grid-change-abs');
@@ -1089,13 +1079,13 @@ BW.GridView = {
 
                     const dateEl = footer.querySelector('.bw-grid-date');
                     if (dateEl) {
-                        dateEl.className = 'bw-grid-date text-[10px] text-brand-black-60 dark:text-white/70';
+                        dateEl.className = 'bw-grid-date text-2xs text-brand-black-60 dark:text-white/70';
                         dateEl.style.cssText = '';
                     }
 
                     const arrowEl = footer.lastElementChild;
                     if (arrowEl) {
-                        arrowEl.className = 'text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal group-hover:translate-x-0.5 transition-all';
+                        arrowEl.className = 'text-brand-black-60 dark:text-white/70 group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition';
                         arrowEl.style.cssText = '';
                     }
                 }

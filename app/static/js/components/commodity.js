@@ -674,14 +674,14 @@ BW.Commodity = {
                             const change = price - prev;
                             const sign = change >= 0 ? '+' : '';
                             changeEl.textContent = `${sign}${change.toFixed(2)} %`;
-                            changeEl.className = 'text-sm font-bold ml-2';
+                            changeEl.className = 'text-sm font-semibold ml-2';
                             changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
                         } else {
                             const change = price - prev;
                             const changePercent = prev !== 0 ? ((change / prev) * 100).toFixed(2) : 'N/A';
                             const sign = change >= 0 ? '+' : '';
                             changeEl.textContent = `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
-                            changeEl.className = 'text-sm font-bold ml-2';
+                            changeEl.className = 'text-sm font-semibold ml-2';
                             changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
                         }
                     }
@@ -694,6 +694,16 @@ BW.Commodity = {
         }
 
         this.priceChart = new Chart(this.ctx, chartConfig);
+
+        // Seed the crosshair readout with the latest point so the panel never
+        // shows "--" placeholders before the first hover.
+        try {
+            const seedData = (chartConfig.data.datasets[0] || {}).data || [];
+            const seedIdx = seedData.length - 1;
+            if (seedIdx > 0 && seedData[seedIdx] !== null && seedData[seedIdx] !== undefined) {
+                chartConfig.options.onHover.call(this.priceChart, null, [{ index: seedIdx, datasetIndex: 0 }]);
+            }
+        } catch (e) { /* cosmetic seeding only */ }
 
         // Pass metadata to chart instance for plugins
         const isDark = document.documentElement.classList.contains('dark');
@@ -738,7 +748,7 @@ BW.Commodity = {
             const btn = document.getElementById(id);
             if (!btn) return;
 
-            btn.className = 'view-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5';
+            btn.className = 'view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5';
             if (mode === this.currentViewMode) {
                 btn.className += ' ' + activeClasses;
             } else {
@@ -913,9 +923,9 @@ BW.Commodity = {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
                 if (range === self.currentRange) {
-                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text';
                 } else {
-                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all';
+                    btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition';
                 }
             }
         });
@@ -928,9 +938,9 @@ BW.Commodity = {
             const btn = document.getElementById(`type-${type}`);
             if (btn) {
                 if (type === self.currentChartType) {
-                    btn.className = 'type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text flex items-center gap-1.5';
+                    btn.className = 'type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text flex items-center gap-1.5';
                 } else {
-                    btn.className = 'type-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all flex items-center gap-1.5';
+                    btn.className = 'type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition flex items-center gap-1.5';
                 }
             }
         });
@@ -995,7 +1005,7 @@ BW.Commodity = {
         scopeRoot.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
         // Deactivate all tabs
         scopeRoot.querySelectorAll('.chart-settings-tab').forEach(t => {
-            t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white';
+            t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white';
         });
         // Show selected content
         const content = document.getElementById('content-' + tabName);
@@ -1003,7 +1013,7 @@ BW.Commodity = {
         // Activate selected tab
         const tab = document.getElementById('tab-' + tabName);
         if (tab) {
-            tab.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-bold rounded-lg whitespace-nowrap transition-all theme-surface theme-text';
+            tab.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition theme-surface theme-text';
         }
     },
 
@@ -1212,11 +1222,9 @@ BW.Commodity = {
         const chartContainer = document.getElementById('priceChart') ? document.getElementById('priceChart').parentElement : null;
         if (chartContainer) chartContainer.style.height = s.chartHeight + 'px';
 
-        // Up/Down colors: apply locally to chart stats only (do not override global market theme)
-        const statHigh = document.getElementById('stat-high');
-        const statLow = document.getElementById('stat-low');
-        if (statHigh) statHigh.style.color = s.upColor;
-        if (statLow) statLow.style.color = s.downColor;
+        // High/Low are extremes of one series, not gains/losses — up/down colors
+        // would misuse direction semantics, so they stay neutral ink (UI rules:
+        // hierarchy via weight, color reserved for direction).
 
         // Crosshair info fields
         const crosshairFields = {
@@ -1367,7 +1375,7 @@ BW.Commodity = {
             nameSpan.textContent = c.name;
 
             var categorySpan = document.createElement('span');
-            categorySpan.className = 'text-[10px] uppercase tracking-wider text-brand-black-60 shrink-0';
+            categorySpan.className = 'text-2xs uppercase tracking-wider text-brand-black-60 shrink-0';
             categorySpan.textContent = c.category;
 
             button.appendChild(nameSpan);
@@ -1439,7 +1447,7 @@ BW.Commodity = {
             var id = ids[i];
             var comp = this.comparisonData[id];
             var pill = document.createElement('span');
-            pill.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-white shrink-0 whitespace-nowrap';
+            pill.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-semibold text-white shrink-0 whitespace-nowrap';
             pill.style.backgroundColor = comp.color;
 
             var name = document.createElement('span');
@@ -1551,7 +1559,7 @@ function setChangePeriod(period) {
     const arrowDisplay = document.getElementById('change-arrow-display');
     if (badgeBg)      badgeBg.style.backgroundColor = bg;
     if (pctDisplay)   { pctDisplay.style.color = color; pctDisplay.textContent = `${sign}${Math.abs(pct).toFixed(2)}%`; }
-    if (arrowDisplay) { arrowDisplay.style.backgroundColor = color; arrowDisplay.textContent = arrow; }
+    if (arrowDisplay) { arrowDisplay.style.color = color; arrowDisplay.textContent = arrow; }
 
     // Update tooltip-change-line color too
     const changeLine = document.getElementById('tooltip-change-line');
@@ -1590,8 +1598,8 @@ function setChangePeriod(period) {
         if (!btn) return;
         const isActive = p === period;
         btn.className = isActive
-            ? 'period-btn px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal theme-surface theme-text'
-            : 'period-btn px-2.5 py-1 text-[10px] font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5';
+            ? 'period-btn px-2.5 py-1 text-2xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal theme-surface theme-text'
+            : 'period-btn px-2.5 py-1 text-2xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal text-brand-black-60 hover:bg-brand-black-60/5 dark:hover:bg-white/5';
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
     });
 

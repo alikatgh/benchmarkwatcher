@@ -281,7 +281,7 @@ BW.Index = {
         container.innerHTML = '';
         if (!Array.isArray(categories) || categories.length === 0) {
             const empty = document.createElement('div');
-            empty.className = 'rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 text-xs font-bold text-brand-black-60';
+            empty.className = 'rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 text-xs font-semibold text-brand-black-60';
             empty.textContent = 'No category data';
             container.appendChild(empty);
             return;
@@ -294,8 +294,8 @@ BW.Index = {
             item.href = this.buildCategoryUrl(slug, activeRange);
             const isActive = slug && slug === activeCategory;
             item.className = isActive
-                ? 'group/category block rounded-lg border border-brand-oxford dark:border-brand-teal bg-brand-oxford/5 dark:bg-brand-teal/5 p-3 transition-colors'
-                : 'group/category block rounded-lg border border-brand-black-60/15 dark:border-white/10 p-3 hover:border-brand-oxford dark:hover:border-brand-teal transition-colors';
+                ? 'group/category block rounded-lg bg-brand-oxford/5 dark:bg-brand-teal/5 p-2.5 transition-colors'
+                : 'group/category block rounded-lg p-2.5 hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors';
             item.dataset.category = slug;
             if (isActive) item.setAttribute('aria-current', 'page');
 
@@ -310,8 +310,8 @@ BW.Index = {
 
             item.innerHTML = `
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs font-bold text-brand-black-80 dark:text-white truncate">${this.escapeHtml(categoryName)}</span>
-                    <span class="text-[10px] font-semibold tabular-nums text-brand-black-60">
+                    <span class="text-xs font-semibold truncate ${isActive ? 'text-brand-oxford dark:text-brand-teal' : 'text-brand-black-80 dark:text-white'}">${this.escapeHtml(categoryName)}</span>
+                    <span class="text-2xs font-semibold tabular-nums text-brand-black-60">
                         ${upCount} / ${flatCount} / ${downCount}
                     </span>
                 </div>
@@ -321,7 +321,7 @@ BW.Index = {
                     <div class="h-full" style="width: ${flatPercent}%; background-color: var(--theme-border);"></div>
                     <div class="h-full" style="width: ${downPercent}%; background-color: var(--color-down);"></div>
                 </div>
-                <div class="mt-1 flex items-center justify-between gap-2 text-[10px] text-brand-black-60">
+                <div class="mt-1 flex items-center justify-between gap-2 text-2xs text-brand-black-60">
                     <span>${totalCount} benchmarks</span>
                     <span>up / flat / down</span>
                 </div>
@@ -363,12 +363,12 @@ BW.Index = {
             if (!Array.isArray(list) || list.length === 0) {
                 return `<div class="text-xs text-brand-black-60 px-2 py-1.5">${emptyLabel}</div>`;
             }
-            return list.map((m, i) => `<a ${i === 0 ? `id="${firstId}"` : ''} href="/commodity/${encodeURIComponent(m.id || '')}" class="flex items-center justify-between gap-3 py-1.5 px-2 rounded-lg hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors"><span class="text-xs font-bold text-brand-black-80 dark:text-white truncate">${esc(m.name)}</span><span class="text-xs font-bold tabular-nums shrink-0" style="color: var(${colorVar});">${sign}${round2(m.change_percent)}%</span></a>`).join('');
+            return list.map((m, i) => `<a ${i === 0 ? `id="${firstId}"` : ''} href="/commodity/${encodeURIComponent(m.id || '')}" class="flex items-center justify-between gap-3 py-1.5 px-2 rounded-lg hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-colors"><span class="text-xs font-semibold text-brand-black-80 dark:text-white truncate">${esc(m.name)}</span><span class="text-xs font-semibold tabular-nums shrink-0" style="color: var(${colorVar});">${sign}${round2(m.change_percent)}%</span></a>`).join('');
         };
         container.innerHTML =
-            `<div><div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Risers</div>` +
+            `<div><div class="text-2xs font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Risers</div>` +
             `<div class="space-y-0.5">${rowsHtml(up, '--color-up', '+', 'market-pulse-rise-link', 'No positive moves')}</div></div>` +
-            `<div><div class="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Fallers</div>` +
+            `<div><div class="text-2xs font-semibold uppercase tracking-[0.12em] text-brand-black-60 mb-1.5 px-1">Top Fallers</div>` +
             `<div class="space-y-0.5">${rowsHtml(down, '--color-down', '', 'market-pulse-drop-link', 'No negative moves')}</div></div>`;
     },
 
@@ -377,8 +377,8 @@ BW.Index = {
         filter: 'all'
     },
 
-    quickFilterActiveClass: 'quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg transition-all theme-surface theme-text',
-    quickFilterIdleClass: 'quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-bold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition-all',
+    quickFilterActiveClass: 'quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text',
+    quickFilterIdleClass: 'quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition',
 
     getQuickFindScope: function () {
         const grid = document.getElementById('grid-view');

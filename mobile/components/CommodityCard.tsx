@@ -34,11 +34,11 @@ export default function CommodityCard({ commodity, onPress }: Props) {
 
     // Style adjustments based on Font Scale
     const titleText = fontScale === 'small' ? 'text-base' : fontScale === 'large' ? 'text-xl' : 'text-lg';
-    const metaText = fontScale === 'small' ? 'text-[10px]' : fontScale === 'large' ? 'text-sm' : 'text-xs';
+    const metaText = fontScale === 'small' ? 'text-2xs' : fontScale === 'large' ? 'text-sm' : 'text-xs';
 
     return (
         <TouchableOpacity
-            className={`bg-brand-paper dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 ${cardPadding}`}
+            className={`bg-brand-paper dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 ${cardPadding}`}
             activeOpacity={0.7}
             onPress={() => onPress(commodity)}
             accessibilityRole="button"
@@ -46,7 +46,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
         >
             <View className="flex-row justify-between items-start mb-2">
                 <View className="flex-1 mr-2">
-                    <Text className={`${titleText} font-bold text-slate-800 dark:text-white mb-0.5`} numberOfLines={1}>
+                    <Text className={`${titleText} font-semibold text-slate-800 dark:text-white mb-0.5`} numberOfLines={1}>
                         {commodity.name}
                     </Text>
                     {(showCategory || showUnit) && (
@@ -58,7 +58,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
                     )}
                 </View>
                 <View className="items-end shrink-0">
-                    <Text className={`${titleText} font-bold text-slate-800 dark:text-white mb-0.5`}>
+                    <Text className={`${titleText} font-semibold text-slate-800 dark:text-white mb-0.5`}>
                         {commodity.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </Text>
                     <Text className={`${metaText} text-slate-500 mt-0.5`}>
@@ -80,7 +80,7 @@ export default function CommodityCard({ commodity, onPress }: Props) {
                     </Text>
                     {(showChangePercent || showChangeAbs) && (
                         <View className={`px-2 py-1 rounded-md flex-row items-center ${changeBg}`}>
-                            <Text className={`${metaText} font-bold ${changeColor}`}>
+                            <Text className={`${metaText} font-semibold ${changeColor}`}>
                                 {showChangeAbs ? `${isUp ? '+' : ''}${formatChange(commodity.change)}` : ''}
                                 {showChangeAbs && showChangePercent ? ' (' : ''}
                                 {showChangePercent ? `${isUp ? '+' : ''}${formatPercent(commodity.change_percent)}%` : ''}
