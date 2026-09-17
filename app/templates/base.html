@@ -2,31 +2,37 @@
 <html lang="en">
 
 <head>
+    {% set seo_title = commodity.name ~ ' historical benchmark prices — BenchmarkWatcher' if commodity is defined else ('Product updates — BenchmarkWatcher' if request.endpoint == 'main.changelog' else 'Historical commodity benchmark prices — BenchmarkWatcher') %}
+    {% set seo_description = 'Explore historical ' ~ commodity.name ~ ' benchmark observations, source attribution, and descriptive price charts. Reference data only; not investment advice.' if commodity is defined else 'Explore historical commodity benchmark prices for energy, metals, and agriculture, with source attribution and descriptive charts. Reference data only.' %}
+    {% set seo_canonical = 'https://benchmarkwatcher.online' ~ request.path %}
+    <link rel="canonical" href="{{ seo_canonical }}">
+
+    <meta name="google-site-verification" content="d8EFQSbh_id9Pknb7iewNsiOqqy4nXdWqLnHt1_KkU8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description"
-        content="BenchmarkWatcher - Historical commodity benchmark reference display. Free, open-source dashboard for oil, gas, metals, and agricultural commodities.">
+        content="{{ seo_description }}">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://benchmarkwatcher.online/">
-    <meta property="og:title" content="BenchmarkWatcher - Historical Commodity Benchmark Reference">
+    <meta property="og:url" content="{{ seo_canonical }}">
+    <meta property="og:title" content="{{ seo_title }}">
     <meta property="og:description"
-        content="Historical commodity benchmark reference display. Free, open-source dashboard for oil, gas, metals, and agricultural commodities.">
+        content="{{ seo_description }}">
     <meta property="og:image" content="https://benchmarkwatcher.online/static/images/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://benchmarkwatcher.online/">
-    <meta name="twitter:title" content="BenchmarkWatcher - Historical Commodity Benchmark Reference">
+    <meta name="twitter:url" content="{{ seo_canonical }}">
+    <meta name="twitter:title" content="{{ seo_title }}">
     <meta name="twitter:description"
-        content="Historical commodity benchmark reference display. Free, open-source dashboard for oil, gas, metals, and agricultural commodities.">
+        content="{{ seo_description }}">
     <meta name="twitter:image" content="https://benchmarkwatcher.online/static/images/og-image.png">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/og-image.png') }}">
 
-    <title>{% block title %}BenchmarkWatcher{% endblock %}</title>
+    <title>{% block title %}{{ seo_title }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     <!-- Warm the font connections early; load the font via <link> (parallel,
          non-blocking) instead of a render-blocking @import inside <style>.
