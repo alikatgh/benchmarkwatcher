@@ -110,7 +110,9 @@
     "api_config": {
       "series_id": "PCOPPUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PCOPPUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "iron_ore",
@@ -121,7 +123,9 @@
     "api_config": {
       "series_id": "PIORECRUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PIORECRUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "aluminum",
@@ -132,7 +136,9 @@
     "api_config": {
       "series_id": "PALUMUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PALUMUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "zinc",
@@ -143,7 +149,9 @@
     "api_config": {
       "series_id": "PZINCUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PZINCUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "nickel",
@@ -154,7 +162,9 @@
     "api_config": {
       "series_id": "PNICKUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PNICKUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "lead",
@@ -165,7 +175,9 @@
     "api_config": {
       "series_id": "PLEADUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PLEADUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "tin",
@@ -176,7 +188,9 @@
     "api_config": {
       "series_id": "PTINUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PTINUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "gold",
@@ -223,7 +237,9 @@
     "api_config": {
       "series_id": "PWHEAMTUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PWHEAMTUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "corn",
@@ -234,7 +250,9 @@
     "api_config": {
       "series_id": "PMAIZMTUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PMAIZMTUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "soybeans",
@@ -245,7 +263,9 @@
     "api_config": {
       "series_id": "PSOYBUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSOYBUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "rice",
@@ -262,56 +282,66 @@
     "id": "sugar",
     "name": "Sugar",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PSUGAISAUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSUGAISAUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "coffee",
     "name": "Coffee (Arabica)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PCOFFOTMUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PCOFFOTMUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "cocoa",
     "name": "Cocoa",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "metric ton",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PCOCOUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PCOCOUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "cotton",
     "name": "Cotton",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PCOTTINDUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PCOTTINDUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "rubber",
     "name": "Rubber (Natural)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PRUBBUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PRUBBUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "palm_oil",
@@ -322,7 +352,9 @@
     "api_config": {
       "series_id": "PPOILUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PPOILUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "beef",
@@ -333,18 +365,22 @@
     "api_config": {
       "series_id": "PBEEFUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PBEEFUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "chicken",
     "name": "Poultry (Chicken)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PPOULTUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PPOULTUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "coal_australia",
@@ -355,7 +391,9 @@
     "api_config": {
       "series_id": "PCOALAUUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PCOALAUUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "crude_oil_brent",
@@ -366,29 +404,35 @@
     "api_config": {
       "series_id": "POILBREUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/POILBREUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "natural_gas_eu",
     "name": "Natural Gas (Europe)",
     "category": "energy",
-    "unit": "MMBtu",
+    "unit": "million metric british thermal unit",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PNGASEUUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PNGASEUUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "natural_gas_japan",
     "name": "Natural Gas (Japan/Korea)",
     "category": "energy",
-    "unit": "MMBtu",
+    "unit": "million metric british thermal unit",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PNGASJPUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PNGASJPUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "uranium",
@@ -399,7 +443,9 @@
     "api_config": {
       "series_id": "PURANUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PURANUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "barley",
@@ -410,7 +456,9 @@
     "api_config": {
       "series_id": "PBARLUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PBARLUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "soybean_oil",
@@ -421,7 +469,9 @@
     "api_config": {
       "series_id": "PSOILUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSOILUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "soybean_meal",
@@ -432,7 +482,9 @@
     "api_config": {
       "series_id": "PSMEAUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSMEAUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "rapeseed_oil",
@@ -443,7 +495,9 @@
     "api_config": {
       "series_id": "PROILUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PROILUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "sunflower_oil",
@@ -454,7 +508,9 @@
     "api_config": {
       "series_id": "PSUNOUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSUNOUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "olive_oil",
@@ -465,29 +521,35 @@
     "api_config": {
       "series_id": "POLVOILUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/POLVOILUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "coffee_robusta",
     "name": "Coffee (Robusta)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PCOFFROBUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PCOFFROBUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "tea_kenyan",
     "name": "Tea (Kenyan)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "kilogram",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PTEAUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PTEAUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "timber_logs_hard",
@@ -498,95 +560,113 @@
     "api_config": {
       "series_id": "PLOGSKUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PLOGSKUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "sawnwood",
     "name": "Sawnwood (Softwood)",
     "category": "agricultural",
-    "unit": "cubic meter",
+    "unit": "metric ton",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PSAWOREUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSAWOREUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "hides",
     "name": "Hides (Heavy Steers)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PHIDEUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PHIDEUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "wool_fine",
     "name": "Wool (Fine)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "kilogram",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PWOOLFUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PWOOLFUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "wool_coarse",
     "name": "Wool (Coarse)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "kilogram",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PWOOLCUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PWOOLCUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "lamb",
     "name": "Lamb",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PLAMBUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PLAMBUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "swine",
     "name": "Swine (Pork)",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "pound",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PPORKUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PPORKUSDM"
-    }
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "shrimp",
     "name": "Shrimp",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "kilogram",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PSHRIUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSHRIUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "salmon",
     "name": "Salmon",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "kilogram",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PSALMUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PSALMUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "fishmeal",
@@ -597,84 +677,100 @@
     "api_config": {
       "series_id": "PFISHUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PFISHUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "bananas",
     "name": "Bananas",
     "category": "agricultural",
-    "unit": "kg",
+    "unit": "metric ton",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PBANSOPUSDM",
       "source_info_url": "https://fred.stlouisfed.org/series/PBANSOPUSDM"
-    }
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "index_all_commodities",
     "name": "All Commodities Index",
     "category": "index",
-    "unit": "index (2016=100)",
+    "unit": "2016 = 100",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PALLFNFINDEXM",
       "source_info_url": "https://fred.stlouisfed.org/series/PALLFNFINDEXM"
-    }
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "index_energy",
     "name": "Energy Price Index",
     "category": "index",
-    "unit": "index (2016=100)",
+    "unit": "2016 = 100",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PNRGINDEXM",
       "source_info_url": "https://fred.stlouisfed.org/series/PNRGINDEXM"
-    }
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "index_food",
     "name": "Food Price Index",
     "category": "index",
-    "unit": "index (2016=100)",
+    "unit": "2016 = 100",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PFOODINDEXM",
       "source_info_url": "https://fred.stlouisfed.org/series/PFOODINDEXM"
-    }
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "index_metals",
     "name": "Metals Price Index",
     "category": "index",
-    "unit": "index (2016=100)",
+    "unit": "2016 = 100",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PMETAINDEXM",
       "source_info_url": "https://fred.stlouisfed.org/series/PMETAINDEXM"
-    }
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "index_agriculture",
     "name": "Agricultural Raw Materials Index",
     "category": "index",
-    "unit": "index (2016=100)",
+    "unit": "2016 = 100",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PRAWMINDEXM",
       "source_info_url": "https://fred.stlouisfed.org/series/PRAWMINDEXM"
-    }
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "index_food_beverages",
     "name": "Food & Beverages Index",
     "category": "index",
-    "unit": "index (2016=100)",
+    "unit": "2016 = 100",
     "source_type": "FRED",
     "api_config": {
       "series_id": "PFANDBINDEXM",
       "source_info_url": "https://fred.stlouisfed.org/series/PFANDBINDEXM"
-    }
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
   },
   {
     "id": "rbob_gasoline",
@@ -839,5 +935,187 @@
       "unit_desc": "$ / CWT",
       "source_info_url": "https://quickstats.nass.usda.gov/"
     }
+  },
+  {
+    "id": "index_beverages",
+    "name": "Beverages Price Index",
+    "category": "index",
+    "source_type": "FRED",
+    "unit": "2016 = 100",
+    "api_config": {
+      "series_id": "PBEVEINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PBEVEINDEXM"
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "groundnuts",
+    "name": "Groundnuts",
+    "category": "agricultural",
+    "source_type": "FRED",
+    "unit": "metric ton",
+    "api_config": {
+      "series_id": "PGNUTSUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PGNUTSUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "index_industrial",
+    "name": "Industrial Materials Index",
+    "category": "index",
+    "source_type": "FRED",
+    "unit": "2016 = 100",
+    "api_config": {
+      "series_id": "PINDUINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PINDUINDEXM"
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "timber_logs_soft",
+    "name": "Logs (Softwood)",
+    "category": "agricultural",
+    "source_type": "FRED",
+    "unit": "cubic meter",
+    "api_config": {
+      "series_id": "PLOGOREUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PLOGOREUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "index_nonfuel",
+    "name": "Non-Fuel Commodity Index",
+    "category": "index",
+    "source_type": "FRED",
+    "unit": "2016 = 100",
+    "api_config": {
+      "series_id": "PNFUELINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PNFUELINDEXM"
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "natural_gas_us_monthly",
+    "name": "Natural Gas (Henry Hub, Monthly)",
+    "category": "energy",
+    "source_type": "FRED",
+    "unit": "million metric british thermal unit",
+    "api_config": {
+      "series_id": "PNGASUSUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PNGASUSUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "index_crude_oil",
+    "name": "Crude Oil Price Index",
+    "category": "index",
+    "source_type": "FRED",
+    "unit": "2016 = 100",
+    "api_config": {
+      "series_id": "POILAPSPINDEXM",
+      "source_info_url": "https://fred.stlouisfed.org/series/POILAPSPINDEXM"
+    },
+    "currency": "Index",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "crude_oil_average",
+    "name": "Crude Oil (Average Spot Price)",
+    "category": "energy",
+    "source_type": "FRED",
+    "unit": "barrel",
+    "api_config": {
+      "series_id": "POILAPSPUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/POILAPSPUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "crude_oil_dubai",
+    "name": "Crude Oil (Dubai)",
+    "category": "energy",
+    "source_type": "FRED",
+    "unit": "barrel",
+    "api_config": {
+      "series_id": "POILDUBUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/POILDUBUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "crude_oil_wti_monthly",
+    "name": "Crude Oil (WTI, Monthly)",
+    "category": "energy",
+    "source_type": "FRED",
+    "unit": "barrel",
+    "api_config": {
+      "series_id": "POILWTIUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/POILWTIUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "oranges",
+    "name": "Oranges",
+    "category": "agricultural",
+    "source_type": "FRED",
+    "unit": "pound",
+    "api_config": {
+      "series_id": "PORANGUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PORANGUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "rice_thailand",
+    "name": "Rice (Thailand)",
+    "category": "agricultural",
+    "source_type": "FRED",
+    "unit": "metric ton",
+    "api_config": {
+      "series_id": "PRICENPQUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PRICENPQUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "sawnwood_hard",
+    "name": "Sawnwood (Hardwood)",
+    "category": "agricultural",
+    "source_type": "FRED",
+    "unit": "cubic meter",
+    "api_config": {
+      "series_id": "PSAWMALUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSAWMALUSDM"
+    },
+    "currency": "USD",
+    "source_name": "IMF via FRED"
+  },
+  {
+    "id": "sugar_us",
+    "name": "Sugar (US No. 16)",
+    "category": "agricultural",
+    "source_type": "FRED",
+    "unit": "pound",
+    "api_config": {
+      "series_id": "PSUGAUSAUSDM",
+      "source_info_url": "https://fred.stlouisfed.org/series/PSUGAUSAUSDM"
+    },
+    "currency": "US¢",
+    "source_name": "IMF via FRED"
   }
 ]

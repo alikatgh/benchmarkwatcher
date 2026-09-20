@@ -1,6 +1,6 @@
 <!-- Combined Data Range & Table Settings Header -->
 <div
-    class="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 font-ui">
+    class="range-toolbar mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 font-ui">
     <!-- LEFT: Data Range Selector -->
     <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-3 min-w-0">
         <div class="flex items-center gap-2 shrink-0"
@@ -325,7 +325,7 @@
                     <div class="flex items-center gap-2">
                         <input type="checkbox" id="col-updated" checked onchange="toggleColumn('updated')"
                             class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Updated</span>
+                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Observation date</span>
                     </div>
                 </div>
                 <!-- Live Preview -->
@@ -428,19 +428,19 @@
                     </th>
                     <th data-col="chg" data-sort="change" scope="col" onclick="sortTable('change')"
                         class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">Chg <span
+                        <span class="flex items-center justify-end gap-1 pointer-events-none">Change <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="change"></span></span>
                     </th>
                     <th data-col="pct" data-sort="pct" scope="col" onclick="sortTable('pct')"
                         class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">%Chg <span
+                        <span class="flex items-center justify-end gap-1 pointer-events-none">Change % <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="pct"></span></span>
                     </th>
                     <th data-col="updated" data-sort="date" scope="col" onclick="sortTable('date')"
                         class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">Updated <span
+                        <span class="flex items-center justify-end gap-1 pointer-events-none">Observed <span
                                 class="sort-indicator text-brand-oxford dark:text-brand-teal"
                                 data-sort="date"></span></span>
                     </th>

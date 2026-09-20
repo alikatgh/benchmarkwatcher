@@ -41,3 +41,27 @@ describe('Commodity chart view button scoping', () => {
         expect(document.getElementById('view-compact').className).toBe(compactBefore);
     });
 });
+
+describe('Global appearance updates the detail chart', () => {
+    test('updates chart colors after applying the page theme without resetting other chart options', () => {
+        global.BW = {};
+        loadCommodityScript();
+        const commodity = BW.Commodity;
+        commodity.ctx = {};
+        commodity.chartSettings.lineWidth = 4;
+        commodity.updateChart = jest.fn();
+        commodity.populateSettingsUI = jest.fn();
+        commodity.applySettingsToDOM = jest.fn();
+        commodity.saveChartSettings = jest.fn();
+        window.eval(fs.readFileSync(path.join(__dirname, '..', 'app/static/js/components/settings_modal.js'), 'utf8'));
+        BW.SettingsModal.applyTheme = jest.fn(() => document.documentElement.setAttribute('data-theme', 'dark'));
+        BW.SettingsModal.updateUI = jest.fn();
+        BW.SettingsModal.setTheme('dark');
+        expect(commodity.chartSettings.lineColor).toBe(commodity.themes.dark.lineColor);
+        expect(commodity.chartSettings.lineWidth).toBe(4);
+        expect(commodity.updateChart).toHaveBeenCalled();
+        commodity.currentViewMode = 'price';
+        commodity.updateViewButtons();
+        expect(document.getElementById('view-price').getAttribute('aria-pressed')).toBe('true');
+    });
+});

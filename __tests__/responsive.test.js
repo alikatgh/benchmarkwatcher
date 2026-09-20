@@ -62,3 +62,14 @@ describe('BW.Responsive first-visit detection', () => {
         expect(setViewMode).toHaveBeenCalledWith('compact');
     });
 });
+
+test('narrow layouts never save hidden columns as the user preference', () => {
+    global.BW = { CompactTable: {setColumnVisibility: jest.fn()} };
+    document.body.innerHTML = '<table id="data-table"><tr><th data-col="trend">Recent</th><th data-col="updated">Observed</th></tr></table>';
+    Object.defineProperty(window, 'innerWidth', {writable:true,value:390});
+    loadResponsiveScript();
+    BW.Responsive.applyColumnPriority();
+    Object.defineProperty(window, 'innerWidth', {writable:true,value:1400});
+    BW.Responsive.applyColumnPriority();
+    expect(BW.CompactTable.setColumnVisibility).not.toHaveBeenCalled();
+});

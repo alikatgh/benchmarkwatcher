@@ -188,12 +188,12 @@ BW.Commodity = {
     // Preset themes for chart customization
     themes: {
         light: {
-            lineColor: '#0f5499', fillColor: '#0f5499', fillOpacity: 15,
+            lineColor: '#1967d2', fillColor: '#1967d2', fillOpacity: 15,
             gridColor: '#33302e', gridOpacity: 10, tooltipBg: '#f7f4f0', tooltipText: '#33302e',
             upColor: '#0d7680', downColor: '#990f3d'
         },
         dark: {
-            lineColor: '#1aecff', fillColor: '#1aecff', fillOpacity: 15,
+            lineColor: '#8ab4f8', fillColor: '#8ab4f8', fillOpacity: 15,
             gridColor: '#e8e6e3', gridOpacity: 5, tooltipBg: '#13171f', tooltipText: '#e8e6e3',
             upColor: '#00d68f', downColor: '#ff6b6b'
         },
@@ -240,7 +240,10 @@ BW.Commodity = {
         if (!canvas) return;
         this.ctx = canvas.getContext('2d');
 
-        // Load saved chart settings from localStorage
+        // Start with the page theme; an explicitly saved chart style can override it.
+        const pageTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        Object.assign(this.chartSettings, this.themes[pageTheme] || this.themes.light);
+        this.chartSettings.chartTheme = pageTheme;
         this.loadChartSettings();
 
         // Set up colors based on theme (will be overridden by chartSettings)
@@ -250,6 +253,7 @@ BW.Commodity = {
         this.updateChart();
         this.updateRangeButtons();
         this.updateTypeButtons();
+        this.updateViewButtons();
 
         // Hide skeleton loader once chart is ready
         const skeleton = document.getElementById('chart-skeleton');
@@ -748,6 +752,7 @@ BW.Commodity = {
             const btn = document.getElementById(id);
             if (!btn) return;
 
+            btn.setAttribute('aria-pressed', mode === this.currentViewMode ? 'true' : 'false');
             btn.className = 'view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5';
             if (mode === this.currentViewMode) {
                 btn.className += ' ' + activeClasses;

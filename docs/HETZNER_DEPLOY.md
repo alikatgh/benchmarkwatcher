@@ -1,5 +1,59 @@
 # Hetzner + Cloudflare Deploy Playbook — benchmarkwatcher.online
 
+## Current production — verified September 20, 2026
+
+**The site now runs on Hetzner. Namecheap provides domain registration and
+BasicDNS only; Cloudflare is not in the live request path.** The provisioning
+instructions below describe an older proposed topology, not the current host.
+Do not rerun the whole-server provisioner or replace the shared Caddyfile.
+
+- Host: `89.167.29.166` (`turgen-hel`). SSH:
+  `ssh -i ~/.ssh/turgen -o BatchMode=yes root@89.167.29.166`.
+- App: `/home/benchmarkwatcher/app`, owned by the dedicated non-login
+  `benchmarkwatcher` account. Initial deployed commit: `d401aa4`.
+- Runtime: `venv/bin/gunicorn -c gunicorn.conf.py run:app`, bound only to
+  `127.0.0.1:8001`, under `benchmarkwatcher.service` with automatic restart
+  and a 512 MB memory limit.
+- Routing: the existing shared Caddy service proxies `benchmarkwatcher.online`
+  to the app and redirects `www` to the apex. Caddy manages public TLS
+  certificates directly. Preserve all sibling-site configuration.
+- DNS: Namecheap BasicDNS A records for `@` and `www` both point to
+  `89.167.29.166`. Nameservers and email-forwarding settings are unchanged.
+- State: `.env`, `data/`, and `tmp/` live in the app directory. Keep `.env`
+  private; preserve production data during code updates.
+- Refresh: `benchmarkwatcher-fetch.timer`, daily at 06:30 UTC with up to
+  ten minutes of jitter. The first fetch completed successfully. Fetch logs
+  are private at `/home/benchmarkwatcher/fetch.log`; upstream errors can
+  contain credentials, so do not print or publish raw logs.
+- GitHub push-to-deploy is **not configured**. The existing workflow expects
+  a different deployment user/path; pushing a commit does not update this host.
+
+For an explicitly authorized update, check the server checkout is clean,
+fetch and identify the release commit, then fast-forward as the app account:
+
+```bash
+runuser -u benchmarkwatcher -- git -C /home/benchmarkwatcher/app status --short
+runuser -u benchmarkwatcher -- git -C /home/benchmarkwatcher/app pull --ff-only origin main
+# Only if requirements.txt changed:
+runuser -u benchmarkwatcher -- /home/benchmarkwatcher/app/venv/bin/pip install -r /home/benchmarkwatcher/app/requirements.txt
+systemctl restart benchmarkwatcher
+curl --fail --silent --show-error https://benchmarkwatcher.online/health
+```
+
+Recovery evidence: dashboard, health, list/detail APIs, commodity detail page,
+and all ten dashboard JS/CSS assets returned 200 over public HTTPS. The list
+contained 72 commodities; the internal API returned 403 without authentication.
+The other four sites on the shared server remained available. No product-code
+changes or unrelated local edits were deployed during recovery.
+
+The outage was caused by DNS still pointing at Namecheap's expired Stellar
+hosting (`198.54.116.96`), which returned a suspension redirect. The domain
+registration itself remained active. The original shared proxy configuration
+is saved at `/etc/caddy/Caddyfile.before-benchmarkwatcher-20260920` for reference;
+roll back only this site's changes if sibling configuration has since changed.
+
+## Historical provisioning plan
+
 Move BenchmarkWatcher off Namecheap shared hosting (Passenger) onto a Hetzner
 VPS running **gunicorn + systemd behind Caddy**, with **Cloudflare** in front for
 DNS/CDN/SSL. This is the migration that actually fixes "the site isn't always

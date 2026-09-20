@@ -3,22 +3,38 @@
 {% block title %}Changelog - BenchmarkWatcher{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+<div class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
     <header class="mb-6 sm:mb-8 md:mb-12">
         <h1 class="text-2xl sm:text-3xl font-bold text-brand-black-80 dark:text-white font-serif mb-2">
             Changelog
         </h1>
         <p class="text-brand-black-60 dark:text-brand-black-60 font-ui">
-            Updates, new features, and improvements to BenchmarkWatcher.
+            Release notes and changes to the data catalogue.
         </p>
     </header>
+
+    <article class="release-entry">
+        <time datetime="2026-09-21">September 21, 2026 · v1.4.0</time>
+        <h2>A clearer dashboard, broader public data</h2>
+        <ul>
+            <li>Restored the public site on our Hetzner server with HTTPS and scheduled daily data retrieval.</li>
+            <li>Added 14 monthly IMF series via FRED: groundnuts, oranges, Thai rice, US sugar, softwood logs, hardwood sawnwood, monthly Henry Hub gas, average spot crude, Dubai crude, monthly WTI, and four commodity indices.</li>
+            <li>Expanded FRED retrieval to 20,000 observations and EIA retrieval to 5,000. Saved histories are no longer trimmed to 1,000 records. Coverage varies by source.</li>
+            <li>Aligned IMF series currency and units with the source metadata, including US cents and index base years.</li>
+            <li>Moved the benchmark table above the fold and put the coverage breakdown behind an expandable row. Reduced spacing on commodity pages to bring charts into view sooner.</li>
+            <li>Fixed mobile column hiding so narrowing the screen no longer overwrites saved desktop column choices.</li>
+            <li>Repaired theme contrast across navigation, settings, tables, and detail pages. Added an appearance switch in the header.</li>
+            <li>Separated observation dates from retrieval dates, and corrected the chart label for monthly data.</li>
+            <li>Added a sitemap, crawler directives, and page-specific titles, descriptions, and canonical links.</li>
+        </ul>
+    </article>
 
     <!-- Version 1.3.0 -->
     <article class="mb-12 pb-12 border-b border-brand-black-60/20 dark:border-white/10">
         <div class="flex items-center gap-3 mb-4">
             <span
                 class="px-3 py-1 bg-brand-teal/10 text-brand-teal dark:text-brand-teal rounded-full text-xs font-semibold font-ui">
-                NEW
+                RELEASE
             </span>
             <time class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">
                 June 8, 2026

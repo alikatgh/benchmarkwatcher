@@ -14,7 +14,7 @@ def _get_fred_api_key() -> str:
     return os.getenv('FRED_API_KEY', '')
 
 
-def fetch_fred_series(series_id: str, limit: int = 730) -> Optional[List[Dict[str, Any]]]:
+def fetch_fred_series(series_id: str, limit: int = 20000) -> Optional[List[Dict[str, Any]]]:
     """Fetch data from FRED API."""
     api_key = _get_fred_api_key()
     if not api_key:
