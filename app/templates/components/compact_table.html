@@ -1,55 +1,16 @@
-<!-- Combined Data Range & Table Settings Header -->
-<div
-    class="range-toolbar mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 font-ui">
-    <!-- LEFT: Data Range Selector -->
-    <div class="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-2 sm:gap-3 min-w-0">
-        <div class="flex items-center gap-2 shrink-0"
-            title="Ranges filter displayed observations only. Metrics are based on available data points, not calendar periods.">
-            <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span class="text-xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60">Display
-                Range</span>
-        </div>
-        <div class="overflow-x-auto scrollbar-hide -mx-1 px-1 w-full sm:w-auto">
-        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-max">
-            <button onclick="setDataRange('1W')" id="range-1W" aria-label="Show last 1 week of available observations"
-                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
-            <button onclick="setDataRange('1M')" id="range-1M" aria-label="Show last 1 month of available observations"
-                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
-            <button onclick="setDataRange('3M')" id="range-3M" aria-label="Show last 3 months of available observations"
-                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
-            <button onclick="setDataRange('6M')" id="range-6M" aria-label="Show last 6 months of available observations"
-                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
-            <button onclick="setDataRange('1Y')" id="range-1Y" aria-label="Show last 1 year of available observations"
-                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
-            <button onclick="setDataRange('ALL')" id="range-ALL" aria-label="Show all data"
-                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
-        </div>
-        </div>
-        <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
-            <span class="font-medium">Showing:</span>
-            <span id="date-range-display" class="font-bold text-brand-black-80 dark:text-white ml-1">All available
-                data</span>
-        </div>
+<div class="range-toolbar">
+    <div class="range-tabs" role="group" aria-label="Observation range">
+        <button type="button" onclick="setDataRange('1W')" id="range-1W" class="range-btn" aria-label="Show last 1 week of available observations">1W</button>
+        <button type="button" onclick="setDataRange('1M')" id="range-1M" class="range-btn" aria-label="Show last 1 month of available observations">1M</button>
+        <button type="button" onclick="setDataRange('3M')" id="range-3M" class="range-btn" aria-label="Show last 3 months of available observations">3M</button>
+        <button type="button" onclick="setDataRange('6M')" id="range-6M" class="range-btn" aria-label="Show last 6 months of available observations">6M</button>
+        <button type="button" onclick="setDataRange('1Y')" id="range-1Y" class="range-btn" aria-label="Show last 1 year of available observations">1Y</button>
+        <button type="button" onclick="setDataRange('ALL')" id="range-ALL" class="range-btn" aria-label="Show all data">ALL</button>
     </div>
-
-    <!-- RIGHT: Table Configuration Toggle -->
-    <div class="flex items-center gap-3 shrink-0 border-t md:border-t-0 md:border-l border-brand-black-60/10 dark:border-white/10 pt-3 md:pt-0 md:pl-4 lg:pl-6">
-        <div class="flex items-center gap-2">
-            <svg class="w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                </path>
-            </svg>
-            <span class="text-xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60">Columns</span>
-        </div>
-        <button onclick="toggleSettingsPanel()" id="settings-toggle-btn"
-            class="text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:underline">
-            <span id="settings-toggle-text">Show</span>
-        </button>
-    </div>
+    <span id="date-range-display" class="sr-only" aria-live="polite">All available data</span>
+    <button type="button" onclick="toggleSettingsPanel()" id="settings-toggle-btn" class="columns-toggle" aria-expanded="false" aria-controls="table-settings-container">
+        Columns <span id="settings-toggle-text" class="sr-only">Show</span><span aria-hidden="true">⌄</span>
+    </button>
 </div>
 
 <!-- Table Settings Panel -->

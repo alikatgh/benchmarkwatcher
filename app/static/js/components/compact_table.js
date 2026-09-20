@@ -575,6 +575,7 @@ BW.CompactTable = {
         ranges.forEach(range => {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
+                btn.setAttribute('aria-pressed', String(range === activeRange));
                 if (range === activeRange) {
                     btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text';
                 } else {
@@ -619,6 +620,7 @@ BW.CompactTable = {
 
         const isHidden = panel.classList.contains('hidden');
         toggleText.textContent = isHidden ? 'Show' : 'Hide';
+        document.getElementById('settings-toggle-btn')?.setAttribute('aria-expanded', String(!isHidden));
 
         const settings = this.getSettings();
         settings.panelOpen = !isHidden;

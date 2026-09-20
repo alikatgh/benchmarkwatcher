@@ -28,7 +28,7 @@ html[data-theme] :is(h1,h2,h3) {letter-spacing:-.025em;}
 html[data-theme] h1 {font-size:30px;line-height:1.2;}
 html[data-theme] .max-w-6xl {max-width:1280px;}
 header {box-shadow:none;}
-header nav:first-child {height:60px;}
+header > nav:first-child {height:60px;}
 header a[aria-label="BenchmarkWatcher home"] > div {background:var(--theme-accent)!important;border-radius:5px;}
 header a[aria-label="BenchmarkWatcher home"] > div span {color:var(--theme-bg)!important;}
 .quick-theme-toggle {display:flex;gap:7px;align-items:center;min-height:40px;padding:6px 10px;color:var(--theme-text-muted);font-size:12px;border:1px solid var(--theme-border);border-radius:6px;}
@@ -100,8 +100,44 @@ html[data-theme] #settings-modal .theme-btn[data-active="true"] {border-color:va
   #data-table .commodity-icon {display:none!important;}
   #data-table .commodity-name {font-size:12px;overflow-wrap:anywhere;}
   #data-table .commodity-category {font-size:10px;}
-  .range-toolbar {padding:8px;gap:8px;margin-bottom:8px;}
-  .range-toolbar>div:first-child>div:first-child {display:none;}
-  .range-toolbar>div:last-child {padding-top:6px;}
   #quick-find-summary {display:none;}
+}
+
+/* A single, quiet control strip keeps the data dominant. */
+.range-toolbar {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 12px;border-bottom:1px solid var(--theme-border);margin:0;}
+.range-tabs {display:flex;align-items:center;gap:3px;}
+.range-toolbar .range-btn {min-height:36px;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:600;}
+.columns-toggle {display:flex;align-items:center;gap:8px;min-height:36px;padding:6px 8px;font-size:12px;color:var(--theme-text-muted);white-space:nowrap;}
+.columns-toggle:hover {color:var(--theme-text);}
+#category-strip nav {height:36px;}
+.chart-panel {border-radius:4px!important;}
+.chart-toolbar {display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px!important;}
+.chart-heading h3 {font-size:16px;line-height:1.4;font-weight:600;}
+.chart-heading p {font-size:11px;line-height:1.5;color:var(--theme-text-muted);margin-top:2px;}
+.chart-controls {display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.chart-control-group {display:flex;align-items:center;gap:2px;}
+.chart-control-group + .chart-control-group {border-left:1px solid var(--theme-border);padding-left:14px;}
+.chart-controls :is(.range-btn,.type-btn,.view-btn) {min-height:34px;padding:5px 9px;border-radius:3px;font-size:12px;line-height:20px;box-shadow:none;}
+.chart-controls :is(.type-btn,.view-btn) svg {display:none;}
+html[data-theme] .chart-controls :is(.range-btn,.type-btn,.view-btn) {background:transparent!important;color:var(--theme-text-muted)!important;border-bottom:2px solid transparent;}
+html[data-theme] .chart-controls :is(.range-btn,.type-btn).theme-surface,
+html[data-theme] .chart-controls .view-btn[aria-pressed="true"] {background:transparent!important;color:var(--theme-accent)!important;border-bottom-color:var(--theme-accent);}
+html[data-theme] .range-toolbar .range-btn.theme-surface {background:var(--theme-bg)!important;color:var(--theme-accent)!important;box-shadow:inset 0 -2px var(--theme-accent);}
+#commodity-page #stats-bar {background:transparent!important;padding:12px 16px;}
+#stats-bar > div:first-child {display:none;}
+#stats-bar > div:last-child {text-align:left;gap:16px;}
+#stats-bar > div:last-child > div {padding-left:12px;border-left:1px solid var(--theme-border);}
+#stats-bar > div:last-child > div:first-child {padding-left:0;border-left:0;}
+#commodity-page #crosshair-info {background:transparent!important;border-top:1px solid var(--theme-border);border-radius:0;padding:12px 0 4px;}
+@media(max-width:640px) {
+  .range-toolbar {gap:4px;padding:4px 6px;}
+  .range-toolbar .range-btn {min-height:44px;padding:6px 8px;}
+  .columns-toggle {min-height:44px;padding:6px;}
+  .chart-toolbar {gap:10px;padding:12px!important;}
+  .chart-controls {width:100%;gap:6px 12px;}
+  .chart-control-group:first-child {width:100%;justify-content:space-between;}
+  .chart-control-group:nth-child(2) {border-left:0;padding-left:0;}
+  .chart-controls :is(.range-btn,.type-btn,.view-btn) {min-height:44px;padding:8px 10px;}
+  .chart-controls .hidden.sm\:inline {display:inline;}
+  .chart-controls .sm\:hidden {display:none;}
 }

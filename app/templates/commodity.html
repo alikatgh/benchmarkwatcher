@@ -210,43 +210,27 @@
 
     <!-- Enhanced Chart Section -->
     <div
-        class="mt-4 sm:mt-5 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 transition-colors duration-500 overflow-visible">
+        class="chart-panel mt-4 sm:mt-5 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 transition-colors duration-500 overflow-visible">
 
-        <!-- Chart Header with Controls -->
-        <div class="p-3 sm:p-4 md:p-6 border-b border-brand-black-60/10 dark:border-white/5">
-            <div class="flex flex-col gap-2 sm:gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
-                <!-- Title -->
-                <div class="shrink-0">
-                    <h3
-                        class="text-base sm:text-lg md:text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-ui">
-                        Price History</h3>
-                    <p class="text-xs sm:text-xs md:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-0.5 sm:mt-1">
-                        {{ 'Daily observations' if commodity.is_daily else 'Monthly observations' }} · {{ commodity.currency }} / {{ commodity.unit }}
-                    </p>
-                </div>
-
-                <!-- Chart Controls — horizontally scrollable on mobile -->
-                <div class="overflow-x-auto scrollbar-hide -mx-1 px-1">
-                    <div class="flex items-center gap-2 w-max">
-                        <!-- Time Range Selector -->
-                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                            <button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
+        <div class="chart-toolbar border-b border-brand-black-60/10">
+            <div class="chart-heading">
+                <h3>Price history</h3>
+                <p>{{ 'Daily observations' if commodity.is_daily else 'Monthly observations' }} · {{ commodity.currency }} / {{ commodity.unit }}</p>
+            </div>
+            <div class="chart-controls" aria-label="Chart controls">
+<div class="chart-control-group"><button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
                                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
-                            <button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
+<button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
                                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
-                            <button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
+<button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
                                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
-                            <button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
+<button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
                                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
-                            <button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
+<button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
                                 class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
-                            <button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button>
-                        </div>
-
-                        <!-- Chart Type Selector -->
-                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                            <button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
+<button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
+                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button></div>
+<div class="chart-control-group"><button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
                                 class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -254,7 +238,7 @@
                                 </svg>
                                 <span class="hidden sm:inline">Line</span>
                             </button>
-                            <button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
+<button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
                                 class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
                                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
@@ -262,12 +246,8 @@
                                     </path>
                                 </svg>
                                 <span class="hidden sm:inline">Area</span>
-                            </button>
-                        </div>
-
-                        <!-- View Mode Selector (Price vs Percent) -->
-                        <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui">
-                            <button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
+                            </button></div>
+<div class="chart-control-group"><button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
                                 class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 bg-white dark:bg-white text-brand-black-80 dark:text-terminal-black">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -276,7 +256,7 @@
                                 </svg>
                                 Price
                             </button>
-                            <button onclick="setViewMode('percent')" id="view-percent"
+<button onclick="setViewMode('percent')" id="view-percent"
                                 aria-label="Show percentage change"
                                 class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,10 +266,7 @@
                                 </svg>
                                 <span class="hidden sm:inline">% Change</span>
                                 <span class="sm:hidden">%</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                            </button></div>
             </div>
         </div>
 
