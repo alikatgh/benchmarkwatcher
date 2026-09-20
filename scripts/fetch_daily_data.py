@@ -135,7 +135,6 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
     # 3. Merge & Process
     conf = commodity.get('api_config', {})
     history = merge_history(existing_history, new_data)
-    history = history[-1000:]  # Keep last 1000 observations
     metrics = compute_metrics(history)
 
     # 4. Construct Record — config-derived fields, then shared builder sets the
@@ -144,7 +143,7 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
         "id": commodity['id'],
         "name": commodity['name'],
         "category": commodity['category'],
-        "currency": "USD",
+        "currency": commodity.get("currency", "USD"),
         "unit": commodity['unit'],
         "source_name": commodity.get('source_name', commodity['source_type']),
         "source_url": conf.get('source_info_url', ''),

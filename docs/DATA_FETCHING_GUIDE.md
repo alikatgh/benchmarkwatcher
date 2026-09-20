@@ -83,7 +83,7 @@ This will:
 1. **Load existing data** from `data/{commodity_id}.json`
 2. **Fetch new observations** from the source API
 3. **Merge history** — new data overwrites existing entries for the same date, deduplicates by date, sorts chronologically
-4. **Trim to 1000 observations** (keeps the most recent)
+4. **Retain merged history** without the former 1,000-observation cutoff. FRED requests up to 20,000 observations; EIA requests up to 5,000 rows. Source coverage and gaps remain visible; these limits do not imply a complete archive.
 5. **Compute metrics** — observation-based statistics (1-obs change, 30-obs change, 365-obs change, direction)
 6. **Atomic save** — writes to a temp file then renames to prevent corruption
 

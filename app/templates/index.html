@@ -4,9 +4,9 @@
 <div id="index-page-state" data-active-view="{{ active_view }}" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 min-h-screen transition-colors duration-300">
     <div class="flex flex-col md:flex-row md:items-end justify-between mb-4 sm:mb-6 gap-2 sm:gap-3">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-brand-black-80 dark:text-brand-paper font-serif">Market Benchmarks</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-brand-black-80 dark:text-brand-paper font-serif">Commodity benchmarks</h1>
             <p class="text-xs sm:text-xs text-brand-black-60 dark:text-brand-black-60 mt-1 font-ui tracking-wide">
-                Historical reference data — not for trading or investment decisions</p>
+                Public reference prices, source histories, and downloadable data.</p>
         </div>
     </div>
 
@@ -21,12 +21,13 @@
     } %}
     {% set biggest_up = summary.biggest_up if summary.biggest_up else none %}
     {% set biggest_down = summary.biggest_down if summary.biggest_down else none %}
-    <section id="market-pulse" class="mb-5 sm:mb-6 font-ui" aria-label="Market pulse summary">
+    <details id="market-pulse" class="mb-5 sm:mb-6 font-ui" aria-label="Market pulse summary">
+        <summary class="coverage-summary"><span><strong>{{ commodities|length }}</strong> benchmarks · Energy, metals &amp; agriculture</span><span>Explore coverage &amp; changes <span aria-hidden="true">↓</span></span></summary>
         <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] gap-3">
             <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-4 sm:p-5">
                 <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
                     <div>
-                        <div class="text-2xs font-semibold tracking-[0.16em] uppercase text-brand-black-60">Market Pulse</div>
+                        <div class="text-2xs font-semibold tracking-[0.16em] uppercase text-brand-black-60">Coverage summary</div>
                         <h2 id="market-pulse-headline" class="mt-1 text-lg sm:text-xl font-bold font-serif text-brand-black-80 dark:text-white">
                             {{ summary.headline|default('No benchmarks loaded') }}
                         </h2>
@@ -55,7 +56,7 @@
                         </div>
                     </div>
                     <div class="border-t border-brand-black-60/15 dark:border-white/10 pt-2.5">
-                        <div class="text-2xs font-semibold uppercase tracking-[0.12em] text-brand-black-60">Latest Batch</div>
+                        <div class="text-2xs font-semibold uppercase tracking-[0.12em] text-brand-black-60">Latest observation</div>
                         <div id="market-pulse-latest-date" class="mt-1 text-sm font-semibold tabular-nums text-brand-black-80 dark:text-white truncate">
                             {{ summary.latest_date|default('No date', true) }}
                         </div>
@@ -145,7 +146,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </details>
 
     <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">
         <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4">

@@ -37,7 +37,7 @@ def _build_eia_params(
 def fetch_eia_v2(
     api_url: str,
     facets: Dict[str, List[str]],
-    length: int = 730,
+    length: int = 5000,
 ) -> Optional[List[Dict[str, Any]]]:
     """
     Generic fetcher for EIA API v2.

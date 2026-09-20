@@ -1,0 +1,107 @@
+/* Shared display tokens: every theme uses the same foreground/surface contract. */
+html[data-theme="light"] {
+  --theme-bg:#f7f9fc; --theme-surface:#fff; --theme-text:#202124;
+  --theme-text-muted:#58616f; --theme-border:#dce1e8; --theme-accent:#1967d2;
+  --sparkline-line:#1967d2;
+}
+html[data-theme="dark"] {
+  --theme-bg:#15171b; --theme-surface:#1d2025; --theme-text:#e8eaed;
+  --theme-text-muted:#b3bac5; --theme-border:#353b45; --theme-accent:#8ab4f8;
+  --sparkline-line:#8ab4f8;
+}
+html.dark {color-scheme:dark; --brand-teal:#81c995; --brand-claret:#f28b82; --brand-oxford:#8ab4f8;}
+html:not(.dark) {color-scheme:light;}
+html.dark:not([data-market="asian"]):not([data-market="monochrome"]) {--color-up:#81c995;--color-down:#f28b82;--color-up-bg:#81c99518;--color-down-bg:#f28b8218;}
+html.dark[data-market="asian"] {--color-up:#f28b82;--color-down:#81c995;--color-up-bg:#f28b8218;--color-down-bg:#81c99518;}
+html[data-theme] body {background:var(--theme-bg)!important;color:var(--theme-text);font-family:Inter,system-ui,sans-serif;}
+html[data-theme] .font-serif {font-family:Inter,system-ui,sans-serif;}
+html[data-theme] :is(.text-brand-black-60,[class*="dark:text-brand-black-60"],.text-brand-black-70) {color:var(--theme-text-muted)!important;}
+html[data-theme] :is(.text-brand-black-80,.text-brand-paper) {color:var(--theme-text)!important;}
+html[data-theme] :is(.text-brand-oxford,.text-brand-teal) {color:var(--theme-accent)!important;}
+html.dark [class*="dark:text-white"] {color:var(--theme-text)!important;}
+html[data-theme] :is(.bg-card-warm,.bg-brand-pink,.theme-surface) {background-color:var(--theme-surface)!important;}
+html.dark :is(.dark\:bg-terminal-black,.dark\:bg-terminal-surface) {background-color:var(--theme-surface)!important;}
+html[data-theme] :is(.border-brand-black-60\/20,.border-brand-black-60\/15,.border-brand-black-60\/10) {border-color:var(--theme-border)!important;}
+html[data-theme] .text-2xs {font-size:11px;line-height:1.5;}
+html[data-theme] .tracking-widest {letter-spacing:.02em;}
+html[data-theme] :is(h1,h2,h3) {letter-spacing:-.025em;}
+html[data-theme] h1 {font-size:30px;line-height:1.2;}
+html[data-theme] .max-w-6xl {max-width:1280px;}
+header {box-shadow:none;}
+header nav:first-child {height:60px;}
+header a[aria-label="BenchmarkWatcher home"] > div {background:var(--theme-accent)!important;border-radius:5px;}
+header a[aria-label="BenchmarkWatcher home"] > div span {color:var(--theme-bg)!important;}
+.quick-theme-toggle {display:flex;gap:7px;align-items:center;min-height:40px;padding:6px 10px;color:var(--theme-text-muted);font-size:12px;border:1px solid var(--theme-border);border-radius:6px;}
+.quick-theme-toggle>span:first-child {font-size:19px;}
+.quick-theme-toggle:hover {color:var(--theme-text);background:var(--theme-bg);}
+.coverage-summary {display:flex;justify-content:space-between;gap:12px;cursor:pointer;padding:14px 0;border-block:1px solid var(--theme-border);font-size:13px;color:var(--theme-text-muted);list-style:none;}
+.coverage-summary::-webkit-details-marker {display:none;}
+.coverage-summary strong {color:var(--theme-text);font-variant-numeric:tabular-nums;}
+.coverage-summary>span:last-child {color:var(--theme-accent);}
+#market-pulse {margin-bottom:16px;}
+#market-pulse[open]>.grid {margin-top:16px;}
+#quick-find {margin-bottom:14px;}
+#quick-find>div {padding:0;border:0;background:transparent!important;}
+#quick-find-summary {margin-top:8px;font-weight:500;letter-spacing:0;}
+#quick-find input {background:var(--theme-surface)!important;}
+#compact-view>.rounded-xl {border-radius:8px;}
+#commodity-page {padding-top:20px;}
+#commodity-page>div:first-child {margin-bottom:16px;}
+#commodity-page>div:nth-child(2) {border:0;border-bottom:1px solid var(--theme-border);border-radius:0;background:transparent!important;}
+#commodity-page>div:nth-child(2)>div {padding:0 0 18px;}
+#commodity-page>div:nth-child(3) {margin-top:20px;border-radius:8px;}
+#commodity-page>div:nth-child(3)>div:first-child {padding:14px 16px;}
+#commodity-page .source-provenance {min-width:190px;}
+#commodity-page #change-badge-section {margin-top:12px;}
+#commodity-page #change-badge-bg {padding:3px 8px;}
+#commodity-page #change-pct-display {font-size:17px;}
+#commodity-page #stats-bar {padding:9px 16px;}
+#commodity-page #stats-bar>div:first-child {text-align:left;}
+#commodity-page #crosshair-info {padding:8px 12px;}
+html[data-theme] :is(.range-btn,.type-btn,.view-btn,.period-btn,.quick-filter-btn) {color:var(--theme-text-muted);}
+html[data-theme] :is(.range-btn,.type-btn,.view-btn,.period-btn,.quick-filter-btn).theme-surface {background:var(--theme-accent)!important;color:var(--theme-bg)!important;}
+html[data-theme] .view-btn[aria-pressed="true"] {background:var(--theme-accent)!important;color:var(--theme-bg)!important;}
+html[data-theme] #settings-modal .theme-btn[data-active="true"] {border-color:var(--theme-accent)!important;}
+#change-tooltip {background:var(--theme-surface)!important;color:var(--theme-text)!important;border:1px solid var(--theme-border);}
+#change-tooltip .text-white {color:var(--theme-text)!important;}
+#main-content:has(.release-notes) .release-notes {max-width:900px;padding-top:32px;}
+.release-entry {padding:24px 0;border-top:1px solid var(--theme-border);}
+.release-entry time {font-size:12px;color:var(--theme-text-muted);}
+.release-entry h2 {font-size:22px;font-weight:650;margin:8px 0 12px;}
+.release-entry ul {padding-left:20px;list-style:disc;line-height:1.8;color:var(--theme-text-muted);}
+@media(max-width:640px) {
+  html[data-theme] h1 {font-size:26px;}
+  .theme-toggle-label {display:none;}
+  .coverage-summary {font-size:12px;align-items:center;}
+  .coverage-summary>span:first-child {max-width:56%;}
+  #commodity-page .source-provenance {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding-top:12px;min-width:0;}
+  #commodity-page .source-provenance .text-sm {font-size:12px;}
+}
+/* Put the plot before secondary statistics and its cursor readout. */
+#commodity-page>div:nth-child(3) {display:flex;flex-direction:column;}
+#commodity-page #stats-bar {order:2;border-top:1px solid var(--theme-border);border-bottom:0;}
+#commodity-page>div:nth-child(3)>div:nth-child(3) {display:flex;flex-direction:column;padding:12px 16px;}
+#commodity-page #crosshair-info {order:1;margin:10px 0 0;}
+#commodity-page #compare-bar {order:2;}
+#commodity-page #crosshair-info~div:last-child {order:3;}
+.reference-notes {margin-top:24px;font-size:13px;line-height:1.7;color:var(--theme-text-muted);border-top:1px solid var(--theme-border);padding:18px 0;}
+.reference-notes summary {cursor:pointer;color:var(--theme-text);font-weight:600;}
+.reference-notes p {max-width:850px;margin-top:12px;}
+#data-table td {padding:9px 12px;}
+#data-table th {padding:12px;letter-spacing:.02em;}
+@media(max-width:767px) {#data-table [data-col="trend"],#data-table [data-col="updated"] {display:none!important;}}
+@media(max-width:479px) {#data-table [data-col="source"] {display:none!important;}}
+@media(max-width:640px) {
+  #data-table {min-width:100%;table-layout:fixed;}
+  #data-table [data-col="chg"] {display:none!important;}
+  #data-table [data-col="commodity"] {width:48%;}
+  #data-table [data-col="price"],#data-table [data-col="pct"] {width:26%;}
+  #data-table td,#data-table th {padding:10px 8px;}
+  #data-table .commodity-icon {display:none!important;}
+  #data-table .commodity-name {font-size:12px;overflow-wrap:anywhere;}
+  #data-table .commodity-category {font-size:10px;}
+  .range-toolbar {padding:8px;gap:8px;margin-bottom:8px;}
+  .range-toolbar>div:first-child>div:first-child {display:none;}
+  .range-toolbar>div:last-child {padding-top:6px;}
+  #quick-find-summary {display:none;}
+}

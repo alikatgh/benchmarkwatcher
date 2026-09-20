@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-10 min-h-screen">
+<div id="commodity-page" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-5 md:py-6 min-h-screen">
     <!-- Header Row: stacked on mobile, side-by-side on desktop -->
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-6 sm:mb-8">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-5">
         <!-- Left: Title -->
         <div>
             <div class="flex flex-col font-ui mb-2">
@@ -41,15 +41,15 @@
 
     <div
         class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
-        <div class="p-4 sm:p-6 md:p-8">
-            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
+        <div class="p-4 sm:p-5">
+            <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-6">
                 <!-- LEFT: Price and Change (main content) -->
                 <div class="flex-1 min-w-0">
                     <!-- Label + frequency badge: stacked on mobile, inline on sm+ -->
                     <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 mb-3">
                         <div
                             class="text-xs sm:text-sm text-brand-black-60 dark:text-brand-black-60 tracking-wider font-semibold font-ui">
-                            Latest Benchmark
+                            Latest observation
                         </div>
                         <!-- Frequency indicator badge -->
                         <span class="text-2xs font-semibold px-2 py-0.5 rounded-full w-fit
@@ -102,10 +102,10 @@
                     {% set _abs1 = commodity.change | default(0) %}
                     {% set _pct30 = ds.pct_change_30_obs | default(0) %}
                     {% set _pct365 = ds.pct_change_365_obs | default(0) %}
-                    {% set _prev_label = 'prev day' if commodity.is_daily else 'prev month' %}
+                    {% set _prev_label = 'previous observation' %}
                     {% set trend_color = 'var(--color-up)' if commodity.change >= 0 else 'var(--color-down)' %}
                     {% set trend_bg = 'var(--color-up-bg)' if commodity.change >= 0 else 'var(--color-down-bg)' %}
-                    <div class="flex flex-col gap-2.5 mt-4"
+                    <div class="flex flex-col gap-2 mt-3"
                          id="change-badge-section"
                          data-pct1="{{ _pct1 }}"
                          data-abs1="{{ _abs1 }}"
@@ -174,9 +174,9 @@
                     </div>
                 </div>
 
-                <!-- RIGHT: Data Source Info (pushed to right edge) -->
+                <!-- Source provenance -->
                 <div
-                    class="shrink-0 border-t md:border-t-0 md:border-l border-brand-black-60/10 dark:border-white/10 pt-4 md:pt-0 md:pl-6 flex flex-row md:flex-col gap-4 md:gap-3 md:ml-auto md:text-right">
+                    class="source-provenance shrink-0 border-t md:border-t-0 md:border-l border-brand-black-60/10 dark:border-white/10 pt-4 md:pt-0 md:pl-6 flex flex-row md:flex-col gap-4 md:gap-3 md:ml-auto md:text-right">
                     <div>
                         <div
                             class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
@@ -195,10 +195,11 @@
                         </a>
                         {% endif %}
                     </div>
+                    <div><div class="text-2xs text-brand-black-60 font-ui">OBSERVATION DATE</div><div class="text-sm font-medium font-ui">{{ commodity.date }}</div></div>
                     <div>
                         <div
                             class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
-                            UPDATED</div>
+                            RETRIEVED</div>
                         <div class="text-sm font-medium text-brand-black-80 dark:text-white font-ui">{{
                             commodity.updated_at[:10] }}</div>
                     </div>
@@ -209,7 +210,7 @@
 
     <!-- Enhanced Chart Section -->
     <div
-        class="mt-6 sm:mt-8 md:mt-12 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 transition-colors duration-500 overflow-visible">
+        class="mt-4 sm:mt-5 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 transition-colors duration-500 overflow-visible">
 
         <!-- Chart Header with Controls -->
         <div class="p-3 sm:p-4 md:p-6 border-b border-brand-black-60/10 dark:border-white/5">
@@ -220,7 +221,7 @@
                         class="text-base sm:text-lg md:text-xl font-bold text-brand-black-80 dark:text-white leading-tight font-ui">
                         Price History</h3>
                     <p class="text-xs sm:text-xs md:text-sm text-brand-black-60 dark:text-brand-black-60 font-ui mt-0.5 sm:mt-1">
-                        Daily benchmark price (end-of-day)
+                        {{ 'Daily observations' if commodity.is_daily else 'Monthly observations' }} · {{ commodity.currency }} / {{ commodity.unit }}
                     </p>
                 </div>
 
@@ -294,8 +295,8 @@
 
         <!-- Price Statistics Bar -->
         <div id="stats-bar"
-            class="px-4 sm:px-6 py-3 sm:py-4 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
-            <div class="text-2xs text-brand-black-60 font-ui mb-2 text-center">Based on selected historical window
+            class="px-4 sm:px-6 py-2.5 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
+            <div class="text-2xs text-brand-black-60 font-ui mb-1.5 text-center">Based on selected historical window
             </div>
             <div class="flex overflow-x-auto scrollbar-hide gap-3 sm:gap-4 sm:grid sm:grid-cols-5 font-ui text-center">
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
@@ -330,7 +331,7 @@
         <div class="p-3 sm:p-4 md:p-6">
             <!-- Crosshair Info Display — stacks on mobile, 3-cols on sm+ -->
             <div id="crosshair-info"
-                class="hidden mb-3 sm:mb-4 p-2.5 sm:p-3 md:p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui overflow-x-auto scrollbar-hide">
+                class="hidden mb-3 p-2.5 sm:px-3 bg-brand-black-60/5 dark:bg-white/5 rounded-lg font-ui overflow-x-auto scrollbar-hide">
                 <div class="flex gap-4 sm:gap-6 min-w-max sm:min-w-0 sm:grid sm:grid-cols-3">
                     <!-- Date -->
                     <div class="flex flex-col min-w-0 shrink-0">
@@ -985,87 +986,11 @@
         </div>
     </div>
 
-    <!-- Educational Section: Data Frequency Explanation -->
-    <div
-        class="mt-8 sm:mt-12 md:mt-16 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden transition-colors duration-500">
-        <div class="p-4 sm:p-6 md:p-8">
-            <div class="flex items-center gap-3 mb-4">
-                <svg class="w-5 h-5 text-brand-oxford dark:text-brand-teal" fill="none" stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <h3 class="text-brand-black-80 dark:text-white font-bold tracking-wider text-sm font-ui">
-                    Understanding Data Frequency
-                </h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Daily Data -->
-                <div class="p-4 rounded-xl bg-brand-teal/5 dark:bg-brand-teal/10 border border-brand-teal/20">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span
-                            class="text-2xs font-semibold px-2 py-0.5 rounded-full bg-brand-teal/20 text-brand-teal font-ui uppercase tracking-wider">Daily</span>
-                        <span class="text-xs font-semibold text-brand-black-80 dark:text-white font-ui">Exchange-Traded
-                            Benchmarks</span>
-                    </div>
-                    <p class="text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed mb-2">
-                        Updated every business day from public data sources. Reflects end-of-day benchmark
-                        prices.
-                    </p>
-                    <div class="text-2xs text-brand-black-60 font-medium font-ui">
-                        <span class="font-bold">Includes:</span> Crude Oil (Brent, WTI), Natural Gas, Heating Oil, Jet
-                        Fuel, Propane, Gold
-                    </div>
-                </div>
-
-                <!-- Monthly Data -->
-                <div class="p-4 rounded-xl bg-brand-oxford/5 dark:bg-brand-oxford/10 border border-brand-oxford/20">
-                    <div class="flex items-center gap-2 mb-2">
-                        <span
-                            class="text-2xs font-semibold px-2 py-0.5 rounded-full bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal font-ui uppercase tracking-wider">Monthly</span>
-                        <span class="text-xs font-semibold text-brand-black-80 dark:text-white font-ui">Global
-                            Benchmarks</span>
-                    </div>
-                    <p class="text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed mb-2">
-                        IMF/World Bank global commodity price indices. Published monthly with 1-2 month lag. Provides
-                        historical context over longer periods.
-                    </p>
-                    <div class="text-2xs text-brand-black-60 font-medium font-ui">
-                        <span class="font-bold">Includes:</span> Industrial Metals (Copper, Aluminum, Zinc, etc.),
-                        Agricultural (Wheat, Corn, Coffee, etc.)
-                    </div>
-                </div>
-            </div>
-
-            <p class="mt-4 text-xs text-brand-black-60 dark:text-brand-black-60 leading-relaxed">
-                <span class="font-bold">Why the difference?</span> Daily commodity prices from exchanges are freely
-                available for energy products. However, metals and agricultural commodities are typically traded through
-                private contracts, so free public data is only available as monthly averages from international
-                organizations.
-            </p>
-        </div>
-    </div>
-
-    <!-- Legal Disclaimer -->
-    <div
-        class="mt-6 sm:mt-8 p-4 sm:p-6 border-l-4 border-brand-claret/50 bg-brand-black-60/5 dark:bg-white/5 rounded-r-xl transition-colors duration-500">
-        <h4
-            class="text-brand-black-80 dark:text-white font-bold mb-2 tracking-wider text-xs font-ui flex items-center gap-2">
-            <svg class="w-4 h-4 text-brand-claret" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                </path>
-            </svg>
-            Benchmark Disclaimer
-        </h4>
-        <p class="text-brand-black-60 dark:text-brand-black-60 text-xs leading-relaxed">
-            This benchmark represents the end-of-day reference price for standard market monitoring. It is
-            provided for <span class="font-semibold">informational purposes only</span>. BenchmarkWatcher does not
-            provide
-            real-time data or trading facilities, and this data should not be used for trading decisions.
-        </p>
-    </div>
+    <details class="reference-notes">
+        <summary>About the source and observation dates</summary>
+        <p>Each series keeps the dates, units, and publication frequency of its source. Daily observations may skip weekends or missing reports; monthly series are published with a delay and may be revised. Retrieval is when BenchmarkWatcher last fetched the source, not the date of the price.</p>
+        <p>Changes compare available observations. The selected chart range ends at the latest available observation. This is historical reference data, not real-time quotes or investment advice.</p>
+    </details>
 </div>
 
 <script defer src="{{ url_for('static', filename='js/vendor/chartjs-plugin-zoom.min.js') }}"></script>

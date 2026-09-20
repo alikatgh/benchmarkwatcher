@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory, current_app
+from flask import Blueprint, render_template, request, jsonify, abort, send_from_directory, current_app, Response, url_for
 from app.data_handler import build_market_summary, get_all_commodities, get_commodity
 from app.extensions import limiter, cache
 import os
@@ -286,3 +286,22 @@ def favicon():
         'og-image.png',
         mimetype='image/png'
     )
+
+
+@bp.route('/robots.txt')
+def robots():
+    return Response('User-agent: *\nAllow: /\nDisallow: /internal/\nDisallow: /api/\nSitemap: https://benchmarkwatcher.online/sitemap.xml\n', mimetype='text/plain')
+
+
+@bp.route('/sitemap.xml')
+@cache.cached(timeout=600)
+def sitemap():
+    """Canonical, publicly rendered pages only; no parameter permutations."""
+    from xml.etree.ElementTree import Element, SubElement, tostring
+    root = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
+    paths = ['/', '/changelog']
+    paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
+                 for item in get_all_commodities(include_history=False))
+    for path in sorted(set(paths)):
+        SubElement(SubElement(root, 'url'), 'loc').text = 'https://benchmarkwatcher.online' + path
+    return Response(tostring(root, encoding='utf-8', xml_declaration=True), mimetype='application/xml')

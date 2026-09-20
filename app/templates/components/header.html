@@ -19,6 +19,7 @@
         </a>
 
         <div class="flex items-center gap-2">
+            <button type="button" id="quick-theme-toggle" class="quick-theme-toggle" aria-label="Toggle light and dark mode" onclick="setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark')"><span aria-hidden="true">◐</span><span class="theme-toggle-label">Appearance</span></button>
             <!-- Settings button -->
             <button onclick="toggleSettings()" id="settings-button"
                 class="p-2 rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
@@ -41,7 +42,7 @@
         <div class="max-w-6xl mx-auto px-4 overflow-x-auto scrollbar-hide">
             {% set cat = selected_category|default('') %}
             {% set nav_range = date_range|default('ALL') %}
-            {% set nav_view = active_view|default('grid') %}
+            {% set nav_view = active_view|default('compact') %}
             {% set base_cls = "px-3 py-1 text-xs font-semibold rounded-lg transition-colors font-ui" %}
             {% set idle_cls = "text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white
             hover:bg-brand-black-60/8 dark:hover:bg-white/8" %}

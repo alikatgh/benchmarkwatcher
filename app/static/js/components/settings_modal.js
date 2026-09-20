@@ -228,6 +228,10 @@ BW.SettingsModal = {
             this.setRawSetting('THEME', 'theme', mode);
         }
         this.applyTheme();
+        if (BW.Commodity && BW.Commodity.ctx) {
+            BW.Commodity.setupColors();
+            BW.Commodity.applyChartTheme(mode);
+        }
         this.updateUI();
     },
 

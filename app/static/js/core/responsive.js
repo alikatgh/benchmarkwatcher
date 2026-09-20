@@ -25,15 +25,6 @@ BW.Responsive = (function () {
     // ─── Constants ───────────────────────────────────────────────────────────
     const BREAKPOINTS = { xs: 480, sm: 768, md: 1200, lg: 1400 };
 
-    // Columns to auto-hide on xs/sm (heaviest to render, smallest value on narrow screens)
-    const PRIORITY_HIDE = {
-        xs: ['trend', 'updated', 'source'],
-        sm: ['trend', 'updated'],
-        md: [],
-        lg: [],
-        xl: [],
-    };
-
     // ─── Internal state ──────────────────────────────────────────────────────
     let _deviceClass = 'md';
     let _resizeObserver = null;
@@ -106,31 +97,9 @@ BW.Responsive = (function () {
 
     // ─── R3: Priority column hiding on narrow viewports ───────────────────────
     function applyColumnPriority() {
-        const colsToHide = PRIORITY_HIDE[_deviceClass] || [];
-
-        // Wait for BW.CompactTable to be available
-        if (!window.BW || !BW.CompactTable || typeof BW.CompactTable.setColumnVisibility !== 'function') {
-            return; // will be retried via resize observer or manual call
-        }
-
-        // Restore all responsive-hidden columns first (clean slate on resize)
-        const allCols = ['trend', 'updated', 'source', 'ytd', 'range'];
-        allCols.forEach(col => {
-            const header = document.querySelector(`th[data-col="${col}"]`);
-            if (header && header.dataset.responsiveHidden === 'true') {
-                BW.CompactTable.setColumnVisibility(col, true);
-                header.dataset.responsiveHidden = '';
-            }
-        });
-
-        // Hide priority columns for current device class
-        colsToHide.forEach(col => {
-            const header = document.querySelector(`th[data-col="${col}"]`);
-            if (header && header.dataset.responsiveHidden !== 'true') {
-                BW.CompactTable.setColumnVisibility(col, false);
-                header.dataset.responsiveHidden = 'true';
-            }
-        });
+        // CSS handles narrow-screen visibility without changing saved columns.
+        // Persisting auto-hidden columns made them stay missing on desktop.
+        updateDeviceClass();
     }
 
     // ─── ResizeObserver for continuous adaptation ────────────────────────────
