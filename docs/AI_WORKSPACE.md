@@ -1,5 +1,49 @@
 # Private financial research workspace
 
+## Production deployment — September 21, 2026
+
+- Live at https://benchmarkwatcher.online/workspace/ on the existing Hetzner
+  host `89.167.29.166` (`wallmarkets-hel` in the console; `turgen-hel` in the OS).
+- Deployed application commit: `b7546fa4120443ce352b9e9307a6803efab5d7ea`, from
+  `codex/jev-model-analysis`. The server checkout is detached at this release;
+  do not assume `origin/main` contains it. Review: GitHub PR #1.
+- App: `/home/benchmarkwatcher/app`, `benchmarkwatcher.service`, loopback port
+  8001 behind the existing Caddy route. No DNS or sibling service changes.
+- Private DB: `/home/benchmarkwatcher/state/accounts/workspace.sqlite3` (0600,
+  parent 0700). The service's `workspace.conf` drop-in allows writes only to this
+  additional account directory and sets `UMask=0077`.
+- Library: `/home/benchmarkwatcher/state/model-source`, pinned to source commit
+  `c5ef2e191f3689bdb8ac08aae9b80f804cef6e18`. It is outside public file paths and
+  read-only under the app service sandbox. All 609 workbooks opened: 364 supported,
+  245 require mappings. A serial full-library audit peaked at 99.5 MiB RSS;
+  this is not a concurrency/load-test result.
+- Secrets remain in the private production `.env`. Redis on loopback provides
+  shared limits with the `benchmarkwatcher` key prefix. No other Redis keys were
+  cleared. One trusted Caddy forwarding hop is enabled.
+- `benchmarkwatcher-workspace-backup.timer` runs daily around 05:15 UTC, keeping
+  seven integrity-checked SQLite snapshots in `/home/benchmarkwatcher/state/backups`.
+  The initial backup passed. These are local server backups, not off-site copies.
+- Rollback materials: root-only `/var/backups/benchmarkwatcher-release-20260921/`
+  contains the previous commit, prior environment/service/dependency manifest,
+  new workspace environment, and a separate copy of the persistent workspace
+  secrets. Do not print these environment files or generate replacement keys.
+- To roll back the application: preserve account DB/backups and the workspace
+  environment; switch only the clean app checkout to the recorded previous
+  commit as its service user, restore `production.env`, remove only the added
+  `workspace.conf` drop-in, reload systemd, restart BenchmarkWatcher, and verify
+  `/health`. Before re-enabling accounts, restore the saved workspace secrets;
+  generating new encryption keys would make existing provider keys unreadable.
+- Verification: 115 Python tests (one skipped), 241 Jest tests, vocabulary check,
+  and all GitHub CI jobs including browser tests passed. Public HTTPS health,
+  dashboard, commodity API/detail, register/login pages returned 200. Private
+  pages redirected unauthenticated visitors; secure cookie flags were checked.
+  The live registration page was inspected in Chrome. Neighboring services
+  remained active. Live provider responses still need testing with a user's key.
+
+The CI browser server now uses isolated synthetic data and opens the existing
+coverage disclosure before checking its contents; production data is never used
+as a test fixture.
+
 The first increment adds private accounts, encrypted user-owned DeepSeek and
 TypeSafe keys, a searchable XLSX library, deterministic calculations, and saved
 analyses. The public commodity dashboard continues to work without accounts.
