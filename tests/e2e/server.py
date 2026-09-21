@@ -17,6 +17,7 @@ def main():
                     'price': history[-1]['price'], 'date': history[-1]['date'],
                     'currency': 'USD', 'unit': 'test unit', 'frequency': 'daily',
                     'source_name': 'Synthetic test data', 'source_url': 'https://example.com',
+                    'updated_at': history[-1]['date'] + 'T00:00:00Z',
                     'source_type': 'FIXTURE', 'history': history}
             (Path(directory) / f'{item["id"]}.json').write_text(json.dumps(item))
 
