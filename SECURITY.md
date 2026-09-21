@@ -1,6 +1,6 @@
 # Security Policy
 
-## Scope
+## Public dashboard scope
 
 BenchmarkWatcher is a monitoring dashboard that displays publicly available benchmark prices. It does not handle:
 
@@ -10,6 +10,15 @@ BenchmarkWatcher is a monitoring dashboard that displays publicly available benc
 - Trading operations
 
 The security surface is intentionally minimal.
+
+## Optional private workspace
+
+When `WORKSPACE_ENABLED=1`, the application also handles account credentials,
+user-owned AI provider keys, questions, and saved financial analyses. See
+[`docs/AI_WORKSPACE.md`](docs/AI_WORKSPACE.md) for configuration, encryption,
+session/CSRF controls, owner isolation, and deployment boundaries. This feature
+must use HTTPS and persistent private session/encryption keys. It is disabled
+by default and does not execute trades.
 
 ## Reporting a Vulnerability
 

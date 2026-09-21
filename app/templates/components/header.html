@@ -48,8 +48,12 @@
             hover:bg-brand-black-60/8 dark:hover:bg-white/8" %}
             {% set active_cls = "text-brand-black-80 dark:text-white bg-brand-black-60/10 dark:bg-white/10" %}
             <nav class="flex items-center gap-0.5 h-9 whitespace-nowrap" aria-label="Category filters">
+                {% if config.WORKSPACE_ENABLED %}
+                <a href="{{ url_for('workspace.home') }}" class="{{ base_cls }} {{ active_cls if request.blueprint == 'workspace' else idle_cls }}" {% if request.blueprint == 'workspace' %}aria-current="page"{% endif %}>Workspace</a>
+                <span class="w-px h-4 bg-brand-black-60/20 dark:bg-white/15 mx-1 self-center flex-shrink-0"></span>
+                {% endif %}
                 <a href="{{ url_for('main.index', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if not cat else idle_cls }}" {% if not cat %}aria-current="page"{% endif %}>All</a>
+                    class="{{ base_cls }} {{ active_cls if not cat and request.blueprint != 'workspace' else idle_cls }}" {% if not cat and request.blueprint != 'workspace' %}aria-current="page"{% endif %}>{{ 'Benchmarks' if request.blueprint == 'workspace' else 'All' }}</a>
                 <a href="{{ url_for('main.index', category='energy', range=nav_range, view=nav_view) }}"
                     class="{{ base_cls }} {{ active_cls if cat == 'energy' else idle_cls }}" {% if cat == 'energy' %}aria-current="page"{% endif %}>Energy</a>
                 <a href="{{ url_for('main.index', category='metal', range=nav_range, view=nav_view) }}"

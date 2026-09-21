@@ -39,6 +39,11 @@ def create_app(config_class=Config):
     from app import routes
     app.register_blueprint(routes.bp)
 
+    # Opt-in account workspace; public benchmark routes remain available.
+    if app.config.get('WORKSPACE_ENABLED', os.getenv('WORKSPACE_ENABLED') == '1'):
+        from app.workspace_store import init_workspace
+        init_workspace(app)
+
     # --- Static asset cache-busting ------------------------------------
     # Append each static file's mtime as ?v= so a deploy invalidates the
     # browser cache. Without this, soft reloads can serve stale JS/CSS even

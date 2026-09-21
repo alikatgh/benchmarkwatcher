@@ -1,0 +1,58 @@
+.workspace {max-width:1160px;margin:0 auto;padding:24px 24px 48px;color:var(--theme-text);font-size:14px;line-height:1.6;}
+.workspace-nav,.workspace-nav>div,.workspace-actions,.workspace-links {display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+.workspace-nav {justify-content:space-between;border-bottom:1px solid var(--theme-border);padding-bottom:16px;margin-bottom:32px;}
+.workspace-nav>a {font-weight:600;}
+.workspace h1 {margin:0 0 12px;font-weight:650;}
+.workspace h2 {font-size:18px;font-weight:600;margin-bottom:10px;}
+.workspace p {margin:10px 0;}
+.workspace a {color:var(--theme-accent);text-underline-offset:4px;}
+.workspace a:hover {text-decoration:underline;}
+.workspace .muted {color:var(--theme-text-muted);}
+.workspace .small {font-size:12px;}
+.workspace-panel {padding:22px;border:1px solid var(--theme-border);background:var(--theme-surface);border-radius:5px;margin:20px 0;min-width:0;}
+.workspace-auth {max-width:480px;margin:56px auto;}
+.workspace-form {display:flex;flex-direction:column;gap:10px;margin-top:24px;}
+.workspace-form>label:not(.check) {font-weight:600;margin-top:6px;}
+.workspace :is(input:not([type=checkbox]):not([type=hidden]),select,textarea) {width:100%;min-width:0;background:var(--theme-surface);color:var(--theme-text);border:1px solid var(--theme-border);border-radius:4px;padding:10px 12px;min-height:44px;font:inherit;}
+.workspace textarea {resize:vertical;}
+.workspace :is(button,.primary) {display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid var(--theme-border);border-radius:3px;padding:9px 16px;font:inherit;cursor:pointer;}
+.workspace .primary {background:var(--theme-text);color:var(--theme-surface);font-weight:600;text-decoration:none;}
+.workspace :is(input,select,textarea,button,a,summary):focus-visible {outline:2px solid var(--theme-accent);outline-offset:3px;}
+.workspace button:hover {filter:brightness(.9);}
+.workspace .check {display:flex;align-items:flex-start;gap:10px;font-size:13px;margin:10px 0;}
+.workspace .check input {flex-shrink:0;width:18px;height:18px;margin-top:3px;accent-color:var(--theme-accent);}
+.workspace-notice {border-left:3px solid var(--theme-border);padding:10px 16px;background:var(--theme-surface);}
+.workspace-notice.error {border-color:var(--color-down);}
+.workspace-notice.success {border-color:var(--color-up);}
+.provider-grid {display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.research-layout {display:grid;grid-template-columns:minmax(0,1.7fr) minmax(240px,1fr);gap:32px;align-items:start;}
+.workspace-search {display:flex;gap:8px;margin:24px 0 8px;}
+.workbook-list {display:grid;grid-template-columns:1fr 1fr;gap:0 24px;}
+.workbook-list>a,.saved-analysis {display:flex;flex-direction:column;gap:2px;padding:14px 0;border-bottom:1px solid var(--theme-border);overflow-wrap:anywhere;}
+.workbook-list strong,.saved-analysis strong {color:var(--theme-text);}
+.workbook-list span,.saved-analysis span {font-size:12px;color:var(--theme-text-muted);}
+.workspace-links,.workspace-actions {margin-top:24px;}
+.workspace summary {cursor:pointer;font-weight:600;min-height:32px;}
+.workspace .period-fields {display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.period-fields label {display:block;margin:8px 0;}
+.workspace-table {overflow-x:auto;}
+.workspace table {border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap;}
+.workspace th,.workspace td {padding:10px 16px;border-bottom:1px solid var(--theme-border);text-align:left;}
+.workspace th {color:var(--theme-text-muted);font-weight:500;}
+.workspace .numeric {font-variant-numeric:tabular-nums;text-align:right;}
+.calculated-value {font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;}
+.calculated-value span {font-size:14px;font-weight:400;}
+.explanation {white-space:pre-wrap;max-width:75ch;}
+.workspace pre {font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.source-version,.recovery-code {overflow-wrap:anywhere;}
+.recovery-code {display:block;padding:20px 0;font-size:18px;user-select:all;}
+@media(max-width:640px) {
+ .workspace {padding:16px 14px 32px;}
+ .workspace-nav {gap:12px;margin-bottom:24px;}
+ .workspace-nav>div {gap:12px;}
+ .provider-grid,.research-layout,.workbook-list {grid-template-columns:1fr;gap:0;}
+ .workspace-panel {padding:16px;}
+ .workspace-auth {margin:28px auto;}
+ .workspace .period-fields {grid-template-columns:1fr;gap:0;}
+ .workspace :is(input:not([type=hidden]),select,textarea) {font-size:16px;}
+}

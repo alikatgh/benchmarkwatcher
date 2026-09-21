@@ -9,7 +9,7 @@
                 <span class="text-lg font-bold text-brand-black-80 dark:text-white font-serif">BenchmarkWatcher</span>
             </div>
             <p class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">
-                Historical reference data for commodity benchmarks.
+                {% if request.blueprint == 'workspace' %}Company model research and source-backed calculations.{% else %}Historical reference data for commodity benchmarks.{% endif %}
             </p>
         </div>
 
@@ -52,9 +52,16 @@
             <p
                 class="text-xs text-brand-black-60/70 dark:text-brand-black-60/50 leading-relaxed font-ui max-w-md md:ml-auto">
                 Data provided for informational and reference purposes only.
+                {% if request.blueprint == 'workspace' %}
+                Imported workbooks may contain historical figures and assumptions.
+                AI commentary is separate from calculated results. Verify source
+                data and assumptions before using an analysis. No trade execution
+                or personalized investment advice is provided.
+                {% else %}
                 All values are historical observations and derived summaries.
                 This service does not facilitate trading, provide real-time data,
                 generate forecasts, or offer financial or investment advice.
+                {% endif %}
             </p>
         </div>
     </div>

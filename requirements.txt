@@ -30,6 +30,9 @@ python-dateutil>=2.8,<3.0  # tested 2.9.0.post0
 # Security (HTML escaping; also transitive via Jinja2, pinned explicitly)
 MarkupSafe>=3.0.3,<4     # tested 3.0.3; cap the major
 
+# Encrypted user-owned provider keys (private workspace only).
+cryptography>=46,<51
+
 # NOTE: pandas and numpy are NOT required — data handling uses stdlib json/datetime.
 # Transitive (resolved by the above, listed for reference): Jinja2 3.1.6,
 # blinker 1.9.0, click 8.3.1, itsdangerous 2.2.0, limits 5.8.0.

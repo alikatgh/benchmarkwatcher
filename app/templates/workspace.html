@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Research workspace | BenchmarkWatcher{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">
+{% macro token() %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
+{% macro number(point) %}{% if point.value is none %}Unavailable{% elif point.percent %}{{ '{:,.2f}'.format(point.value * 100) }}%{% else %}{{ '{:,.2f}'.format(point.value) }}{% endif %}{% endmacro %}
+<div class="workspace">
+  <nav class="workspace-nav" aria-label="Research workspace">
+    <a href="{{ url_for('workspace.home') }}">Research workspace</a>
+    {% if user %}<div><span>{{ user.username }}</span><a href="{{ url_for('workspace.settings') }}">AI settings</a>
+    <form method="post" action="{{ url_for('workspace.logout') }}">{{ token() }}<button type="submit">Sign out</button></form></div>{% endif %}
+  </nav>
+  {% for category, message in get_flashed_messages(with_categories=true) %}<p class="workspace-notice {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>{% endfor %}
+  {% if mode in ['login', 'register', 'recover'] %}
+  <section class="workspace-auth">
+    <h1>{{ {'login':'Welcome back', 'register':'Your research, in one place', 'recover':'Recover your account'}[mode] }}</h1>
+    <p class="muted">{% if mode == 'register' %}Save analyses and connect your own AI providers. Your workspace is private.{% elif mode == 'recover' %}Use the recovery code you saved when creating your account.{% else %}Sign in to your models, provider connections, and saved analyses.{% endif %}</p>
+    <form method="post" class="workspace-form">{{ token() }}
+      <label for="username">Username</label><input id="username" name="username" autocomplete="username" required minlength="3" maxlength="40" pattern="[a-zA-Z0-9][a-zA-Z0-9_.-]{2,39}">
+      {% if mode == 'recover' %}<label for="recovery">Recovery code</label><input id="recovery" name="recovery" type="password" autocomplete="off" required maxlength="100">{% endif %}
+      <label for="password">{{ 'Password' if mode == 'login' else 'New password (at least 12 characters)' }}</label>
+      <input id="password" name="password" type="password" autocomplete="{{ 'current-password' if mode == 'login' else 'new-password' }}" minlength="{{ 1 if mode == 'login' else 12 }}" maxlength="256" required>
+      <button class="primary" type="submit">{{ {'login':'Sign in', 'register':'Create private workspace', 'recover':'Reset password'}[mode] }}</button>
+    </form>
+    <div class="workspace-links"><a href="{{ url_for('workspace.login' if mode != 'login' else 'workspace.register') }}">{{ 'Sign in' if mode != 'login' else 'Create an account' }}</a>{% if mode == 'login' %}<a href="{{ url_for('workspace.recover') }}">Forgot password?</a>{% endif %}</div>
+  </section>
+  {% elif mode == 'recovery_code' %}
+  <section class="workspace-auth"><h1>Save your recovery code</h1><p>Keep this in your password manager. It is shown once and lets you reset your password. There is no email recovery.</p><code class="recovery-code">{{ recovery_code }}</code><a class="primary" href="{{ url_for('workspace.home') }}">Continue to workspace</a></section>
+  {% elif mode == 'settings' %}
+  <h1>Your AI connections</h1><p class="muted">Bring your own API key. Your provider bills your account directly. BenchmarkWatcher supplies no AI credits or shared keys.</p>
+  <div class="provider-grid">
+  {% for id, name in providers.items() %}{% set linked = connections | selectattr('provider', 'equalto', id) | list %}
+  <section class="workspace-panel"><h2>{{ name }}</h2><p>{{ 'Questions and optional written explanations.' if id == 'deepseek' else 'Structured selection of workbook metrics and reporting periods.' }}</p>
+    {% if linked %}<p class="connection-status">Connected{% if user.default_provider == id %} · Default{% endif %}</p><p class="muted">{{ linked[0].models | join(', ') }}</p>
+    <div class="workspace-actions"><form method="post">{{ token() }}<input type="hidden" name="provider" value="{{ id }}"><button name="action" value="default">Make default</button></form><form method="post">{{ token() }}<input type="hidden" name="provider" value="{{ id }}"><button name="action" value="remove">Remove saved key</button></form></div>{% endif %}
+    <form method="post" class="workspace-form">{{ token() }}<input type="hidden" name="provider" value="{{ id }}">
+      <label for="key-{{ id }}">{{ 'Replace API key' if linked else 'API key' }}</label><input id="key-{{ id }}" name="api_key" type="password" autocomplete="off" required maxlength="4096" spellcheck="false">
+      <label class="check"><input type="checkbox" name="consent" value="yes" required><span>Test this key with {{ name }} and store it encrypted. {% if id == 'typesafe' %}The test makes a small billable AI request.{% else %}The test retrieves my available models.{% endif %}</span></label>
+      <button class="primary" name="action" value="connect">Test and save key</button>
+    </form><p class="muted small">Keys are never shown again. Removing a saved key stops future use here; it does not revoke the key at your provider.</p>
+  </section>{% endfor %}</div>
+  {% elif mode == 'home' %}
+  <h1>What are you researching?</h1><p class="muted">Open a company workbook, ask a question, and keep the calculation with its sources.</p>
+  <div class="research-layout"><section>
+    <form method="get" class="workspace-search"><label class="sr-only" for="q">Find a workbook</label><input id="q" name="q" value="{{ query }}" placeholder="Search by ticker or workbook name" maxlength="100"><button type="submit">Search</button></form>
+    <p class="muted small">{{ count }} of {{ total }} workbooks</p>
+    <div class="workbook-list">{% for book in books %}<a href="{{ url_for('workspace.model', model_id=book.id) }}"><strong>{{ book.name }}</strong><span>{{ book.file }}</span></a>{% else %}<p>{{ 'No matching workbooks. Try another ticker.' if total else 'The workbook library has not been connected yet.' }}</p>{% endfor %}</div>
+    <div class="workspace-links">{% if page_number > 1 %}<a href="{{ url_for('workspace.home', q=query, page=page_number-1) }}">Previous</a>{% endif %}{% if page_number*60 < count %}<a href="{{ url_for('workspace.home', q=query, page=page_number+1) }}">Next</a>{% endif %}</div>
+  </section><aside class="workspace-panel"><h2>Saved analyses</h2>{% for item in saved %}<a class="saved-analysis" href="{{ url_for('workspace.analysis', analysis_id=item.id) }}"><strong>{{ item.title }}</strong><span>{{ providers.get(item.provider, 'Local calculation') }}</span></a>{% else %}<p class="muted">Your completed analyses will appear here. Only you can see them.</p>{% endfor %}<a href="{{ url_for('workspace.settings') }}">Manage AI connections</a></aside></div>
+  {% elif mode == 'model' %}
+  <h1>{{ workbook.name }}</h1><p class="muted">{{ workbook.filename }} · Saved workbook snapshot</p>
+  <p class="workspace-notice">These workbooks may mix historical figures and model assumptions. Their values are not live prices or independently verified company results. Units follow the original workbook.</p>
+  {% if workbook.external_links %}<p class="muted small">This workbook references other files. External links are not refreshed; only saved values are read.</p>{% endif %}
+  {% if workbook.metrics %}
+  <section class="workspace-panel ask-panel"><h2>Ask about this model</h2>
+    {% if connections %}<form method="post" class="workspace-form">{{ token() }}<input type="hidden" name="action" value="ask">
+      <label for="question">Your question</label><textarea id="question" name="question" required minlength="3" maxlength="1500" rows="3" placeholder="Show {{ workbook.metrics[0].label }} across the available periods">{{ question }}</textarea>
+      <label for="provider-model">Use my provider</label><select id="provider-model" name="provider_model" required>{% for connection in connections %}{% for model in connection.models %}<option value="{{ connection.provider }}:{{ model }}" {% if connection.provider == user.default_provider and loop.first %}selected{% endif %}>{{ providers[connection.provider] }} · {{ model }}</option>{% endfor %}{% endfor %}</select>
+      <label class="check"><input type="checkbox" name="explain" value="yes"><span>Add a written explanation when using DeepSeek (an additional provider request).</span></label>
+      <label class="check"><input type="checkbox" name="consent" value="yes" required><span>Send my question and workbook row/period labels to my selected provider. If I request a DeepSeek explanation, also send the selected cell values and calculated results. My provider’s usage charges apply.</span></label>
+      <button class="primary" type="submit">Analyze and save</button><p class="muted small">Supports one metric: view its series, look up a named period, or compare two named periods. Maximum 30 AI analyses per account per day.</p>
+    </form>{% else %}<p>Connect your own DeepSeek or TypeSafe key to ask questions in plain language.</p><a class="primary" href="{{ url_for('workspace.settings') }}">Connect an AI provider</a>{% endif %}
+  </section>
+  <details class="workspace-panel" {% if not connections %}open{% endif %}><summary>Choose the calculation yourself</summary><p class="muted">Runs locally without a provider key or AI charges.</p>
+    <form method="post" class="workspace-form manual-form">{{ token() }}<input type="hidden" name="action" value="manual">
+      <label for="metric">Metric</label><select id="metric" name="metric">{% for metric in workbook.metrics %}<option value="{{ metric.id }}">{{ metric.label }} · Model!{{ metric.cell }}</option>{% endfor %}</select>
+      <label for="operation">Calculation</label><select id="operation" name="operation"><option value="series">All available periods</option><option value="value">One period (To)</option><option value="change">Change between From and To</option></select>
+      <div class="period-fields"><div><label for="start">From</label><select id="start" name="start">{% for p in workbook.periods %}<option value="{{ p.id }}">{{ p.label }} · {{ p.cell }}</option>{% endfor %}</select></div><div><label for="end">To</label><select id="end" name="end">{% for p in workbook.periods %}<option value="{{ p.id }}" {% if loop.last %}selected{% endif %}>{{ p.label }} · {{ p.cell }}</option>{% endfor %}</select></div></div>
+      <button class="primary" type="submit">Calculate and save</button>
+    </form>
+  </details>
+  {% else %}<section class="workspace-panel"><h2>This workbook needs a table mapping</h2><p>Automatic analysis currently supports clearly labeled period tables on a visible Model sheet. No values have been guessed or imported from this file.</p><p class="muted">Available sheets: {{ workbook.sheets | join(', ') }}</p></section>{% endif %}
+  {% elif mode == 'analysis' %}
+  <h1>{{ record.title }}</h1><p class="muted">{{ record.question }}</p>
+  <p class="small">Saved privately · {{ providers.get(record.provider, 'Local calculation') }}{% if result.provider_metadata %} · {{ result.provider_metadata.model }}{% endif %}</p>
+  <p class="workspace-notice">{{ result.basis }}</p>
+  {% if result.difference is defined %}<section class="workspace-panel"><h2>Change from {{ result.points[0].period }} to {{ result.points[1].period }}</h2><p class="calculated-value">{{ '{:+,.2f}'.format(result.difference) }} <span>{{ result.difference_unit }}</span></p><p>{% if result.relative_change is not none %}{{ '{:+,.2f}'.format(result.relative_change) }}% relative change{% else %}Relative change unavailable because the starting value is zero or negative.{% endif %}</p><p class="muted small">Difference = ending value − starting value. Relative change = (ending ÷ starting − 1) × 100.</p></section>{% endif %}
+  <section class="workspace-panel"><h2>{{ result.metric }}</h2><div class="workspace-table" tabindex="0" role="region" aria-label="Calculated values and source cells"><table><thead><tr><th>Workbook period</th><th>Saved value</th><th>Source cell</th><th>Value type</th></tr></thead><tbody>{% for point in result.points %}<tr><td>{{ point.period }}</td><td class="numeric">{{ number(point) }}</td><td><code>{{ point.source }}</code></td><td>{{ 'Saved formula result' if point.formula else 'Entered value' }}</td></tr>{% endfor %}</tbody></table></div></section>
+  {% if result.explanation %}<section class="workspace-panel"><h2>AI explanation</h2><p class="explanation">{{ result.explanation }}</p><p class="muted small">AI-written commentary. Use the source cells and calculated values above to verify it.</p></section>{% endif %}
+  {% if result.explanation_notice %}<p role="status">{{ result.explanation_notice }}</p>{% endif %}
+  <details class="workspace-panel"><summary>Source and request details</summary><p>{{ result.filename }}</p><p class="muted small">Workbook SHA-256: <code class="source-version">{{ result.version }}</code>. This saved analysis keeps the values used at the time of the request.</p>{% if result.provider_metadata %}<pre>{{ result.provider_metadata | tojson(indent=2) }}</pre>{% endif %}{% if result.explanation_usage %}<p>Explanation token usage:</p><pre>{{ result.explanation_usage | tojson(indent=2) }}</pre>{% endif %}</details>
+  <div class="workspace-actions"><a class="primary" href="{{ url_for('workspace.model', model_id=record.workbook) }}">New analysis of this model</a><details><summary>Delete analysis</summary><form method="post" action="{{ url_for('workspace.delete_analysis', analysis_id=record.id) }}">{{ token() }}<p>This permanently deletes this saved analysis.</p><button type="submit">Confirm deletion</button></form></details></div>
+  {% endif %}
+</div>
+{% endblock %}
