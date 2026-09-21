@@ -161,3 +161,29 @@ Mock-provider tests establish application behavior, not live model accuracy.
 Before public activation, verify real keys, representative questions, persistence
 across server restarts, production HTTPS cookies, and backup/recovery. Enabling
 the workspace is a separate deployment operation.
+
+## Samsung company research increment
+
+The company entry accepts Samsung Electronics, Samsung, 005930, or 005935
+(optionally preceded by Analyze). It saves a private report from curated official
+2Q2026 and 4Q2025 Samsung presentations, checked September 21, 2026. Income,
+segments, cash flow, balance sheet, and annual valuation inputs include source
+pages and document hashes. This is one mapped issuer, not an automatic filing
+crawler or a claim to reproduce an analyst's complete research.
+
+Memory-price sensitivities and FY2025 valuation multiples run in Python without
+AI charges. Each saves a new case linked to the previous one and retains its
+source snapshot. Market capitalization must include common and preferred shares;
+no live quote is assumed. Memory scenarios hold volume, mix, FX, and other
+businesses fixed, with explicit user-controlled earnings flow-through.
+
+Optional follow-ups use the user's Jev or DeepSeek connection to select a typed
+action and an explicit percentage from the question. DeepSeek written notes
+require a separate model selection and visible payload consent. Invalid or
+ambiguous plans stop; explanation failures retain the calculated report.
+
+Validation: `python -m pytest tests/test_workspace.py tests/test_company_research.py`
+(33 passed); full Python suite (129 passed, one skipped), Jest (241 passed),
+vocabulary guard, and browser checks for company search, saved scenario,
+valuation inputs, and 390px report layout. Mocked provider tests do not establish live
+provider accuracy. No provider key was used for these checks.

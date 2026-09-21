@@ -40,7 +40,12 @@
     </form><p class="muted small">Keys are never shown again. Removing a saved key stops future use here; it does not revoke the key at your provider.</p>
   </section>{% endfor %}</div>
   {% elif mode == 'home' %}
-  <h1>What are you researching?</h1><p class="muted">Open a company workbook, ask a question, and keep the calculation with its sources.</p>
+  <h1>What are you researching?</h1><p class="muted">Start with a company. Keep the evidence, change an assumption, and see what changes.</p>
+  <section class="workspace-panel company-entry"><h2>Company research</h2>
+    <form method="post" action="{{ url_for('workspace.research') }}" class="workspace-search">{{ token() }}<label class="sr-only" for="company">Company name or ticker</label><input id="company" name="company" placeholder="Analyze Samsung" required maxlength="1500"><button class="primary" type="submit">Analyze company</button></form>
+    <p class="muted small">Samsung Electronics is the first supported company. A dated report from official releases opens without AI charges. Connect your own provider for follow-up questions.</p>
+  </section>
+  <h2>Workbook library</h2>
   {% if config.MODEL_LIBRARY_SOURCE_URL %}<p class="muted small">Workbook collection: <a href="{{ config.MODEL_LIBRARY_SOURCE_URL }}" rel="noopener noreferrer" target="_blank">View original source</a>. Third-party models; no affiliation or endorsement is implied.</p>{% endif %}
   <div class="research-layout"><section>
     <form method="get" class="workspace-search"><label class="sr-only" for="q">Find a workbook</label><input id="q" name="q" value="{{ query }}" placeholder="Search by ticker or workbook name" maxlength="100"><button type="submit">Search</button></form>
@@ -71,6 +76,8 @@
     </form>
   </details>
   {% else %}<section class="workspace-panel"><h2>This workbook needs a table mapping</h2><p>Automatic analysis currently supports clearly labeled period tables on a visible Model sheet. No values have been guessed or imported from this file.</p><p class="muted">Available sheets: {{ workbook.sheets | join(', ') }}</p></section>{% endif %}
+  {% elif mode == 'company_report' %}
+  {% include 'company_report.html' %}
   {% elif mode == 'analysis' %}
   <h1>{{ record.title }}</h1><p class="muted">{{ record.question }}</p>
   {% if result.library_source %}<p class="muted small"><a href="{{ result.library_source }}" rel="noopener noreferrer" target="_blank">Original workbook collection</a></p>{% endif %}

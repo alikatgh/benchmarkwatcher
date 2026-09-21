@@ -10,6 +10,8 @@ from app.extensions import limiter
 from app.workspace_store import current_user, db, digest, read_key, reserve_analysis, save_key, sign_in
 from app.model_library import catalog, calculate, load_model
 from app.analysis_providers import PROVIDERS, analyze, test_key
+from app.analysis_providers import research_plan, explain_research, ProviderError
+from app.company_research import build_report, resolve_company, scenario, valuation, number
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 DUMMY_HASH = generate_password_hash(secrets.token_urlsafe(24))
@@ -219,7 +221,104 @@ def analysis(analysis_id):
     record = db().execute('SELECT * FROM analyses WHERE id=? AND user_id=?', (analysis_id, g.workspace_user['id'])).fetchone()
     if record is None:
         abort(404)
-    return page('analysis', record=record, result=json.loads(record['result']))
+    result = json.loads(record['result'])
+    if result.get('kind') == 'company_report':
+        return page('company_report', record=record, result=result, connections=connections())
+    return page('analysis', record=record, result=result)
+
+
+def save_research(result, question, provider='local'):
+    analysis_id = secrets.token_urlsafe(18)
+    suffix = ' · Memory sensitivity' if 'scenario' in result else ' · Company research'
+    with db():
+        db().execute('INSERT INTO analyses VALUES (?,?,?,?,?,?,?,?)',
+            (analysis_id, g.workspace_user['id'], result['company'] + suffix,
+             result['company_id'], question, provider, json.dumps(result, allow_nan=False), int(time.time())))
+    return redirect(url_for('workspace.analysis', analysis_id=analysis_id))
+
+
+@bp.post('/research')
+@limiter.limit('10 per minute', methods=['POST'])
+def research():
+    question = request.form.get('company', '').strip()[:1500]
+    try:
+        resolve_company(question)
+        start = time.monotonic()
+        report = build_report()
+        report['elapsed_ms'] = round((time.monotonic() - start) * 1000)
+        return save_research(report, question)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('workspace.home'))
+
+
+def selected_connection(value, required_provider=None):
+    selection = value.split(':', 1)
+    if len(selection) != 2:
+        raise ValueError('Select a connected provider and model.')
+    provider, model_name = selection
+    connection = next((c for c in connections() if c['provider'] == provider), None)
+    if (not connection or model_name not in connection['models'] or
+        (required_provider and provider != required_provider)):
+        raise ValueError('Select a model from the required connected provider.')
+    return provider, model_name
+
+
+@bp.post('/analyses/<analysis_id>/follow-up')
+@limiter.limit('10 per minute', methods=['POST'])
+def research_follow_up(analysis_id):
+    record = db().execute('SELECT * FROM analyses WHERE id=? AND user_id=?',
+                         (analysis_id, g.workspace_user['id'])).fetchone()
+    if record is None:
+        abort(404)
+    report = json.loads(record['result'])
+    if report.get('kind') != 'company_report':
+        abort(400)
+    # Keep the saved source snapshot, but never carry commentary into a new case.
+    for field in ('explanation', 'explanation_notice', 'explanation_usage', 'provider_metadata', 'plan'):
+        report.pop(field, None)
+    start = time.monotonic()
+    provider = 'local'
+    try:
+        action = request.form.get('action')
+        if action == 'scenario':
+            report['scenario'] = scenario(report, request.form.get('price_change'), request.form.get('flow_through'))
+            question = f"Memory price change {report['scenario']['price_change']:+g}%; earnings flow-through {report['scenario']['flow_through']:g}%"
+        elif action == 'valuation':
+            report['valuation'] = valuation(report, request.form.get('market_cap'), request.form.get('as_of'))
+            question = 'Historical valuation multiples using my equity value'
+        elif action == 'ask':
+            question = request.form.get('question', '').strip()
+            if not 3 <= len(question) <= 1500:
+                raise ValueError('Enter a follow-up between 3 and 1,500 characters.')
+            if request.form.get('consent') != 'yes':
+                raise ValueError('Confirm sharing this follow-up with your selected provider.')
+            provider, model_name = selected_connection(request.form.get('provider_model', ''))
+            commentary = request.form.get('explanation_model', '')
+            if commentary:
+                _, commentary_model = selected_connection(commentary, 'deepseek')
+            flow = number(request.form.get('flow_through', '100'), 'Earnings flow-through (%)', 0, 100)
+            reserve_analysis(g.workspace_user['id'])
+            plan, metadata = research_plan(provider, read_key(g.workspace_user['id'], provider), model_name, question)
+            if plan['operation'] == 'memory_price':
+                report['scenario'] = scenario(report, plan['price_change'], flow)
+            elif not commentary:
+                raise ValueError('For a written answer, select a connected DeepSeek explanation model. Jev selects calculations; it does not write the research note.')
+            report.update(plan=plan, provider_metadata=metadata)
+            if commentary:
+                try:
+                    text, usage = explain_research(read_key(g.workspace_user['id'], 'deepseek'), commentary_model, question, report)
+                    report.update(explanation=text, explanation_usage={'model': commentary_model, 'usage': usage})
+                except ProviderError:
+                    report['explanation_notice'] = 'The AI explanation failed. The source report and calculated case were saved; no automatic retry was made.'
+        else:
+            abort(400)
+        report['parent_analysis'] = analysis_id
+        report['elapsed_ms'] = round((time.monotonic() - start) * 1000)
+        return save_research(report, question, provider)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('workspace.analysis', analysis_id=analysis_id))
 
 
 @bp.post('/analyses/<analysis_id>/delete')

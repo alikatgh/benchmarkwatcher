@@ -46,6 +46,13 @@
 .workspace pre {font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;}
 .source-version,.recovery-code {overflow-wrap:anywhere;}
 .recovery-code {display:block;padding:20px 0;font-size:18px;user-select:all;}
+.company-heading {max-width:80ch;}
+.research-section {margin:36px 0;scroll-margin-top:24px;}
+.research-section>p,.research-section>ul {max-width:80ch;}
+.research-section li {margin:10px 0;}
+.research-section h3 {font-size:15px;margin-top:24px;font-weight:600;}
+.scenario-form {max-width:660px;}
+.company-entry .workspace-search {margin-top:12px;}
 @media(max-width:640px) {
  .workspace {padding:16px 14px 32px;}
  .workspace-nav {gap:12px;margin-bottom:24px;}
@@ -55,4 +62,6 @@
  .workspace-auth {margin:28px auto;}
  .workspace .period-fields {grid-template-columns:1fr;gap:0;}
  .workspace :is(input:not([type=hidden]),select,textarea) {font-size:16px;}
+ .company-entry .workspace-search {flex-wrap:wrap;}
+ .company-entry .workspace-search input {flex:1 1 220px;}
 }
