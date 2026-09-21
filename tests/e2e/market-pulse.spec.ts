@@ -4,6 +4,7 @@ test.describe('Market Pulse', () => {
     test('updates summary when the grid range changes', async ({ page }) => {
         const response = await page.goto('/?view=grid');
         expect(response?.ok()).toBeTruthy();
+        await page.locator('#market-pulse > summary').click();
 
         await expect(page.locator('#market-pulse')).toBeVisible();
         await expect(page.locator('#quick-find')).toBeVisible();
@@ -56,6 +57,7 @@ test.describe('Market Pulse', () => {
     test('updates summary when the compact table range changes', async ({ page }) => {
         const response = await page.goto('/?view=compact');
         expect(response?.ok()).toBeTruthy();
+        await page.locator('#market-pulse > summary').click();
 
         await expect(page.locator('#market-pulse')).toBeVisible();
         await expect(page.locator('#table-body')).toBeVisible();
@@ -112,6 +114,7 @@ test.describe('Market Pulse', () => {
 
             const response = await page.goto('/?view=grid');
             expect(response?.ok()).toBeTruthy();
+            await page.locator('#market-pulse > summary').click();
 
             await expect(page.locator('#market-pulse')).toBeVisible();
             await expect(page.locator('#market-pulse-headline')).toBeVisible();
