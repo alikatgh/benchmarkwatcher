@@ -41,6 +41,7 @@
   </section>{% endfor %}</div>
   {% elif mode == 'home' %}
   <h1>What are you researching?</h1><p class="muted">Open a company workbook, ask a question, and keep the calculation with its sources.</p>
+  {% if config.MODEL_LIBRARY_SOURCE_URL %}<p class="muted small">Workbook collection: <a href="{{ config.MODEL_LIBRARY_SOURCE_URL }}" rel="noopener noreferrer" target="_blank">View original source</a>. Third-party models; no affiliation or endorsement is implied.</p>{% endif %}
   <div class="research-layout"><section>
     <form method="get" class="workspace-search"><label class="sr-only" for="q">Find a workbook</label><input id="q" name="q" value="{{ query }}" placeholder="Search by ticker or workbook name" maxlength="100"><button type="submit">Search</button></form>
     <p class="muted small">{{ count }} of {{ total }} workbooks</p>
@@ -72,6 +73,7 @@
   {% else %}<section class="workspace-panel"><h2>This workbook needs a table mapping</h2><p>Automatic analysis currently supports clearly labeled period tables on a visible Model sheet. No values have been guessed or imported from this file.</p><p class="muted">Available sheets: {{ workbook.sheets | join(', ') }}</p></section>{% endif %}
   {% elif mode == 'analysis' %}
   <h1>{{ record.title }}</h1><p class="muted">{{ record.question }}</p>
+  {% if result.library_source %}<p class="muted small"><a href="{{ result.library_source }}" rel="noopener noreferrer" target="_blank">Original workbook collection</a></p>{% endif %}
   <p class="small">Saved privately · {{ providers.get(record.provider, 'Local calculation') }}{% if result.provider_metadata %} · {{ result.provider_metadata.model }}{% endif %}</p>
   <p class="workspace-notice">{{ result.basis }}</p>
   {% if result.difference is defined %}<section class="workspace-panel"><h2>Change from {{ result.points[0].period }} to {{ result.points[1].period }}</h2><p class="calculated-value">{{ '{:+,.2f}'.format(result.difference) }} <span>{{ result.difference_unit }}</span></p><p>{% if result.relative_change is not none %}{{ '{:+,.2f}'.format(result.relative_change) }}% relative change{% else %}Relative change unavailable because the starting value is zero or negative.{% endif %}</p><p class="muted small">Difference = ending value − starting value. Relative change = (ending ÷ starting − 1) × 100.</p></section>{% endif %}

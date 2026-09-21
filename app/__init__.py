@@ -32,6 +32,9 @@ def _versioned_url_for(endpoint, **values):
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    if app.config.get('TRUST_PROXY_HEADERS'):
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=0, x_port=0, x_prefix=0)
 
     cache.init_app(app)
     limiter.init_app(app)

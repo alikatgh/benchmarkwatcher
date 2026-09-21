@@ -36,6 +36,9 @@ WORKSPACE_SESSION_SECRET=<random secret of at least 32 characters>
 WORKSPACE_ENCRYPTION_KEY=<Fernet key>
 WORKSPACE_DB=/private/persistent/path/workspace.sqlite3
 MODEL_LIBRARY_DIR=/private/read-only/path/to/workbooks
+MODEL_LIBRARY_SOURCE_URL=https://github.com/martinshkreli/models
+RATELIMIT_STORAGE_URI=redis://127.0.0.1:6379/0
+TRUST_PROXY_HEADERS=1
 ```
 
 Generate secrets locally, save directly to a private environment file, and keep
@@ -48,6 +51,10 @@ Local HTTP preview only: set `WORKSPACE_LOCAL_HTTP=1`. Production defaults to
 Secure, HttpOnly, SameSite=Lax cookies and must use HTTPS. Database files are
 created mode 0600. Keep the database and its containing directory outside static
 paths, owned by the service account. Back up SQLite using its backup API.
+The proxy option trusts one forwarding hop and is only appropriate when Gunicorn
+is inaccessible publicly and the front proxy replaces client-supplied forwarding
+headers. It lets per-IP limits distinguish visitors behind Caddy. Redis keys use
+the `benchmarkwatcher` prefix; no Redis database or sibling keys are cleared.
 
 Start with `python run.py`, then visit `/workspace/register`. Save the recovery
 code, connect a key in AI settings, open a workbook, and select a supported
@@ -76,8 +83,11 @@ testing retrieves the account's model list.
 The local collection was identified as a checkout of
 `https://github.com/martinshkreli/models`. It contains 609 workbooks, including
 company files, sector references, and screens. It is not bundled with this code.
-No LICENSE file was found in that checkout; redistribution permissions need to
-be resolved before hosting the source collection for other users.
+No LICENSE file was found in that checkout; this application does not claim
+ownership of the collection or relicense it. Workbooks stay outside public file
+paths; the analysis UI links to the original collection and displays selected
+values with source cells. Administrators remain responsible for choosing a
+collection appropriate for their use.
 
 The reader recognizes visible `Model` sheets with explicit quarterly/annual
 period headers (including numeric year cells) and metric labels in column B.

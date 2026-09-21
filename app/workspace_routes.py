@@ -203,6 +203,7 @@ def model(model_id):
             else:
                 abort(400)
             analysis_id = secrets.token_urlsafe(18)
+            result['library_source'] = current_app.config.get('MODEL_LIBRARY_SOURCE_URL', '')
             with db():
                 db().execute('INSERT INTO analyses VALUES (?,?,?,?,?,?,?,?)',
                     (analysis_id, g.workspace_user['id'], f"{workbook['name']} · {result['metric']}", model_id,

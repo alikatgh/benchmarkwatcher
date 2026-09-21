@@ -54,6 +54,7 @@ def init_workspace(app):
                       SESSION_COOKIE_SAMESITE='Lax', PERMANENT_SESSION_LIFETIME=timedelta(days=7))
     app.config['SESSION_COOKIE_SECURE'] = app.config.get('WORKSPACE_COOKIE_SECURE', os.getenv('WORKSPACE_LOCAL_HTTP') != '1')
     app.config.setdefault('MODEL_LIBRARY_DIR', os.getenv('MODEL_LIBRARY_DIR', ''))
+    app.config.setdefault('MODEL_LIBRARY_SOURCE_URL', os.getenv('MODEL_LIBRARY_SOURCE_URL', ''))
     app.config.setdefault('WORKSPACE_DB', os.getenv('WORKSPACE_DB', str(Path(app.instance_path) / 'workspace.sqlite3')))
     path = Path(app.config['WORKSPACE_DB'])
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)

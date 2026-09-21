@@ -32,6 +32,7 @@ MarkupSafe>=3.0.3,<4     # tested 3.0.3; cap the major
 
 # Encrypted user-owned provider keys (private workspace only).
 cryptography>=46,<51
+redis>=5,<6           # shared account/IP limits across Gunicorn workers
 
 # NOTE: pandas and numpy are NOT required — data handling uses stdlib json/datetime.
 # Transitive (resolved by the above, listed for reference): Jinja2 3.1.6,
