@@ -10,7 +10,7 @@
 - `__tests__/` contains Jest/jsdom tests for web UI modules.
 - `mobile/` is the Expo React Native app.
 - `bots/` contains Telegram and Discord bots that read commodity data.
-- `docs/` contains hardening, deployment, vocabulary, release, and mobile planning notes.
+- `docs/` contains public hardening, vocabulary, release, and mobile planning notes.
 
 ## Product Boundaries
 
@@ -74,10 +74,24 @@ generated CSS unless the task is explicitly about those artifacts.
 - Public API hardening: read `docs/API_HARDENING.md` and `SECURITY.md` before
   auth, rate limiting, or public endpoint changes.
 - Data fetching: read `docs/DATA_FETCHING_GUIDE.md` before source/fetcher changes.
-- Release work: read `docs/RELEASE_CHECKLIST.md` and `docs/DEPLOYMENT.md`.
+- Release work: read `docs/RELEASE_CHECKLIST.md` and the private local
+  operations runbook before changing deployment behavior.
 - UI text changes should satisfy `npm run check:vocab`.
 - Mobile release or EAS commands should not be run unless the user explicitly asks.
 - Bot tokens live in `.env` files; never print or commit secrets.
+
+## Public Repository Boundary
+
+- Treat every branch, commit, pull request, and CI log as public.
+- Keep credentials, API/provider keys, runtime environment files, private
+  databases, user workbooks, recovery codes, and private contact details out of
+  GitHub, including GitHub Actions secrets.
+- Keep hosting provider details, origin addresses, remote access instructions,
+  service topology, operational runbooks, and unresolved security audit reports
+  in private local operations storage, outside this repository.
+- Before every push, review both the staged diff and all outgoing commits for
+  those categories. Do not push a branch with private details in its ancestry.
+- Deleting a branch or reverting a commit does not erase public Git history.
 
 ## Working Style
 

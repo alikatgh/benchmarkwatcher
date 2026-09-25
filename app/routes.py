@@ -44,7 +44,7 @@ def _internal_rate_limit() -> str:
 def health():
     """Liveness probe. A 200 here means create_app() succeeded and Flask is
     serving, so a monitor (or a quick curl) can tell an *app* failure apart from
-    the host's generic 500 page (see docs/DEPLOY_RECOVERY.md). Does no data
+    the host's generic 500 page. Does no data
     loading and is exempt from rate limiting so it can be polled freely."""
     return jsonify(status='ok'), 200
 

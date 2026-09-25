@@ -87,7 +87,7 @@ Both bots support these commands:
 
 ## Hosting
 
-### Option A: Run on cPanel (domain registrar)
+### Option A: Run on cPanel
 
 ⚠️ **Note:** Shared hosting typically doesn't support persistent processes. You may need to use a VPS or Railway instead.
 

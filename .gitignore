@@ -31,6 +31,27 @@ env/
 */.env
 .env.local
 .env.*.local
+.env.*
+!.env.example
+
+# Private operations and account data stay outside this public repository.
+deploy/
+.github/workflows/deploy.yml
+scripts/deploy_*.sh
+scripts/provision_*.sh
+docs/*DEPLOY*.md
+docs/audits/
+docs/BUG_JOURNAL.md
+SESSION_STATE.md
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite*
+*.db
+*.xlsx
+*.xls
+*.xlsm
 
 # Internal documents (not for public)
 *.internal.md

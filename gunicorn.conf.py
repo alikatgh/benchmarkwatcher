@@ -1,28 +1,24 @@
-"""Gunicorn configuration for the hosting provider/VPS deploy.
+"""Gunicorn configuration for the hosted app.
 
-Replaces Phusion Passenger (the domain registrar WSGI server). The entry point is
+Replaces the previous Phusion Passenger WSGI server. The entry point is
 `run:app` — `run.py` calls `load_dotenv()` then `create_app()`, so the `.env`
 in the WorkingDirectory is loaded exactly as it was under Passenger.
 
-Worker model — deliberately small, for two reasons:
-  1. The box is shared with the rest of the fleet (4 GB / 2 vCPU on the €5
-     hosting provider plan), so a lean footprint leaves room for sibling apps.
-  2. This app is I/O-bound (it reads ~73 small JSON files and serves cached
-     renders), not CPU-bound, so threads buy more than extra processes.
+Worker model — deliberately small because the app is I/O-bound (it reads small
+JSON files and serves cached renders), so threads buy more than processes.
 
 So: 2 gthread workers × 4 threads. `preload_app` loads the app once in the
 master and forks (copy-on-write) to keep memory down.
 
-CAVEAT (carried over from domain registrar, not a regression): Flask-Limiter uses
+CAVEAT: Flask-Limiter uses
 `memory://` storage, which is PER-PROCESS. With 2 workers, a configured
 "60 per minute" limit is enforced as up to 2×60 across the pool. The on-disk
 FileSystemCache (config.py) IS shared across workers, so only the rate limiter
 is affected. If you ever need exact global limits, point
-RATELIMIT_STORAGE_URI at Redis — see docs/HOSTING_PROVIDER_DEPLOY.md.
+RATELIMIT_STORAGE_URI at a shared store.
 """
 
-# Bind to loopback only — Caddy (or nginx) terminates TLS and reverse-proxies
-# here. Each fleet app gets its own port: BenchmarkWatcher = 8001.
+# Bind to loopback only; the reverse proxy terminates TLS.
 bind = "127.0.0.1:8001"
 
 workers = 2

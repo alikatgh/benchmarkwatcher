@@ -14,8 +14,8 @@ Flask-Limiter>=4.1.1,<5  # API rate limiting; tested 4.1.1.
                          # tested 4.1.1 — a resolver could pick 3.x and behave
                          # differently. Pinned to the tested major.
 
-# Production WSGI server (hosting provider/VPS deploy — gunicorn replaces Passenger).
-# Not used on domain registrar (Passenger supplies the WSGI server) and harmless there.
+# Production WSGI server.
+# Unused under Passenger, which supplies its own WSGI server.
 gunicorn>=23.0,<24       # tested 23.0.0; cap the major like the rest
 
 # Configuration

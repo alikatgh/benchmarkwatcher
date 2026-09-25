@@ -53,7 +53,7 @@ Run any skill by typing `/skill-name` in Claude Code.
 | Skill | Purpose |
 |-------|---------|
 | `/session-start` | Load context, report state, ask for session goal |
-| `/session-end` | Save SESSION_STATE + JOURNAL, suggest commit |
+| `/session-end` | Save local ignored session state + journal, suggest commit |
 | `/next` | One recommended next action based on project state |
 
 ### Audit & Fix

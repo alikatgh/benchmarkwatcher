@@ -8,7 +8,7 @@
 #   - Points Playwright's webServer at ./venv's Flask (not bare `python`).
 #   - Forwards any extra args to `playwright test` (e.g. a spec path / --ui).
 #
-# What bugs it was built to dodge (see docs/BUG_JOURNAL.md, 2026-06-07 e2e entry):
+# What bugs it was built to dodge (recorded in the private bug journal):
 #   1. reuseExistingServer + a FIXED port → Playwright silently reuses whatever
 #      foreign app is already on that port. A 'wallmarkets' server on :5050 once
 #      produced 9 phantom "element not found" failures. Picking a free port each
