@@ -4,6 +4,8 @@
 <head>
     {% set page_title = (commodity.name ~ ' price history | BenchmarkWatcher') if commodity is defined else ('Changelog | BenchmarkWatcher' if request.path == '/changelog' else 'Commodity prices & history | BenchmarkWatcher') %}
     {% set page_description = ('Explore ' ~ commodity.name ~ ' historical reference prices, observation dates, charts and source data.') if commodity is defined else 'Explore public commodity reference prices and historical data for energy, metals and agriculture. Compare observations and download CSV data.' %}
+    {% set page_title = meta_title|default(page_title, true) %}
+    {% set page_description = meta_description|default(page_description, true) %}
     {% set canonical_url = 'https://benchmarkwatcher.online' ~ request.path %}
     <link rel="canonical" href="{{ canonical_url }}">
     <meta charset="UTF-8">

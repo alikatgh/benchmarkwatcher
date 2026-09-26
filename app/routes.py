@@ -278,6 +278,26 @@ def changelog():
     return render_template('changelog.html')
 
 
+@bp.route('/blog')
+def blog():
+    """Product stories and practical guides to the public reference workspace."""
+    return render_template(
+        'blog/index.html',
+        meta_title='Blog | BenchmarkWatcher',
+        meta_description='Product updates and practical guides to exploring historical benchmark data with BenchmarkWatcher.',
+    )
+
+
+@bp.route('/blog/a-workspace-for-benchmark-research')
+def research_workspace_story():
+    """The launch story for customizable tables and browser-local Research."""
+    return render_template(
+        'blog/research_workspace.html',
+        meta_title='A workspace for benchmark research | BenchmarkWatcher',
+        meta_description='Explore the redesigned BenchmarkWatcher: customizable tables, saved views, historical comparisons and a personal Research workspace with portable backups.',
+    )
+
+
 @bp.route('/favicon.ico')
 def favicon():
     """Serve favicon to avoid browser 404 noise in console."""
@@ -299,7 +319,7 @@ def sitemap():
     """Canonical, publicly rendered pages only; no parameter permutations."""
     from xml.etree.ElementTree import Element, SubElement, tostring
     root = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
-    paths = ['/', '/changelog']
+    paths = ['/', '/changelog', url_for('main.blog'), url_for('main.research_workspace_story')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):

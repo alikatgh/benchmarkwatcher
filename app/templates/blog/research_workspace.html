@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}A workspace for benchmark research | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header class="mb-6 sm:mb-8">
+        <p class="text-sm mb-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">A workspace for benchmark research</h1>
+        <p class="text-lg leading-relaxed mb-4">Start with a public observation. Follow its history. Keep the question it raises.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-09-26">September 26, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+
+    <p class="mb-4 leading-relaxed">Reference data is most useful when you can work with it. You might be comparing publication dates, gathering sources for a report, or returning to the same group of commodities each week. The redesigned BenchmarkWatcher brings those tasks into one workspace: flexible benchmark tables, a closer look at each series, and a place for your own research.</p>
+    <figure class="my-6">
+        <a href="{{ url_for('static', filename='images/blog/benchmark-table.png') }}" aria-label="Open the full-size benchmark table screenshot"><img class="w-full rounded-lg border border-brand-black-60/20 dark:border-white/10" src="{{ url_for('static', filename='images/blog/benchmark-table.png') }}" width="1440" height="960" alt="Benchmark table with saved-view tabs, Filter, Sort, Properties and Actions controls, and dated reference observations."></a>
+        <figcaption class="text-sm theme-text-muted mt-2">The redesigned benchmark table. Screenshots show example data captured during testing, not current observations.</figcaption>
+    </figure>
+
+    <section class="release-entry" aria-labelledby="tables-heading">
+        <h2 id="tables-heading">Make the table fit your question</h2>
+        <p class="mb-4 leading-relaxed">A saved view keeps a useful arrangement close at hand. Combine filters, apply several sort rules, and choose which properties belong on screen. Move columns, resize them and adjust row density to give the important details enough room.</p>
+        <p class="mb-4 leading-relaxed">Build a watchlist for the series you revisit. Select rows when you want to work with a smaller group, then export that selection or your filtered view to CSV. Observation dates and units stay visible, so a monthly series does not masquerade as a daily one.</p>
+        <p class="leading-relaxed">Try a view for the category you review most often, keep the observed date beside the reference value, and save the arrangement under a name you will recognize next time.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="history-heading">
+        <h2 id="history-heading">Inspect the history without losing your place</h2>
+        <p class="mb-4 leading-relaxed">Open a benchmark from the table to see its detail panel. Its chart uses actual observation dates, and a table exposes the values behind the picture. Source links let you follow the record back to its publisher.</p>
+        <p class="mb-4 leading-relaxed">Select two to four benchmarks to compare their histories. Indexed mode starts each available series at 100; each series shows its own baseline date. Absolute values remain available for reviewing the original observations and units. Different publication schedules and baselines matter when reading the result.</p>
+        <p class="leading-relaxed">Your table remains the starting point. Moving between categories, changing the history range and using Back should keep the workflow understandable rather than make you rebuild it.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="research-heading">
+        <h2 id="research-heading">Keep the question beside the observation</h2>
+        <p class="mb-4 leading-relaxed">Research is a personal workspace for notes, citations, tags and review status. Begin with a blank entry or add a benchmark as a reference. Personal properties let you record the information your project needs, while saved views help you find work that is still to review or already archived.</p>
+        <p class="mb-4 leading-relaxed">A linked benchmark records a historical snapshot. It does not silently update inside your entry when new observations arrive. Your notes stay separate from the original reference data, which remains read-only.</p>
+        <figure class="my-6">
+            <a href="{{ url_for('static', filename='images/blog/research-workspace.png') }}" aria-label="Open the full-size Research screenshot"><img class="w-full rounded-lg border border-brand-black-60/20 dark:border-white/10" src="{{ url_for('static', filename='images/blog/research-workspace.png') }}" width="1440" height="1221" loading="lazy" alt="Research workspace with an example note about observation revisions, review status, tags, and backup controls."></a>
+            <figcaption class="text-sm theme-text-muted mt-2">An example Research entry. The save status and backup controls stay visible alongside your notes.</figcaption>
+        </figure>
+        <p class="mb-4 leading-relaxed"><strong>Research is stored in this browser only.</strong> It does not sync between devices or provide shared editing. Clearing browser data can remove it, so use Export backup to keep a copy of your entries, properties and saved views.</p>
+        <p class="leading-relaxed">Import shows what is in a backup before you choose to merge it with the current workspace or replace the current contents. Archive and undo help with everyday changes, and an explicit save status makes browser storage failures visible instead of implying that an edit is safely stored.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="everyday-heading">
+        <h2 id="everyday-heading">A calmer workspace on every screen</h2>
+        <p class="mb-4 leading-relaxed">Benchmarks, Watchlist and Research now share navigation and search. Tables and cards remain available, controls adapt to smaller screens, and six appearances let you choose a comfortable reading surface. Keyboard focus, dialog behavior and navigation continuity received the same attention as the visual layout.</p>
+        <p class="leading-relaxed">The purpose remains the same: public, historical benchmark and reference observations. Data can be delayed, missing or revised, and source schedules vary. The new workspace gives you more control over how you read and organize that material.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="try-heading">
+        <h2 id="try-heading">Try it with one question</h2>
+        <ul class="space-y-3 mb-6">
+            <li>Open the benchmark table and save a view for a category you follow.</li>
+            <li>Open a benchmark, inspect its dates and visit the source.</li>
+            <li>Add it to Research, write down your question, and export a backup.</li>
+        </ul>
+        <p class="mb-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.index', view='compact') }}">Explore the benchmark workspace</a></p>
+        <p><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.index', workspace='research') }}">Open your Research workspace</a></p>
+    </section>
+</article>
+{% endblock %}
