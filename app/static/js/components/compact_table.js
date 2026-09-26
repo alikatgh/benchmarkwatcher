@@ -42,10 +42,15 @@ BW.CompactTable = {
     },
 
     // Data Range Functions
-    setDataRange: function (range) {
+    setDataRange: function (range, options = {}) {
+        const previousRange = this.loadedRange || new URLSearchParams(window.location.search).get('range') || '1Y';
+        if (!this.loadedRange) this.loadedRange = previousRange;
+        // A late initial sparkline request must not repaint the newly selected range.
+        this.sparklineRequestSeq += 1;
         const settings = this.getSettings();
         settings.dataRange = range;
         this.saveSettings(settings);
+        BW.TableWorkspace?.rangeChanged(range);
 
         this.updateRangeButtons(range);
         this.updateDateRangeDisplay(range);
@@ -53,10 +58,14 @@ BW.CompactTable = {
         // Update URL without reload
         const url = new URL(window.location.href);
         url.searchParams.set('range', range);
-        window.history.pushState({}, '', url.toString());
+        if (options.history !== 'none') {
+            window.history[options.history === 'replace' ? 'replaceState' : 'pushState']({}, '', url.toString());
+        }
 
         // Show loading state
         const tableBody = document.getElementById('table-body');
+        document.getElementById('data-table')?.setAttribute('aria-busy', 'true');
+        document.getElementById('tw-range-error')?.remove();
         const loading = document.getElementById('table-loading');
         if (loading) loading.classList.remove('hidden');
         if (tableBody) {
@@ -74,7 +83,7 @@ BW.CompactTable = {
 
         // Preserve category filter from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const category = urlParams.get('category');
+        const category = BW.TableWorkspace ? null : urlParams.get('category');
         const apiUrl = BW.Utils.buildCommoditiesApiUrl({
             range,
             includeHistory: true,
@@ -83,10 +92,14 @@ BW.CompactTable = {
 
         // Fetch data via AJAX and update table
         fetch(apiUrl, { signal: this.currentRequest.signal })
-            .then(response => response.json())
+            .then(response => {
+                if (response.ok === false) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
             .then(response => {
                 if (activeRequestSeq !== this.requestSeq) return;
                 const commodities = BW.Utils.getCommoditiesFromApiResponse(response);
+                this.loadedRange = range;
                 this.updateTableData(commodities);
                 if (BW.Index?.updateMarketPulse) {
                     BW.Index.updateMarketPulse(response?.meta?.summary || commodities, { range });
@@ -96,6 +109,31 @@ BW.CompactTable = {
                 if (activeRequestSeq !== this.requestSeq) return;
                 if (error.name === 'AbortError') return;
                 console.error('Failed to fetch data:', error);
+                if (BW.TableWorkspace?.ready) {
+                    // Keep prior observations and their range together after a failed refresh.
+                    this.loadedRange = previousRange;
+                    const restored = this.getSettings();
+                    restored.dataRange = previousRange;
+                    this.saveSettings(restored);
+                    BW.TableWorkspace.rangeChanged(previousRange);
+                    this.updateRangeButtons(previousRange);
+                    this.updateDateRangeDisplay(previousRange);
+                    const restoredUrl = new URL(window.location.href);
+                    restoredUrl.searchParams.set('range', previousRange);
+                    if (options.history !== 'none') window.history.replaceState({}, '', restoredUrl);
+                    const error = document.createElement('div');
+                    error.id = 'tw-range-error';
+                    error.className = 'tw-storage-warning';
+                    error.setAttribute('role', 'status');
+                    const message = document.createElement('span');
+                    message.textContent = 'Could not load that range. Previous observations are still shown.';
+                    const retry = document.createElement('button');
+                    retry.type = 'button'; retry.className = 'tw-button'; retry.textContent = 'Retry range';
+                    retry.addEventListener('click', () => this.setDataRange(range));
+                    error.append(message, retry);
+                    document.querySelector('.tw-table-region')?.before(error);
+                    return;
+                }
                 if (tableBody) {
                     tableBody.innerHTML = '';
                     const tr = document.createElement('tr');
@@ -138,6 +176,7 @@ BW.CompactTable = {
             })
             .finally(() => {
                 if (activeRequestSeq !== this.requestSeq) return;
+                document.getElementById('data-table')?.setAttribute('aria-busy', 'false');
                 if (loading) loading.classList.add('hidden');
                 if (tableBody) {
                     tableBody.style.opacity = '1';
@@ -180,8 +219,8 @@ BW.CompactTable = {
 
         commodities.forEach(commodity => {
             // Use range-based change (first to last in selected range)
-            const displayChange = commodity.change !== undefined ? commodity.change : 0;
-            const displayChangePercent = commodity.change_percent !== undefined ? commodity.change_percent : 0;
+            const displayChange = typeof commodity.change === 'number' && Number.isFinite(commodity.change) ? commodity.change : null;
+            const displayChangePercent = typeof commodity.change_percent === 'number' && Number.isFinite(commodity.change_percent) ? commodity.change_percent : null;
 
             // Calculate first and last price from history for tooltip
             const history = commodity.history || [];
@@ -190,7 +229,7 @@ BW.CompactTable = {
             const firstDate = history.length > 0 ? history[0].date : '';
             const lastDate = history.length > 0 ? history[history.length - 1].date : commodity.date;
 
-            const direction = displayChange > 0 ? 'up' : (displayChange < 0 ? 'down' : 'flat');
+            const direction = displayChange === null ? 'unavailable' : displayChange > 0 ? 'up' : (displayChange < 0 ? 'down' : 'flat');
             const colorVar = direction === 'up' ? '--color-up' : (direction === 'down' ? '--color-down' : '--color-flat');
             const bgColorVar = direction === 'up' ? '--color-up-bg' : (direction === 'down' ? '--color-down-bg' : '--color-flat-bg');
             const arrow = direction === 'up' ? '▲' : (direction === 'down' ? '▼' : '');
@@ -200,7 +239,7 @@ BW.CompactTable = {
             const safeIconText = this.escapeHtml(String(commodity.name || '').slice(0, 2).toUpperCase());
             const safeName = this.escapeHtml(String(commodity.name || ''));
             const safeCategory = this.escapeHtml(String(commodity.category || '').toUpperCase());
-            const safePrice = this.escapeHtml(String(commodity.price));
+            const safePrice = this.escapeHtml(Number.isFinite(commodity.price) ? String(commodity.price) : '');
             const safeCurrency = this.escapeHtml(String(commodity.currency || ''));
             const roundedChange = Number.isFinite(displayChange) ? parseFloat(Number(displayChange).toFixed(2)) : 0;
             // Round percent for display too (mirrors roundedChange). applyVisualSettings
@@ -208,8 +247,8 @@ BW.CompactTable = {
             // div) where the attr is absent, so it bails on NaN and the innerHTML render
             // below is the only thing the user sees. Raw percent here = float noise on screen.
             const roundedPercent = Number.isFinite(displayChangePercent) ? parseFloat(Number(displayChangePercent).toFixed(2)) : 0;
-            const safeDisplayChange = this.escapeHtml(`${sign}${roundedChange}`);
-            const safeDisplayChangePercent = this.escapeHtml(`${sign}${roundedPercent}`);
+            const safeDisplayChange = displayChange === null ? '' : this.escapeHtml(`${sign}${roundedChange}`);
+            const safeDisplayChangePercent = displayChangePercent === null ? '' : this.escapeHtml(`${displayChangePercent > 0 ? '+' : ''}${roundedPercent}`);
             const safeFirstPrice = this.escapeHtml(String(firstPrice));
             const safeLastPrice = this.escapeHtml(String(lastPrice));
             const safeFirstDate = this.escapeHtml(String(firstDate));
@@ -225,26 +264,20 @@ BW.CompactTable = {
             const safeFreqTitle = this.escapeHtml(freqTitle);
 
             const row = document.createElement('tr');
-            row.onclick = () => { window.location = `/commodity/${encodeURIComponent(commodityId)}`; };
-            row.className = 'hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition duration-200 group';
-            row.tabIndex = 0;
-            row.setAttribute('role', 'link');
-            row.addEventListener('keydown', event => {
-                if (event.key === 'Enter') {
-                    window.location = `/commodity/${encodeURIComponent(commodityId)}`;
-                }
-            });
+            row.className = 'group';
             row.dataset.id = commodityId;
             row.dataset.name = commodity.name || '';
             row.dataset.category = commodity.category || '';
             row.dataset.currency = commodity.currency || '';
             row.dataset.unit = commodity.unit || '';
+            row.dataset.source = commodity.source_name || commodity.source || '';
+            row.dataset.sourceUrl = commodity.source_url || '';
             row.dataset.date = commodity.date || '';
             row.dataset.frequency = isDaily ? 'daily' : 'monthly';
             row.dataset.direction = direction;
-            row.dataset.price = commodity.price;
-            row.dataset.changePct = displayChangePercent;
-            row.dataset.changeAbs = displayChange;
+            row.dataset.price = Number.isFinite(commodity.price) ? commodity.price : '';
+            row.dataset.changePct = displayChangePercent ?? '';
+            row.dataset.changeAbs = displayChange ?? '';
 
             row.innerHTML = `
                 <td data-col="commodity" class="px-4 py-5">
@@ -253,7 +286,7 @@ BW.CompactTable = {
                             <span class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60">${safeIconText}</span>
                         </div>
                         <div>
-                            <div class="commodity-name text-sm font-semibold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors">${safeName}</div>
+                            <a href="/commodity/${encodeURIComponent(commodityId)}" data-benchmark-id="${this.escapeHtml(commodityId)}" class="commodity-name text-sm font-semibold text-brand-black-80 dark:text-white">${safeName}</a>
                             <div class="flex items-center gap-1.5">
                                 <span class="commodity-category text-2xs text-brand-black-60 tracking-wide uppercase">${safeCategory}</span>
                                 <span class="text-[8px] font-bold px-1 py-0.5 rounded ${freqColor} font-ui freq-badge" title="${safeFreqTitle}">${freqBadge}</span>
@@ -267,14 +300,14 @@ BW.CompactTable = {
                     </div>
                 </td>
                 <td data-col="price" class="px-4 py-5 text-right">
-                    <div class="price-value text-sm font-semibold text-brand-black-80 dark:text-white" data-raw="${safePrice}">${safePrice}</div>
+                    <div class="price-value text-sm font-semibold text-brand-black-80 dark:text-white" data-raw="${safePrice}">${safePrice || "—"}</div>
                     <div class="price-currency text-2xs text-brand-black-60">${safeCurrency}</div>
                 </td>
                 <td data-col="chg" class="px-4 py-5 text-right">
                     <div class="chg-cell relative group/chg">
                         <div class="inline-flex items-center gap-1 text-sm font-semibold cursor-help" style="color: var(${colorVar});" data-value="${safeDisplayChange}">
                             <span class="chg-arrow text-2xs">${arrow}</span>
-                            <span class="chg-value">${safeDisplayChange}</span>
+                            <span class="chg-value">${safeDisplayChange || "—"}</span>
                         </div>
                         <!-- Tooltip -->
                         <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-2xs opacity-0 invisible group-hover/chg:opacity-100 group-hover/chg:visible transition z-50 font-ui text-left">
@@ -290,7 +323,7 @@ BW.CompactTable = {
                 <td data-col="pct" class="px-4 py-5 text-right">
                     <div class="pct-cell relative group/pct">
                         <div class="inline-flex px-2 py-1 rounded-lg text-sm font-semibold cursor-help" style="color: var(${colorVar}); background-color: var(${bgColorVar});" data-value="${safeDisplayChangePercent}">
-                            ${safeDisplayChangePercent}%
+                            ${safeDisplayChangePercent === "" ? "—" : safeDisplayChangePercent + "%"}
                         </div>
                         <!-- Tooltip -->
                         <div class="absolute bottom-full right-0 mb-2 w-48 p-2 bg-brand-black-80 dark:bg-terminal-black rounded-lg shadow-lg text-white text-2xs opacity-0 invisible group-hover/pct:opacity-100 group-hover/pct:visible transition z-50 font-ui text-left">
@@ -316,6 +349,8 @@ BW.CompactTable = {
         });
         this.applyVisualSettings(settings);
         this.initSparklines(commodities);
+        BW.TableWorkspace?.refresh();
+        document.dispatchEvent(new CustomEvent('bw:table-data', { detail: { commodities } }));
         if (BW.Index?.applyQuickFind) {
             BW.Index.applyQuickFind();
         }
@@ -868,7 +903,7 @@ BW.CompactTable = {
         // Reload charts
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || '1Y';
-        const category = urlParams.get('category');
+        const category = BW.TableWorkspace ? null : urlParams.get('category');
         this.requestSparklineData(currentRange, category, 'Failed to reload charts:');
 
         // Show confirmation
@@ -1068,6 +1103,7 @@ BW.CompactTable = {
 
     // Export to CSV
     exportToCSV: function () {
+        if (BW.TableWorkspace?.ready) { BW.TableWorkspace.exportRows('filtered'); return; }
         const table = document.getElementById('data-table');
         if (!table) return;
 
@@ -1081,6 +1117,7 @@ BW.CompactTable = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(link.href), 1000);
     },
 
     // Load settings on page load
@@ -1140,7 +1177,7 @@ BW.CompactTable = {
     loadSparklinesForCurrentRange: function () {
         const urlParams = new URLSearchParams(window.location.search);
         const currentRange = urlParams.get('range') || this.getSettings().dataRange || '1Y';
-        const category = urlParams.get('category');
+        const category = BW.TableWorkspace ? null : urlParams.get('category');
         this.requestSparklineData(currentRange, category, 'Failed to load sparkline data:');
     },
 
@@ -1228,6 +1265,10 @@ if (!window.__bwCompactTableSortState) {
 
 // Sort table by column
 function sortTable(column) {
+    if (BW.TableWorkspace?.ready) {
+        BW.TableWorkspace.sortBy(({ name: 'commodity', change: 'chg', date: 'updated' })[column] || column);
+        return;
+    }
     const sortState = window.__bwCompactTableSortState || (window.__bwCompactTableSortState = {
         currentSortColumn: null,
         currentSortDirection: 'asc'

@@ -1,0 +1,18 @@
+<div id="benchmark-detail-backdrop" class="benchmark-detail-backdrop" hidden></div>
+<aside id="benchmark-detail" class="benchmark-detail" aria-labelledby="benchmark-detail-title" tabindex="-1" hidden>
+    <div class="benchmark-detail-topbar">
+        <span id="benchmark-detail-context">Benchmark details</span>
+        <button type="button" class="benchmark-detail-close" data-detail-action="close" aria-label="Close benchmark details">✕</button>
+    </div>
+    <div class="benchmark-detail-heading">
+        <p id="benchmark-detail-category" class="benchmark-detail-muted"></p>
+        <h2 id="benchmark-detail-title">Benchmark details</h2>
+        <div id="benchmark-detail-actions" class="benchmark-detail-actions"></div>
+    </div>
+    <div id="benchmark-detail-body" class="benchmark-detail-body" aria-live="polite"></div>
+</aside>
+<div id="benchmark-detail-notice" class="benchmark-detail-notice" hidden>
+    <span id="benchmark-detail-notice-text" role="status"></span>
+    <button type="button" data-detail-action="retry-save" hidden>Retry save</button>
+    <button type="button" data-detail-action="dismiss-notice" aria-label="Dismiss notification">✕</button>
+</div>

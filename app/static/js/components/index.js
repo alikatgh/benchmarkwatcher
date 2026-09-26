@@ -495,14 +495,17 @@ BW.Index = {
         let visibleCount = 0;
         const visibleItems = [];
 
-        scope.items.forEach(item => {
-            const visible = this.matchesQuickFind(item);
-            this.setQuickFindItemVisibility(item, visible);
-            if (visible) {
-                visibleCount += 1;
-                visibleItems.push(item);
-            }
-        });
+        if (scope.type === 'compact' && BW.TableWorkspace?.ready) {
+            BW.TableWorkspace.setExternalQuery(this.quickFindState.query, this.quickFindState.filter);
+            visibleItems.push(...BW.TableWorkspace.getVisibleRows());
+            visibleCount = visibleItems.length;
+        } else {
+            scope.items.forEach(item => {
+                const visible = this.matchesQuickFind(item);
+                this.setQuickFindItemVisibility(item, visible);
+                if (visible) { visibleCount += 1; visibleItems.push(item); }
+            });
+        }
 
         const count = document.getElementById('quick-find-count');
         if (count) {

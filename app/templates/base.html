@@ -753,6 +753,10 @@
     <!-- External JS for base theme initialization -->
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reference.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/workspace-table.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/research-workspace.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark-detail.css') }}">
 </head>
 
 <body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
@@ -764,6 +768,10 @@
 
     {% include 'components/footer.html' %}
     {% include 'components/settings_modal.html' %}
+    {% include 'components/benchmark_detail.html' %}
+    <script src="{{ url_for('static', filename='js/components/workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/research_workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/benchmark_detail.js') }}" defer></script>
 </body>
 
 </html>

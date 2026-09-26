@@ -1,68 +1,14 @@
-<!-- Skip to main content link for accessibility -->
-<a href="#main-content"
-    class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:bg-brand-oxford focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:text-sm focus:font-bold">
-    Skip to main content
-</a>
-
-<header
-    class="bg-brand-pink dark:bg-terminal-black sticky top-0 z-40 border-b border-brand-black-60/15 dark:border-white/10 transition-colors duration-500 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
-    <!-- Primary nav row -->
-    <nav class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <a href="{{ url_for('main.index') }}" class="flex items-center gap-3 group" aria-label="BenchmarkWatcher home">
-            <!-- Logo icon -->
-            <div
-                class="w-7 h-7 rounded-lg bg-brand-black-80 dark:bg-white flex items-center justify-center">
-                <span class="text-white dark:text-brand-terminal-black font-semibold text-xs font-ui">BW</span>
-            </div>
-            <span
-                class="text-base font-bold text-brand-black-80 dark:text-white tracking-tight group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors font-serif">BenchmarkWatcher</span>
-        </a>
-
-        <div class="flex items-center gap-2">
-            <button type="button" id="quick-theme-toggle" class="quick-theme-toggle" aria-label="Toggle light and dark mode" onclick="setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark')"><span aria-hidden="true">◐</span><span class="theme-toggle-label">Appearance</span></button>
-            <!-- Settings button -->
-            <button onclick="toggleSettings()" id="settings-button"
-                class="p-2 rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:text-brand-black-60 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition active:scale-95 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
-                aria-label="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-modal">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                    </path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-            </button>
-        </div>
+<a href="#main-content" class="bw-skip-link">Skip to main content</a>
+<header class="bw-header">
+    <nav aria-label="Primary navigation">
+        <a href="{{ url_for('main.index') }}" class="bw-brand" aria-label="BenchmarkWatcher home"><span class="bw-brand-mark" aria-hidden="true">b<span>↗</span></span><span>Benchmark<span class="bw-brand-light">Watcher</span></span></a>
+        <button type="button" class="bw-search-trigger" id="bw-search-trigger" aria-haspopup="dialog" aria-controls="bw-search-dialog"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Search benchmarks &amp; research</span><kbd id="bw-search-shortcut">⌘ K</kbd></button>
+        <div class="bw-header-actions"><button type="button" id="quick-theme-toggle" class="bw-icon-button" aria-label="Toggle light and dark mode" onclick="setTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark')"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/></svg></button><button type="button" onclick="toggleSettings()" id="settings-button" class="bw-icon-button" aria-label="Settings" aria-haspopup="dialog" aria-expanded="false" aria-controls="settings-modal"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--theme-surface)"/><circle cx="16" cy="17" r="3" fill="var(--theme-surface)"/></svg></button></div>
     </nav>
-
-    <!-- Quick-nav category strip — hides on scroll down, reappears on scroll up (Google Console style) -->
-    <div id="category-strip"
-        class="border-t border-brand-black-60/8 dark:border-white/6 transition duration-300 ease-in-out overflow-hidden"
-        style="max-height: 36px;">
-        <div class="max-w-6xl mx-auto px-4 overflow-x-auto scrollbar-hide">
-            {% set cat = selected_category|default('') %}
-            {% set nav_range = date_range|default('ALL') %}
-            {% set nav_view = active_view|default('compact') %}
-            {% set base_cls = "px-3 py-1 text-xs font-semibold rounded-lg transition-colors font-ui" %}
-            {% set idle_cls = "text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white
-            hover:bg-brand-black-60/8 dark:hover:bg-white/8" %}
-            {% set active_cls = "text-brand-black-80 dark:text-white bg-brand-black-60/10 dark:bg-white/10" %}
-            <nav class="flex items-center gap-0.5 h-9 whitespace-nowrap" aria-label="Category filters">
-                <a href="{{ url_for('main.index', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if not cat else idle_cls }}" {% if not cat %}aria-current="page"{% endif %}>All</a>
-                <a href="{{ url_for('main.index', category='energy', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'energy' else idle_cls }}" {% if cat == 'energy' %}aria-current="page"{% endif %}>Energy</a>
-                <a href="{{ url_for('main.index', category='metal', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'metal' else idle_cls }}" {% if cat == 'metal' %}aria-current="page"{% endif %}>Metals</a>
-                <a href="{{ url_for('main.index', category='precious', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'precious' else idle_cls }}" {% if cat == 'precious' %}aria-current="page"{% endif %}>Precious</a>
-                <a href="{{ url_for('main.index', category='agricultural', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'agricultural' else idle_cls }}" {% if cat == 'agricultural' %}aria-current="page"{% endif %}>Agriculture</a>
-                <a href="{{ url_for('main.index', category='index', range=nav_range, view=nav_view) }}"
-                    class="{{ base_cls }} {{ active_cls if cat == 'index' else idle_cls }}" {% if cat == 'index' %}aria-current="page"{% endif %}>Indices</a>
-                <span class="w-px h-4 bg-brand-black-60/20 dark:bg-white/15 mx-1 self-center flex-shrink-0"></span>
-                <a href="{{ url_for('main.changelog') }}" class="{{ base_cls }} {{ idle_cls }}">Changelog</a>
-            </nav>
-        </div>
-    </div>
 </header>
+<dialog id="bw-search-dialog" class="bw-search-dialog" aria-labelledby="bw-search-title">
+    <div class="bw-search-dialog-top"><h2 id="bw-search-title">Search your workspace</h2><button type="button" id="bw-search-close" class="bw-icon-button" aria-label="Close search">×</button></div>
+    <label for="bw-global-query" class="sr-only">Search benchmarks and research</label><input id="bw-global-query" type="search" placeholder="A benchmark, topic or research note…" autocomplete="off">
+    <p id="bw-search-status" class="bw-search-status" role="status"></p><div id="bw-search-results" class="bw-search-results"></div>
+    <div class="bw-search-hint"><span>Research search stays in this browser</span><span><kbd>esc</kbd> to close</span></div>
+</dialog>

@@ -239,7 +239,7 @@ def test_index_category_nav_preserves_range_and_view(app_client):
 def test_index_selected_category_marks_active_nav_and_pulse_link(app_client):
     resp = app_client.get("/?category=precious&range=1M&view=compact")
     assert resp.status_code == 200
-    assert b'aria-current="page">Precious</a>' in resp.data
+    assert b'data-workspace-category="precious" aria-current="page"' in resp.data
     assert b'aria-current="page">All</a>' not in resp.data
     assert b'href="/?category=precious&amp;range=1M&amp;view=compact"' in resp.data
     assert b'id="market-pulse-total">1</span>' in resp.data
