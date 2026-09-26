@@ -454,6 +454,7 @@ BW.GridView = {
             container.appendChild(card);
         });
 
+        this.updateSettings();
         if (BW.Index?.applyQuickFind) {
             BW.Index.applyQuickFind();
         }
