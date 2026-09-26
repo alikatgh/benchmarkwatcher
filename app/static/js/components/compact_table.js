@@ -1046,8 +1046,9 @@ BW.CompactTable = {
             const category = row.querySelector('.commodity-category')?.textContent?.trim() || '';
             const price = row.querySelector('.price-value')?.dataset?.raw || '';
             const currency = row.querySelector('.price-currency')?.textContent?.trim() || row.dataset.currency || '';
-            const change = row.querySelector('.chg-cell')?.dataset?.value || '';
-            const changePct = row.querySelector('.pct-cell')?.dataset?.value || '';
+            // Server-rendered cells hold data-value directly; refreshed rows hold it on a child.
+            const change = row.querySelector('.chg-cell[data-value], .chg-cell [data-value]')?.dataset.value || '';
+            const changePct = row.querySelector('.pct-cell[data-value], .pct-cell [data-value]')?.dataset.value || '';
             const updatedCell = row.querySelector('.updated-cell');
             const date = updatedCell?.dataset?.raw || updatedCell?.dataset?.date || row.dataset.date || '';
 
