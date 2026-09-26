@@ -122,4 +122,45 @@ describe('Compact table CSV export helpers', () => {
 
         expect(csv).toContain('"Gold","Precious","2000","USD","20","1.01","2024-01-10"');
     });
+
+    test.each([
+        [20, 1.01, '+20', '+1.01'],
+        [-20, -1.01, '-20', '-1.01'],
+        [0, 0, '0', '0']
+    ])('exports change values after rebuilding rows (%s, %s)', (change, changePercent, expectedChange, expectedPercent) => {
+        const utilsPath = path.join(__dirname, '..', 'app', 'static', 'js', 'core', 'utils.js');
+        window.eval(fs.readFileSync(utilsPath, 'utf8'));
+        jest.spyOn(BW.CompactTable, 'getSettings').mockReturnValue({
+            ...BW.CompactTable.defaultSettings,
+            chg: { format: 'plain', color: 'neutral' },
+            pct: { style: 'plain', decimals: '0' }
+        });
+        jest.spyOn(BW.CompactTable, 'initSparklines').mockImplementation(() => {});
+
+        BW.CompactTable.updateTableData([{
+            id: 'gold',
+            name: 'Gold',
+            category: 'Precious',
+            price: 2000,
+            currency: 'USD',
+            date: '2024-01-10',
+            change,
+            change_percent: changePercent
+        }]);
+
+        const rows = BW.CompactTable.getExportRows(document.getElementById('data-table'));
+        const csv = BW.CompactTable.buildCsvContent(rows);
+
+        expect(csv).toContain(`"Gold","PRECIOUS","2000","USD","${expectedChange}","${expectedPercent}","2024-01-10"`);
+    });
+
+    test('leaves missing change values empty in the export', () => {
+        document.querySelector('.chg-cell').removeAttribute('data-value');
+        document.querySelector('.pct-cell').removeAttribute('data-value');
+
+        const rows = BW.CompactTable.getExportRows(document.getElementById('data-table'));
+        const csv = BW.CompactTable.buildCsvContent(rows);
+
+        expect(csv).toContain('"Gold","Precious","2000","USD","","","2024-01-10"');
+    });
 });

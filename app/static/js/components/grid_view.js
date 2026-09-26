@@ -217,7 +217,7 @@ BW.GridView = {
     },
 
     // Set data range and fetch new data
-    setDataRange: function (range) {
+    setDataRange: function (range, options = {}) {
         const settings = this.getSettings();
         settings.dataRange = range;
         this.saveSettings(settings);
@@ -228,7 +228,7 @@ BW.GridView = {
         // Update URL without reload
         const url = new URL(window.location.href);
         url.searchParams.set('range', range);
-        window.history.pushState({}, '', url.toString());
+        if (options.history !== 'none') window.history.pushState({}, '', url.toString());
 
         // Cancel any pending request to prevent race conditions
         if (this.currentRequest) {
@@ -454,6 +454,7 @@ BW.GridView = {
             container.appendChild(card);
         });
 
+        this.updateSettings();
         if (BW.Index?.applyQuickFind) {
             BW.Index.applyQuickFind();
         }

@@ -1,15 +1,105 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<div id="index-page-state" data-active-view="{{ active_view }}" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-8 min-h-screen transition-colors duration-300">
-    <div class="flex flex-col md:flex-row md:items-end justify-between mb-4 sm:mb-6 gap-2 sm:gap-3">
-        <div>
-            <h1 class="text-2xl sm:text-3xl font-bold text-brand-black-80 dark:text-brand-paper font-serif">Commodity benchmarks</h1>
-            <p class="text-xs sm:text-xs text-brand-black-60 dark:text-brand-black-60 mt-1 font-ui tracking-wide">
-                Public reference prices, source histories, and downloadable data.</p>
+<div id="index-page-state" data-active-view="{{ active_view }}" class="bw-workspace">
+    <aside class="bw-sidebar" aria-label="Workspace navigation">
+        <div class="bw-sidebar-label">WORKSPACE</div>
+        <nav class="bw-destinations" aria-label="Workspace">
+            <a href="{{ url_for('main.index', view=active_view, range=date_range) }}" data-workspace="benchmarks"><span class="bw-nav-icon" aria-hidden="true">▤</span>Benchmarks</a>
+            <a href="{{ url_for('main.index', workspace='watchlist', view='compact', range=date_range) }}" data-workspace="watchlist"><span class="bw-nav-icon" aria-hidden="true">☆</span>Watchlist <span id="bw-watch-count" class="bw-nav-count">0</span></a>
+            <a href="{{ url_for('main.index', workspace='research', view=active_view, range=date_range) }}" data-workspace="research"><span class="bw-nav-icon" aria-hidden="true">▧</span>Research <span id="bw-research-count" class="bw-nav-count">0</span></a>
+        </nav>
+        <div class="bw-category-nav"><div class="bw-sidebar-label">EXPLORE</div><nav aria-label="Benchmark categories">
+        {% for slug, label in [('energy','Energy'),('metal','Metals'),('precious','Precious metals'),('agricultural','Agriculture'),('index','Indices')] %}
+            <a href="{{ url_for('main.index', category=slug, range=date_range, view=active_view) }}" data-workspace-category="{{ slug }}"{% if selected_category == slug %} aria-current="page"{% endif %}><span class="bw-category-dot bw-dot-{{ slug }}" aria-hidden="true"></span>{{ label }}</a>
+        {% endfor %}
+        </nav></div>
+        <div class="bw-sidebar-bottom"><a href="#market-pulse" id="bw-about-data">About the data <span aria-hidden="true">↗</span></a><a href="{{ url_for('main.changelog') }}">What’s new</a><p>Public observations.<br>Your own perspective.</p></div>
+    </aside>
+    <div class="bw-main-content">
+        <section id="benchmark-workspace" aria-labelledby="bw-page-title">
+            <div class="bw-page-heading"><div><h1 id="bw-page-title">Commodity benchmarks</h1><p id="bw-page-description">A clearer view of energy, metals and agriculture.</p></div><div class="bw-layout-switch" aria-label="Benchmark layout"><a href="{{ url_for('main.index', view='compact', range=date_range, category=selected_category) }}" {% if active_view == 'compact' %}aria-current="page"{% endif %}>Table</a><a href="{{ url_for('main.index', view='grid', range=date_range, category=selected_category) }}" {% if active_view == 'grid' %}aria-current="page"{% endif %}>Cards</a></div></div>
+            <section id="bw-overview" class="bw-overview" aria-label="Selected reference observations"></section>
+            <div class="bw-section-heading"><h2 id="bw-table-heading">Explore benchmarks</h2><span>Historical observations · source schedules vary</span></div>
+    <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">
+        <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4">
+            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                <label for="quick-find-input" class="sr-only">Search benchmarks</label>
+                <div class="relative flex-1 min-w-0">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
+                    </svg>
+                    <input id="quick-find-input" type="search" autocomplete="off" placeholder="Search benchmarks"
+                        class="w-full min-h-[44px] rounded-lg border border-brand-black-60/20 dark:border-white/10 bg-white dark:bg-terminal-black pl-9 pr-3 text-sm font-medium text-brand-black-80 dark:text-white placeholder:text-brand-black-60 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                </div>
+                <div class="overflow-x-auto scrollbar-hide -mx-1 px-1 lg:mx-0 lg:px-0">
+                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-max" role="group" aria-label="Movement and cadence filters">
+                        <button type="button" data-quick-filter="all"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text"
+                            aria-pressed="true">All</button>
+                        <button type="button" data-quick-filter="up"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
+                            aria-pressed="false">Rising</button>
+                        <button type="button" data-quick-filter="down"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
+                            aria-pressed="false">Falling</button>
+                        <button type="button" data-quick-filter="flat"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
+                            aria-pressed="false">Flat</button>
+                        <button type="button" data-quick-filter="daily"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
+                            aria-pressed="false">Daily</button>
+                        <button type="button" data-quick-filter="monthly"
+                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
+                            aria-pressed="false">Monthly</button>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between gap-3 lg:justify-end shrink-0">
+                    <div id="quick-find-count" class="text-xs font-semibold text-brand-black-60 tabular-nums" aria-live="polite">
+                        {{ commodities|length }} shown
+                    </div>
+                    <button id="quick-find-reset" type="button"
+                        class="hidden min-h-[44px] px-3 text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:underline">
+                        Reset
+                    </button>
+                    <button id="quick-find-export" type="button"
+                        class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:opacity-80 bg-brand-oxford/10 dark:bg-brand-teal/10 border border-brand-oxford/20 dark:border-brand-teal/20 rounded-lg transition flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        CSV
+                    </button>
+                </div>
+            </div>
+            <div id="quick-find-summary" class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-2xs font-semibold uppercase tracking-[0.1em] text-brand-black-60" aria-live="polite">
+                <span><span id="quick-find-up">0</span> rising</span>
+                <span><span id="quick-find-down">0</span> falling</span>
+                <span><span id="quick-find-daily">0</span> daily</span>
+                <span><span id="quick-find-monthly">0</span> monthly</span>
+            </div>
+            <div id="quick-find-empty" class="hidden mt-3 rounded-lg border border-brand-black-60/15 dark:border-white/10 bg-brand-black-60/5 dark:bg-white/5 p-3 text-xs font-semibold text-brand-black-60">
+                No benchmarks match the current quick find.
+            </div>
         </div>
+    </section>
+
+    <!-- Grid View Container -->
+    <div id="grid-view" role="region" aria-label="Commodity cards grid view" class="{{ '' if active_view == 'grid' else 'hidden' }}">
+        {% if active_view == 'grid' %}
+        {% include 'components/grid_view.html' %}
+        {% endif %}
     </div>
 
+    <!-- Compact View Container -->
+    <div id="compact-view" role="region" aria-label="Commodity compact table view" class="{{ '' if active_view == 'compact' else 'hidden' }}">
+        {% if active_view == 'compact' %}
+        <div
+            class="bw-table-card">
+            {% include 'components/compact_table.html' %}
+        </div>
+        {% endif %}
+    </div>
+            <div class="bw-data-notes">
     {% set summary = market_summary or {} %}
     {% set range_labels = {
         '1W': 'Recent observations',
@@ -148,88 +238,16 @@
         </div>
     </details>
 
-    <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">
-        <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4">
-            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-                <label for="quick-find-input" class="sr-only">Search benchmarks</label>
-                <div class="relative flex-1 min-w-0">
-                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-black-60" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 110-15 7.5 7.5 0 010 15z"></path>
-                    </svg>
-                    <input id="quick-find-input" type="search" autocomplete="off" placeholder="Search benchmarks"
-                        class="w-full min-h-[44px] rounded-lg border border-brand-black-60/20 dark:border-white/10 bg-white dark:bg-terminal-black pl-9 pr-3 text-sm font-medium text-brand-black-80 dark:text-white placeholder:text-brand-black-60 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                </div>
-                <div class="overflow-x-auto scrollbar-hide -mx-1 px-1 lg:mx-0 lg:px-0">
-                    <div class="flex items-center gap-1 p-1 bg-brand-black-60/5 dark:bg-white/5 rounded-xl w-max" role="group" aria-label="Movement and cadence filters">
-                        <button type="button" data-quick-filter="all"
-                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text"
-                            aria-pressed="true">All</button>
-                        <button type="button" data-quick-filter="up"
-                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
-                            aria-pressed="false">Rising</button>
-                        <button type="button" data-quick-filter="down"
-                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
-                            aria-pressed="false">Falling</button>
-                        <button type="button" data-quick-filter="flat"
-                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
-                            aria-pressed="false">Flat</button>
-                        <button type="button" data-quick-filter="daily"
-                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
-                            aria-pressed="false">Daily</button>
-                        <button type="button" data-quick-filter="monthly"
-                            class="quick-filter-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5 transition"
-                            aria-pressed="false">Monthly</button>
-                    </div>
-                </div>
-                <div class="flex items-center justify-between gap-3 lg:justify-end shrink-0">
-                    <div id="quick-find-count" class="text-xs font-semibold text-brand-black-60 tabular-nums" aria-live="polite">
-                        {{ commodities|length }} shown
-                    </div>
-                    <button id="quick-find-reset" type="button"
-                        class="hidden min-h-[44px] px-3 text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:underline">
-                        Reset
-                    </button>
-                    <button id="quick-find-export" type="button"
-                        class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:opacity-80 bg-brand-oxford/10 dark:bg-brand-teal/10 border border-brand-oxford/20 dark:border-brand-teal/20 rounded-lg transition flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
-                        CSV
-                    </button>
-                </div>
-            </div>
-            <div id="quick-find-summary" class="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-2xs font-semibold uppercase tracking-[0.1em] text-brand-black-60" aria-live="polite">
-                <span><span id="quick-find-up">0</span> rising</span>
-                <span><span id="quick-find-down">0</span> falling</span>
-                <span><span id="quick-find-daily">0</span> daily</span>
-                <span><span id="quick-find-monthly">0</span> monthly</span>
-            </div>
-            <div id="quick-find-empty" class="hidden mt-3 rounded-lg border border-brand-black-60/15 dark:border-white/10 bg-brand-black-60/5 dark:bg-white/5 p-3 text-xs font-semibold text-brand-black-60">
-                No benchmarks match the current quick find.
-            </div>
-        </div>
-    </section>
 
-    <!-- Grid View Container -->
-    <div id="grid-view" role="region" aria-label="Commodity cards grid view" class="{{ '' if active_view == 'grid' else 'hidden' }}">
-        {% if active_view == 'grid' %}
-        {% include 'components/grid_view.html' %}
-        {% endif %}
-    </div>
-
-    <!-- Compact View Container -->
-    <div id="compact-view" role="region" aria-label="Commodity compact table view" class="{{ '' if active_view == 'compact' else 'hidden' }}">
-        {% if active_view == 'compact' %}
-        <div
-            class="bg-card-warm dark:bg-brand-slate border border-brand-black-60/20 dark:border-brand-black-60/40 rounded-xl overflow-hidden">
-            {% include 'components/compact_table.html' %}
-        </div>
-        {% endif %}
+                <p>Each benchmark has its own unit, frequency and observation date. Changes describe the selected historical range; gaps and revisions can occur. Open a benchmark for its source and observation history.</p>
+            </div>
+        </section>
+        {% include 'components/research_workspace.html' %}
     </div>
 </div>
-
-<!-- External JS for index page -->
+{% set workspace_data = namespace(items=[]) %}
+{% for c in commodities %}{% set workspace_data.items = workspace_data.items + [{'id':c.id,'name':c.name,'category':c.category,'price':c.price,'currency':c.currency,'unit':c.unit,'date':c.date,'source':c.source_name|default(c.source|default(''))}] %}{% endfor %}
+<script type="application/json" id="workspace-benchmarks">{{ workspace_data.items|tojson }}</script>
 <script src="{{ url_for('static', filename='js/core/responsive.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/index.js') }}"></script>
 {% endblock %}

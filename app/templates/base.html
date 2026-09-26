@@ -4,6 +4,8 @@
 <head>
     {% set page_title = (commodity.name ~ ' price history | BenchmarkWatcher') if commodity is defined else ('Changelog | BenchmarkWatcher' if request.path == '/changelog' else 'Commodity prices & history | BenchmarkWatcher') %}
     {% set page_description = ('Explore ' ~ commodity.name ~ ' historical reference prices, observation dates, charts and source data.') if commodity is defined else 'Explore public commodity reference prices and historical data for energy, metals and agriculture. Compare observations and download CSV data.' %}
+    {% set page_title = meta_title|default(page_title, true) %}
+    {% set page_description = meta_description|default(page_description, true) %}
     {% if request.blueprint == 'workspace' %}
     {% set page_title = 'Research workspace | BenchmarkWatcher' %}
     {% set page_description = 'A private workspace for company models, source-backed calculations, and your own AI providers.' %}
@@ -757,6 +759,10 @@
     <!-- External JS for base theme initialization -->
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/reference.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark-workspace.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/workspace-table.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/research-workspace.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark-detail.css') }}">
 </head>
 
 <body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
@@ -768,6 +774,10 @@
 
     {% include 'components/footer.html' %}
     {% include 'components/settings_modal.html' %}
+    {% include 'components/benchmark_detail.html' %}
+    <script src="{{ url_for('static', filename='js/components/workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/research_workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/benchmark_detail.js') }}" defer></script>
 </body>
 
 </html>

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Blog | BenchmarkWatcher{% endblock %}
+{% block content %}
+<div class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header class="mb-6 sm:mb-8">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-2">The BenchmarkWatcher blog</h1>
+        <p class="theme-text-muted">Product updates and ways to work with public reference data.</p>
+    </header>
+    <article class="release-entry">
+        <time datetime="2026-09-26">September 26, 2026</time>
+        <h2><a class="hover:underline" href="{{ url_for('main.research_workspace_story') }}">A workspace for benchmark research</a></h2>
+        <p class="mb-4 leading-relaxed">Shape the table around your question, inspect historical observations without losing your place, and keep your own notes alongside the data. Meet the redesigned BenchmarkWatcher.</p>
+        <a href="{{ url_for('main.research_workspace_story') }}" aria-label="Read A workspace for benchmark research">
+            <img class="w-full rounded-lg border border-brand-black-60/20 dark:border-white/10" src="{{ url_for('static', filename='images/blog/benchmark-table.png') }}" width="1440" height="960" alt="The benchmark workspace with saved views, table controls, reference values and observation dates.">
+        </a>
+        <p class="mt-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.research_workspace_story') }}">Read the article</a></p>
+    </article>
+    <nav aria-label="More about BenchmarkWatcher" class="pt-8 border-t border-brand-black-60/20 dark:border-white/10">
+        <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.index') }}">Open benchmarks</a>
+        <span aria-hidden="true"> · </span>
+        <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.changelog') }}">All release notes</a>
+    </nav>
+</div>
+{% endblock %}

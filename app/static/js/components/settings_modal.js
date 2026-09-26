@@ -98,6 +98,9 @@ BW.SettingsModal = {
         const isClosed = modal.classList.contains('opacity-0');
 
         if (isClosed) {
+            modal.hidden = false;
+            modal.inert = false;
+            if (mainContent) { this.mainWasInert = mainContent.inert; mainContent.inert = true; }
             this.openFocusSeq += 1;
             const activeOpenSeq = this.openFocusSeq;
             // Opening - save current focus
@@ -159,6 +162,9 @@ BW.SettingsModal = {
             }
             // Modal is now hidden from assistive tech
             modal.setAttribute('aria-hidden', 'true');
+            modal.hidden = true;
+            modal.inert = true;
+            if (mainContent) mainContent.inert = !!this.mainWasInert;
             // Restore body scroll
             document.documentElement.classList.remove('modal-open');
             // Restore main content visibility to assistive tech

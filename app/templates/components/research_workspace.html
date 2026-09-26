@@ -1,0 +1,57 @@
+<section id="research-workspace" class="research-workspace" aria-labelledby="research-heading" hidden>
+  <div class="rw-heading">
+    <div><p class="rw-eyebrow">Your working notes</p><h1 id="research-heading">Research</h1><p>Connect the observations. Keep your own perspective.</p></div>
+    <button type="button" class="rw-button rw-primary" data-rw-action="new">+ New entry</button>
+  </div>
+  <div class="rw-storage-notice"><span>Stored in this browser only. Browser cleanup can remove entries. Export a backup to keep a copy.</span><button type="button" class="rw-text-button" data-rw-action="export">Export backup</button></div>
+  <div class="rw-viewbar" aria-label="Research views">
+    <div id="rw-views" class="rw-views"></div>
+    <button type="button" class="rw-text-button" data-rw-action="save-view">+ Save view</button>
+  </div>
+  <div class="rw-toolbar">
+    <label class="rw-search"><span class="rw-sr-only">Search research entries</span><input id="rw-search" type="search" placeholder="Search this research view" autocomplete="off"></label>
+    <label class="rw-control"><span>Status</span><select id="rw-status-filter" aria-label="Filter by status"><option value="">All statuses</option><option>To review</option><option>In progress</option><option>Reviewed</option></select></label>
+    <label class="rw-control"><span>Sort</span><select id="rw-sort" aria-label="Sort research by"><option value="updatedAt">Last edited</option><option value="title">Title</option><option value="status">Status</option><option value="benchmark">Linked benchmark</option></select></label>
+    <button type="button" class="rw-button" id="rw-sort-direction" aria-label="Sort oldest first" title="Reverse sort direction">↓</button>
+    <button type="button" class="rw-button" data-rw-action="properties">Properties</button>
+    <button type="button" class="rw-button" data-rw-action="import">Import backup</button>
+    <input id="rw-import-file" type="file" accept=".json,application/json" hidden>
+  </div>
+  <div class="rw-results-bar"><span id="rw-count"></span><button type="button" class="rw-text-button" id="rw-reset" data-rw-action="reset" hidden>Clear filters</button><span id="rw-save-state" role="status" aria-live="polite">No changes yet</span><button type="button" class="rw-text-button" id="rw-retry" data-rw-action="retry" hidden>Retry saving</button><button type="button" class="rw-text-button" id="rw-undo" data-rw-action="undo" disabled>Undo</button></div>
+  <div class="rw-table-region" tabindex="0" role="region" aria-label="Research entries, scroll horizontally for more properties"><table class="rw-table"><thead id="rw-table-head"></thead><tbody id="rw-table-body"></tbody></table></div>
+  <div id="rw-empty" class="rw-empty" hidden><span class="rw-empty-symbol" aria-hidden="true">▤</span><h2 id="rw-empty-heading">A place for your next question</h2><p id="rw-empty-copy">Start with a note, or add a benchmark from the collection. Your source data stays read-only.</p><button type="button" class="rw-button" data-rw-action="new">Create an entry</button></div>
+  <p class="rw-footnote">Personal notes are your own work. Linked observations are historical reference data; they are not updated inside saved research entries.</p>
+  <p id="rw-announcement" class="rw-sr-only" role="status" aria-live="polite"></p>
+
+  <dialog id="rw-editor" class="rw-dialog rw-editor" aria-labelledby="rw-editor-heading">
+    <div class="rw-dialog-heading"><div><p class="rw-eyebrow">Research entry</p><h2 id="rw-editor-heading">Entry details</h2></div><button type="button" class="rw-icon-button" data-rw-action="close-editor" aria-label="Close entry">×</button></div>
+    <p class="rw-editor-help">Edits save in this browser. Escape in a field restores its value when you entered it.</p>
+    <form id="rw-editor-form" class="rw-editor-form" novalidate>
+      <label>Title<input name="title" type="text" maxlength="300" placeholder="Untitled entry" autocomplete="off"></label>
+      <div id="rw-linked-source" class="rw-linked-source" hidden></div>
+      <div class="rw-form-pair"><label>Status<select name="status" aria-label="Entry status"><option>To review</option><option>In progress</option><option>Reviewed</option></select></label><label>Tags <span class="rw-muted">comma separated</span><input name="tags" type="text" maxlength="1000" placeholder="Supply, methodology"></label></div>
+      <label>Notes<textarea name="notes" rows="8" maxlength="100000" placeholder="What are you looking into? Record context, questions, and your own interpretation."></textarea></label>
+      <label>Citations <span class="rw-muted">one http or https link per line</span><textarea name="citations" rows="2" maxlength="20000" placeholder="https://…"></textarea></label>
+      <p id="rw-citation-error" class="rw-error" hidden></p>
+      <div id="rw-citation-links" class="rw-citation-links"></div>
+      <div id="rw-custom-fields" class="rw-custom-fields"></div>
+    </form>
+    <div class="rw-editor-footer"><span id="rw-editor-save" role="status"></span><div><button type="button" class="rw-text-button" id="rw-discard-entry" data-rw-action="discard" hidden>Discard empty draft</button><button type="button" class="rw-text-button" data-rw-action="duplicate">Duplicate</button><button type="button" class="rw-text-button" id="rw-archive-entry" data-rw-action="archive">Archive</button><button type="button" class="rw-button" data-rw-action="close-editor">Done</button></div></div>
+  </dialog>
+  <dialog id="rw-properties-dialog" class="rw-dialog" aria-labelledby="rw-properties-heading">
+    <div class="rw-dialog-heading"><h2 id="rw-properties-heading">Properties</h2><button type="button" class="rw-icon-button" data-rw-action="close-properties" aria-label="Close properties">×</button></div>
+    <p class="rw-muted">Choose visible properties and move them into your preferred order. Title stays visible.</p>
+    <div id="rw-property-list" class="rw-property-list"></div>
+    <form id="rw-property-form" class="rw-property-form"><h3>Add a personal property</h3><p class="rw-muted">Your values are separate from linked source observations.</p><label>Name<input name="propertyName" required maxlength="60" placeholder="e.g. Reporting lag"></label><div class="rw-form-pair"><label>Type<select name="propertyType" aria-label="Property type"><option value="text">Text</option><option value="number">Number</option><option value="date">Date</option><option value="checkbox">Checkbox</option><option value="select">Select</option></select></label><label id="rw-unit-label">Unit (optional)<input name="propertyUnit" maxlength="30" placeholder="days, USD/t…"></label></div><label id="rw-options-label" hidden>Options, comma separated<input name="propertyOptions" maxlength="1000" placeholder="Low, Medium, High"></label><p id="rw-property-error" class="rw-error" hidden></p><button type="submit" class="rw-button rw-primary">Add property</button></form>
+  </dialog>
+  <dialog id="rw-import-dialog" class="rw-dialog" aria-labelledby="rw-import-heading">
+    <div class="rw-dialog-heading"><h2 id="rw-import-heading">Review backup</h2><button type="button" class="rw-icon-button" data-rw-action="close-import" aria-label="Close import">×</button></div>
+    <p id="rw-import-summary"></p><p class="rw-muted">Only BenchmarkWatcher Research JSON backups are supported. Files stay in this browser.</p>
+    <label class="rw-choice"><input type="radio" name="rw-import-mode" value="merge" checked><span><strong>Merge with current entries</strong><small>Keep all entries; for matching IDs, keep the later edit. Combine saved views, skip identical copies, and keep conflicting versions separately. Your current view settings stay unchanged.</small></span></label>
+    <label class="rw-choice"><input type="radio" name="rw-import-mode" value="replace"><span><strong>Replace this research workspace</strong><small>Replace entries, properties, and views with this backup. Undo is available during this session.</small></span></label>
+    <p id="rw-import-error" class="rw-error" hidden></p><button type="button" class="rw-button rw-primary" data-rw-action="apply-import">Import backup</button>
+  </dialog>
+  <dialog id="rw-view-dialog" class="rw-dialog" aria-labelledby="rw-view-heading">
+    <div class="rw-dialog-heading"><h2 id="rw-view-heading">Save this view</h2><button type="button" class="rw-icon-button" data-rw-action="close-view" aria-label="Close view dialog">×</button></div><p class="rw-muted">Save your search, status, sorting, property order, and visibility.</p><form id="rw-view-form"><label>View name<input name="viewName" maxlength="60" required placeholder="e.g. Supply research"></label><button type="submit" class="rw-button rw-primary">Save as new view</button></form>
+  </dialog>
+</section>

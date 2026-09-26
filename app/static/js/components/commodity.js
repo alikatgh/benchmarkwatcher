@@ -1539,31 +1539,33 @@ function setChangePeriod(period) {
     if (!section) return;
 
     const pctMap = {
-        '1':   parseFloat(section.dataset.pct1)   || 0,
-        '30':  parseFloat(section.dataset.pct30)  || 0,
-        '365': parseFloat(section.dataset.pct365) || 0,
+        '1':   parseFloat(section.dataset.pct1),
+        '30':  parseFloat(section.dataset.pct30),
+        '365': parseFloat(section.dataset.pct365),
     };
-    const abs1      = parseFloat(section.dataset.abs1) || 0;
+    const abs1      = parseFloat(section.dataset.abs1);
     const currency  = section.dataset.currency || '';
     const date      = section.dataset.date || '';
     const prevPrice = section.dataset.prevPrice || '';
     const prevDate  = section.dataset.prevDate || '';
     const prevLabel = section.dataset.prevLabel || 'vs prev obs';
 
-    const pct  = pctMap[period] || 0;
+    const pct  = pctMap[period];
+    const available = Number.isFinite(pct);
     const isUp = pct >= 0;
     const cs   = getComputedStyle(document.documentElement);
-    const color = cs.getPropertyValue(isUp ? '--color-up' : '--color-down').trim();
-    const bg    = cs.getPropertyValue(isUp ? '--color-up-bg' : '--color-down-bg').trim();
+    const color = cs.getPropertyValue(available ? (isUp ? '--color-up' : '--color-down') : '--theme-text-muted').trim();
+    const bg    = cs.getPropertyValue(available ? (isUp ? '--color-up-bg' : '--color-down-bg') : '--theme-bg').trim();
     const sign  = isUp ? '+' : '';
-    const arrow = isUp ? '▲' : '▼';
+    const arrow = available ? (isUp ? '▲' : '▼') : '—';
+    const pctText = available ? `${sign}${pct.toFixed(2)}%` : 'Unavailable';
 
     // Update badge
     const badgeBg = document.getElementById('change-badge-bg');
     const pctDisplay   = document.getElementById('change-pct-display');
     const arrowDisplay = document.getElementById('change-arrow-display');
     if (badgeBg)      badgeBg.style.backgroundColor = bg;
-    if (pctDisplay)   { pctDisplay.style.color = color; pctDisplay.textContent = `${sign}${Math.abs(pct).toFixed(2)}%`; }
+    if (pctDisplay)   { pctDisplay.style.color = color; pctDisplay.textContent = pctText; }
     if (arrowDisplay) { arrowDisplay.style.color = color; arrowDisplay.textContent = arrow; }
 
     // Update tooltip-change-line color too
@@ -1590,11 +1592,12 @@ function setChangePeriod(period) {
     if (period === '1') {
         if (tooltipPrevRow) tooltipPrevRow.style.display = '';
         if (tooltipPrevLbl) tooltipPrevLbl.textContent = `Previous (${prevDate}):`;
-        if (tooltipPrevPrc) tooltipPrevPrc.textContent = `${prevPrice} ${currency}`;
-        if (changeLine) changeLine.textContent = `${sign}${abs1} ${currency} (${sign}${Math.abs(pct).toFixed(2)}%)`;
+        if (tooltipPrevPrc) tooltipPrevPrc.textContent = prevPrice ? `${prevPrice} ${currency}` : 'Unavailable';
+        if (changeLine) changeLine.textContent = available && Number.isFinite(abs1)
+            ? `${abs1 >= 0 ? '+' : ''}${abs1} ${currency} (${pctText})` : 'Change unavailable';
     } else {
         if (tooltipPrevRow) tooltipPrevRow.style.display = 'none';
-        if (changeLine) changeLine.textContent = `${sign}${Math.abs(pct).toFixed(2)}%`;
+        if (changeLine) changeLine.textContent = pctText;
     }
 
     // Update button active states

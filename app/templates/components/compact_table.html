@@ -1,494 +1,84 @@
-<div class="range-toolbar">
-    <div class="range-tabs" role="group" aria-label="Observation range">
-        <button type="button" onclick="setDataRange('1W')" id="range-1W" class="range-btn" aria-label="Show last 1 week of available observations">1W</button>
-        <button type="button" onclick="setDataRange('1M')" id="range-1M" class="range-btn" aria-label="Show last 1 month of available observations">1M</button>
-        <button type="button" onclick="setDataRange('3M')" id="range-3M" class="range-btn" aria-label="Show last 3 months of available observations">3M</button>
-        <button type="button" onclick="setDataRange('6M')" id="range-6M" class="range-btn" aria-label="Show last 6 months of available observations">6M</button>
-        <button type="button" onclick="setDataRange('1Y')" id="range-1Y" class="range-btn" aria-label="Show last 1 year of available observations">1Y</button>
-        <button type="button" onclick="setDataRange('ALL')" id="range-ALL" class="range-btn" aria-label="Show all data">ALL</button>
+<section id="table-workspace" class="table-workspace" aria-label="Benchmark table workspace">
+    <div class="tw-viewbar">
+        <div id="tw-views" class="tw-views" role="group" aria-label="Saved table views"></div>
+        <button type="button" id="tw-new-view" class="tw-button tw-subtle">+ New view</button>
+        <button type="button" id="tw-view-menu-button" class="tw-button tw-subtle" aria-expanded="false" aria-controls="tw-view-menu">View settings</button>
     </div>
-    <span id="date-range-display" class="sr-only" aria-live="polite">All available data</span>
-    <button type="button" onclick="toggleSettingsPanel()" id="settings-toggle-btn" class="columns-toggle" aria-expanded="false" aria-controls="table-settings-container">
-        Columns <span id="settings-toggle-text" class="sr-only">Show</span><span aria-hidden="true">⌄</span>
-    </button>
-</div>
-
-<!-- Table Settings Panel -->
-<div id="table-settings-container"
-    class="mb-6 bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 overflow-hidden hidden">
-
-    <!-- Settings Content (Hidden by default) -->
-    <div id="settings-panel" class="hidden">
-        <div class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-            <!-- COMMODITY Column Settings -->
-            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="col-commodity" checked onchange="toggleColumn('commodity')"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Commodity</span>
-                    </div>
-                </div>
-                <!-- Live Preview -->
-                <div
-                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
-                        Preview</div>
-                    <div id="preview-commodity" class="flex items-center gap-2">
-                        <div
-                            class="w-8 h-8 rounded-lg bg-brand-black-60/10 dark:bg-white/10 flex items-center justify-center">
-                            <span class="text-2xs font-semibold text-brand-black-60">BR</span>
-                        </div>
-                        <div>
-                            <div class="text-xs font-semibold text-brand-black-80 dark:text-white">Brent Crude Oil</div>
-                            <div class="text-2xs text-brand-black-60">Energy</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="space-y-2 text-xs font-ui">
-                    <div>
-                        <label
-                            class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Display</label>
-                        <select id="commodity-display" onchange="updatePreview('commodity')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="full">Name + Category + Icon</option>
-                            <option value="name-category">Name + Category</option>
-                            <option value="name-only">Name Only</option>
-                            <option value="compact">Icon + Name</option>
-                        </select>
-                    </div>
-                    <label class="flex items-center gap-2 cursor-pointer mt-2" title="D = Daily data, M = Monthly data">
-                        <input type="checkbox" id="table-show-freq-badge" checked onchange="toggleFreqBadge()"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-xs font-medium text-brand-black-80 dark:text-white">Freq. Badge (D/M)</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- TREND Column Settings -->
-            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="col-trend" checked onchange="toggleColumn('trend')"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Recent</span>
-                    </div>
-                </div>
-                <!-- Live Preview -->
-                <div
-                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
-                        Preview</div>
-                    <div id="preview-trend"
-                        class="h-8 flex items-center justify-center text-brand-oxford dark:text-brand-teal">
-                        <svg class="w-full h-6" viewBox="0 0 100 24">
-                            <defs>
-                                <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="currentColor" stop-opacity="0.3" />
-                                    <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
-                                </linearGradient>
-                            </defs>
-                            <path id="preview-trend-fill"
-                                d="M0,20 L10,18 L25,12 L40,15 L55,8 L70,10 L85,4 L100,6 L100,24 L0,24 Z"
-                                fill="url(#sparkGrad)" />
-                            <path id="preview-trend-line" d="M0,20 L10,18 L25,12 L40,15 L55,8 L70,10 L85,4 L100,6"
-                                fill="none" stroke="currentColor" stroke-width="2" />
-                        </svg>
-                    </div>
-                </div>
-                <div class="space-y-2 text-xs font-ui">
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Chart
-                            Type</label>
-                        <select id="trend-type" onchange="updatePreview('trend')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="area">Area Chart</option>
-                            <option value="line">Line Chart</option>
-                            <option value="bar">Bar Chart</option>
-                            <option value="step">Step Chart</option>
-                            <option value="sparkline-range">Sparkline + Range</option>
-                            <option value="none">Hide Chart</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Data
-                            Points</label>
-                        <select id="trend-points" onchange="updatePreview('trend')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="7">Last 7 days</option>
-                            <option value="15">Last 15 days</option>
-                            <option value="30" selected>Last 30 days</option>
-                            <option value="90">Last 90 days</option>
-                            <option value="180">Last 180 days</option>
-                            <option value="365">Last 365 days</option>
-                            <option value="all">All available</option>
-                        </select>
-                    </div>
-                    <div class="pt-2 border-t border-brand-black-60/10 dark:border-white/10">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="trend-ma" onchange="updatePreview('trend')"
-                                class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                            <span class="text-2xs font-semibold text-brand-black-60 tracking-wider">Show 7-Day
-                                Moving Avg</span>
-                        </label>
-                    </div>
-                    <div>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="trend-highlow" onchange="updatePreview('trend')"
-                                class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                            <span class="text-2xs font-semibold text-brand-black-60 tracking-wider">Show
-                                High/Low Markers</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PRICE Column Settings -->
-            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="col-price" checked onchange="toggleColumn('price')"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Price</span>
-                    </div>
-                </div>
-                <!-- Live Preview -->
-                <div
-                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
-                        Preview</div>
-                    <div id="preview-price" class="text-right">
-                        <div class="text-sm font-semibold text-brand-black-80 dark:text-white">2,328.23</div>
-                        <div class="text-2xs text-brand-black-60">USD</div>
-                    </div>
-                </div>
-                <div class="space-y-2 text-xs font-ui">
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Number
-                            Format</label>
-                        <select id="price-format" onchange="updatePreview('price')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="default">Default (89.84)</option>
-                            <option value="thousands">Thousands (2,328.23)</option>
-                            <option value="compact">Compact (2.3K)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Currency</label>
-                        <select id="price-currency" onchange="updatePreview('price')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="below">Below Price</option>
-                            <option value="inline">Inline (USD 89.84)</option>
-                            <option value="symbol">Symbol ($89.84)</option>
-                            <option value="none">Hide Currency</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Decimal
-                            Precision</label>
-                        <select id="price-precision" onchange="updatePreview('price')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="2" selected>2 decimals (63.00)</option>
-                            <option value="3">3 decimals (63.000)</option>
-                            <option value="4">4 decimals (63.0000)</option>
-                            <option value="0">No decimals (63)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CHANGE Column Settings -->
-            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="col-chg" checked onchange="toggleColumn('chg')"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Change (Abs)</span>
-                    </div>
-                </div>
-                <!-- Live Preview -->
-                <div
-                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
-                        Preview</div>
-                    <div id="preview-chg" class="flex items-center justify-end gap-1">
-                        <span class="text-sm font-semibold text-brand-teal">▲ +12.45</span>
-                    </div>
-                </div>
-                <div class="space-y-2 text-xs font-ui">
-                    <div>
-                        <label
-                            class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Display</label>
-                        <select id="chg-format" onchange="updatePreview('chg')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="arrow">With Arrow (▲ +0.65)</option>
-                            <option value="sign">Sign Only (+0.65)</option>
-                            <option value="plain">Plain (0.65)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Color</label>
-                        <select id="chg-color" onchange="updatePreview('chg')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="colored">Green/Red</option>
-                            <option value="neutral">Neutral</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PERCENT CHANGE Column Settings -->
-            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="col-pct" checked onchange="toggleColumn('pct')"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Change (%)</span>
-                    </div>
-                </div>
-                <!-- Live Preview -->
-                <div
-                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
-                        Preview</div>
-                    <div id="preview-pct" class="flex justify-end">
-                        <span
-                            class="px-2 py-0.5 rounded text-xs font-semibold bg-brand-teal/10 text-brand-teal">+0.72%</span>
-                    </div>
-                </div>
-                <div class="space-y-2 text-xs font-ui">
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Style</label>
-                        <select id="pct-style" onchange="updatePreview('pct')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="badge">Badge Style</option>
-                            <option value="plain">Plain Text</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Decimals</label>
-                        <select id="pct-decimals" onchange="updatePreview('pct')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="0">0 (-1%)</option>
-                            <option value="1">1 (-0.7%)</option>
-                            <option value="2" selected>2 (-0.72%)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- UPDATED Column Settings -->
-            <div class="p-4 bg-brand-black-60/5 dark:bg-white/5 rounded-xl">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="col-updated" checked onchange="toggleColumn('updated')"
-                            class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                        <span class="text-sm font-semibold text-brand-black-80 dark:text-white font-ui">Observation date</span>
-                    </div>
-                </div>
-                <!-- Live Preview -->
-                <div
-                    class="mb-3 p-3 bg-white dark:bg-terminal-black rounded-lg border border-brand-black-60/10 dark:border-white/10">
-                    <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-2">
-                        Preview</div>
-                    <div id="preview-updated" class="text-right">
-                        <span class="text-xs font-medium text-brand-black-60">2026-01-07</span>
-                    </div>
-                </div>
-                <div class="space-y-2 text-xs font-ui">
-                    <div>
-                        <label class="block text-2xs font-semibold tracking-wider text-brand-black-60 mb-1">Date
-                            Format</label>
-                        <select id="updated-format" onchange="updatePreview('updated')"
-                            class="w-full px-2 py-1.5 text-xs bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg text-brand-black-80 dark:text-white">
-                            <option value="iso">ISO (2026-01-07)</option>
-                            <option value="short">Short (Jan 7)</option>
-                            <option value="long">Long (January 7, 2026)</option>
-                            <option value="relative">Relative (Today)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+    <div id="tw-view-menu" class="tw-panel" hidden>
+        <form id="tw-view-form" class="tw-inline-form">
+            <label for="tw-view-name">View name</label><input id="tw-view-name" maxlength="60" required placeholder="e.g. Monthly energy" autocomplete="off">
+            <button class="tw-button tw-primary" type="submit">Save as new view</button>
+        </form>
+        <div class="tw-panel-actions">
+            <button type="button" id="tw-update-view" class="tw-button">Update current view</button>
+            <button type="button" id="tw-rename-view" class="tw-button">Rename</button>
+            <button type="button" id="tw-delete-view" class="tw-button">Remove view</button>
         </div>
-
-        <!-- Additional Column Options -->
-        <div class="px-4 py-3 border-t border-brand-black-60/10 dark:border-white/5">
-            <div class="text-2xs font-semibold tracking-wider text-brand-black-60 mb-2">Additional Columns</div>
-            <div class="flex flex-wrap gap-3">
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="col-source" onchange="toggleColumn('source')"
-                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                    <span class="text-xs font-semibold text-brand-black-60">Data Source</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="col-ytd" onchange="toggleColumn('ytd')"
-                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                    <span class="text-xs font-semibold text-brand-black-60">YTD Change</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="col-range" onchange="toggleColumn('range')"
-                        class="w-4 h-4 rounded border-brand-black-60/30 text-brand-oxford focus:ring-brand-oxford">
-                    <span class="text-xs font-semibold text-brand-black-60">52-Week Range</span>
-                </label>
-            </div>
-        </div>
-
-        <!-- Settings Footer -->
-        <div
-            class="px-4 py-3 bg-brand-black-60/5 dark:bg-white/5 border-t border-brand-black-60/10 dark:border-white/5 flex items-center justify-between">
-            <div class="text-xs text-brand-black-60 dark:text-brand-black-60 font-ui">
-                <span id="visible-columns-count">6</span>/9 columns visible
-            </div>
-            <div class="flex items-center gap-2 flex-wrap">
-                <button onclick="exportToCSV()"
-                    class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold text-brand-oxford dark:text-brand-teal hover:opacity-80 bg-brand-oxford/10 dark:bg-brand-teal/10 border border-brand-oxford/20 dark:border-brand-teal/20 rounded-lg transition font-ui flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Export</span> CSV
-                </button>
-                <button onclick="resetAllSettings()"
-                    class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-white dark:bg-terminal-black border border-brand-black-60/20 dark:border-white/10 rounded-lg transition font-ui">
-                    Reset
-                </button>
-                <button onclick="applySettings()"
-                    class="min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold text-white bg-brand-black-80 dark:bg-white dark:text-terminal-black rounded-lg transition hover:opacity-90 font-ui">
-                    Apply
-                </button>
-            </div>
+        <p class="tw-help">Named views save your filters, sorting, properties, density and observation range in this browser. Removing a view keeps your research and watchlist.</p>
+    </div>
+    <div class="tw-toolbar">
+        <label class="tw-search"><span aria-hidden="true">⌕</span><span class="sr-only">Search this view</span><input type="search" id="tw-query" placeholder="Search this view" autocomplete="off"></label>
+        <div class="tw-tools">
+            <button type="button" class="tw-button" id="tw-filter-button" aria-expanded="false" aria-controls="tw-filters">Filter <span id="tw-filter-count"></span></button>
+            <button type="button" class="tw-button" id="tw-sort-button" aria-expanded="false" aria-controls="tw-sort-panel">Sort <span id="tw-sort-count"></span></button>
+            <button type="button" class="tw-button" id="tw-properties-button" aria-expanded="false" aria-controls="tw-properties">Properties</button>
+            <button type="button" class="tw-button" id="tw-actions-button" aria-expanded="false" aria-controls="tw-actions">Actions</button>
         </div>
     </div>
-</div>
-
-<div class="relative">
-    <div id="table-loading" class="loading-overlay hidden">
-        <div class="loading-spinner"></div>
+    <div id="tw-filters" class="tw-panel tw-filter-panel" hidden>
+        <label>Category<select id="tw-category"><option value="">All categories</option></select></label>
+        <label>Frequency<select id="tw-frequency"><option value="">All frequencies</option><option value="daily">Daily</option><option value="monthly">Monthly</option></select></label>
+        <label>Availability<select id="tw-availability"><option value="">All observations</option><option value="available">Has reference value</option><option value="unavailable">Value unavailable</option><option value="change">Has historical change</option><option value="no-change">Change unavailable</option></select></label>
+        <label>Historical direction<select id="tw-direction"><option value="">Any direction</option><option value="up">Increased</option><option value="down">Decreased</option><option value="flat">Unchanged</option></select></label>
+        <label>Membership<select id="tw-watch"><option value="">All benchmarks</option><option value="watched">On watchlist</option><option value="unwatched">Not on watchlist</option></select></label>
     </div>
-    <div class="overflow-x-auto">
-        <table class="w-full min-w-[640px] text-left border-collapse font-ui" id="data-table">
-            <thead class="bg-brand-black-60/5 dark:bg-white/5 border-y border-brand-black-60/20 dark:border-white/10">
-                <tr>
-                    <th data-col="commodity" data-sort="name" scope="col" onclick="sortTable('name')"
-                        class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center gap-1 pointer-events-none">Commodity <span
-                                class="sort-indicator text-brand-oxford dark:text-brand-teal"
-                                data-sort="name"></span></span>
-                    </th>
-                    <th data-col="trend" scope="col"
-                        class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 w-32">Recent
-                    </th>
-                    <th data-col="price" data-sort="price" scope="col" onclick="sortTable('price')"
-                        class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">Price <span
-                                class="sort-indicator text-brand-oxford dark:text-brand-teal"
-                                data-sort="price"></span></span>
-                    </th>
-                    <th data-col="chg" data-sort="change" scope="col" onclick="sortTable('change')"
-                        class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">Change <span
-                                class="sort-indicator text-brand-oxford dark:text-brand-teal"
-                                data-sort="change"></span></span>
-                    </th>
-                    <th data-col="pct" data-sort="pct" scope="col" onclick="sortTable('pct')"
-                        class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">Change % <span
-                                class="sort-indicator text-brand-oxford dark:text-brand-teal"
-                                data-sort="pct"></span></span>
-                    </th>
-                    <th data-col="updated" data-sort="date" scope="col" onclick="sortTable('date')"
-                        class="px-4 py-4 text-2xs font-semibold tracking-wider text-brand-black-60 text-right cursor-pointer hover:bg-brand-black-60/10 dark:hover:bg-white/10 transition-colors select-none">
-                        <span class="flex items-center justify-end gap-1 pointer-events-none">Observed <span
-                                class="sort-indicator text-brand-oxford dark:text-brand-teal"
-                                data-sort="date"></span></span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody id="table-body" class="divide-y divide-brand-black-60/10 dark:divide-white/5">
-                {% for commodity in commodities %}
-                <tr onclick="window.location='{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}'"
-                    tabindex="0" role="link"
-                    onkeydown="if(event.key==='Enter')window.location='{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}'"
-                    data-id="{{ commodity.id }}"
-                    data-name="{{ commodity.name }}"
-                    data-category="{{ commodity.category }}"
-                    data-currency="{{ commodity.currency }}"
-                    data-unit="{{ commodity.unit }}"
-                    data-date="{{ commodity.date }}"
-                    data-frequency="{% if commodity.is_daily %}daily{% else %}monthly{% endif %}"
-                    data-direction="{% if commodity.daily_change_percent|default(commodity.change_percent) > 0 %}up{% elif commodity.daily_change_percent|default(commodity.change_percent) < 0 %}down{% else %}flat{% endif %}"
-                    data-price="{{ commodity.price }}"
-                    data-change-pct="{{ commodity.daily_change_percent|default(commodity.change_percent) }}"
-                    data-change-abs="{{ commodity.daily_change|default(commodity.change) }}"
-                    class="hover:bg-brand-black-60/5 dark:hover:bg-white/5 cursor-pointer transition duration-200 group focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                    <td data-col="commodity" class="px-4 py-5">
-                        <div class="flex items-center gap-3 commodity-cell">
-                            <div
-                                class="commodity-icon w-10 h-10 rounded-xl bg-brand-black-60/5 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-oxford/10 dark:group-hover:bg-brand-teal/10 transition-colors">
-                                <span class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60">{{
-                                    commodity.name[:2] | upper }}</span>
-                            </div>
-                            <div>
-                                <div
-                                    class="commodity-name text-sm font-semibold text-brand-black-80 dark:text-white group-hover:text-brand-oxford dark:group-hover:text-brand-teal transition-colors whitespace-nowrap">
-                                    {{ commodity.name }}</div>
-                                <div class="flex items-center gap-1.5">
-                                    <div class="commodity-category text-2xs text-brand-black-60 tracking-wide">{{ commodity.category }}</div>
-                                    <span class="text-[8px] font-bold px-1 py-0.5 rounded font-ui freq-badge {% if commodity.is_daily %}bg-brand-teal/20 text-brand-teal{% else %}bg-brand-oxford/20 text-brand-oxford dark:bg-brand-teal/20 dark:text-brand-teal{% endif %}"
-                                        title="{% if commodity.is_daily %}Daily data{% else %}Monthly data{% endif %}">{% if commodity.is_daily %}D{% else %}M{% endif %}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                    <td data-col="trend" class="px-4 py-5">
-                        <div class="h-10 w-28 bg-brand-black-60/5 dark:bg-white/5 rounded-lg p-1">
-                            <canvas id="sparkline-{{ commodity.id }}" role="img"
-                                aria-label="Price trend sparkline for {{ commodity.name }}"></canvas>
-                        </div>
-                    </td>
-                    <td data-col="price" class="px-4 py-5 text-right">
-                        <div class="price-value text-sm font-semibold text-brand-black-80 dark:text-white"
-                            data-raw="{{ commodity.price }}">{{ commodity.price }}</div>
-                        <div class="price-currency text-2xs text-brand-black-60">{{ commodity.currency }}
-                        </div>
-                    </td>
-                    {% set _chg = commodity.daily_change|default(commodity.change) %}
-                    {% set _dir = 'up' if _chg > 0 else ('down' if _chg < 0 else 'flat') %}
-                    {% set _cvar = '--color-up' if _dir == 'up' else ('--color-down' if _dir == 'down' else '--color-flat') %}
-                    {% set _cbg = '--color-up-bg' if _dir == 'up' else ('--color-down-bg' if _dir == 'down' else '--color-flat-bg') %}
-                    {% set _arrow = '▲' if _dir == 'up' else ('▼' if _dir == 'down' else '') %}
-                    {% set _sgn = '+' if _dir == 'up' else '' %}
-                    <td data-col="chg" class="px-4 py-5 text-right">
-                        <div class="chg-cell inline-flex items-center gap-1 text-sm font-semibold"
-                            style="color: var({{ _cvar }});"
-                            data-value="{{ _chg }}">
-                            <span class="chg-arrow text-2xs">{{ _arrow }}</span>
-                            <span class="chg-value">{{ _sgn }}{{ _chg | round(2) }}</span>
-                        </div>
-                    </td>
-                    <td data-col="pct" class="px-4 py-5 text-right">
-                        <div class="pct-cell inline-flex px-2 py-1 rounded-lg text-sm font-semibold"
-                            style="color: var({{ _cvar }}); background-color: var({{ _cbg }});"
-                            data-value="{{ commodity.daily_change_percent|default(commodity.change_percent) }}">
-                            {{ _sgn }}{{ commodity.daily_change_percent|default(commodity.change_percent) | round(2) }}%
-                        </div>
-                    </td>
-                    <td data-col="updated" class="px-4 py-5 text-right">
-                        <div class="updated-cell text-xs font-medium text-brand-black-60"
-                            data-raw="{{ commodity.date }}" data-date="{{ commodity.date }}">{{
-                            commodity.date }}</div>
-                    </td>
-                </tr>
+    <div id="tw-sort-panel" class="tw-panel" hidden><p class="tw-help">Apply in priority order. Missing values stay last. Shift-click a header to add it to the sort.</p><div id="tw-sort-rules"></div><button type="button" id="tw-add-sort" class="tw-button">+ Add sort</button></div>
+    <div id="tw-properties" class="tw-panel" hidden><div class="tw-properties-heading"><p>Show, reorder and resize properties</p><label>Row density <select id="tw-density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label></div><p class="tw-help">Drag a property to reorder, or use Move left / right. Benchmark stays pinned. Drag a header edge or use its arrow keys to resize.</p><div id="tw-property-list"></div></div>
+    <div id="tw-actions" class="tw-panel tw-actions" hidden><button type="button" id="tw-export-filtered" class="tw-button">Export filtered results</button><button type="button" id="tw-export-all" class="tw-button">Export all loaded benchmarks</button><p class="tw-help">CSV contains raw values, unit, currency, source, observation dates and the selected range.</p></div>
+    <div class="tw-context">
+        <div class="range-tabs" role="group" aria-label="Observation range">
+            {% for range in ['1W', '1M', '3M', '6M', '1Y', 'ALL'] %}<button type="button" onclick="setDataRange('{{ range }}')" id="range-{{ range }}" class="range-btn" aria-label="Show {{ range }} observation range">{{ range }}</button>{% endfor %}
+        </div>
+        <span id="date-range-display" class="tw-help">All available observations</span><span id="tw-result-count" class="tw-count" aria-live="polite"></span>
+    </div>
+    <div id="tw-filter-chips" class="tw-chips"></div>
+    <div id="tw-selection" class="tw-selection" hidden>
+        <strong id="tw-selection-count"></strong><button type="button" id="tw-watch-selected" class="tw-button">Watch selected</button><button type="button" id="tw-research-selected" class="tw-button">Add to research</button><button type="button" id="tw-compare-selected" class="tw-button">Compare</button><button type="button" id="tw-export-selected" class="tw-button">Export selected</button><button type="button" id="tw-clear-selection" class="tw-button tw-subtle">Clear selection</button>
+    </div>
+    <div id="tw-storage-warning" class="tw-storage-warning" role="status" hidden><span>View changes are not saved. Browser storage is unavailable.</span><button type="button" id="tw-retry-save" class="tw-button">Retry save</button><button type="button" id="tw-backup-views" class="tw-button">Export views backup</button></div>
+    <div class="tw-table-region" tabindex="0" role="region" aria-label="Benchmark table. Scroll horizontally for more properties.">
+        <div id="table-loading" class="loading-overlay hidden" role="status"><span class="loading-spinner"></span><span class="sr-only">Loading observations</span></div>
+        <table id="data-table" class="tw-table">
+            <caption class="sr-only">Historical benchmark reference observations. Values are read-only. Select a benchmark to open details.</caption>
+            <thead><tr>
+                <th data-col="selection" scope="col"><input type="checkbox" id="tw-select-all" aria-label="Select all filtered benchmarks"></th>
+                {% for key, label in [('commodity', 'Benchmark'), ('price', 'Reference value'), ('pct', 'Change %'), ('trend', 'History'), ('updated', 'Observed'), ('chg', 'Change'), ('category', 'Category'), ('frequency', 'Frequency')] %}
+                <th data-col="{{ key }}" scope="col">{{ label }}</th>
                 {% endfor %}
+            </tr></thead>
+            <tbody id="table-body">
+            {% for commodity in commodities %}
+                {% set chg = commodity.change|default(none) %}{% set pct = commodity.change_percent|default(none) %}
+                {% set direction = 'up' if chg is number and chg > 0 else ('down' if chg is number and chg < 0 else ('flat' if chg is number else 'unavailable')) %}
+                <tr data-id="{{ commodity.id }}" data-name="{{ commodity.name }}" data-category="{{ commodity.category }}" data-currency="{{ commodity.currency }}" data-unit="{{ commodity.unit }}" data-source="{{ commodity.source_name|default(commodity.source|default('')) }}" data-date="{{ commodity.date }}" data-frequency="{% if commodity.is_daily %}daily{% else %}monthly{% endif %}" data-direction="{{ direction }}" data-price="{{ commodity.price if commodity.price is number else '' }}" data-change-pct="{{ pct if pct is number else '' }}" data-change-abs="{{ chg if chg is number else '' }}">
+                    <td data-col="commodity"><div class="commodity-cell"><div><a class="commodity-name" data-benchmark-id="{{ commodity.id }}" href="{{ url_for('main.commodity_detail', commodity_id=commodity.id) }}">{{ commodity.name }}</a><div class="commodity-category">{{ commodity.category }}</div></div></div></td>
+                    <td data-col="price"><div class="price-value" data-raw="{{ commodity.price if commodity.price is number else '' }}">{{ commodity.price if commodity.price is number else '—' }}</div><div class="price-currency">{{ commodity.currency }}{% if commodity.unit %} / {{ commodity.unit }}{% endif %}</div></td>
+                    <td data-col="pct"><div class="pct-cell" data-value="{{ pct if pct is number else '' }}" style="color:var(--color-{{ direction if direction != 'unavailable' else 'flat' }})">{% if pct is number %}{{ '+' if pct > 0 else '' }}{{ pct|round(2) }}%{% else %}—{% endif %}</div></td>
+                    <td data-col="trend"><div class="tw-sparkline"><canvas id="sparkline-{{ commodity.id }}" role="img" aria-label="Historical observations for {{ commodity.name }}"></canvas></div></td>
+                    <td data-col="updated"><div class="updated-cell" data-raw="{{ commodity.date }}" data-date="{{ commodity.date }}">{{ commodity.date }}</div></td>
+                    <td data-col="chg"><div class="chg-cell" data-value="{{ chg if chg is number else '' }}" style="color:var(--color-{{ direction if direction != 'unavailable' else 'flat' }})"><span class="chg-value">{% if chg is number %}{{ '+' if chg > 0 else '' }}{{ chg|round(2) }}{% else %}—{% endif %}</span></div></td>
+                    <td data-col="category">{{ commodity.category }}</td><td data-col="frequency">{% if commodity.is_daily %}Daily{% else %}Monthly{% endif %}</td>
+                </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>
-</div>
-<!-- External JS modules -->
+    <div id="tw-empty" class="tw-empty" hidden><strong>No matching benchmarks</strong><p>Adjust your filters or search to see more observations.</p><button type="button" id="tw-reset-filters" class="tw-button">Clear view filters</button></div>
+    <div class="tw-footer"><span>Public reference data · observations are read-only</span><span id="tw-view-status">View preferences stay in this browser</span></div>
+    <div id="tw-announcement" class="sr-only" role="status" aria-live="polite"></div>
+</section>
 <script src="{{ url_for('static', filename='js/core/settings.js') }}"></script>
 <script src="{{ url_for('static', filename='js/core/utils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
 <script src="{{ url_for('static', filename='js/components/compact_table.js') }}"></script>
+<script src="{{ url_for('static', filename='js/components/table_workspace.js') }}"></script>

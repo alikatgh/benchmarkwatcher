@@ -7,6 +7,7 @@ test.describe('Market Pulse', () => {
         await page.locator('#market-pulse > summary').click();
 
         await expect(page.locator('#market-pulse')).toBeVisible();
+        await page.locator('#market-pulse > summary').click();
         await expect(page.locator('#quick-find')).toBeVisible();
         await expect(page.locator('#grid-cards-container')).toBeVisible();
         await expect(page.locator('#market-pulse-categories a').first()).toBeVisible();
@@ -60,6 +61,7 @@ test.describe('Market Pulse', () => {
         await page.locator('#market-pulse > summary').click();
 
         await expect(page.locator('#market-pulse')).toBeVisible();
+        await page.locator('#market-pulse > summary').click();
         await expect(page.locator('#table-body')).toBeVisible();
 
         const initialTotal = Number(await page.locator('#market-pulse-total').innerText());
@@ -91,17 +93,14 @@ test.describe('Market Pulse', () => {
         const rowCount = await rows.count();
         expect(rowCount).toBeGreaterThan(0);
 
-        await page.locator('[data-quick-filter="down"]').click();
-        await expect(page.locator('[data-quick-filter="down"]')).toHaveAttribute('aria-pressed', 'true');
-
-        await page.locator('#quick-find-input').fill('no-such-benchmark');
-        await expect(page.locator('#quick-find-empty')).toBeVisible();
-        await expect(page.locator('#quick-find-count')).toHaveText(`0/${rowCount} shown`);
-        await expect(page.locator('#quick-find-export')).toBeDisabled();
-
-        await page.locator('#quick-find-reset').click();
-        await expect(page.locator('#quick-find-empty')).toBeHidden();
-        await expect(page.locator('#quick-find-export')).toBeEnabled();
+        await page.locator('#tw-filter-button').click();
+        await page.locator('#tw-direction').selectOption('down');
+        await expect(page.locator('#tw-direction')).toHaveValue('down');
+        await page.locator('#tw-query').fill('no-such-benchmark');
+        await expect(page.locator('#tw-empty')).toBeVisible();
+        await expect(page.locator('#tw-result-count')).toHaveText(`0 of ${rowCount} benchmarks`);
+        await page.locator('#tw-reset-filters').click();
+        await expect(page.locator('#tw-empty')).toBeHidden();
         await expect(rows.first()).toBeVisible();
     });
 
@@ -117,6 +116,7 @@ test.describe('Market Pulse', () => {
             await page.locator('#market-pulse > summary').click();
 
             await expect(page.locator('#market-pulse')).toBeVisible();
+        await page.locator('#market-pulse > summary').click();
             await expect(page.locator('#market-pulse-headline')).toBeVisible();
             await expect(page.locator('#market-pulse-rise-link')).toBeVisible();
             await expect(page.locator('#market-pulse-drop-link')).toBeVisible();

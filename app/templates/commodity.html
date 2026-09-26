@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% set _has_price = commodity.price is number %}
+{% set _has_change = commodity.change is number and commodity.change_percent is number %}
 <div id="commodity-page" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-5 md:py-6 min-h-screen">
     <!-- Header Row: stacked on mobile, side-by-side on desktop -->
     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-5">
@@ -70,12 +72,13 @@
                     <!-- Price + unit: stacked on mobile, baseline-aligned on sm+ -->
                     <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 font-ui">
                         <span
-                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-semibold tabular-nums text-brand-black-80 dark:text-white tracking-tighter leading-none">{{ "{:,.2f}".format(commodity.price) }}</span>
+                            class="text-[clamp(1.75rem,8vw,3rem)] sm:text-4xl md:text-5xl font-semibold tabular-nums text-brand-black-80 dark:text-white tracking-tighter leading-none">{{ "{:,.2f}".format(commodity.price) if _has_price else 'Unavailable' }}</span>
                         <div class="flex items-center gap-2">
                             <span
                                 class="text-xs sm:text-lg md:text-xl font-medium text-brand-black-60 dark:text-brand-black-60/60 tracking-widest">{{
                                 commodity.currency }} / {{ commodity.unit }}</span>
                             <!-- Copy to clipboard button -->
+                            {% if _has_price %}
                             <button onclick="copyPrice('{{ commodity.price }} {{ commodity.currency }}')"
                                 aria-label="Copy price to clipboard"
                                 class="p-1.5 sm:p-2 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal"
@@ -93,18 +96,19 @@
                                         d="M5 13l4 4L19 7"></path>
                                 </svg>
                             </button>
+                            {% endif %}
                         </div>
                     </div>
 
                     <!-- Change percentage and badge -->
                     {% set ds = commodity.derived_stats or {} %}
-                    {% set _pct1 = commodity.change_percent | default(0) %}
-                    {% set _abs1 = commodity.change | default(0) %}
-                    {% set _pct30 = ds.pct_change_30_obs | default(0) %}
-                    {% set _pct365 = ds.pct_change_365_obs | default(0) %}
+                    {% set _pct1 = commodity.change_percent if _has_change else '' %}
+                    {% set _abs1 = commodity.change if _has_change else '' %}
+                    {% set _pct30 = ds.pct_change_30_obs if ds.pct_change_30_obs is number else '' %}
+                    {% set _pct365 = ds.pct_change_365_obs if ds.pct_change_365_obs is number else '' %}
                     {% set _prev_label = 'previous observation' %}
-                    {% set trend_color = 'var(--color-up)' if commodity.change >= 0 else 'var(--color-down)' %}
-                    {% set trend_bg = 'var(--color-up-bg)' if commodity.change >= 0 else 'var(--color-down-bg)' %}
+                    {% set trend_color = ('var(--color-up)' if commodity.change >= 0 else 'var(--color-down)') if _has_change else 'var(--theme-text-muted)' %}
+                    {% set trend_bg = ('var(--color-up-bg)' if commodity.change >= 0 else 'var(--color-down-bg)') if _has_change else 'var(--theme-bg)' %}
                     <div class="flex flex-col gap-2 mt-3"
                          id="change-badge-section"
                          data-pct1="{{ _pct1 }}"
@@ -113,8 +117,8 @@
                          data-pct365="{{ _pct365 }}"
                          data-currency="{{ commodity.currency }}"
                          data-date="{{ commodity.date }}"
-                         data-prev-price="{{ commodity.prev_price }}"
-                         data-prev-date="{{ commodity.prev_date }}"
+                         data-prev-price="{{ commodity.prev_price if commodity.prev_price is number else '' }}"
+                         data-prev-date="{{ commodity.prev_date or '' }}"
                          data-prev-label="vs {{ _prev_label }}">
 
                         <!-- Row 1: badge + label -->
@@ -122,10 +126,10 @@
                             <div class="group relative cursor-help" id="change-badge-wrapper" onclick="this.classList.toggle('tooltip-open')" role="button" tabindex="0">
                                 <div id="change-badge-bg" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition w-fit" style="background-color: {{ trend_bg }};">
                                     <span id="change-arrow-display" class="text-xs font-semibold" style="color: {{ trend_color }};">
-                                        {% if commodity.change >= 0 %}▲{% else %}▼{% endif %}
+                                        {% if not _has_change %}—{% elif commodity.change >= 0 %}▲{% else %}▼{% endif %}
                                     </span>
                                     <span id="change-pct-display" class="text-lg sm:text-xl font-semibold font-ui tabular-nums" style="color: {{ trend_color }};">
-                                        {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%
+                                        {% if _has_change %}{% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%{% else %}Unavailable{% endif %}
                                     </span>
                                 </div>
                                 <!-- Tooltip on hover -->
@@ -134,16 +138,16 @@
                                     <div class="space-y-1.5 text-brand-black-60">
                                         <div class="flex justify-between gap-2">
                                             <span class="shrink-0">Current ({{ commodity.date }}):</span>
-                                            <span class="text-white font-bold text-right">{{ commodity.price }} {{ commodity.currency }}</span>
+                                            <span class="text-white font-bold text-right">{{ commodity.price if _has_price else 'Unavailable' }} {{ commodity.currency }}</span>
                                         </div>
                                         <div id="tooltip-prev-row" class="flex justify-between gap-2">
                                             <span class="shrink-0" id="tooltip-prev-label">Previous ({{ commodity.prev_date }}):</span>
-                                            <span class="text-white font-bold text-right" id="tooltip-prev-price">{{ commodity.prev_price }} {{ commodity.currency }}</span>
+                                            <span class="text-white font-bold text-right" id="tooltip-prev-price">{{ commodity.prev_price if commodity.prev_price is number else 'Unavailable' }} {{ commodity.currency }}</span>
                                         </div>
                                         <div class="pt-2 border-t border-white/20 mt-2 flex justify-between gap-2">
                                             <span class="shrink-0">Change:</span>
                                             <span class="font-bold text-right" id="tooltip-change-line" style="color: {{ trend_color }};">
-                                                {% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }} {{ commodity.currency }} ({% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%)
+                                                {% if _has_change %}{% if commodity.change >= 0 %}+{% endif %}{{ commodity.change }} {{ commodity.currency }} ({% if commodity.change >= 0 %}+{% endif %}{{ commodity.change_percent }}%){% else %}Change unavailable{% endif %}
                                             </span>
                                         </div>
                                     </div>
@@ -201,7 +205,7 @@
                             class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 mb-1 tracking-wider font-ui">
                             RETRIEVED</div>
                         <div class="text-sm font-medium text-brand-black-80 dark:text-white font-ui">{{
-                            commodity.updated_at[:10] }}</div>
+                            commodity.updated_at[:10] if commodity.updated_at else 'Not supplied' }}</div>
                     </div>
                 </div>
             </div>
