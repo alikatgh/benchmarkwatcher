@@ -65,13 +65,11 @@ test('command search finds local research and opens its editor', async ({page}) 
 test('homepage light and dark surfaces meet serious WCAG checks', async ({page}) => {
   test.setTimeout(90000);
   await page.goto('/?view=compact');
+  // Audit each theme's final colors. Cascading transitions can start after an
+  // earlier animation finishes, so waiting on one animation snapshot is racy.
+  // Disable motion only; preserve all colors and the full WCAG assertions.
+  await page.addStyleTag({content: '*,:before,:after{transition:none!important;animation:none!important}'});
   for (let i=0;i<2;i++) {
-    // Check settled surfaces rather than intermediate theme-transition colors.
-    await page.evaluate(async () => {
-      const finite = document.getAnimations().filter(animation =>
-        Number.isFinite(animation.effect?.getComputedTiming().endTime));
-      await Promise.all(finite.map(animation => animation.finished.catch(() => {})));
-    });
     const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).analyze();
     const issues=result.violations.filter(v=>['critical','serious'].includes(v.impact || ''));
     expect(issues.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))).toEqual([]);
