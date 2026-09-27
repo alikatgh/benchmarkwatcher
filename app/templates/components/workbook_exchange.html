@@ -14,6 +14,6 @@
   {% if message.presentation.missing %}<p class="muted small">{{ message.presentation.missing }} {{ 'period has' if message.presentation.missing == 1 else 'periods have' }} no saved value.</p>{% endif %}
   {% if message.result.explanation_notice %}<p class="studio-chat-error">{{ message.result.explanation_notice }}</p>{% endif %}
   <p class="studio-answer-footnote">Workbook snapshot · May include model assumptions{% if message.result.explanation %} · AI commentary{% endif %}</p>
-  <div class="studio-answer-actions"><a class="studio-chat-result" href="{{ url_for('workspace.analysis', analysis_id=message.id) }}">Explore chart &amp; sources <span aria-hidden="true">↗</span></a><button type="button" class="studio-copy-answer" aria-label="Copy answer">Copy</button></div>
+  <div class="studio-answer-actions"><a class="studio-chat-result" data-analysis-link="{{ message.id }}" href="{{ url_for('workspace.analysis', analysis_id=message.id) }}">View analysis <span aria-hidden="true">↗</span></a><button type="button" class="studio-copy-answer" aria-label="Copy answer">Copy</button></div>
   {% if message.result.operation == 'series' and message.presentation.groups and message.presentation.groups[0].points|length > 1 %}{% set points = message.presentation.groups[0].points %}<button type="button" class="studio-followup" data-chat-question="Compare {{ points[0].period }} and {{ points[1].period }}.">Compare {{ points[0].period }} and {{ points[1].period }} <span aria-hidden="true">↗</span></button>{% endif %}
 </article>

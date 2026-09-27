@@ -471,6 +471,10 @@ def test_async_chat_context_consent_and_owner_boundaries(workspace, monkeypatch)
     response = ask(alice, consent='yes', remember_consent='yes')
     assert response.status_code == 200
     data = response.get_json()
+    assert f'id="analysis-{data["id"]}"' in data['analysis_html']
+    assert 'studio-series-chart' in data['analysis_html']
+    assert 'Source data' in data['analysis_html'] and 'Model!C3' in data['analysis_html']
+    assert '<script>' not in data['analysis_html']
     assert '<script>' not in data['html'] and '&lt;script&gt;' in data['html']
     assert '61,749.25 in 2030 (Model!T39)' in data['html']
     assert response.headers['Cache-Control'] == 'no-store, private'

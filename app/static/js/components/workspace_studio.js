@@ -33,6 +33,50 @@
     }
     const chat = document.querySelector('.studio-chat-form');
     const messages = document.querySelector('.studio-chat-messages');
+    const canvas = document.getElementById('studio-analysis-canvas');
+    const steps = canvas?.querySelector('.studio-analysis-steps');
+    const pageContent = document.getElementById('studio-page-content');
+    const originalURL = location.href;
+    const workspaceMode = document.querySelector('.workspace')?.dataset.workspaceMode;
+    let latestAnalysisURL = null;
+    const showCanvas = () => {
+        if (!canvas) return;
+        canvas.hidden = false;
+        if (pageContent) pageContent.hidden = true;
+        if (latestAnalysisURL && ['model', 'analysis'].includes(workspaceMode)) {
+            history.replaceState(history.state, '', latestAnalysisURL);
+        }
+    };
+    const revealAnalysis = id => {
+        const step = Array.from(steps?.querySelectorAll('.studio-analysis-step') || []).find(el => el.dataset.analysisId === id);
+        if (!step) return false;
+        latestAnalysisURL = step.dataset.analysisUrl;
+        showCanvas();
+        steps.querySelectorAll('.studio-analysis-step[open]').forEach(el => { if (el !== step) el.open = false; });
+        step.open = true;
+        step.scrollIntoView({ block: 'start' });
+        return true;
+    };
+    canvas?.querySelector('[data-workspace-controls]')?.addEventListener('click', event => {
+        event.preventDefault();
+        canvas.hidden = true;
+        pageContent.hidden = false;
+        history.replaceState(history.state, '', originalURL);
+        pageContent.scrollIntoView({ block: 'start' });
+    });
+    dock?.querySelector('[data-show-analysis]')?.addEventListener('click', () => {
+        showCanvas();
+        if (window.matchMedia('(max-width: 1000px)').matches && !body.hidden) toggle.click();
+        const last = steps?.lastElementChild;
+        if (last) {
+            if (last.tagName === 'DETAILS') revealAnalysis(last.dataset.analysisId);
+            else last.scrollIntoView({ block: 'start' });
+        }
+    });
+    dock?.addEventListener('click', event => {
+        const link = event.target.closest('[data-analysis-link]');
+        if (link && !event.metaKey && !event.ctrlKey && !event.shiftKey && revealAnalysis(link.dataset.analysisLink)) event.preventDefault();
+    });
     if (messages) {
         const lastAnswer = messages.querySelector('.studio-chat-answer:last-of-type');
         messages.scrollTop = Math.max(0, (lastAnswer?.previousElementSibling?.offsetTop || 0) - 16);
@@ -135,6 +179,23 @@
             waiting.textContent = explains ? 'Selecting workbook data and preparing the explanation…' : 'Selecting and calculating workbook data…';
             turn.append(user, waiting);
             messages.append(turn);
+            let pendingAnalysis = null;
+            if (steps) {
+                showCanvas();
+                steps.querySelectorAll('.studio-analysis-failed').forEach(el => el.remove());
+                steps.querySelectorAll('.studio-analysis-step[open]').forEach(el => { el.open = false; });
+                pendingAnalysis = document.createElement('article');
+                pendingAnalysis.className = 'studio-analysis-pending';
+                const heading = document.createElement('h2');
+                heading.textContent = question.value;
+                const progress = document.createElement('p');
+                progress.textContent = 'Working on this question… The result will appear here.';
+                pendingAnalysis.append(heading, progress);
+                steps.append(pendingAnalysis);
+                canvas.setAttribute('aria-busy', 'true');
+                dock.querySelector('[data-show-analysis]').hidden = false;
+                pendingAnalysis.scrollIntoView({ block: 'start' });
+            }
             messages.setAttribute('aria-busy', 'true');
             messages.scrollTop = messages.scrollHeight;
             status.textContent = 'Waiting for your provider. You can keep reading the workbook.';
@@ -149,9 +210,17 @@
                 }
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || 'The request failed. Your draft is still below.');
-                if (!data.html || !data.id) throw new Error('The reply could not be displayed. Check your saved answers before retrying.');
+                if (!data.html || !data.id || !data.analysis_html) throw new Error('The reply could not be displayed. Check your saved answers before retrying.');
                 // Only escaped, server-rendered markup from this authenticated origin.
                 turn.innerHTML = data.html;
+                if (pendingAnalysis) {
+                    const rendered = document.createElement('template');
+                    rendered.innerHTML = data.analysis_html;
+                    pendingAnalysis.replaceWith(rendered.content);
+                    latestAnalysisURL = data.url;
+                    revealAnalysis(data.id);
+                    canvas.querySelector('.studio-canvas-status').textContent = 'Analysis updated with your latest answer.';
+                }
                 permissions = data.permissions || [];
                 const answer = turn.querySelector('.studio-chat-answer');
                 follow(answer);
@@ -169,6 +238,10 @@
                 library.href = '/workspace/';
                 library.textContent = 'Check saved answers';
                 waiting.append(document.createElement('br'), library);
+                if (pendingAnalysis) {
+                    pendingAnalysis.classList.add('studio-analysis-failed');
+                    pendingAnalysis.querySelector('p').textContent = 'This result is unavailable. Review the message in chat; your earlier analyses are still saved below their questions.';
+                }
                 status.textContent = 'Your draft has been kept. Review the message above before retrying.';
                 messages.scrollTop = messages.scrollHeight;
             } finally {
@@ -176,6 +249,7 @@
                 consent.checked = false;
                 controls.forEach(el => { el.disabled = false; });
                 messages.setAttribute('aria-busy', 'false');
+                canvas?.setAttribute('aria-busy', 'false');
                 question.focus({ preventScroll: true });
             }
         });
