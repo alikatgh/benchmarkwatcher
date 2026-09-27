@@ -69,6 +69,28 @@ def model_url(app):
     return '/workspace/models/' + catalog(app.config['MODEL_LIBRARY_DIR'])[0]['id']
 
 
+def test_workbook_search_index_is_private_and_contains_only_names_and_routes(workspace):
+    root = Path(workspace.config['MODEL_LIBRARY_DIR'])
+    nested = root / 'private-subdirectory'
+    nested.mkdir()
+    write_book(nested / '005930 Samsung <Labs>.xlsx')
+    client = workspace.test_client()
+    anonymous = client.get('/workspace/')
+    assert anonymous.status_code == 302 and b'Samsung' not in anonymous.data
+    register(client)
+    response = client.get('/workspace/?q=Samsung+005930')
+    assert response.status_code == 200
+    assert 'no-store' in response.headers['Cache-Control']
+    html = response.get_data(as_text=True)
+    index = json.loads(re.search(r'id="workbook-search-index">(.*?)</script>', html, re.S).group(1))
+    assert len(index) == 2
+    assert all(set(book) == {'name', 'url'} and book['url'].startswith('/workspace/models/') for book in index)
+    assert 'private-subdirectory' not in html and str(root) not in html
+    assert 'Samsung <Labs>' not in html  # Escaped in both HTML and the JSON script.
+    library = re.search(r'<div class="workbook-list">(.*?)</div>', html, re.S).group(1)
+    assert 'Samsung &lt;Labs&gt;' in library and 'DEMO' not in library
+
+
 def connect(client, monkeypatch, provider='deepseek', key='private-api-key'):
     monkeypatch.setattr('app.workspace_routes.test_key', lambda p,k: ['test-model'])
     return post(client, '/workspace/settings', provider=provider, api_key=key, action='connect', consent='yes')

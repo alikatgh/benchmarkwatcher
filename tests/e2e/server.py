@@ -19,6 +19,9 @@ def main(workbooks=False):
         library = Path(directory) / 'models'
         library.mkdir()
         write_workbook(library / 'Sample Company.xlsx')
+        if workbooks:
+            for name in ['005930 Samsung', 'Samsung SDI', 'ZZZ Samsung Research', 'AT&T <Labs>'] + [f'Workbook example {i:03}' for i in range(64)]:
+                write_workbook(library / f'{name}.xlsx')
         for name, category, base, step in [('Gold', 'precious', 2000, 1.25), ('Oil', 'energy', 80, -.05), ('Copper', 'metal', 9000, 2.5)]:
             history = [{'date': (date.today() - timedelta(days=119-i)).isoformat(),
                         'price': round(base + i * step, 4)} for i in range(120)]

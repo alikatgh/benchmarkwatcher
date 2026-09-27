@@ -49,10 +49,15 @@
   {% elif mode == 'home' %}
   <header class="studio-heading"><div><h1>Workbook library</h1><p class="muted">Open a workbook, choose a metric and reporting periods, then save your calculation.</p></div><span class="studio-badge">{{ total }} workbooks</span></header>
   <div class="research-layout"><section aria-label="Workbook library">
-    <form method="get" class="workspace-search"><label class="sr-only" for="q">Find a workbook</label><input type="search" id="q" name="q" value="{{ query }}" placeholder="Find a company or ticker" maxlength="100"><button type="submit">Search</button>{% if query %}<a href="{{ url_for('workspace.home') }}">Clear</a>{% endif %}</form>
-    <div class="studio-library-meta"><p class="muted small">{{ count }} of {{ total }} workbooks{% if query %} matching “{{ query }}”{% endif %}</p>{% if config.MODEL_LIBRARY_SOURCE_URL %}<a class="small" href="{{ config.MODEL_LIBRARY_SOURCE_URL }}" rel="noopener noreferrer" target="_blank">Original collection ↗</a>{% endif %}</div>
+    <form method="get" action="{{ url_for('workspace.home') }}" class="workspace-search" id="workbook-search">
+      <div class="studio-search-field"><label class="sr-only" for="q">Find a workbook</label><input type="search" id="q" name="q" value="{{ query }}" placeholder="Find a company or ticker" maxlength="100" autocomplete="off" spellcheck="false"><button type="button" class="studio-search-clear" aria-label="Clear workbook search" hidden>×</button></div>
+      <button type="submit" class="studio-search-submit">Search</button><noscript>{% if query %}<a href="{{ url_for('workspace.home') }}">Clear</a>{% endif %}</noscript>
+      <div class="studio-search-popup" hidden><p class="studio-search-hint muted small">Matching workbooks <span>↑↓ to choose · Enter to open</span></p><ul id="workbook-suggestions" role="listbox" aria-label="Workbook suggestions"></ul><p class="studio-search-empty muted small" hidden>No matching workbooks. Try another company or ticker.</p></div>
+    </form>
+    <script type="application/json" id="workbook-search-index">{{ search_index|tojson }}</script>
+    <div class="studio-library-meta"><p class="muted small" id="workbook-search-count" role="status" aria-live="polite">{{ count }} of {{ total }} workbooks{% if query %} matching “{{ query }}”{% endif %}</p>{% if config.MODEL_LIBRARY_SOURCE_URL %}<a class="small" href="{{ config.MODEL_LIBRARY_SOURCE_URL }}" rel="noopener noreferrer" target="_blank">Original collection ↗</a>{% endif %}</div>
     <div class="workbook-list">{% for book in books %}<a href="{{ url_for('workspace.model', model_id=book.id) }}"><span class="studio-file-mark" aria-hidden="true">▦</span><span><strong>{{ book.name }}</strong><span>Workbook snapshot</span></span><span class="studio-open">Open →</span></a>{% else %}<p>{{ 'No matching workbooks. Try another company or ticker.' if total else 'The workbook library has not been connected yet.' }}</p>{% endfor %}</div>
-    <nav class="workspace-links" aria-label="Workbook pages">{% if page_number > 1 %}<a href="{{ url_for('workspace.home', q=query, page=page_number-1) }}">Previous</a>{% endif %}{% if page_number*60 < count %}<a href="{{ url_for('workspace.home', q=query, page=page_number+1) }}">Next</a>{% endif %}</nav>
+    <nav class="workspace-links" id="workbook-pages" aria-label="Workbook pages">{% if page_number > 1 %}<a href="{{ url_for('workspace.home', q=query, page=page_number-1) }}">Previous</a>{% endif %}{% if page_number*60 < count %}<a href="{{ url_for('workspace.home', q=query, page=page_number+1) }}">Next</a>{% endif %}</nav>
     <p class="muted small">Third-party models may contain assumptions and saved formula results. No affiliation or endorsement is implied.</p>
   </section><aside class="studio-aside">
     <section><h2>Saved analyses</h2>{% for item in saved %}<a class="saved-analysis" href="{{ url_for('workspace.analysis', analysis_id=item.id) }}"><strong>{{ item.title }}</strong><span>{{ providers.get(item.provider, 'Local calculation') }}</span></a>{% else %}<p class="muted">No saved analyses yet. Open a workbook and select a metric to create your first result.</p>{% endfor %}</section>
@@ -84,4 +89,5 @@
   {% if user and mode != 'recovery_code' %}{% include 'components/workbook_chat.html' %}{% endif %}
 </div>
 <script defer src="{{ url_for('static', filename='js/components/workspace_studio.js') }}"></script>
+{% if mode == 'home' %}<script defer src="{{ url_for('static', filename='js/components/workbook_search.js') }}"></script>{% endif %}
 {% endblock %}
