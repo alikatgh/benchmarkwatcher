@@ -239,6 +239,45 @@ def test_failed_question_stays_in_chat_and_feedback_is_in_notifications(workspac
     assert 'value="typesafe:test-model" selected' in html
 
 
+def test_chat_remains_available_after_saving_and_on_library_and_settings(workspace, monkeypatch):
+    client = workspace.test_client()
+    register(client)
+    connect(client, monkeypatch)
+    url = model_url(workspace)
+    response = post(client, url, action='manual', metric='r3', operation='series')
+    assert response.status_code == 302
+    for path in (response.headers['Location'], '/workspace/', '/workspace/settings'):
+        html = client.get(path).get_data(as_text=True)
+        assert html.count('aria-label="Workbook AI chat"') == 1
+        assert f'action="{url}"' in html
+        assert 'data-chat-question="Show Revenue across the available periods."' in html
+
+
+def test_jev_selection_can_use_the_separately_connected_deepseek_explanation(workspace, monkeypatch):
+    client = workspace.test_client()
+    register(client)
+    connect(client, monkeypatch, provider='typesafe', key='jev-fixture-key')
+    connect(client, monkeypatch, provider='deepseek', key='deepseek-fixture-key')
+    calls = []
+
+    def plan(key, model, question, workbook):
+        calls.append(('jev', key))
+        return {'metric': 'r3', 'operation': 'series', 'start': 'unspecified', 'end': 'unspecified'}, {'model': model}
+
+    def explain(key, model, messages, structured=False):
+        calls.append(('explanation', key))
+        assert json.loads(messages[-1]['content'])['result']['points'][0]['source'] == 'Model!C3'
+        return 'Saved Revenue begins at 100 (Model!C3).', {}
+
+    monkeypatch.setattr(providers, '_jev_plan', plan)
+    monkeypatch.setattr(providers, '_deepseek_chat', explain)
+    response = post(client, model_url(workspace), action='ask', question='Show Revenue across the available periods.',
+                    provider_model='typesafe:test-model', explain='yes', explanation_model='test-model', consent='yes')
+    assert response.status_code == 302
+    assert b'Saved Revenue begins at 100' in client.get(response.headers['Location']).data
+    assert calls == [('jev', 'jev-fixture-key'), ('explanation', 'deepseek-fixture-key')]
+
+
 def test_budget_is_persistent_and_atomic(workspace):
     register(workspace.test_client())
     workspace.config['WORKSPACE_DAILY_ANALYSES'] = 1

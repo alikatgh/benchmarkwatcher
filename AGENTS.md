@@ -30,6 +30,11 @@ Git. Publish from public main ancestry; never merge private deployment history.
 
 ## Commands
 
+For an isolated local setup and sample-data preview, follow
+`docs/LOCAL_DEVELOPMENT.md`. Run `npm run test:chat` for the authenticated AI chat
+journey; it uses temporary accounts and simulated provider responses. Codex
+desktop actions are defined in `.codex/environments/environment.toml`.
+
 Python setup:
 
 - `python3 -m venv .venv`

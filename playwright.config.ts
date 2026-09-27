@@ -12,11 +12,14 @@ const flaskCommand = process.env.PLAYWRIGHT_FLASK_COMMAND || `python -m flask --
 
 export default defineConfig({
     testDir: './tests/e2e',
+    // Authenticated workbook tests always use their isolated fixture config.
+    testIgnore: 'workbook-chat.spec.ts',
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 1 : undefined,
-    reporter: 'html',
+    reporter: [['html', { open: 'never', outputFolder: 'playwright-report/public' }]],
+    outputDir: 'test-results/public',
 
     use: {
         baseURL,

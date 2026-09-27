@@ -17,7 +17,8 @@
         <time datetime="2026-09-27">September 27, 2026</time>
         <h2>Workbook AI chat and a practical Jev guide</h2>
         <ul>
-            <li>Moved workbook AI questions into a chat panel beside the calculator. On smaller screens, it follows the calculator.</li>
+            <li>AI chat stays in the bottom-right corner throughout Workbook Studio, including saved analyses, the library and AI settings. It stays open unless you minimize it; that choice persists across navigation and refresh.</li>
+            <li>Use Jev to select the metric and periods while DeepSeek explains the calculated result. Connect both providers, then choose a selection provider and an optional DeepSeek explanation model.</li>
             <li>Added a clickable example where Operating Income is available: “Show Operating Income across the available periods.” Clicking fills the question; only Send and save contacts your provider.</li>
             <li>Added <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.help_page') }}#jev">Help for Jev</a> and a <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.jev_workbook_story') }}">blog guide</a> explaining setup, supported questions, sharing and provider charges. Jev selects the metric and periods; BenchmarkWatcher calculates from saved workbook cells.</li>
             <li>Moved errors and confirmations into Notifications, keeping questions and the selected provider intact after an error.</li>

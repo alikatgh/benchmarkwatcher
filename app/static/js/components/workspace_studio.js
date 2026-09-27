@@ -1,5 +1,31 @@
 (function () {
     'use strict';
+    const dock = document.querySelector('.studio-chat');
+    const toggle = document.getElementById('studio-chat-toggle');
+    const body = document.getElementById('studio-chat-body');
+    if (dock && toggle && body) {
+        const storageKey = 'bw-workbook-chat-minimized:' + dock.dataset.chatUser;
+        const setMinimized = minimized => {
+            body.hidden = minimized;
+            dock.classList.toggle('is-minimized', minimized);
+            document.querySelector('.workspace')?.classList.toggle('chat-minimized', minimized);
+            toggle.setAttribute('aria-expanded', String(!minimized));
+            toggle.setAttribute('aria-label', minimized ? 'Open AI chat' : 'Minimize AI chat');
+            toggle.textContent = minimized ? 'Open' : 'Minimize';
+        };
+        const restore = () => {
+            try { setMinimized(localStorage.getItem(storageKey) === 'true'); }
+            catch (_) { setMinimized(false); }
+        };
+        restore();
+        window.addEventListener('pageshow', restore);
+        toggle.addEventListener('click', () => {
+            const minimized = !body.hidden;
+            setMinimized(minimized);
+            try { localStorage.setItem(storageKey, String(minimized)); } catch (_) { /* Storage can be unavailable. */ }
+            if (!minimized) body.querySelector('#question')?.focus();
+        });
+    }
     const chat = document.querySelector('.studio-chat-form');
     if (chat) {
         const question = chat.querySelector('#question');
@@ -22,16 +48,17 @@
             status.hidden = true;
         });
     }
-    const provider = document.getElementById('provider-model');
     const explanation = document.getElementById('studio-explanation');
-    if (provider && explanation) {
-        const updateProvider = () => {
-            const enabled = provider.value.startsWith('deepseek:');
-            explanation.hidden = !enabled;
-            explanation.querySelector('input').disabled = !enabled;
+    const explanationModel = document.getElementById('studio-explanation-model');
+    if (explanation && explanationModel) {
+        const updateExplanation = () => {
+            const enabled = explanation.querySelector('input').checked;
+            explanationModel.hidden = !enabled;
+            explanationModel.querySelector('select').disabled = !enabled;
         };
-        provider.addEventListener('change', updateProvider);
-        updateProvider();
+        explanation.querySelector('input').addEventListener('change', updateExplanation);
+        window.addEventListener('pageshow', updateExplanation);
+        updateExplanation();
     }
     const operation = document.getElementById('operation');
     if (!operation || !document.querySelector('.manual-form')) return;
