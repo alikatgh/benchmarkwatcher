@@ -207,11 +207,12 @@ def settings():
 def home():
     query = request.args.get('q', '').strip()[:100]
     all_books = catalog(current_app.config['MODEL_LIBRARY_DIR'])
-    books = [b for b in all_books if query.casefold() in b['name'].casefold()]
+    books = [b for b in all_books if all(term in b['name'].casefold() for term in query.casefold().split())]
     page_number = max(1, min(request.args.get('page', 1, type=int) or 1, 10000))
     saved = db().execute('SELECT id,title,provider,created_at FROM analyses WHERE user_id=? ORDER BY created_at DESC LIMIT 30', (g.workspace_user['id'],)).fetchall()
     return page('home', books=books[(page_number-1)*60:page_number*60], query=query,
-                count=len(books), total=len(all_books), page_number=page_number, saved=saved)
+                count=len(books), total=len(all_books), page_number=page_number, saved=saved,
+                search_index=[{'name': b['name'], 'url': url_for('workspace.model', model_id=b['id'])} for b in all_books])
 
 
 def workbook_or_404(model_id):
