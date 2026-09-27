@@ -106,18 +106,26 @@ def _jev_plan(key, model_name, question, workbook):
 
 
 def _deepseek_chat(key, model, messages, structured=False):
-    payload = {'model': model, 'messages': messages, 'max_tokens': 1200, 'stream': False}
+    # Current DeepSeek models default to thinking mode. These bounded selection
+    # and explanation requests need final content, not a reasoning budget that
+    # can consume the entire completion limit before producing an answer.
+    payload = {'model': model, 'messages': messages, 'max_tokens': 1200, 'stream': False,
+               'thinking': {'type': 'disabled'}}
     if structured:
         payload['response_format'] = {'type': 'json_object'}
     response = _request('deepseek', key, payload)
     try:
         choice = response['choices'][0]
         text = choice['message']['content']
+        if choice.get('finish_reason') == 'length':
+            raise ProviderError('DeepSeek reached the response limit before finishing. Please try again.')
         if choice.get('finish_reason') != 'stop' or not isinstance(text, str) or not text.strip():
             raise ValueError()
         return text, response.get('usage', {})
+    except ProviderError:
+        raise
     except (KeyError, IndexError, TypeError, ValueError):
-        raise ProviderError('DeepSeek did not return a complete answer. Please try a narrower question.') from None
+        raise ProviderError('DeepSeek did not return a complete answer. Please try again.') from None
 
 
 def research_plan(provider, key, model, question):

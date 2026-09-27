@@ -302,6 +302,42 @@ def test_deepseek_calculates_in_code_and_explanation_is_opt_in(workspace, monkey
     assert 'private-api-key' not in json.dumps(result)
 
 
+@pytest.mark.parametrize('model', ['deepseek-flash', 'deepseek-v4-pro'])
+@pytest.mark.parametrize('structured', [True, False])
+def test_deepseek_returns_final_content_without_spending_the_budget_on_thinking(model, structured, monkeypatch):
+    calls = []
+    answer = '{"metric":"r3","operation":"series","start":"unspecified","end":"unspecified"}' if structured else 'The saved result is tied to its workbook cells.'
+    def response(provider, key, payload):
+        calls.append(payload)
+        # The current provider defaults to thinking. A short completion can end
+        # with reasoning only and no final answer, even for a supported question.
+        if payload.get('thinking', {}).get('type') != 'disabled':
+            return {'choices': [{'finish_reason': 'length', 'message': {
+                'content': '', 'reasoning_content': 'private reasoning'}}],
+                'usage': {'completion_tokens': 1200}}
+        return {'choices': [{'finish_reason': 'stop', 'message': {'content': answer}}],
+                'usage': {'completion_tokens': 30}}
+    monkeypatch.setattr(providers, '_request', response)
+    text, usage = providers._deepseek_chat('test-key', model,
+        [{'role': 'user', 'content': 'Show Operating Income across the available periods.'}], structured)
+    assert text == answer and usage['completion_tokens'] == 30
+    assert len(calls) == 1
+
+
+def test_deepseek_truncation_does_not_blame_the_question_or_retry(monkeypatch):
+    calls = []
+    def response(*args):
+        calls.append(args)
+        return {'choices': [{'finish_reason': 'length', 'message': {
+            'content': '{"metric":', 'reasoning_content': 'private reasoning'}}]}
+    monkeypatch.setattr(providers, '_request', response)
+    with pytest.raises(providers.ProviderError, match='response limit') as error:
+        providers._deepseek_chat('test-key', 'deepseek-flash', [])
+    assert 'narrower' not in str(error.value)
+    assert 'private reasoning' not in str(error.value)
+    assert len(calls) == 1
+
+
 def test_jev_rejects_uncertain_or_invalid_choices(workspace, monkeypatch):
     model = load_model(workspace.config['MODEL_LIBRARY_DIR'], catalog(workspace.config['MODEL_LIBRARY_DIR'])[0]['id'])
     def response(provider, key, payload):

@@ -31,6 +31,11 @@ def provider_response(provider, key, payload=None):
         return {'answers': {'connected': {'type': 'noul', 'noul': 1}}}
     if provider == 'deepseek' and payload is None:
         return {'data': [{'id': 'fixture-chat'}]}
+    if provider == 'deepseek' and payload.get('thinking', {}).get('type') != 'disabled':
+        # Match the real API's default-thinking failure under a short budget,
+        # rather than making every syntactically valid request succeed.
+        return {'choices': [{'finish_reason': 'length', 'message': {'content': ''}}],
+                'usage': {'completion_tokens': payload['max_tokens']}}
     if provider == 'typesafe':
         question = payload['state']['user_question']
     else:
