@@ -53,6 +53,8 @@ def provider_response(provider, key, payload=None):
             'start': 'unspecified', 'end': 'unspecified'}
     if question == 'Compare Q124 and Q224.' and previous and previous['metric'] == 'r3':
         plan = {'metric': 'r3', 'operation': 'change', 'start': 'C', 'end': 'D'}
+    if question == 'Show Revenue for Q124.':
+        plan = {'metric': 'r4', 'operation': 'value', 'start': 'unspecified', 'end': 'C'}
     if provider == 'typesafe':
         return {'model': 'jev-latest', 'answers': {name: {'type': 'choice', 'choice': choice, 'confidence': 1} for name, choice in plan.items()}}
     return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(plan)}}]}

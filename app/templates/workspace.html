@@ -17,6 +17,7 @@
     </details>
     {% if user %}<form method="post" action="{{ url_for('workspace.logout') }}">{{ token() }}<button type="submit">Sign out</button></form>{% endif %}</div>
   </nav>
+  <div id="studio-page-content" {% if show_canvas %}hidden{% endif %}>
   {% if mode in ['login', 'register', 'recover'] %}
   <section class="workspace-auth">
     <h1>{{ {'login':'Welcome back', 'register':'Your research, in one place', 'recover':'Recover your account'}[mode] }}</h1>
@@ -65,7 +66,7 @@
   {% if workbook.external_links %}<p class="muted small">This workbook references other files. External links are not refreshed; only saved values are read.</p>{% endif %}
   {% if workbook.metrics %}
   <section class="workspace-panel studio-calculator"><div class="studio-section-heading"><h2>Calculate from this workbook</h2><span class="studio-badge">No AI charge</span></div><p class="muted small">Choose a metric and what to calculate. The saved result includes its source cells.</p>
-    <form method="post" class="workspace-form manual-form">{{ token() }}<input type="hidden" name="action" value="manual">
+    <form method="post" action="{{ url_for('workspace.model', model_id=workbook.id) }}" class="workspace-form manual-form">{{ token() }}<input type="hidden" name="action" value="manual">
       <label for="metric">Metric</label><select id="metric" name="metric">{% for metric in workbook.metrics %}<option value="{{ metric.id }}">{{ metric.label }} · Model!{{ metric.cell }}</option>{% endfor %}</select>
       <label for="operation">Calculation</label><select id="operation" name="operation"><option value="series">All available periods</option><option value="value">Value in one period</option><option value="change">Change between From and To</option></select>
       <div class="period-fields" id="studio-periods"><div id="studio-from-field"><label for="start">From</label><select id="start" name="start">{% for p in workbook.periods %}<option value="{{ p.id }}" data-frequency="{{ 'quarter' if 'Q' in p.label.upper() else 'annual' }}">{{ p.label }} · {{ p.cell }}</option>{% endfor %}</select></div><div id="studio-to-field"><label for="end">To</label><select id="end" name="end">{% for p in workbook.periods %}<option value="{{ p.id }}" data-frequency="{{ 'quarter' if 'Q' in p.label.upper() else 'annual' }}" {% if loop.last %}selected{% endif %}>{{ p.label }} · {{ p.cell }}</option>{% endfor %}</select></div></div>
@@ -77,16 +78,9 @@
   </div>
   {% elif mode == 'company_report' %}
   {% include 'company_report.html' %}
-  {% elif mode == 'analysis' %}
-  <h1>{{ record.title }}</h1><p class="muted">{{ record.question }}</p>
-  {% if result.library_source %}<p class="muted small"><a href="{{ result.library_source }}" rel="noopener noreferrer" target="_blank">Original workbook collection</a></p>{% endif %}
-  <p class="small">Saved privately · {{ providers.get(record.provider, 'Local calculation') }}{% if result.provider_metadata %} · {{ result.provider_metadata.model }}{% endif %}</p>
-  <p class="workspace-notice">{{ result.basis }}</p>
-  {% if result.difference is defined %}<section class="workspace-panel"><h2>Change from {{ result.points[0].period }} to {{ result.points[1].period }}</h2><p class="calculated-value">{{ '{:+,.2f}'.format(result.difference) }} <span>{{ result.difference_unit }}</span></p><p>{% if result.relative_change is not none %}{{ '{:+,.2f}'.format(result.relative_change) }}% relative change{% else %}Relative change unavailable because the starting value is zero or negative.{% endif %}</p><p class="muted small">Difference = ending value − starting value. Relative change = (ending ÷ starting − 1) × 100.</p></section>{% endif %}
-  {% include 'components/workbook_result.html' %}
-  <details class="workspace-panel"><summary>Source and request details</summary><p>{{ result.filename }}</p><p class="muted small">Workbook SHA-256: <code class="source-version">{{ result.version }}</code>. This saved analysis keeps the values used at the time of the request.</p>{% if result.provider_metadata %}<pre>{{ result.provider_metadata | tojson(indent=2) }}</pre>{% endif %}{% if result.explanation_usage %}<p>Explanation token usage:</p><pre>{{ result.explanation_usage | tojson(indent=2) }}</pre>{% endif %}</details>
-  <div class="workspace-actions"><a class="primary" href="{{ url_for('workspace.model', model_id=record.workbook) }}">New analysis of this model</a><details><summary>Delete analysis</summary><form method="post" action="{{ url_for('workspace.delete_analysis', analysis_id=record.id) }}">{{ token() }}<p>This permanently deletes this saved analysis.</p><button type="submit">Confirm deletion</button></form></details></div>
   {% endif %}
+  </div>
+  {% if user and mode != 'recovery_code' and (chat_workbook or mode == 'analysis') %}{% include 'components/workbook_canvas.html' %}{% endif %}
   {% if user and mode != 'recovery_code' %}{% include 'components/workbook_chat.html' %}{% endif %}
 </div>
 <script defer src="{{ url_for('static', filename='js/components/workspace_studio.js') }}"></script>

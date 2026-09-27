@@ -1,0 +1,8 @@
+<section id="studio-analysis-canvas" class="studio-analysis-canvas" aria-label="Analysis workspace" {% if not show_canvas %}hidden{% endif %}>
+  <header class="studio-canvas-heading"><div><p class="muted small">Analysis workspace</p><h1>{{ chat_workbook.name if chat_workbook else record.title }}</h1><p class="muted small">Each answer adds a result below. Open an earlier question to revisit it.</p></div>{% if mode in ['model', 'analysis'] and chat_workbook %}<a href="{{ url_for('workspace.model', model_id=chat_workbook.id, controls=1) }}" {% if mode == 'model' %}data-workspace-controls{% endif %}>Workbook controls</a>{% elif mode != 'analysis' %}<button type="button" data-workspace-controls>Back to {{ 'AI settings' if mode == 'settings' else 'library' }}</button>{% endif %}</header>
+  <p class="studio-canvas-basis muted small">Saved workbook values · May include historical figures and model assumptions · Units follow the source</p>
+  <div class="studio-analysis-steps">
+    {% for message in analysis_steps %}{% include 'components/workbook_step.html' %}{% endfor %}
+  </div>
+  <p class="studio-canvas-status sr-only" role="status"></p>
+</section>

@@ -64,8 +64,12 @@ def page(mode, **values):
             values['chat_history'] = [chat_message(row) for row in reversed(history)]
         values['chat_preferences'] = session.get('chat_preferences', {})
         values['chat_permissions'] = session.get('chat_permissions', [])
-    if mode == 'analysis':
-        values['presentation'] = present_result(values['result'])
+        values['analysis_steps'] = list(values['chat_history'])
+        if mode == 'analysis' and not any(m['id'] == values['record']['id'] for m in values['analysis_steps']):
+            values['analysis_steps'].insert(0, chat_message(values['record']))
+        values['show_canvas'] = mode == 'analysis' or (mode == 'model' and bool(values['analysis_steps']) and request.args.get('controls') != '1')
+        values['active_analysis_id'] = values['record']['id'] if mode == 'analysis' else (
+            values['analysis_steps'][-1]['id'] if values['analysis_steps'] else '')
     return render_template('workspace.html', mode=mode, user=g.workspace_user,
                            csrf=session['csrf'], providers=PROVIDERS, **values)
 
@@ -281,6 +285,8 @@ def model(model_id):
                 message = chat_message({'id': analysis_id, 'question': question, 'provider': provider, 'result': result})
                 return jsonify(id=analysis_id, url=url_for('workspace.analysis', analysis_id=analysis_id),
                                html=render_template('components/workbook_exchange.html', message=message, providers=PROVIDERS),
+                               analysis_html=render_template('components/workbook_step.html', message=message,
+                                                             providers=PROVIDERS, csrf=session['csrf']),
                                permissions=session.get('chat_permissions', []))
             return redirect(url_for('workspace.analysis', analysis_id=analysis_id))
         except ValueError as exc:

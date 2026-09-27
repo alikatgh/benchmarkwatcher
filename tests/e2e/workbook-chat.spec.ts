@@ -1,5 +1,6 @@
 import { test, expect, Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import AxeBuilder from '@axe-core/playwright';
 
 const question = 'Show Operating Income across the available periods.';
 const dock = (page: Page) => page.getByRole('complementary', { name: 'Workbook AI chat' });
@@ -58,10 +59,10 @@ test('AI answer keeps its chat through saved analysis, navigation, refresh, and 
   await dock(page).getByRole('button', { name: 'Send message' }).click();
   await page.getByRole('button', { name: 'Agree and send' }).click();
   await expect(dock(page).getByLabel('AI response', { exact: true })).toBeVisible();
-  await expect(page).toHaveURL(modelURL);
-  await dock(page).getByRole('link', { name: 'Explore chart & sources' }).click();
+  await expect(page).toHaveURL(/\/workspace\/analyses\//);
+  await dock(page).getByRole('link', { name: 'View analysis' }).click();
   const analysisURL = page.url();
-  await page.locator('#source-data > summary').click();
+  await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();
   const table = page.getByRole('region', { name: 'Calculated values and source cells' });
   await expect(table.getByRole('row').filter({ hasText: 'Q124' })).toContainText('10.00');
   await expect(table).toContainText('Model!C3');
@@ -97,7 +98,7 @@ test('AI answer keeps its chat through saved analysis, navigation, refresh, and 
   await expect(dock(page).getByLabel('Your question', { exact: true })).toBeVisible();
   await page.goto(analysisURL);
   await page.getByRole('button', { name: 'Minimize AI chat' }).click();
-  await page.locator('#source-data > summary').click();
+  await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();
   await expect(table).toContainText('Model!C3');
   await page.getByRole('button', { name: 'Open AI chat' }).click();
   await expect(dock(page).getByLabel('Your question', { exact: true })).toBeVisible();
@@ -136,7 +137,7 @@ test('Jev selection and a DeepSeek explanation work together, including a follow
   await dock(page).locator('#provider-model').selectOption('deepseek:fixture-chat');
   await dock(page).getByRole('button', { name: 'Send message' }).click();
   await page.getByRole('button', { name: 'Agree and send' }).click();
-  await expect(page).toHaveURL(firstURL);
+  await expect(page).not.toHaveURL(firstURL);
   await expect(log.getByLabel('Your message', { exact: true })).toHaveCount(2);
   await expect(log.getByLabel('AI response', { exact: true })).toHaveCount(2);
   await expect(log.locator('.explanation')).toContainText('10 (Model!C3)');
@@ -178,12 +179,16 @@ test('pending requests cannot be sent twice and a dropped connection preserves t
   await page.getByRole('button', { name: 'Agree and send' }).click();
   await expect(dock(page).getByRole('button', { name: 'Send message' })).toBeDisabled();
   await expect(dock(page).getByRole('log')).toHaveAttribute('aria-busy', 'true');
+  await expect(page.locator('.studio-analysis-pending')).toContainText(question);
+  await expect(page.locator('#studio-analysis-canvas')).toHaveAttribute('aria-busy', 'true');
   await expect.poll(() => requests).toBe(1);
   release();
   await expect(dock(page).getByRole('log')).toContainText('Check your saved answers before retrying');
   await expect(dock(page).getByLabel('Your question', { exact: true })).toHaveValue(question);
   await expect(dock(page).getByRole('button', { name: 'Send message' })).toBeEnabled();
   expect(requests).toBe(1);
+  await expect(page.locator('.studio-analysis-failed')).toBeVisible();
+  await expect(page.locator('.studio-analysis-step')).toHaveCount(0);
 });
 
 test('remembered consent follows the sharing scope and charts keep source data available', async ({ page }, testInfo) => {
@@ -197,15 +202,15 @@ test('remembered consent follows the sharing scope and charts keep source data a
   await dock(page).getByLabel('Your question', { exact: true }).press('Enter');
   await expect(dock(page).getByLabel('AI response', { exact: true })).toHaveCount(2);
   await expect(page.getByRole('dialog')).not.toBeVisible();
-  await dock(page).getByRole('link', { name: 'Explore chart & sources' }).first().click();
+  await dock(page).getByRole('link', { name: 'View analysis' }).first().click();
   if (testInfo.project.name === 'desktop') await page.getByRole('button', { name: 'Minimize AI chat' }).click();
   await expect(page.getByRole('region', { name: 'Analysis overview' })).toBeVisible();
-  await expect(page.locator('.studio-series-chart')).toHaveCount(2);
+  await expect(page.locator('.studio-analysis-step[open] .studio-series-chart')).toHaveCount(2);
   const source = page.getByRole('region', { name: 'Calculated values and source cells' });
   await expect(source).toBeHidden();
-  await page.locator('#source-data > summary').click();
+  await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();
   await expect(source).toContainText('Model!C3');
-  await page.locator('#source-data > summary').click();
+  await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();
   await page.screenshot({ path: testInfo.outputPath('analysis-overview.png') });
   await page.getByRole('button', { name: 'Open AI chat' }).click();
   await dock(page).locator('.studio-chat-options > summary').click();
@@ -214,4 +219,64 @@ test('remembered consent follows the sharing scope and charts keep source data a
   await dock(page).getByRole('button', { name: 'Send message' }).click();
   await expect(page.getByRole('dialog')).toContainText('selected cell values');
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+});
+
+
+test('each question automatically draws a saved analysis step and preserves the trail on refresh', async ({ page }, testInfo) => {
+  await openWorkbook(page);
+  let documentLoads = 0;
+  page.on('load', () => documentLoads++);
+  const canvas = page.getByRole('region', { name: 'Analysis workspace', exact: true });
+  const steps = canvas.locator('.studio-analysis-step');
+  await dock(page).getByLabel('Your question', { exact: true }).fill(question);
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await page.getByRole('dialog').getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Agree and send' }).click();
+  await expect(steps).toHaveCount(1);
+  await expect(canvas).toBeVisible();
+  await expect(steps.first()).toHaveAttribute('open', '');
+  await expect(steps.first().locator('.studio-series-chart')).toHaveCount(2);
+  await expect(steps.first().locator('summary').first()).toContainText(question);
+  await expect(page.locator('#studio-page-content')).toBeHidden();
+  await dock(page).getByLabel('Your question', { exact: true }).fill('Compare Q124 and Q224.');
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await expect(steps).toHaveCount(2);
+  await expect(steps.first()).not.toHaveAttribute('open', '');
+  await expect(steps.last().getByRole('region', { name: 'Calculated comparison' })).toContainText('+5.00');
+  await expect(steps.last()).toHaveAttribute('open', '');
+  await dock(page).getByLabel('Your question', { exact: true }).fill('Show Revenue for Q124.');
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await expect(steps).toHaveCount(3);
+  await expect(steps.last()).toContainText('Single value');
+  await expect(steps.last()).toContainText('100.00');
+  await expect(steps.last().locator('.studio-series-chart')).toHaveCount(0);
+  if (testInfo.project.name === 'mobile') await dock(page).getByRole('button', { name: 'Analysis', exact: false }).click();
+  await canvas.getByRole('link', { name: 'Workbook controls', exact: true }).click();
+  await expect(page.locator('.manual-form')).toBeVisible();
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Open AI chat' }).click();
+  await dock(page).getByRole('button', { name: 'Analysis', exact: false }).click();
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Open AI chat' }).click();
+  await expect(steps.last()).toHaveAttribute('open', '');
+  expect(documentLoads).toBe(0);
+  await expect(page).toHaveURL(/\/workspace\/analyses\//);
+  await page.reload();
+  await expect(steps).toHaveCount(3);
+  await expect(steps.last()).toHaveAttribute('open', '');
+  await expect(dock(page).getByLabel('AI response', { exact: true })).toHaveCount(3);
+  if (testInfo.project.name === 'mobile') await dock(page).getByRole('button', { name: 'Analysis', exact: false }).click();
+  await steps.first().locator(':scope > summary').click();
+  await expect(steps.first().locator('.studio-series-chart').first()).toBeVisible();
+  expect(await page.evaluate(() => {
+    const ids = Array.from(document.querySelectorAll('[id]'), el => el.id);
+    return ids.length - new Set(ids).size;
+  })).toBe(0);
+  await page.screenshot({ path: testInfo.outputPath('dynamic-analysis-trail.png') });
+  // Audit settled theme colors, as in the workspace shell accessibility check.
+  // Motion is disabled without changing colors or relaxing contrast assertions.
+  await page.addStyleTag({ content: '*,:before,:after{transition:none!important;animation:none!important}' });
+  for (const appearance of ['light', 'dark']) {
+    if (appearance === 'dark') await page.getByRole('button', { name: 'Toggle light and dark mode' }).click();
+    const audit = await new AxeBuilder({ page }).include('.workspace').withTags(['wcag2a', 'wcag2aa']).analyze();
+    expect(audit.violations.filter(v => ['serious', 'critical'].includes(v.impact || ''))).toEqual([]);
+  }
 });

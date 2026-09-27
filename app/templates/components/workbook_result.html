@@ -1,5 +1,6 @@
+{% macro number(point) %}{% if point.value is none %}Unavailable{% elif point.percent %}{{ '{:,.2f}'.format(point.value * 100) }}%{% else %}{{ '{:,.2f}'.format(point.value) }}{% endif %}{% endmacro %}
 <section class="studio-result-overview" aria-label="Analysis overview">
-  <div class="studio-section-heading"><h2>{{ result.metric }}</h2><span class="muted small">{{ result.points|length }} saved periods</span></div>
+  <div class="studio-section-heading"><h2>{{ result.metric }}</h2><span class="muted small">{{ result.points|length }} saved {{ 'period' if result.points|length == 1 else 'periods' }}</span></div>
   <p class="muted small">Quarterly and annual values are shown separately. Period labels and units follow the workbook; dates alone do not distinguish historical figures from assumptions.</p>
   {% for group in presentation.groups %}
   <figure class="studio-series">
@@ -16,6 +17,6 @@
   {% endfor %}
   {% if presentation.missing %}<p class="muted small">{{ presentation.missing }} periods have no saved value. Gaps are left open in the chart.</p>{% endif %}
 </section>
-<details class="workspace-panel studio-source-data" id="source-data"><summary>Source data <span class="muted small">{{ result.points|length }} periods · exact values &amp; cells</span></summary>
+<details class="workspace-panel studio-source-data"><summary>Source data <span class="muted small">{{ result.points|length }} {{ 'period' if result.points|length == 1 else 'periods' }} · exact values &amp; cells</span></summary>
   <div class="workspace-table" tabindex="0" role="region" aria-label="Calculated values and source cells"><table><thead><tr><th>Workbook period</th><th>Saved value</th><th>Source cell</th><th>Value type</th></tr></thead><tbody>{% for point in result.points %}<tr><td>{{ point.period }}</td><td class="numeric">{{ number(point) }}</td><td><code>{{ point.source }}</code></td><td>{{ 'Saved formula result' if point.formula else 'Entered value' }}</td></tr>{% endfor %}</tbody></table></div>
 </details>
