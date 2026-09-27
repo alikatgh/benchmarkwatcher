@@ -74,16 +74,16 @@
   </section>
   {% else %}<section class="workspace-panel"><h2>This workbook needs a table mapping</h2><p>Automatic analysis currently supports clearly labeled period tables on a visible Model sheet. No values have been guessed or imported from this file.</p><p class="muted">Available sheets: {{ workbook.sheets | join(', ') }}</p></section>{% endif %}
   </section>
-  {% if workbook.metrics %}{% set chat_metric = (workbook.metrics | selectattr('label', 'equalto', 'Revenue') | list | first) | default(workbook.metrics[0]) %}
+  {% if workbook.metrics %}{% set chat_metric = (workbook.metrics | selectattr('label', 'equalto', 'Operating Income') | list | first) | default((workbook.metrics | selectattr('label', 'equalto', 'Revenue') | list | first) | default(workbook.metrics[0])) %}
   <aside class="workspace-panel studio-chat" aria-label="Workbook AI chat">
     <div class="studio-section-heading"><h2>AI chat</h2><span class="studio-badge">Your provider</span></div>
     <div class="studio-chat-messages">
-      <div class="studio-chat-message"><p>Ask for one metric’s series, its value in a named period, or a comparison between two named periods.</p><p class="muted small">Full earnings assessments and multi-metric research are not supported yet.</p></div>
+      <div class="studio-chat-message"><p>Ask for one metric’s series, its value in a named period, or a comparison between two named periods.</p><p class="muted small">Full earnings assessments and multi-metric research are not supported yet.</p><a class="small" href="{{ url_for('main.help_page') }}#jev">What is Jev, and how do I use it?</a></div>
       {% if question %}<div class="studio-chat-message studio-chat-question"><span class="small">Your question</span><p>{{ question }}</p></div><p class="muted small">This question wasn’t saved. See Notifications for details, then edit it below.</p>{% endif %}
     </div>
     {% if connections %}<form method="post" class="workspace-form studio-chat-form">{{ token() }}<input type="hidden" name="action" value="ask">
-      <button type="button" class="studio-chat-example" data-chat-question="Show {{ chat_metric.label }} across the available periods">Show {{ chat_metric.label }} across available periods</button>
-      <label for="question">Your question</label><textarea id="question" name="question" required minlength="3" maxlength="1500" rows="3" placeholder="Show {{ chat_metric.label }} across the available periods">{{ question }}</textarea>
+      <button type="button" class="studio-chat-example" data-chat-question="Show {{ chat_metric.label }} across the available periods.">Show {{ chat_metric.label }} across the available periods.</button>
+      <label for="question">Your question</label><textarea id="question" name="question" required minlength="3" maxlength="1500" rows="3" placeholder="Show {{ chat_metric.label }} across the available periods.">{{ question }}</textarea>
       <div class="studio-provider-heading"><label for="provider-model">Use my provider</label><a href="{{ url_for('workspace.settings') }}">Manage or reconnect</a></div><select id="provider-model" name="provider_model" required>{% for connection in connections %}{% for model in connection.models %}<option value="{{ connection.provider }}:{{ model }}" {% if request.form.get('provider_model') == connection.provider ~ ':' ~ model or (not request.form.get('provider_model') and connection.provider == user.default_provider and loop.first) %}selected{% endif %}>{{ providers[connection.provider] }} · {{ model }}</option>{% endfor %}{% endfor %}</select>
       <label class="check" id="studio-explanation"><input type="checkbox" name="explain" value="yes"><span>Add a DeepSeek explanation (an extra provider request).</span></label>
       <label class="check"><input type="checkbox" name="consent" value="yes" required><span>Share my question and workbook row/period labels with this provider. For a DeepSeek explanation, also share the selected cell values and results. Provider charges apply.</span></label>

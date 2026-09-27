@@ -14,6 +14,19 @@
     </header>
 
     <article class="release-entry">
+        <time datetime="2026-09-27">September 27, 2026</time>
+        <h2>Workbook AI chat and a practical Jev guide</h2>
+        <ul>
+            <li>Moved workbook AI questions into a chat panel beside the calculator. On smaller screens, it follows the calculator.</li>
+            <li>Added a clickable example where Operating Income is available: “Show Operating Income across the available periods.” Clicking fills the question; only Send and save contacts your provider.</li>
+            <li>Added <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.help_page') }}#jev">Help for Jev</a> and a <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.jev_workbook_story') }}">blog guide</a> explaining setup, supported questions, sharing and provider charges. Jev selects the metric and periods; BenchmarkWatcher calculates from saved workbook cells.</li>
+            <li>Moved errors and confirmations into Notifications, keeping questions and the selected provider intact after an error.</li>
+            <li>Fixed desktop navigation so the sidebar stays below the header and long menus scroll internally.</li>
+        </ul>
+    </article>
+
+
+    <article class="release-entry">
         <time datetime="2026-09-26">September 26, 2026</time>
         <h2>A workspace for benchmark research</h2>
         <ul>

@@ -298,6 +298,21 @@ def research_workspace_story():
     )
 
 
+@bp.route('/help')
+def help_page():
+    """Public instructions for workbook questions and personal AI connections."""
+    return render_template('help.html', meta_title='Help | BenchmarkWatcher',
+                           meta_description='Learn what Jev does in BenchmarkWatcher, connect your own provider, and ask workbook questions with clear examples.')
+
+
+@bp.route('/blog/using-jev-for-workbook-analysis')
+def jev_workbook_story():
+    """Explain Jev's role and the supported workbook question workflow."""
+    return render_template('blog/jev_workbooks.html',
+                           meta_title='Using Jev for workbook analysis | BenchmarkWatcher',
+                           meta_description='Start with an Operating Income example, understand why BenchmarkWatcher uses Jev, and follow workbook calculations back to their source cells.')
+
+
 @bp.route('/favicon.ico')
 def favicon():
     """Serve favicon to avoid browser 404 noise in console."""
@@ -319,7 +334,8 @@ def sitemap():
     """Canonical, publicly rendered pages only; no parameter permutations."""
     from xml.etree.ElementTree import Element, SubElement, tostring
     root = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
-    paths = ['/', '/changelog', url_for('main.blog'), url_for('main.research_workspace_story')]
+    paths = ['/', '/changelog', url_for('main.blog'), url_for('main.research_workspace_story'),
+             url_for('main.help_page'), url_for('main.jev_workbook_story')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):
