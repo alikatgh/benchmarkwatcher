@@ -6,28 +6,47 @@
   <div id="studio-chat-body" class="studio-chat-body">
     {% if chat_workbook and chat_workbook.metrics %}
     {% set chat_metric = (chat_workbook.metrics | selectattr('label', 'equalto', 'Operating Income') | list | first) | default((chat_workbook.metrics | selectattr('label', 'equalto', 'Revenue') | list | first) | default(chat_workbook.metrics[0])) %}
-    <p class="small">Workbook: <a href="{{ url_for('workspace.model', model_id=chat_workbook.id) }}">{{ chat_workbook.name }}</a></p>
-    <details class="studio-chat-help"><summary>How to ask</summary><p class="small">Ask for one metric’s series, its value in a named period, or a comparison between two named periods. Full earnings assessments are not supported yet.</p><p class="small">Jev or DeepSeek selects the metric and periods. BenchmarkWatcher calculates from saved cells. DeepSeek can also explain the result.</p><a class="small" href="{{ url_for('main.help_page') }}#jev">About Jev and workbook analysis</a></details>
-    {% if question %}<div class="studio-chat-message studio-chat-question"><span class="small">Your question</span><p>{{ question }}</p></div><p class="muted small">This question wasn’t saved. See Notifications for details, then edit it below.</p>{% endif %}
+    <div class="studio-chat-context"><a href="{{ url_for('workspace.model', model_id=chat_workbook.id) }}">{{ chat_workbook.name }}</a><a href="{{ url_for('main.help_page') }}#jev">Help</a></div>
+    {% endif %}
+    <div class="studio-chat-messages" role="log" aria-label="Workbook conversation" tabindex="0">
+      {% if chat_history|length == 20 %}<p class="muted small">Showing the latest 20 saved exchanges. Older analyses are in your workbook library.</p>{% endif %}
+      {% for message in chat_history %}
+      <article class="studio-chat-message studio-chat-question" aria-label="Your message"><span class="studio-message-author">You</span><p>{{ message.question }}</p></article>
+      <article class="studio-chat-message studio-chat-answer" aria-label="AI response">
+        <span class="studio-message-author">{{ 'DeepSeek' if message.result.explanation else providers.get(message.provider, 'BenchmarkWatcher') }}</span>
+        {% if message.result.explanation %}<p class="explanation">{{ message.result.explanation }}</p><p class="muted small">AI explanation · Verify against the saved values and source cells.</p>
+        {% else %}<p>Saved {{ message.result.metric }}{% if message.result.operation == 'change' %}: a comparison of {{ message.result.points[0].period }} and {{ message.result.points[1].period }}{% else %} for {{ message.result.points|length }} {{ 'period' if message.result.points|length == 1 else 'periods' }}{% endif %}.</p>{% endif %}
+        {% if message.result.explanation_notice %}<p class="studio-chat-error">{{ message.result.explanation_notice }}</p>{% endif %}
+        <a class="studio-chat-result" href="{{ url_for('workspace.analysis', analysis_id=message.id) }}">View values and source cells →</a>
+      </article>
+      {% else %}
+      <div class="studio-chat-welcome"><h3>Ask about this workbook</h3><p>Choose a metric to explore its saved values or compare two named periods.</p><p class="muted small">Jev or DeepSeek selects the data. Add a DeepSeek explanation for a written answer here.</p></div>
+      {% if chat_metric and connections %}<button type="button" class="studio-chat-example" data-chat-question="Show {{ chat_metric.label }} across the available periods.">Show {{ chat_metric.label }} across the available periods.</button>{% endif %}
+      {% endfor %}
+      {% if question %}<article class="studio-chat-message studio-chat-question" aria-label="Your message"><span class="studio-message-author">You</span><p>{{ question }}</p></article><div class="studio-chat-message studio-chat-error" role="status">{% for category, message in notifications if category == 'error' %}<p>{{ message }}</p>{% else %}<p>This question wasn’t saved. See Notifications for details.</p>{% endfor %}<p>Edit your question below and try again.</p></div>{% endif %}
+    </div>
+    {% if chat_workbook and chat_workbook.metrics %}
     {% if connections %}
     {% set deepseek = connections | selectattr('provider', 'equalto', 'deepseek') | list %}
+    {% set selected_provider = request.form.get('provider_model', chat_preferences.get('provider_model', '')) %}
+    {% set wants_explanation = request.form.get('explain', '') if request.method == 'POST' else chat_preferences.get('explain', '') %}
     <form method="post" action="{{ url_for('workspace.model', model_id=chat_workbook.id) }}" class="workspace-form studio-chat-form">
       {{ token() }}<input type="hidden" name="action" value="ask">
-      <button type="button" class="studio-chat-example" data-chat-question="Show {{ chat_metric.label }} across the available periods.">Show {{ chat_metric.label }} across the available periods.</button>
-      <label for="question">Your question</label><textarea id="question" name="question" required minlength="3" maxlength="1500" rows="3" placeholder="Show {{ chat_metric.label }} across the available periods.">{{ question }}</textarea>
-      <div class="studio-provider-heading"><label for="provider-model">Select metric with</label><a href="{{ url_for('workspace.settings') }}">AI settings</a></div>
-      <select id="provider-model" name="provider_model" required>{% for connection in connections %}{% for model in connection.models %}<option value="{{ connection.provider }}:{{ model }}" {% if request.form.get('provider_model') == connection.provider ~ ':' ~ model or (not request.form.get('provider_model') and connection.provider == user.default_provider and loop.first) %}selected{% endif %}>{{ providers[connection.provider] }} · {{ model }}</option>{% endfor %}{% endfor %}</select>
-      {% if deepseek %}
-      <label class="check" id="studio-explanation"><input type="checkbox" name="explain" value="yes" {% if request.form.get('explain') == 'yes' %}checked{% endif %}><span>Add a DeepSeek explanation (an extra provider request).</span></label>
-      <div id="studio-explanation-model"><label for="explanation-model">Explanation model</label><select id="explanation-model" name="explanation_model">{% for model in deepseek[0].models %}<option value="{{ model }}" {% if request.form.get('explanation_model') == model %}selected{% endif %}>{{ model }}</option>{% endfor %}</select></div>
-      {% else %}<p class="muted small"><a href="{{ url_for('workspace.settings') }}">Connect DeepSeek</a> to add a written explanation alongside Jev.</p>{% endif %}
-      <label class="check"><input type="checkbox" name="consent" value="yes" required {% if request.form.get('consent') == 'yes' %}checked{% endif %}><span>Share my question and workbook labels with the selected provider. With an explanation, also share selected values and results with DeepSeek. Provider charges apply.</span></label>
-      <button class="primary" type="submit">Send and save</button><p class="muted small studio-chat-status" role="status" hidden></p>
+      <details class="studio-chat-options">
+        <summary><span id="studio-chat-provider-summary">Provider options</span><span class="muted">Settings</span></summary>
+        <div class="studio-provider-heading"><label for="provider-model">Select metric with</label><a href="{{ url_for('workspace.settings') }}">AI settings</a></div>
+        <select id="provider-model" name="provider_model" required>{% for connection in connections %}{% for model in connection.models %}<option value="{{ connection.provider }}:{{ model }}" {% if selected_provider == connection.provider ~ ':' ~ model or (not selected_provider and connection.provider == user.default_provider and loop.first) %}selected{% endif %}>{{ providers[connection.provider] }} · {{ model }}</option>{% endfor %}{% endfor %}</select>
+        {% if deepseek %}
+        <label class="check" id="studio-explanation"><input type="checkbox" name="explain" value="yes" {% if wants_explanation == 'yes' %}checked{% endif %}><span>Add a DeepSeek explanation (an extra provider request).</span></label>
+        <div id="studio-explanation-model"><label for="explanation-model">Explanation model</label><select id="explanation-model" name="explanation_model">{% for model in deepseek[0].models %}<option value="{{ model }}" {% if request.form.get('explanation_model', chat_preferences.get('explanation_model')) == model %}selected{% endif %}>{{ model }}</option>{% endfor %}</select></div>
+        {% else %}<p class="muted small"><a href="{{ url_for('workspace.settings') }}">Connect DeepSeek</a> to add a written explanation alongside Jev.</p>{% endif %}
+      </details>
+      <label class="sr-only" for="question">Your question</label><textarea id="question" name="question" required minlength="3" maxlength="1500" rows="3" placeholder="Ask about a metric or compare two periods…">{{ question }}</textarea>
+      <label class="check studio-chat-consent"><input type="checkbox" name="consent" value="yes" required {% if request.form.get('consent') == 'yes' %}checked{% endif %}><span>Share this question and workbook labels with my provider<span class="studio-consent-explanation" {% if wants_explanation != 'yes' %}hidden{% endif %}>, plus selected values and results with DeepSeek for the explanation</span>. Provider charges apply.</span></label>
+      <div class="studio-chat-send"><span class="muted small">Answers are saved privately.</span><button class="primary" type="submit">Send and save</button></div>
+      <p class="muted small studio-chat-status" role="status" hidden></p>
     </form>
-    {% else %}<p>Connect Jev or DeepSeek to ask about this workbook.</p><a class="primary" href="{{ url_for('workspace.settings') }}">Connect an AI provider</a>{% endif %}
-    {% else %}
-    <p>Open a workbook to ask about its metrics and reporting periods.</p>
-    <a class="primary" href="{{ url_for('workspace.home') }}">Choose a workbook</a>
-    {% endif %}
+    {% else %}<div class="studio-chat-connect"><p>Connect Jev or DeepSeek to ask about this workbook.</p><a class="primary" href="{{ url_for('workspace.settings') }}">Connect an AI provider</a></div>{% endif %}
+    {% else %}<div class="studio-chat-connect"><p>Open a workbook to ask about its metrics and reporting periods.</p><a class="primary" href="{{ url_for('workspace.home') }}">Choose a workbook</a></div>{% endif %}
   </div>
 </aside>

@@ -278,6 +278,37 @@ def test_jev_selection_can_use_the_separately_connected_deepseek_explanation(wor
     assert calls == [('jev', 'jev-fixture-key'), ('explanation', 'deepseek-fixture-key')]
 
 
+def test_chat_history_is_saved_ordered_bounded_and_owner_and_workbook_scoped(workspace):
+    alice = workspace.test_client()
+    register(alice)
+    bob = workspace.test_client()
+    register(bob, username='bob')
+    workbook = load_model(workspace.config['MODEL_LIBRARY_DIR'], catalog(workspace.config['MODEL_LIBRARY_DIR'])[0]['id'])
+    result = calculate(workbook, 'r3', 'series', None, None)
+    result['explanation'] = 'Saved answer <script>unsafe()</script>'
+    with workspace.app_context(), db():
+        for index in range(22):
+            db().execute('INSERT INTO analyses VALUES (?,?,?,?,?,?,?,?)',
+                         (f'answer-{index}', 1, 'Revenue', workbook['id'], f'Question {index:02}',
+                          'deepseek', json.dumps(result), 100))
+        for owner, model_id, marker in [(2, workbook['id'], 'other-account'), (1, 'another-book', 'other-workbook')]:
+            db().execute('INSERT INTO analyses VALUES (?,?,?,?,?,?,?,?)',
+                         (marker, owner, 'Revenue', model_id, marker, 'deepseek', json.dumps(result), 100))
+    html = alice.get(model_url(workspace)).get_data(as_text=True)
+    assert html.count('aria-label="Your message"') == 20
+    assert 'Question 00' not in html and 'Question 01' not in html
+    assert html.index('Question 02') < html.index('Question 21')
+    assert 'other-account' not in html and 'other-workbook' not in html
+    assert '<script>unsafe()' not in html and '&lt;script&gt;unsafe()' in html
+    old = alice.get('/workspace/analyses/answer-0').get_data(as_text=True)
+    assert old.count('aria-label="Your message"') == 1
+    assert 'Question 01' not in old
+    assert bob.get('/workspace/analyses/answer-0').status_code == 404
+    with workspace.app_context(), db():
+        db().execute('DELETE FROM analyses WHERE id=?', ('answer-21',))
+    assert 'Question 21' not in alice.get(model_url(workspace)).get_data(as_text=True)
+
+
 def test_budget_is_persistent_and_atomic(workspace):
     register(workspace.test_client())
     workspace.config['WORKSPACE_DAILY_ANALYSES'] = 1

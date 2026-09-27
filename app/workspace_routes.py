@@ -52,6 +52,19 @@ def page(mode, **values):
         if chat_workbook:
             session['chat_workbook'] = chat_workbook['id']
         values['chat_workbook'] = chat_workbook
+        # Reuse saved answers as the visible conversation; keep each account
+        # and workbook isolated. Opening an older answer ends the log there.
+        values['chat_history'] = []
+        if model_id:
+            history = db().execute(
+                '''SELECT id,question,provider,result FROM analyses
+                   WHERE user_id=? AND workbook=? AND provider IN ('typesafe','deepseek')
+                   AND rowid <= COALESCE((SELECT rowid FROM analyses WHERE id=? AND user_id=?), 9223372036854775807)
+                   ORDER BY rowid DESC LIMIT 20''',
+                (g.workspace_user['id'], model_id,
+                 values['record']['id'] if mode == 'analysis' else '', g.workspace_user['id'])).fetchall()
+            values['chat_history'] = [dict(row, result=json.loads(row['result'])) for row in reversed(history)]
+        values['chat_preferences'] = session.get('chat_preferences', {})
     return render_template('workspace.html', mode=mode, user=g.workspace_user,
                            csrf=session['csrf'], providers=PROVIDERS, **values)
 
@@ -224,6 +237,11 @@ def model(model_id):
                 result = analyze(provider, key, model_name, question, workbook,
                                  explain=explain, explanation_key=explanation_key,
                                  explanation_model=explanation_model)
+                session['chat_preferences'] = {
+                    'provider_model': request.form['provider_model'],
+                    'explain': 'yes' if explain else '',
+                    'explanation_model': explanation_model or '',
+                }
             else:
                 abort(400)
             analysis_id = secrets.token_urlsafe(18)

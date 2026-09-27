@@ -42,7 +42,8 @@ def provider_response(provider, key, payload=None):
         context = json.loads(payload['messages'][-1]['content'])
         if 'result' in context:
             assert context['result']['points'][0]['source'] == 'Model!C3'
-            content = 'The saved Operating Income series starts at 10 (Model!C3) and 15 (Model!D3).'
+            content = ('The saved Operating Income series starts at 10 (Model!C3) and 15 (Model!D3).\n\n'
+                       + 'The remaining periods are saved workbook values. Check the source cells alongside each period before interpreting this series.\n\n' * 8)
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': content}}]}
         question = context['question']
     supported = question == 'Show Operating Income across the available periods.'
