@@ -20,3 +20,19 @@ test('DeepSeek-only explanation cannot be submitted with a different provider',(
  const field=document.querySelector('#studio-explanation input');expect(field.disabled).toBe(true);
  choose('provider-model','deepseek:chat');expect(field.disabled).toBe(false);expect(document.getElementById('studio-explanation').hidden).toBe(false);
 });
+
+test('chat examples do not submit and repeated sends are prevented until a page restore',()=>{
+ document.body.insertAdjacentHTML('beforeend',`<form class="studio-chat-form"><textarea id="question"></textarea><button type="button" data-chat-question="Show Revenue across the available periods">Example</button><button type="submit">Send and save</button><p class="studio-chat-status" role="status" hidden></p></form>`);
+ window.eval(source);
+ const form=document.querySelector('.studio-chat-form'), send=form.querySelector('[type=submit]');
+ const submit=jest.fn();form.addEventListener('submit',submit);
+ form.querySelector('[data-chat-question]').click();
+ expect(submit).not.toHaveBeenCalled();expect(document.getElementById('question').value).toContain('Revenue');
+ expect(document.activeElement).toBe(document.getElementById('question'));
+ expect(form.dispatchEvent(new Event('submit',{cancelable:true}))).toBe(true);
+ expect(send.disabled).toBe(true);
+ expect(form.querySelector('.studio-chat-status').hidden).toBe(false);
+ expect(form.dispatchEvent(new Event('submit',{cancelable:true}))).toBe(false);
+ window.dispatchEvent(new Event('pageshow'));
+ expect(send.disabled).toBe(false);expect(form.querySelector('.studio-chat-status').hidden).toBe(true);
+});

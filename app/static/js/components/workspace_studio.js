@@ -1,5 +1,27 @@
 (function () {
     'use strict';
+    const chat = document.querySelector('.studio-chat-form');
+    if (chat) {
+        const question = chat.querySelector('#question');
+        const send = chat.querySelector('[type=submit]');
+        const status = chat.querySelector('.studio-chat-status');
+        chat.querySelectorAll('[data-chat-question]').forEach(example => {
+            example.addEventListener('click', () => {
+                question.value = example.dataset.chatQuestion;
+                question.focus();
+            });
+        });
+        chat.addEventListener('submit', event => {
+            if (send.disabled) { event.preventDefault(); return; }
+            send.disabled = true;
+            status.textContent = 'Sending to your provider… Your saved answer will open when ready.';
+            status.hidden = false;
+        });
+        window.addEventListener('pageshow', () => {
+            send.disabled = false;
+            status.hidden = true;
+        });
+    }
     const provider = document.getElementById('provider-model');
     const explanation = document.getElementById('studio-explanation');
     if (provider && explanation) {

@@ -88,3 +88,30 @@
 @media(max-width:900px){.research-layout{grid-template-columns:minmax(0,1fr) 250px;gap:20px}.workspace{padding-inline:20px}.studio-aside{padding-left:18px}}
 @media(max-width:640px){.workspace{padding:16px 14px 28px}.workspace h1{font-size:23px}.workspace-nav{margin-bottom:20px}.studio-heading{gap:10px;margin-bottom:18px}.studio-heading>.studio-badge{display:none}.research-layout{grid-template-columns:1fr}.studio-aside{border-left:0;border-top:1px solid var(--theme-border);padding:20px 0 0}.studio-library-meta{align-items:flex-start;font-size:11px}.studio-library-meta a{max-width:110px;text-align:right}.workspace-panel{padding:16px}.manual-form{display:flex;align-items:stretch}.manual-form>.primary{align-self:flex-start}.workspace :is(button,.primary){min-height:44px}.workspace .period-fields{grid-template-columns:1fr 1fr;gap:10px}.workspace :is(input:not([type=hidden]),select,textarea){font-size:16px}.workbook-list>a{padding-inline:0}}
 @media(pointer:coarse){.workspace :is(button,.primary,input:not([type=checkbox]):not([type=hidden]),select){min-height:44px}}
+
+/* Feedback stays in the header; workbook questions have their own side panel. */
+.workspace-nav{position:relative;z-index:20}
+.workspace-notifications summary{display:flex;align-items:center;gap:7px;min-height:38px;padding:7px 10px;border:1px solid var(--theme-border);border-radius:6px;font-size:12px;font-weight:500;list-style:none}
+.workspace-notifications summary::-webkit-details-marker{display:none}
+.workspace-notifications[open] summary{color:var(--theme-accent);background:var(--theme-bg)}
+.notification-count{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:50%;background:var(--theme-accent);color:var(--theme-bg);font-size:11px}
+.workspace-notification-list{position:absolute;right:0;top:calc(100% - 6px);width:min(420px,100%);max-height:min(360px,60vh);overflow:auto;padding:12px;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px;box-shadow:0 8px 24px #0002}
+.workspace-notification-list .workspace-notification{margin:0;padding:10px 12px;border-left:3px solid var(--theme-accent);font-size:13px;overflow-wrap:anywhere}
+.workspace-notification-list .workspace-notification+.workspace-notification{margin-top:8px}
+.workspace-notification.error{border-color:var(--color-down)}
+.workspace-notification.success{border-color:var(--color-up)}
+.studio-model-layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:28px;align-items:start}
+.studio-model-main{min-width:0}
+.studio-model-main>.workspace-notice{font-size:12px;line-height:1.7;margin:12px 0 18px}
+.studio-chat{position:sticky;top:calc(var(--bw-header-height) + 16px);max-height:calc(100dvh - var(--bw-header-height) - 32px);overflow:auto;overscroll-behavior-y:contain;margin:0;padding:18px;min-width:0}
+.studio-chat-messages{margin-top:16px;font-size:13px}
+.studio-chat-message{padding:10px 12px;background:var(--theme-bg);border-radius:7px;overflow-wrap:anywhere}
+.studio-chat-question{margin:12px 0 8px;border:1px solid var(--theme-border);background:var(--theme-surface)}
+.studio-chat-question p{white-space:pre-wrap}
+.studio-chat .studio-provider-heading{gap:8px}
+.studio-chat .studio-provider-heading a{white-space:nowrap}
+.studio-chat .studio-chat-example{justify-content:flex-start;white-space:normal;text-align:left;font-size:12px;color:var(--theme-accent);background:var(--theme-bg)}
+.studio-chat [type=submit]:disabled{opacity:.6;cursor:wait}
+.studio-model-unmapped{grid-template-columns:minmax(0,1fr)}
+@media(max-width:1000px){.studio-model-layout{grid-template-columns:minmax(0,1fr) 330px;gap:20px}.studio-chat{padding:16px}.manual-form{grid-template-columns:90px minmax(0,1fr)}}
+@media(max-width:760px){.studio-model-layout{grid-template-columns:minmax(0,1fr)}.studio-chat{position:static;max-height:none;overflow:visible}.workspace-nav>div{gap:10px}.workspace-notifications summary{min-height:44px}.workspace-notification-list{top:calc(100% - 4px)}}

@@ -220,6 +220,25 @@ def test_consent_and_model_allowlist_before_provider_call(workspace, monkeypatch
     assert calls == []
 
 
+def test_failed_question_stays_in_chat_and_feedback_is_in_notifications(workspace, monkeypatch):
+    client = workspace.test_client()
+    register(client)
+    connect(client, monkeypatch)
+    connect(client, monkeypatch, provider='typesafe')
+    question = 'Show Revenue <script>alert(1)</script>'
+    response = post(client, model_url(workspace), action='ask', question=question,
+                    provider_model='typesafe:test-model')
+    html = response.get_data(as_text=True)
+    notifications = re.search(r'<section class="workspace-notification-list".*?</section>', html, re.S).group()
+    assert 'role="alert"' in notifications and 'Confirm sharing' in notifications
+    assert 'workspace-notice error' not in html
+    assert 'aria-label="Workbook AI chat"' in html
+    assert html.count('Show Revenue &lt;script&gt;alert(1)&lt;/script&gt;') == 2
+    assert question not in html
+    assert 'Send and save' in html
+    assert 'value="typesafe:test-model" selected' in html
+
+
 def test_budget_is_persistent_and_atomic(workspace):
     register(workspace.test_client())
     workspace.config['WORKSPACE_DAILY_ANALYSES'] = 1
