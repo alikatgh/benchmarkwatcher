@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
     // Only test __tests__ directory (Jest unit tests)
+    roots: ['<rootDir>/__tests__'],
     testMatch: ['**/__tests__/**/*.js'],
 
     // Ignore Playwright E2E tests (they're run by Playwright, not Jest)

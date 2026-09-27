@@ -39,6 +39,19 @@ def private_response(response):
 
 
 def page(mode, **values):
+    if g.workspace_user:
+        values.setdefault('connections', connections())
+        chat_workbook = values.get('workbook')
+        model_id = chat_workbook['id'] if chat_workbook else (
+            values['record']['workbook'] if mode == 'analysis' else session.get('chat_workbook'))
+        if not chat_workbook and model_id:
+            try:
+                chat_workbook = load_model(current_app.config['MODEL_LIBRARY_DIR'], model_id)
+            except (KeyError, ValueError):
+                pass
+        if chat_workbook:
+            session['chat_workbook'] = chat_workbook['id']
+        values['chat_workbook'] = chat_workbook
     return render_template('workspace.html', mode=mode, user=g.workspace_user,
                            csrf=session['csrf'], providers=PROVIDERS, **values)
 
@@ -199,9 +212,18 @@ def model(model_id):
                 if not connection or model_name not in connection['models']:
                     raise ValueError('Select a model from your connected provider.')
                 key = read_key(g.workspace_user['id'], provider)
+                explain = request.form.get('explain') == 'yes'
+                explanation_key = explanation_model = None
+                if explain:
+                    explanation_model = request.form.get('explanation_model', '')
+                    deepseek = next((c for c in connections() if c['provider'] == 'deepseek'), None)
+                    if not deepseek or explanation_model not in deepseek['models']:
+                        raise ValueError('Connect DeepSeek and select one of its explanation models in AI chat.')
+                    explanation_key = read_key(g.workspace_user['id'], 'deepseek')
                 reserve_analysis(g.workspace_user['id'])
                 result = analyze(provider, key, model_name, question, workbook,
-                                 explain=request.form.get('explain') == 'yes')
+                                 explain=explain, explanation_key=explanation_key,
+                                 explanation_model=explanation_model)
             else:
                 abort(400)
             analysis_id = secrets.token_urlsafe(18)

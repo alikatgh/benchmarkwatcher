@@ -1,0 +1,25 @@
+version = 1
+name = "BenchmarkWatcher"
+
+[setup]
+script = "bash scripts/setup_local.sh"
+
+[[actions]]
+name = "Preview with sample data"
+icon = "run"
+command = "npm run preview:fixture"
+
+[[actions]]
+name = "Test AI chat journey"
+icon = "test"
+command = "npm run test:chat"
+
+[[actions]]
+name = "Test workspace backend"
+icon = "test"
+command = ".venv/bin/python -m pytest tests/test_workspace.py -q"
+
+[[actions]]
+name = "Build CSS"
+icon = "tool"
+command = "npm run build:css"
