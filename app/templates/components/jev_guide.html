@@ -10,7 +10,7 @@
         <li>Sign into your BenchmarkWatcher account and open <strong>AI settings</strong>.</li>
         <li>Under <strong>TypeSafe / Jev</strong>, enter your API key from TypeSafe. Enter the key in the settings field; do not put it in a chat question.</li>
         <li>Read the sharing and storage checkbox, then choose <strong>Test and save key</strong>. The TypeSafe connection test makes a small billable AI request.</li>
-        <li>Open a workbook and select <strong>TypeSafe / Jev · jev-latest</strong> under <strong>Select metric with</strong> in the AI chat.</li>
+        <li>Open a workbook and select <strong>TypeSafe / Jev · jev-latest</strong> under <strong>Options → Select metric with</strong> in the AI chat.</li>
     </ol>
     <p class="leading-relaxed">Keys are saved encrypted to the BenchmarkWatcher account that connects them. Your TypeSafe account pays for provider usage; BenchmarkWatcher supplies no shared AI credits. If the provider is missing, check that you signed into the same account and saved a successful connection.</p>
 </section>
@@ -18,13 +18,13 @@
     <h2 id="both-providers-heading">Use Jev and DeepSeek together</h2>
     <p class="mb-4 leading-relaxed">Connect both providers in AI settings. In chat, choose Jev under <strong>Select metric with</strong>, check <strong>Add a DeepSeek explanation</strong>, and choose an explanation model. Jev selects the workbook metric and periods; BenchmarkWatcher calculates the values; DeepSeek explains that calculated result with its source cells. You can also choose DeepSeek for selection, with or without an explanation.</p>
     <p class="mb-4 leading-relaxed">For financial workbook analysis, Jev is useful because it selects from the workbook’s actual rows and periods instead of supplying new figures. This makes a supported question easier to ask while keeping the calculation traceable. It does not verify company results or decide whether an investment is suitable.</p>
-    <p class="leading-relaxed">AI chat stays in the bottom-right corner throughout Workbook Studio, including saved results and AI settings. Use <strong>Minimize</strong> to collapse it and <strong>Open AI chat</strong> to reopen it. Your choice persists when you navigate or refresh.</p>
+    <p class="leading-relaxed">AI chat fills the right side throughout Workbook Studio, including saved results and AI settings. Use <strong>Minimize</strong> to collapse it and <strong>Open AI chat</strong> to reopen it. Your choice persists when you navigate or refresh.</p>
 </section>
 <section id="jev-example" class="release-entry" aria-labelledby="jev-example-heading">
     <h2 id="jev-example-heading">Try an Operating Income question</h2>
     <p class="mb-4 leading-relaxed">Open <strong>000600 SK Hynix</strong> in the workbook library. It includes an Operating Income row. In the AI chat, click the example or type:</p>
     <blockquote class="border-l-4 border-brand-black-60/20 dark:border-white/10 pl-4 my-6 text-lg">Show Operating Income across the available periods.</blockquote>
-    <p class="mb-4 leading-relaxed">Confirm sharing your question and workbook labels with your selected provider, then choose <strong>Send and save</strong>. Clicking the example only fills the question; it does not contact a provider. A successful request opens a saved analysis with the period labels, values and source cells.</p>
+    <p class="mb-4 leading-relaxed">Choose <strong>Send</strong> and confirm the sharing details. Clicking the example only fills the question; it does not contact a provider. The saved answer appears in chat without reloading your workbook. Choose <strong>Explore chart &amp; sources</strong> for separate quarterly and annual charts, then expand <strong>Source data</strong> to inspect every value and cell.</p>
     <p class="leading-relaxed">For another workbook, use a metric that appears in its Metric list. “Show Revenue across the available periods.” works as a question format when that workbook has a Revenue row.</p>
 </section>
 <section id="supported-questions" class="release-entry" aria-labelledby="supported-questions-heading">
@@ -36,12 +36,13 @@
     </ul>
     <p class="mb-4 leading-relaxed">Choose “Value in one period” or “Change between From and To” in the calculator to see the available period labels. Ask about one metric at a time.</p>
     <p class="mb-4 leading-relaxed">“We good with earnings?” does not identify a metric or a calculation, and it asks for a broader assessment than this integration supports. An Operating Income series answers a narrower question; it is not a complete assessment of a company’s earnings. Multi-company research, general earnings assessments and open-ended reports are not supported by this workbook chat yet.</p>
-    <p class="leading-relaxed">If a question fails, open <strong>Notifications</strong> for the reason and edit the retained question. Nothing retries automatically. For optional written commentary on a supported calculation, check <strong>Add a DeepSeek explanation</strong>. This works with either Jev or DeepSeek selected for the metric.</p>
+    <p class="leading-relaxed">If a question fails, read the message in chat and edit the retained question. If the connection was interrupted, check your saved answers before retrying because the request may have completed. Nothing retries automatically. For optional written commentary on a supported calculation, check <strong>Add a DeepSeek explanation</strong>. This works with either Jev or DeepSeek selected for the metric.</p>
 </section>
 <section id="sharing-and-cost" class="release-entry" aria-labelledby="sharing-heading">
     <h2 id="sharing-heading">What is shared, and what costs money?</h2>
-    <p class="mb-4 leading-relaxed">A Jev workbook request sends your question, the workbook name, and its metric and period labels to TypeSafe. It does not send the numerical cell values. An optional DeepSeek explanation additionally sends the selected cell values and calculated results to DeepSeek, and makes another provider request.</p>
-    <p class="mb-4 leading-relaxed">Your provider’s usage charges apply. The workspace allows up to 30 AI analyses per account per day. To calculate without an AI charge, use <strong>Calculate from this workbook</strong>; its metric and period controls do not contact an AI provider.</p>
+    <p class="mb-4 leading-relaxed">A Jev workbook request sends your question, the workbook name, and its metric and period labels to TypeSafe. A follow-up also includes the previous metric and period selection. It does not send the numerical cell values. An optional DeepSeek explanation additionally sends the selected cell values and calculated results to DeepSeek, and makes another provider request.</p>
+    <p class="mb-4 leading-relaxed">After an answer, you can ask “Compare Q224 and Q324.” using two labels in that workbook; the previous metric supplies the context. <strong>New topic</strong> clears that context while keeping the saved conversation.</p>
+    <p class="mb-4 leading-relaxed">You can explicitly allow the same provider setup for this workbook until you sign out. Changing the selection provider, model or explanation option requires confirmation again. Your provider’s usage charges apply. The workspace allows up to 30 AI analyses per account per day. To calculate without an AI charge, use <strong>Calculate from this workbook</strong>; its metric and period controls do not contact an AI provider.</p>
     <p class="leading-relaxed">Saved workbooks can mix historical figures and assumptions. Their values are not live prices or independently verified company results; units follow the original workbook. Check the source cells and assumptions when reading an analysis.</p>
     {% if config.WORKSPACE_ENABLED %}<p class="mt-6"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('workspace.home') }}">Open the workbook library →</a></p>{% endif %}
 </section>

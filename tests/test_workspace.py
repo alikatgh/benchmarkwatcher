@@ -235,7 +235,7 @@ def test_failed_question_stays_in_chat_and_feedback_is_in_notifications(workspac
     assert 'aria-label="Workbook AI chat"' in html
     assert html.count('Show Revenue &lt;script&gt;alert(1)&lt;/script&gt;') == 2
     assert question not in html
-    assert 'Send and save' in html
+    assert 'Send message' in html
     assert 'value="typesafe:test-model" selected' in html
 
 
@@ -301,8 +301,8 @@ def test_chat_history_is_saved_ordered_bounded_and_owner_and_workbook_scoped(wor
     assert 'other-account' not in html and 'other-workbook' not in html
     assert '<script>unsafe()' not in html and '&lt;script&gt;unsafe()' in html
     old = alice.get('/workspace/analyses/answer-0').get_data(as_text=True)
-    assert old.count('aria-label="Your message"') == 1
-    assert 'Question 01' not in old
+    assert old.count('aria-label="Your message"') == 20
+    assert 'Question 21' in old
     assert bob.get('/workspace/analyses/answer-0').status_code == 404
     with workspace.app_context(), db():
         db().execute('DELETE FROM analyses WHERE id=?', ('answer-21',))
@@ -447,3 +447,83 @@ def test_chat_example_prefers_operating_income_only_when_the_workbook_has_it(wor
     html = client.get(url).get_data(as_text=True)
     assert 'data-chat-question="Show Operating Income across the available periods."' in html
     assert 'href="/help#jev"' in html
+
+
+def test_async_chat_context_consent_and_owner_boundaries(workspace, monkeypatch):
+    alice, bob = workspace.test_client(), workspace.test_client()
+    register(alice)
+    register(bob, 'bob')
+    connect(alice, monkeypatch)
+    connect(bob, monkeypatch)
+    seen = []
+    def answer(provider, key, model, question, workbook, **options):
+        seen.append(options.get('previous_selection'))
+        result = calculate(workbook, 'r3', 'series', None, None)
+        result['plan'] = {'metric': 'r3', 'operation': 'series', 'start': 'unspecified', 'end': 'unspecified'}
+        result['explanation'] = '<script>unsafe()</script> Revenue 61749.24583999999 in 2030 (Model!T39).'
+        return result
+    monkeypatch.setattr('app.workspace_routes.analyze', answer)
+    def ask(client, **overrides):
+        return client.post(model_url(workspace), headers={'Accept': 'application/json'}, data={
+            'csrf': csrf(client), 'action': 'ask', 'question': 'Show Revenue',
+            'provider_model': 'deepseek:test-model', **overrides})
+    assert ask(alice).status_code == 422
+    response = ask(alice, consent='yes', remember_consent='yes')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert '<script>' not in data['html'] and '&lt;script&gt;' in data['html']
+    assert '61,749.25 in 2030 (Model!T39)' in data['html']
+    assert response.headers['Cache-Control'] == 'no-store, private'
+    assert ask(alice, context_analysis_id=data['id']).status_code == 200
+    assert seen[-1]['metric'] == 'r3'
+    assert set(seen[-1]) == {'metric', 'operation', 'start', 'end'}
+    before = len(seen)
+    assert ask(bob, consent='yes', context_analysis_id=data['id']).status_code == 422
+    assert len(seen) == before
+    assert ask(alice, explain='yes', explanation_model='test-model').status_code == 422
+    assert len(seen) == before  # Changed data-sharing scope requires fresh consent.
+    assert ask(alice, context_analysis_id='deleted').status_code == 422
+    assert len(seen) == before
+    with workspace.app_context(), db():
+        row = db().execute('SELECT result FROM analyses WHERE id=?', (data['id'],)).fetchone()
+        saved = json.loads(row['result'])
+        saved['version'] = 'old-version'
+        db().execute('UPDATE analyses SET result=? WHERE id=?', (json.dumps(saved), data['id']))
+    assert ask(alice, context_analysis_id=data['id']).status_code == 422
+    assert len(seen) == before
+    assert alice.post(model_url(workspace), headers={'Accept': 'application/json'}, data={'action':'ask'}).status_code == 400
+
+
+@pytest.mark.parametrize('provider', ['typesafe', 'deepseek'])
+def test_followup_sends_only_previous_selection_ids(workspace, monkeypatch, provider):
+    workbook = load_model(workspace.config['MODEL_LIBRARY_DIR'], catalog(workspace.config['MODEL_LIBRARY_DIR'])[0]['id'])
+    previous = {'metric': 'r3', 'operation': 'series', 'start': 'unspecified', 'end': 'unspecified'}
+    def request(p, key, payload):
+        context = payload['state'] if p == 'typesafe' else json.loads(payload['messages'][-1]['content'])['options']
+        assert context['previous_selection'] == previous
+        assert 'points' not in json.dumps(context)
+        plan = {'metric': 'r3', 'operation': 'change', 'start': 'C', 'end': 'D'}
+        if p == 'typesafe':
+            return {'answers': {k: {'type': 'choice', 'choice': v, 'confidence': 1} for k,v in plan.items()}}
+        return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(plan)}}]}
+    monkeypatch.setattr(providers, '_request', request)
+    result = providers.analyze(provider, 'fixture', 'fixture', 'Compare Q124 and Q224.', workbook, previous_selection=previous)
+    assert result['difference'] == 25
+
+
+def test_result_presentation_keeps_period_frequencies_units_and_gaps_separate():
+    from app.workbook_presentation import present_result, readable_explanation
+    result = {'points': [
+        {'period': 'Q124', 'value': 10, 'source': 'Model!C3'},
+        {'period': 'Q224', 'value': None, 'source': 'Model!D3'},
+        {'period': 'Q324', 'value': -5, 'source': 'Model!E3'},
+        {'period': '2024', 'value': 61749.24583999999, 'source': 'Model!F3'},
+        {'period': '2025', 'value': .25, 'percent': True, 'source': 'Model!G3'}]}
+    view = present_result(result)
+    assert [g['label'] for g in view['groups']] == ['Quarterly', 'Annual', 'Annual']
+    assert len(view['groups'][0]['segments']) == 2  # Never bridge missing data.
+    assert view['groups'][1]['first']['display'] == '61,749.25'
+    assert view['groups'][2]['unit'] == 'Percent' and view['groups'][2]['first']['display'] == '25.00%'
+    assert view['missing'] == 1
+    assert readable_explanation('Q224, Model!C39, 2030: 61749.24583999999. Margin 12.456%.') == ['Q224, Model!C39, 2030: 61,749.25. Margin 12.46%.']
+    assert result['points'][3]['value'] == 61749.24583999999

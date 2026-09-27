@@ -38,7 +38,7 @@ async function expectConversationRail(page: Page) {
   expect(viewport.height - box.y - box.height).toBeLessThanOrEqual(1);
   expect(box.y).toBeLessThanOrEqual(80);
   expect(box.height).toBeGreaterThan(viewport.height - 81);
-  await expect(dock(page).getByRole('button', { name: 'Send and save' })).toBeInViewport();
+  await expect(dock(page).getByRole('button', { name: 'Send message' })).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 }
 
@@ -55,13 +55,17 @@ test('AI answer keeps its chat through saved analysis, navigation, refresh, and 
   await expect(dock(page).getByLabel('Your question', { exact: true })).toHaveValue(question);
   await dock(page).locator('.studio-chat-options > summary').click();
   await dock(page).locator('#provider-model').selectOption('typesafe:jev-latest');
-  await dock(page).locator('[name=consent]').check();
-  await dock(page).getByRole('button', { name: 'Send and save' }).click();
-  await expect(page).toHaveURL(/\/workspace\/analyses\//);
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await page.getByRole('button', { name: 'Agree and send' }).click();
+  await expect(dock(page).getByLabel('AI response', { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(modelURL);
+  await dock(page).getByRole('link', { name: 'Explore chart & sources' }).click();
   const analysisURL = page.url();
+  await page.locator('#source-data > summary').click();
   const table = page.getByRole('region', { name: 'Calculated values and source cells' });
   await expect(table.getByRole('row').filter({ hasText: 'Q124' })).toContainText('10.00');
   await expect(table).toContainText('Model!C3');
+  if (testInfo.project.name === 'mobile') await page.getByRole('button', { name: 'Open AI chat' }).click();
   // This is the original failure: the result page dropped the chat entirely.
   await expect(dock(page)).toBeVisible();
   await expectConversationRail(page);
@@ -92,7 +96,10 @@ test('AI answer keeps its chat through saved analysis, navigation, refresh, and 
   await page.goBack();
   await expect(dock(page).getByLabel('Your question', { exact: true })).toBeVisible();
   await page.goto(analysisURL);
+  await page.getByRole('button', { name: 'Minimize AI chat' }).click();
+  await page.locator('#source-data > summary').click();
   await expect(table).toContainText('Model!C3');
+  await page.getByRole('button', { name: 'Open AI chat' }).click();
   await expect(dock(page).getByLabel('Your question', { exact: true })).toBeVisible();
 });
 
@@ -103,9 +110,8 @@ test('Jev selection and a DeepSeek explanation work together, including a follow
   await dock(page).locator('#provider-model').selectOption('typesafe:jev-latest');
   await dock(page).getByLabel('Add a DeepSeek explanation', { exact: false }).check();
   await dock(page).getByLabel('Explanation model', { exact: true }).selectOption('fixture-chat');
-  await dock(page).locator('[name=consent]').check();
-  await dock(page).getByRole('button', { name: 'Send and save' }).click();
-  await expect(page).toHaveURL(/\/workspace\/analyses\//);
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await page.getByRole('button', { name: 'Agree and send' }).click();
   const log = dock(page).getByRole('log', { name: 'Workbook conversation' });
   await expect(log.getByLabel('Your message', { exact: true })).toContainText(question);
   await expect(log.locator('.explanation')).toContainText('10 (Model!C3) and 15 (Model!D3)');
@@ -123,31 +129,89 @@ test('Jev selection and a DeepSeek explanation work together, including a follow
   await page.reload();
   await expect(log.locator('.explanation')).toContainText('10 (Model!C3) and 15 (Model!D3)');
   const firstURL = page.url();
-  await dock(page).getByLabel('Your question', { exact: true }).fill(question);
+  await dock(page).getByLabel('Your question', { exact: true }).fill('Compare Q124 and Q224.');
   await dock(page).locator('.studio-chat-options > summary').click();
   await expect(dock(page).getByLabel('Add a DeepSeek explanation', { exact: false })).toBeChecked();
   await dock(page).getByLabel('Add a DeepSeek explanation', { exact: false }).uncheck();
   await dock(page).locator('#provider-model').selectOption('deepseek:fixture-chat');
-  await dock(page).locator('[name=consent]').check();
-  await dock(page).getByRole('button', { name: 'Send and save' }).click();
-  await expect(page).not.toHaveURL(firstURL);
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await page.getByRole('button', { name: 'Agree and send' }).click();
+  await expect(page).toHaveURL(firstURL);
   await expect(log.getByLabel('Your message', { exact: true })).toHaveCount(2);
   await expect(log.getByLabel('AI response', { exact: true })).toHaveCount(2);
   await expect(log.locator('.explanation')).toContainText('10 (Model!C3)');
-  await expect(page).toHaveURL(/\/workspace\/analyses\//);
-  await expect(dock(page)).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Calculated values and source cells' })).toContainText('Model!C3');
+  await expect(log.getByLabel('AI response', { exact: true }).last()).toContainText('+5.00 workbook units');
+  await page.reload();
+  await expect(log.getByLabel('AI response', { exact: true })).toHaveCount(2);
 });
 
-test('unsupported questions retain the draft and a usable chat with feedback in Notifications', async ({ page }) => {
+test('unsupported questions retain the draft and inline recovery without leaving the conversation', async ({ page }) => {
   await openWorkbook(page);
   await dock(page).getByLabel('Your question', { exact: true }).fill('Are earnings good?');
   await dock(page).locator('.studio-chat-options > summary').click();
   await dock(page).locator('#provider-model').selectOption('typesafe:jev-latest');
-  await dock(page).locator('[name=consent]').check();
-  await dock(page).getByRole('button', { name: 'Send and save' }).click();
-  await expect(page.locator('.workspace-notifications').getByRole('alert')).toContainText('Ask for one metric');
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await page.getByRole('button', { name: 'Agree and send' }).click();
   await expect(dock(page).getByRole('log')).toContainText('Ask for one metric');
   await expect(dock(page).getByLabel('Your question', { exact: true })).toHaveValue('Are earnings good?');
-  await expect(dock(page).getByRole('button', { name: 'Send and save' })).toBeEnabled();
+  await expect(dock(page).getByRole('button', { name: 'Send message' })).toBeEnabled();
+});
+
+
+test('pending requests cannot be sent twice and a dropped connection preserves the draft', async ({ page }) => {
+  await openWorkbook(page);
+  await dock(page).getByLabel('Your question', { exact: true }).fill(question);
+  let requests = 0;
+  let release: () => void = () => {};
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/workspace/models/*', async route => {
+    if (route.request().method() !== 'POST') return route.continue();
+    requests++;
+    await gate;
+    await route.abort('connectionreset');
+  });
+  await dock(page).getByLabel('Your question', { exact: true }).press('Enter');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(requests).toBe(0);
+  await dock(page).getByLabel('Your question', { exact: true }).press('Enter');
+  await page.getByRole('button', { name: 'Agree and send' }).click();
+  await expect(dock(page).getByRole('button', { name: 'Send message' })).toBeDisabled();
+  await expect(dock(page).getByRole('log')).toHaveAttribute('aria-busy', 'true');
+  await expect.poll(() => requests).toBe(1);
+  release();
+  await expect(dock(page).getByRole('log')).toContainText('Check your saved answers before retrying');
+  await expect(dock(page).getByLabel('Your question', { exact: true })).toHaveValue(question);
+  await expect(dock(page).getByRole('button', { name: 'Send message' })).toBeEnabled();
+  expect(requests).toBe(1);
+});
+
+test('remembered consent follows the sharing scope and charts keep source data available', async ({ page }, testInfo) => {
+  await openWorkbook(page);
+  await dock(page).getByLabel('Your question', { exact: true }).fill(question);
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await page.getByRole('dialog').getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Agree and send' }).click();
+  await expect(dock(page).getByLabel('AI response', { exact: true })).toHaveCount(1);
+  await dock(page).getByRole('button', { name: 'Compare Q124 and Q224' }).click();
+  await dock(page).getByLabel('Your question', { exact: true }).press('Enter');
+  await expect(dock(page).getByLabel('AI response', { exact: true })).toHaveCount(2);
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await dock(page).getByRole('link', { name: 'Explore chart & sources' }).first().click();
+  if (testInfo.project.name === 'desktop') await page.getByRole('button', { name: 'Minimize AI chat' }).click();
+  await expect(page.getByRole('region', { name: 'Analysis overview' })).toBeVisible();
+  await expect(page.locator('.studio-series-chart')).toHaveCount(2);
+  const source = page.getByRole('region', { name: 'Calculated values and source cells' });
+  await expect(source).toBeHidden();
+  await page.locator('#source-data > summary').click();
+  await expect(source).toContainText('Model!C3');
+  await page.locator('#source-data > summary').click();
+  await page.screenshot({ path: testInfo.outputPath('analysis-overview.png') });
+  await page.getByRole('button', { name: 'Open AI chat' }).click();
+  await dock(page).locator('.studio-chat-options > summary').click();
+  await dock(page).getByLabel('Add a DeepSeek explanation', { exact: false }).check();
+  await dock(page).getByLabel('Your question', { exact: true }).fill(question);
+  await dock(page).getByRole('button', { name: 'Send message' }).click();
+  await expect(page.getByRole('dialog')).toContainText('selected cell values');
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
 });

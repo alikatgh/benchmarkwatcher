@@ -1,0 +1,19 @@
+<article class="studio-chat-message studio-chat-question" aria-label="Your message"><span class="sr-only">You</span><p>{{ message.question }}</p></article>
+<article class="studio-chat-message studio-chat-answer" aria-label="AI response" data-analysis-id="{{ message.id }}" data-metric="{{ message.result.metric }}">
+  <div class="studio-answer-heading"><span>{{ 'Jev' if message.provider == 'typesafe' else 'DeepSeek' }}{% if message.result.explanation and message.provider == 'typesafe' %} + DeepSeek{% endif %}</span><span class="muted">Saved privately</span></div>
+  <h3>{{ message.result.metric }}</h3>
+  <div class="studio-answer-values">
+  {% for group in message.presentation.groups %}
+    <div class="studio-answer-group"><span class="muted">{{ group.label }} · {{ group.unit|lower }}</span>
+      <div><span>{{ group.first.period }}<strong>{{ group.first.display }}</strong></span>{% if group.points|length > 1 %}<span class="muted" aria-hidden="true">→</span><span>{{ group.last.period }}<strong>{{ group.last.display }}</strong></span>{% endif %}</div>
+    </div>
+  {% endfor %}
+  </div>
+  {% if message.result.difference is defined %}<p class="studio-answer-change">{{ '{:+,.2f}'.format(message.result.difference) }} {{ message.result.difference_unit }}{% if message.result.relative_change is not none %} · {{ '{:+,.2f}'.format(message.result.relative_change) }}%{% endif %}</p>{% endif %}
+  {% if message.presentation.explanation %}<div class="explanation">{% for paragraph in message.presentation.explanation %}<p>{{ paragraph }}</p>{% endfor %}</div>{% endif %}
+  {% if message.presentation.missing %}<p class="muted small">{{ message.presentation.missing }} {{ 'period has' if message.presentation.missing == 1 else 'periods have' }} no saved value.</p>{% endif %}
+  {% if message.result.explanation_notice %}<p class="studio-chat-error">{{ message.result.explanation_notice }}</p>{% endif %}
+  <p class="studio-answer-footnote">Workbook snapshot · May include model assumptions{% if message.result.explanation %} · AI commentary{% endif %}</p>
+  <div class="studio-answer-actions"><a class="studio-chat-result" href="{{ url_for('workspace.analysis', analysis_id=message.id) }}">Explore chart &amp; sources <span aria-hidden="true">↗</span></a><button type="button" class="studio-copy-answer" aria-label="Copy answer">Copy</button></div>
+  {% if message.result.operation == 'series' and message.presentation.groups and message.presentation.groups[0].points|length > 1 %}{% set points = message.presentation.groups[0].points %}<button type="button" class="studio-followup" data-chat-question="Compare {{ points[0].period }} and {{ points[1].period }}.">Compare {{ points[0].period }} and {{ points[1].period }} <span aria-hidden="true">↗</span></button>{% endif %}
+</article>

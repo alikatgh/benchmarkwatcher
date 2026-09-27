@@ -10,8 +10,8 @@ def write_workbook(path):
             return f'<c r="{ref}" t="inlineStr"><is><t>{escape(value)}</t></is></c>'
         return f'<c r="{ref}"><v>{value}</v></c>'
 
-    columns = list('CDEFGHIJKLMN')
-    periods = [f'Q{q}{year}' for year in (24, 25, 26) for q in range(1, 5)]
+    columns = list('CDEFGHIJKLMNOP')
+    periods = [f'Q{q}{year}' for year in (24, 25, 26) for q in range(1, 5)] + ['2026', '2027']
     rows = [cell('B2', 'Metric') + ''.join(cell(f'{c}2', p) for c, p in zip(columns, periods))]
     for row, name, base in [(3, 'Operating Income', 10), (4, 'Revenue', 100)]:
         rows.append(cell(f'B{row}', name) + ''.join(cell(f'{c}{row}', base + i * 5) for i, c in enumerate(columns)))
@@ -38,6 +38,7 @@ def provider_response(provider, key, payload=None):
                 'usage': {'completion_tokens': payload['max_tokens']}}
     if provider == 'typesafe':
         question = payload['state']['user_question']
+        previous = payload['state'].get('previous_selection')
     else:
         context = json.loads(payload['messages'][-1]['content'])
         if 'result' in context:
@@ -46,9 +47,12 @@ def provider_response(provider, key, payload=None):
                        + 'The remaining periods are saved workbook values. Check the source cells alongside each period before interpreting this series.\n\n' * 8)
             return {'choices': [{'finish_reason': 'stop', 'message': {'content': content}}]}
         question = context['question']
+        previous = context['options'].get('previous_selection')
     supported = question == 'Show Operating Income across the available periods.'
     plan = {'metric': 'r3' if supported else 'unspecified', 'operation': 'series' if supported else 'unsupported',
             'start': 'unspecified', 'end': 'unspecified'}
+    if question == 'Compare Q124 and Q224.' and previous and previous['metric'] == 'r3':
+        plan = {'metric': 'r3', 'operation': 'change', 'start': 'C', 'end': 'D'}
     if provider == 'typesafe':
         return {'model': 'jev-latest', 'answers': {name: {'type': 'choice', 'choice': choice, 'confidence': 1} for name, choice in plan.items()}}
     return {'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(plan)}}]}

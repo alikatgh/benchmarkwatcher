@@ -33,26 +33,154 @@
     }
     const chat = document.querySelector('.studio-chat-form');
     const messages = document.querySelector('.studio-chat-messages');
-    if (messages) messages.scrollTop = messages.scrollHeight;
-    if (chat) {
+    if (messages) {
+        const lastAnswer = messages.querySelector('.studio-chat-answer:last-of-type');
+        messages.scrollTop = Math.max(0, (lastAnswer?.previousElementSibling?.offsetTop || 0) - 16);
+    }
+    if (chat && messages) {
         const question = chat.querySelector('#question');
         const send = chat.querySelector('[type=submit]');
         const status = chat.querySelector('.studio-chat-status');
-        (dock || chat).querySelectorAll('[data-chat-question]').forEach(example => {
-            example.addEventListener('click', () => {
+        const context = chat.querySelector('[name=context_analysis_id]');
+        const consent = chat.querySelector('[name=consent]');
+        const dialog = chat.querySelector('.studio-consent-dialog');
+        let permissions = JSON.parse(chat.dataset.permissions || '[]');
+        let pending = false;
+        const resize = () => {
+            question.style.height = 'auto';
+            question.style.height = Math.min(144, Math.max(64, question.scrollHeight)) + 'px';
+        };
+        question.addEventListener('input', resize);
+        const follow = answer => {
+            if (answer && context) {
+                context.value = answer.dataset.analysisId;
+                chat.querySelector('.studio-chat-context-hint').textContent = 'Following ' + answer.dataset.metric;
+                chat.querySelector('.studio-new-topic').hidden = false;
+            }
+        };
+        chat.querySelector('.studio-new-topic')?.addEventListener('click', () => {
+            context.value = '';
+            chat.querySelector('.studio-chat-context-hint').textContent = 'New topic · Name a workbook metric';
+            chat.querySelector('.studio-new-topic').hidden = true;
+            question.focus();
+        });
+        (dock || chat).addEventListener('click', async event => {
+            const example = event.target.closest('[data-chat-question]');
+            if (example && !pending) {
                 question.value = example.dataset.chatQuestion;
+                follow(example.closest('.studio-chat-answer'));
+                resize();
                 question.focus();
+            }
+            const copy = event.target.closest('.studio-copy-answer');
+            if (copy) {
+                try {
+                    const answer = copy.closest('.studio-chat-answer');
+                    const text = [answer.querySelector('h3')?.textContent, answer.querySelector('.studio-answer-values')?.innerText,
+                        answer.querySelector('.explanation')?.innerText, answer.querySelector('.studio-answer-change')?.textContent,
+                        answer.querySelector('.studio-chat-result')?.href].filter(Boolean).join('\n\n');
+                    await navigator.clipboard.writeText(text);
+                    status.textContent = 'Answer copied.';
+                } catch (_) { status.textContent = 'Could not copy. Select the answer text to copy it.'; }
+                status.hidden = false;
+            }
+        });
+        if (dialog && typeof dialog.showModal === 'function') {
+            consent.required = false;
+            chat.querySelector('.studio-chat-consent-fallback').hidden = true;
+            dialog.querySelector('[data-consent-cancel]').addEventListener('click', () => dialog.close());
+            dialog.querySelector('[data-consent-send]').addEventListener('click', () => {
+                consent.checked = true;
+                dialog.close();
+                chat.requestSubmit();
             });
+        }
+        question.addEventListener('keydown', event => {
+            if (event.key === 'Enter' && !event.shiftKey && !event.isComposing && !pending) {
+                event.preventDefault();
+                chat.requestSubmit();
+            }
         });
-        chat.addEventListener('submit', event => {
-            if (send.disabled) { event.preventDefault(); return; }
-            send.disabled = true;
-            status.textContent = 'Waiting for your provider… Your answer will appear in this chat.';
+        chat.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (pending || !chat.reportValidity()) return;
+            const provider = chat.querySelector('[name=provider_model]');
+            const explains = chat.querySelector('[name=explain]')?.checked;
+            const explanationModel = explains ? chat.querySelector('[name=explanation_model]').value : '';
+            const scope = [chat.dataset.workbook, provider.value, explanationModel].join('|');
+            if (!consent.checked && !permissions.includes(scope)) {
+                const label = provider.selectedOptions[0].textContent;
+                dialog.querySelector('.studio-sharing-description').textContent =
+                    'Send your question, workbook row and period labels, and previous metric selection to ' + label + '.' +
+                    (explains ? ' Also send selected cell values and calculated results to DeepSeek (' + explanationModel + ') for a written explanation.' : ' Cell values stay in BenchmarkWatcher.');
+                dialog.querySelector('[name=remember_consent]').checked = false;
+                dialog.showModal();
+                return;
+            }
+            const payload = new FormData(chat);
+            pending = true;
+            const controls = Array.from(chat.querySelectorAll('input, textarea, select, button')).filter(el => !el.disabled);
+            controls.forEach(el => { el.disabled = true; });
+            chat.querySelector('.studio-chat-options')?.removeAttribute('open');
+            messages.querySelectorAll('.studio-chat-welcome, .studio-chat-example, .studio-chat-failed').forEach(el => el.remove());
+            const turn = document.createElement('div');
+            const user = document.createElement('article');
+            user.className = 'studio-chat-message studio-chat-question';
+            user.setAttribute('aria-label', 'Your message');
+            const text = document.createElement('p');
+            text.textContent = question.value;
+            user.append(text);
+            const waiting = document.createElement('p');
+            waiting.className = 'studio-chat-pending';
+            waiting.textContent = explains ? 'Selecting workbook data and preparing the explanation…' : 'Selecting and calculating workbook data…';
+            turn.append(user, waiting);
+            messages.append(turn);
+            messages.setAttribute('aria-busy', 'true');
+            messages.scrollTop = messages.scrollHeight;
+            status.textContent = 'Waiting for your provider. You can keep reading the workbook.';
             status.hidden = false;
+            try {
+                const response = await fetch(chat.getAttribute('action'), { method: 'POST', body: payload,
+                    headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+                if (!response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error(response.status === 429 ? 'Too many requests. Wait a minute before sending again.' :
+                        response.redirected || response.status === 400 ? 'Your session or form expired. Reload the page and sign in if needed. Your draft is still below.' :
+                        'The server response was interrupted. Check your saved answers before retrying; this request may have completed.');
+                }
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'The request failed. Your draft is still below.');
+                if (!data.html || !data.id) throw new Error('The reply could not be displayed. Check your saved answers before retrying.');
+                // Only escaped, server-rendered markup from this authenticated origin.
+                turn.innerHTML = data.html;
+                permissions = data.permissions || [];
+                const answer = turn.querySelector('.studio-chat-answer');
+                follow(answer);
+                question.value = '';
+                resize();
+                messages.scrollTop = Math.max(0, turn.offsetTop - 16);
+                status.textContent = 'Answer saved.';
+            } catch (error) {
+                turn.classList.add('studio-chat-failed');
+                waiting.className = 'studio-chat-error';
+                waiting.setAttribute('role', 'alert');
+                waiting.textContent = error instanceof TypeError ?
+                    'Connection interrupted. Check your saved answers before retrying; this request may have completed. Your draft is still below.' : error.message;
+                const library = document.createElement('a');
+                library.href = '/workspace/';
+                library.textContent = 'Check saved answers';
+                waiting.append(document.createElement('br'), library);
+                status.textContent = 'Your draft has been kept. Review the message above before retrying.';
+                messages.scrollTop = messages.scrollHeight;
+            } finally {
+                pending = false;
+                consent.checked = false;
+                controls.forEach(el => { el.disabled = false; });
+                messages.setAttribute('aria-busy', 'false');
+                question.focus({ preventScroll: true });
+            }
         });
-        window.addEventListener('pageshow', () => {
-            send.disabled = false;
-            status.hidden = true;
+        window.addEventListener('beforeunload', event => {
+            if (pending) { event.preventDefault(); event.returnValue = ''; }
         });
     }
     const explanation = document.getElementById('studio-explanation');
