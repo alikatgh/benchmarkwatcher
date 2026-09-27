@@ -7,7 +7,6 @@ test.describe('Market Pulse', () => {
         await page.locator('#market-pulse > summary').click();
 
         await expect(page.locator('#market-pulse')).toBeVisible();
-        await page.locator('#market-pulse > summary').click();
         await expect(page.locator('#quick-find')).toBeVisible();
         await expect(page.locator('#grid-cards-container')).toBeVisible();
         await expect(page.locator('#market-pulse-categories a').first()).toBeVisible();
@@ -61,7 +60,6 @@ test.describe('Market Pulse', () => {
         await page.locator('#market-pulse > summary').click();
 
         await expect(page.locator('#market-pulse')).toBeVisible();
-        await page.locator('#market-pulse > summary').click();
         await expect(page.locator('#table-body')).toBeVisible();
 
         const initialTotal = Number(await page.locator('#market-pulse-total').innerText());
@@ -116,7 +114,6 @@ test.describe('Market Pulse', () => {
             await page.locator('#market-pulse > summary').click();
 
             await expect(page.locator('#market-pulse')).toBeVisible();
-        await page.locator('#market-pulse > summary').click();
             await expect(page.locator('#market-pulse-headline')).toBeVisible();
             await expect(page.locator('#market-pulse-rise-link')).toBeVisible();
             await expect(page.locator('#market-pulse-drop-link')).toBeVisible();
