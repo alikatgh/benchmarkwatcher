@@ -17,7 +17,7 @@ async function openFirst(page: Page) {
     return { link, name, id };
 }
 
-test('desktop opens contextual source history, watches persistently, and returns focus to the table', async ({ page }) => {
+test('desktop opens contextual source history, watches persistently, and returns focus to the table', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await browse(page);
     const { link, id } = await openFirst(page);
@@ -28,7 +28,7 @@ test('desktop opens contextual source history, watches persistently, and returns
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('bw.watchlist.v1')!).ids)).toContain(id);
     await page.locator('#benchmark-detail').getByText(/^Observation table/).click();
     await expect(page.locator('#benchmark-detail-history table')).toBeVisible();
-    await page.screenshot({ path: '/private/tmp/benchmark-detail-desktop.png', fullPage: false });
+    await page.screenshot({ path: testInfo.outputPath('benchmark-detail-desktop.png'), fullPage: false });
     await page.locator('#benchmark-detail [data-detail-action="close"]').click();
     await expect(link).toBeFocused();
     await page.reload();
@@ -65,7 +65,7 @@ test('a failed detail request offers retry and recovers without leaving the tabl
     await expect(page).toHaveURL(/\?range=ALL/);
 });
 
-test('390px details stay contained, close with focus restored, and transfer into editable research', async ({ page }) => {
+test('390px details stay contained, close with focus restored, and transfer into editable research', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await browse(page);
     const { link, name } = await openFirst(page);
@@ -80,7 +80,7 @@ test('390px details stay contained, close with focus restored, and transfer into
     expect(dimensions).toEqual({ left: 0, right: 390, pageOverflow: false, detailOverflow: false, backgroundInert: true });
     const accessibility = await new AxeBuilder({ page }).include('#benchmark-detail').withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(accessibility.violations.filter(issue => issue.impact === 'serious' || issue.impact === 'critical')).toEqual([]);
-    await page.screenshot({ path: '/private/tmp/benchmark-detail-mobile.png', fullPage: false });
+    await page.screenshot({ path: testInfo.outputPath('benchmark-detail-mobile.png'), fullPage: false });
     await page.keyboard.press('Escape');
     await expect(detail).not.toBeVisible();
     await expect(link).toBeFocused();
@@ -96,7 +96,7 @@ test('390px details stay contained, close with focus restored, and transfer into
     await expect(page.locator('#rw-save-state')).toHaveText('Saved in this browser');
 });
 
-test('320px dark details retain readable controls and a contained chart', async ({ page }) => {
+test('320px dark details retain readable controls and a contained chart', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 320, height: 740 });
     await browse(page);
     await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; document.documentElement.classList.add('dark'); });
@@ -106,7 +106,7 @@ test('320px dark details retain readable controls and a contained chart', async 
     await expect(detail.getByRole('button', { name: 'Close benchmark details' })).toBeInViewport();
     const accessibility = await new AxeBuilder({ page }).include('#benchmark-detail').withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(accessibility.violations.filter(issue => issue.impact === 'serious' || issue.impact === 'critical')).toEqual([]);
-    await page.screenshot({ path: '/private/tmp/benchmark-detail-narrow-dark.png', fullPage: false });
+    await page.screenshot({ path: testInfo.outputPath('benchmark-detail-narrow-dark.png'), fullPage: false });
 });
 
 test('detail pane resizes by dragging and keyboard, keeps its chart state, and restores width after reload', async ({ page }) => {

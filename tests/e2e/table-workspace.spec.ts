@@ -102,7 +102,7 @@ test.describe('Benchmark table workspace', () => {
     });
 
     for (const width of [390, 320]) {
-        test(`contains ${width}px horizontal table scroll and keeps touch controls labeled`, async ({ page }) => {
+        test(`contains ${width}px horizontal table scroll and keeps touch controls labeled`, async ({ page }, testInfo) => {
             test.setTimeout(90_000);
             await page.setViewportSize({ width, height: 844 });
             await openTable(page);
@@ -116,7 +116,7 @@ test.describe('Benchmark table workspace', () => {
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
             const a11y = await new AxeBuilder({ page }).include('#table-workspace').withTags(['wcag2a', 'wcag2aa']).analyze();
             expect(a11y.violations.filter(v => ['serious', 'critical'].includes(v.impact || ''))).toEqual([]);
-            await page.screenshot({ path: `/private/tmp/benchmark-table-${width}.png`, fullPage: true });
+            await page.screenshot({ path: testInfo.outputPath(`benchmark-table-${width}.png`), fullPage: true });
         });
     }
 });
