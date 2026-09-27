@@ -142,3 +142,6 @@ html[data-theme] .range-toolbar .range-btn.theme-surface {background:var(--theme
   .chart-controls .hidden.sm\:inline {display:inline;}
   .chart-controls .sm\:hidden {display:none;}
 }
+
+/* Keep linked guide sections visible below the fixed header. */
+.release-notes .release-entry[id] {scroll-margin-top:calc(var(--bw-header-height) + 24px);}
