@@ -32,6 +32,18 @@ beforeEach(() => {
 });
 afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); jest.restoreAllMocks(); });
 
+test('backup menu is keyboard dismissible and import retains a visible focus target', () => {
+  const menu = document.querySelector('.rw-more');
+  menu.open = true;
+  menu.querySelector('summary').dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  expect(menu.open).toBe(false); expect(document.activeElement).toBe(menu.querySelector('summary'));
+  menu.open = true;
+  const chooser = jest.spyOn(document.getElementById('rw-import-file'), 'click').mockImplementation(() => {});
+  menu.querySelector('[data-rw-action="import"]').click();
+  expect(chooser).toHaveBeenCalled(); expect(menu.open).toBe(false);
+  expect(document.activeElement).toBe(menu.querySelector('summary'));
+});
+
 test('creates and edits real entries, saves only in this browser, and reloads production storage', () => {
   research.focusNewEntry();
   enter(field('title'), 'Supply sources'); enter(field('notes'), 'Check the revision schedule.'); enter(field('tags'), 'Metals, Monthly, Metals');

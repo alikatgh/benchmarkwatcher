@@ -125,10 +125,14 @@
             this.activeView = savedView?.id || (this.state.view.archived ? 'archive' : this.state.view.status === 'To review' ? 'review' : 'all');
             this.root.addEventListener('click', event => {
                 const action = event.target.closest('[data-rw-action]');
+                const menu = action?.closest('.rw-more');
+                if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); }
+                this.root.querySelectorAll('.rw-more[open]').forEach(open => { if (!open.contains(event.target)) open.open = false; });
                 if (action) this.action(action.dataset.rwAction, action);
                 const entry = event.target.closest('[data-rw-entry]');
                 if (entry) this.focusEntry(entry.dataset.rwEntry);
             });
+            this.root.addEventListener('keydown', event => { if (event.key !== 'Escape') return; const menu = this.root.querySelector('.rw-more[open]'); if (menu) { menu.open = false; menu.querySelector('summary')?.focus(); event.preventDefault(); } });
             this.$('rw-search').addEventListener('input', event => this.setSearch(event.target.value));
             this.$('rw-status-filter').addEventListener('change', event => this.updateView({ status: event.target.value }));
             this.$('rw-sort').addEventListener('change', event => this.updateView({ sort: event.target.value }));

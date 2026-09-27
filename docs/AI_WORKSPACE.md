@@ -1,10 +1,18 @@
 # Private financial research workspace
 
-## Production deployment — September 21, 2026
+## Current local working copy — September 27, 2026
+
+The complete app now lives in `/Users/s_avelova/Documents/projects/benchmarkwatcher`
+on `local/complete-app-20260927`, based on the full September 26 release `e3c30d9`.
+Pending dashboard and workbook studio changes have been consolidated into this
+folder. This local consolidation did not push or deploy those pending changes.
+The September 21 deployment record below is historical.
+
+## Historical production deployment — September 21, 2026
 
 - Live at https://benchmarkwatcher.online/workspace/ on the existing Hetzner
   host `89.167.29.166` (`wallmarkets-hel` in the console; `turgen-hel` in the OS).
-- Deployed application commit: `b7546fa4120443ce352b9e9307a6803efab5d7ea`, from
+- Deployed application commit: `67892e22be54a2b79c85b2105139eebc280da281`, from
   `codex/jev-model-analysis`. The server checkout is detached at this release;
   do not assume `origin/main` contains it. Review: GitHub PR #1.
 - App: `/home/benchmarkwatcher/app`, `benchmarkwatcher.service`, loopback port
@@ -187,3 +195,10 @@ Validation: `python -m pytest tests/test_workspace.py tests/test_company_researc
 vocabulary guard, and browser checks for company search, saved scenario,
 valuation inputs, and 390px report layout. Mocked provider tests do not establish live
 provider accuracy. No provider key was used for these checks.
+
+Deployment verification: Samsung increment deployed to the existing service;
+pre-deploy workspace backup succeeded. Public health returned `ok`, login 200,
+and an unauthenticated saved-report request redirected (302). The service and
+neighboring apps remained active. No environment, credential, schema, or proxy
+changes were needed. Roll back this increment by checking out `b7546fa` and
+restarting only BenchmarkWatcher; preserve the existing environment and state.

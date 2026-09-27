@@ -1,0 +1,51 @@
+/* Commodity chart: compact controls, with secondary options disclosed on demand. */
+#commodity-page .chart-toolbar {display:block;padding:12px 16px!important;}
+#commodity-page .chart-heading {display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+#commodity-page .chart-heading h3 {font-size:14px;}
+#commodity-page .chart-controls {display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;}
+#commodity-page .chart-control-group {border:0;padding:0;gap:2px;}
+#commodity-page .chart-range-presets {width:auto;flex-wrap:wrap;justify-content:flex-start;}
+html[data-theme] #commodity-page .chart-controls .range-btn {min-height:32px;padding:4px 9px;font-size:12px;line-height:22px;border:0;border-radius:5px;font-weight:550;}
+html[data-theme] #commodity-page .chart-controls .range-btn[aria-pressed="true"] {background:var(--theme-bg)!important;color:var(--theme-accent)!important;box-shadow:inset 0 0 0 1px var(--theme-border);}
+#commodity-page .chart-display-controls {margin-left:auto;gap:12px;}
+#commodity-page .chart-select-label {display:flex;align-items:center;gap:6px;font-size:11px;color:var(--theme-text-muted);}
+#commodity-page .chart-select-label select {min-height:32px;max-width:130px;font-size:12px;padding:4px 22px 4px 8px;color:var(--theme-text);background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:5px;}
+#commodity-page .chart-date-picker {position:relative;}
+#commodity-page .chart-date-picker summary {list-style:none;cursor:pointer;min-height:32px;display:flex;align-items:center;gap:6px;padding:4px 9px;font-size:12px;border:1px solid var(--theme-border);border-radius:5px;}
+#commodity-page .chart-date-picker summary::-webkit-details-marker {display:none;}
+#commodity-page #range-custom[data-active="true"] {color:var(--theme-accent);}
+#commodity-page .chart-date-form {position:absolute;z-index:60;top:calc(100% + 8px);left:0;width:290px;max-width:calc(100vw - 40px);padding:16px;display:grid;gap:10px;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px;box-shadow:0 8px 28px #0002;font-size:12px;}
+#commodity-page .chart-date-form p {color:var(--theme-text-muted);line-height:1.5;}
+#commodity-page .chart-date-form label {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+#commodity-page .chart-date-form input {font:inherit;min-height:36px;padding:6px 8px;max-width:190px;border:1px solid var(--theme-border);border-radius:4px;background:var(--theme-bg);color:var(--theme-text);}
+#commodity-page .chart-date-form button {padding:8px 12px;border-radius:5px;background:var(--theme-accent);color:var(--theme-bg);font-weight:600;}
+#commodity-page #chart-date-error:empty {display:none;}
+#commodity-page #chart-date-error {color:var(--color-down);}
+#commodity-page .chart-controls :is(button,select,summary,input):focus-visible {outline:2px solid var(--theme-accent);outline-offset:2px;}
+#commodity-page #crosshair-info {padding:8px 0;margin-top:6px;border-top:1px solid var(--theme-border);}
+#commodity-page #crosshair-info>div {display:flex;gap:8px 20px;flex-wrap:wrap;min-width:0;}
+#commodity-page #crosshair-info>div>div {flex-direction:row;align-items:baseline;gap:6px;}
+#commodity-page #crosshair-info span {font-size:12px;letter-spacing:0;}
+#commodity-page #crosshair-info span:first-child {font-size:11px;font-weight:400;}
+#commodity-page .chart-action-strip {margin-top:4px;gap:6px;}
+#commodity-page .chart-action-strip button {min-height:32px;font-size:12px;padding:5px 9px;border-radius:5px;}
+#commodity-page #stats-bar {padding:8px 16px;}
+#commodity-page #stats-bar>div:first-child {display:block;font-size:10px;margin-bottom:6px;color:var(--theme-text-muted);}
+#commodity-page #stats-bar>div:last-child {display:flex;flex-wrap:wrap;gap:8px 20px;overflow:visible;}
+#commodity-page #stats-bar>div:last-child>div {display:flex;align-items:baseline;gap:6px;min-width:0;border:0;padding:0;}
+#commodity-page #stats-bar>div:last-child>div>div {font-size:12px;letter-spacing:0;margin:0;}
+#commodity-page #stats-bar>div:last-child>div>div:first-child {font-size:11px;font-weight:400;}
+@media(max-width:640px) {
+  #commodity-page .chart-toolbar {padding:10px!important;}
+  #commodity-page .chart-heading {gap:4px 8px;}
+  #commodity-page .chart-controls {gap:8px;}
+  #commodity-page .chart-range-presets {width:100%;flex-wrap:nowrap;justify-content:space-between;gap:0;}
+  html[data-theme] #commodity-page .chart-controls .range-btn {min-height:40px;padding:4px 7px;}
+  #commodity-page .chart-display-controls {margin-left:0;gap:8px;}
+  #commodity-page .chart-select-label {gap:3px;}
+  #commodity-page .chart-select-label select {min-height:40px;max-width:110px;}
+  #commodity-page .chart-date-picker summary {min-height:40px;}
+  #commodity-page .chart-date-form {left:0;}
+  #commodity-page #crosshair-info>div {gap:5px 14px;}
+  #commodity-page .chart-action-strip button {min-height:40px;}
+}

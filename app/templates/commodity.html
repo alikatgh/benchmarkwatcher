@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/commodity-controls.css') }}">
 {% set _has_price = commodity.price is number %}
 {% set _has_change = commodity.change is number and commodity.change_percent is number %}
 <div id="commodity-page" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-5 md:py-6 min-h-screen">
@@ -222,62 +223,33 @@
                 <p>{{ 'Daily observations' if commodity.is_daily else 'Monthly observations' }} · {{ commodity.currency }} / {{ commodity.unit }}</p>
             </div>
             <div class="chart-controls" aria-label="Chart controls">
-<div class="chart-control-group"><button onclick="setTimeRange('1W')" id="range-1W" aria-label="Show last 1 week"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1W</button>
-<button onclick="setTimeRange('1M')" id="range-1M" aria-label="Show last 1 month"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1M</button>
-<button onclick="setTimeRange('3M')" id="range-3M" aria-label="Show last 3 months"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">3M</button>
-<button onclick="setTimeRange('6M')" id="range-6M" aria-label="Show last 6 months"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">6M</button>
-<button onclick="setTimeRange('1Y')" id="range-1Y" aria-label="Show last 1 year"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">1Y</button>
-<button onclick="setTimeRange('ALL')" id="range-ALL" aria-label="Show all data"
-                                class="range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">ALL</button></div>
-<div class="chart-control-group"><button onclick="setChartType('line')" id="type-line" aria-label="Line chart view"
-                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 12l3-3 3 3 4-4"></path>
-                                </svg>
-                                <span class="hidden sm:inline">Line</span>
-                            </button>
-<button onclick="setChartType('area')" id="type-area" aria-label="Area chart view"
-                                class="type-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M3 18v-6l5-5 4 4 9-9v16H3z" opacity="0.3"></path>
-                                    <path d="M3 18v-6l5-5 4 4 9-9" fill="none" stroke="currentColor" stroke-width="2">
-                                    </path>
-                                </svg>
-                                <span class="hidden sm:inline">Area</span>
-                            </button></div>
-<div class="chart-control-group"><button onclick="setViewMode('price')" id="view-price" aria-label="Show absolute price"
-                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 bg-white dark:bg-white text-brand-black-80 dark:text-terminal-black">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
-                                    </path>
-                                </svg>
-                                Price
-                            </button>
-<button onclick="setViewMode('percent')" id="view-percent"
-                                aria-label="Show percentage change"
-                                class="view-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                    </path>
-                                </svg>
-                                <span class="hidden sm:inline">% Change</span>
-                                <span class="sm:hidden">%</span>
-                            </button></div>
+                <div class="chart-control-group chart-range-presets" role="group" aria-label="Observation window">
+                    {% for value, label in [('1W','1W'),('1M','1M'),('3M','3M'),('6M','6M'),('YTD','YTD'),('1Y','1Y'),('5Y','5Y'),('ALL','All')] %}
+                    <button type="button" onclick="setTimeRange('{{ value }}')" id="range-{{ value }}" class="range-btn" aria-pressed="{{ 'true' if value == 'ALL' else 'false' }}">{{ label }}</button>
+                    {% endfor %}
+                </div>
+                <details id="chart-date-picker" class="chart-date-picker">
+                    <summary id="range-custom">Dates <span aria-hidden="true">⌄</span></summary>
+                    <form class="chart-date-form" onsubmit="event.preventDefault(); BW.Commodity.applyCustomDates()">
+                        <strong>Observation dates</strong>
+                        <p>Choose an inclusive window within the available history.</p>
+                        <label>From <input id="chart-date-start" type="date" required aria-describedby="chart-date-error"></label>
+                        <label>To <input id="chart-date-end" type="date" required aria-describedby="chart-date-error"></label>
+                        <p id="chart-date-error" role="alert"></p>
+                        <button type="submit">Apply dates</button>
+                    </form>
+                </details>
+                <div class="chart-control-group chart-display-controls">
+                    <label class="chart-select-label">Plot <select id="chart-type-select" onchange="setChartType(this.value)"><option value="line">Line</option><option value="area">Area</option></select></label>
+                    <label class="chart-select-label">Show <select id="chart-view-select" onchange="setViewMode(this.value)"><option value="price">Value</option><option value="percent">% change</option></select></label>
+                </div>
             </div>
         </div>
 
         <!-- Price Statistics Bar -->
         <div id="stats-bar"
             class="px-4 sm:px-6 py-2.5 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
-            <div class="text-2xs text-brand-black-60 font-ui mb-1.5 text-center">Based on selected historical window
+            <div class="text-2xs text-brand-black-60 font-ui mb-1.5 text-center">Reference values · selected observation window
             </div>
             <div class="flex overflow-x-auto scrollbar-hide gap-3 sm:gap-4 sm:grid sm:grid-cols-5 font-ui text-center">
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
@@ -309,7 +281,7 @@
         </div>
 
         <!-- Chart Container -->
-        <div class="p-3 sm:p-4 md:p-6">
+        <div class="chart-plot-body p-3 sm:p-4 md:p-6">
             <!-- Crosshair Info Display — stacks on mobile, 3-cols on sm+ -->
             <div id="crosshair-info"
                 class="hidden mb-3 p-2.5 sm:px-3 bg-brand-black-60/5 dark:bg-white/5 rounded-lg font-ui overflow-x-auto scrollbar-hide">
@@ -324,7 +296,7 @@
                     <!-- Price -->
                     <div class="flex flex-col min-w-0 shrink-0">
                         <span
-                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider">Price</span>
+                            class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-wider" id="crosshair-value-label">Value</span>
                         <span id="crosshair-price"
                             class="text-xs sm:text-sm font-semibold text-brand-oxford dark:text-brand-teal tabular-nums whitespace-nowrap">--</span>
                     </div>
@@ -358,7 +330,7 @@
             </div>
 
             <!-- Chart Actions — horizontal scroll on mobile -->
-            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between font-ui">
+            <div class="chart-action-strip mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between font-ui">
                 <div class="text-xs text-brand-black-60 dark:text-brand-black-60">
                     <span id="date-range-display">Showing all data</span>
                 </div>

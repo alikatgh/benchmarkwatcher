@@ -65,3 +65,26 @@
  .company-entry .workspace-search {flex-wrap:wrap;}
  .company-entry .workspace-search input {flex:1 1 220px;}
 }
+
+/* Library first, with a visible calculation workflow. */
+.workspace{max-width:1440px;padding:20px 32px 40px;line-height:1.5}
+.workspace-nav{margin-bottom:24px;padding-bottom:14px;font-size:13px}
+.workspace h1{font-size:26px;line-height:1.25;letter-spacing:-.6px;margin-bottom:8px}.workspace h2{font-size:16px;line-height:1.4;margin-bottom:10px}.workspace p{margin:8px 0}
+.workspace .primary{background:var(--theme-accent);color:var(--theme-bg);border-color:transparent}
+.workspace :is(button,.primary){min-height:38px;padding:7px 13px;border-radius:6px;font-size:13px;white-space:nowrap}
+.workspace-form>.primary{align-self:flex-start}.workspace-form{gap:8px;margin-top:16px}
+.workspace :is(input:not([type=checkbox]):not([type=hidden]),select,textarea){min-height:40px;padding:8px 10px;border-radius:6px}
+.workspace .check{font-size:12px;line-height:1.6;max-width:78ch;margin:6px 0}.workspace-panel{padding:18px 20px;border-radius:8px;margin:18px 0}
+.studio-heading,.studio-section-heading,.studio-library-meta,.studio-provider-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.studio-heading{margin-bottom:24px;align-items:flex-start}.studio-heading p{margin:4px 0;max-width:75ch}
+.studio-badge{font-size:11px;white-space:nowrap;color:var(--theme-text-muted);padding:4px 8px;background:var(--theme-bg);border:1px solid var(--theme-border);border-radius:5px}
+.research-layout{grid-template-columns:minmax(0,1fr) 300px;gap:36px}.workspace-search{margin:0 0 8px;align-items:center}.workspace-search input{flex:1}.workspace-search a{font-size:12px}.studio-library-meta{margin:6px 0 12px}
+.workbook-list{display:block;border-top:1px solid var(--theme-border)}.workbook-list>a{display:flex;flex-direction:row;align-items:center;gap:12px;padding:11px 10px;text-decoration:none}.workbook-list>a:hover{background:var(--theme-bg)}
+.workbook-list>a>span:nth-child(2){display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}.workbook-list strong{font-size:13px;font-weight:550}.workbook-list .studio-file-mark{font-size:22px;color:var(--theme-text-muted)}.workbook-list .studio-open{font-size:12px;color:var(--theme-accent);white-space:nowrap}
+.studio-aside{border-left:1px solid var(--theme-border);padding-left:24px;min-width:0}.studio-aside>section{margin-bottom:24px}.studio-aside p{font-size:12px;line-height:1.7}.studio-company{padding-top:20px;border-top:1px solid var(--theme-border)}.studio-company h3{font-size:14px;font-weight:600}.studio-company button{margin-top:6px}.saved-analysis{padding:12px 0;font-size:13px}
+.studio-calculator,.ask-panel{max-width:900px}.studio-section-heading h2{margin:0}.manual-form{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:12px}.manual-form>label:not(.check){font-size:13px;margin:0}.manual-form>.period-fields,.manual-form>p{grid-column:2}.manual-form>.primary{grid-column:2;justify-self:start}.manual-form .period-fields label{margin:0 0 6px;font-size:12px;color:var(--theme-text-muted)}
+.ask-panel summary{display:flex;align-items:center;justify-content:space-between;gap:12px}.ask-panel summary::after{content:'+';font-size:20px;font-weight:400}.ask-panel[open] summary::after{content:'−'}.ask-panel summary .small{margin-left:auto}.ask-panel .workspace-form{max-width:740px}.studio-provider-heading{font-size:12px}.studio-provider-heading label{font-weight:600}
+.workspace[data-workspace-mode=model]>.workspace-notice{max-width:900px;font-size:12px;line-height:1.7;margin:12px 0 18px}
+@media(max-width:900px){.research-layout{grid-template-columns:minmax(0,1fr) 250px;gap:20px}.workspace{padding-inline:20px}.studio-aside{padding-left:18px}}
+@media(max-width:640px){.workspace{padding:16px 14px 28px}.workspace h1{font-size:23px}.workspace-nav{margin-bottom:20px}.studio-heading{gap:10px;margin-bottom:18px}.studio-heading>.studio-badge{display:none}.research-layout{grid-template-columns:1fr}.studio-aside{border-left:0;border-top:1px solid var(--theme-border);padding:20px 0 0}.studio-library-meta{align-items:flex-start;font-size:11px}.studio-library-meta a{max-width:110px;text-align:right}.workspace-panel{padding:16px}.manual-form{display:flex;align-items:stretch}.manual-form>.primary{align-self:flex-start}.workspace :is(button,.primary){min-height:44px}.workspace .period-fields{grid-template-columns:1fr 1fr;gap:10px}.workspace :is(input:not([type=hidden]),select,textarea){font-size:16px}.workbook-list>a{padding-inline:0}}
+@media(pointer:coarse){.workspace :is(button,.primary,input:not([type=checkbox]):not([type=hidden]),select){min-height:44px}}

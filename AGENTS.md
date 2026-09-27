@@ -1,5 +1,16 @@
 # BenchmarkWatcher Agent Notes
 
+## Canonical Working Copy
+
+- Use `/Users/s_avelova/Documents/projects/benchmarkwatcher` for current work.
+- As of September 27, 2026, this folder is on `local/complete-app-20260927`,
+  based on the full September 26 release `e3c30d9`, with the latest
+  dashboard and workbook studio edits consolidated here.
+- The older `.worktrees/` checkouts remain recovery copies, not the default project.
+- Publish application source through a clean commit based on public `origin/main`.
+  Keep private operational records, credentials, databases, and workbooks local;
+  never push this working copy's private history to the public repository.
+
 ## Project Map
 
 - Flask dashboard for public commodity benchmark/reference prices.
