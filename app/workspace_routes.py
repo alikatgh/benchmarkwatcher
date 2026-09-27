@@ -4,7 +4,7 @@ import re
 import secrets
 import sqlite3
 import time
-from flask import Blueprint, abort, current_app, flash, g, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, current_app, flash, g, jsonify, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 from app.extensions import limiter
 from app.workspace_store import current_user, db, digest, read_key, reserve_analysis, save_key, sign_in
@@ -12,6 +12,7 @@ from app.model_library import catalog, calculate, load_model
 from app.analysis_providers import PROVIDERS, analyze, test_key
 from app.analysis_providers import research_plan, explain_research, ProviderError
 from app.company_research import build_report, resolve_company, scenario, valuation, number
+from app.workbook_presentation import present_result
 
 bp = Blueprint('workspace', __name__, url_prefix='/workspace')
 DUMMY_HASH = generate_password_hash(secrets.token_urlsafe(24))
@@ -52,21 +53,41 @@ def page(mode, **values):
         if chat_workbook:
             session['chat_workbook'] = chat_workbook['id']
         values['chat_workbook'] = chat_workbook
-        # Reuse saved answers as the visible conversation; keep each account
-        # and workbook isolated. Opening an older answer ends the log there.
+        # The conversation stays current even while inspecting an older result.
         values['chat_history'] = []
         if model_id:
             history = db().execute(
                 '''SELECT id,question,provider,result FROM analyses
                    WHERE user_id=? AND workbook=? AND provider IN ('typesafe','deepseek')
-                   AND rowid <= COALESCE((SELECT rowid FROM analyses WHERE id=? AND user_id=?), 9223372036854775807)
                    ORDER BY rowid DESC LIMIT 20''',
-                (g.workspace_user['id'], model_id,
-                 values['record']['id'] if mode == 'analysis' else '', g.workspace_user['id'])).fetchall()
-            values['chat_history'] = [dict(row, result=json.loads(row['result'])) for row in reversed(history)]
+                (g.workspace_user['id'], model_id)).fetchall()
+            values['chat_history'] = [chat_message(row) for row in reversed(history)]
         values['chat_preferences'] = session.get('chat_preferences', {})
+        values['chat_permissions'] = session.get('chat_permissions', [])
+    if mode == 'analysis':
+        values['presentation'] = present_result(values['result'])
     return render_template('workspace.html', mode=mode, user=g.workspace_user,
                            csrf=session['csrf'], providers=PROVIDERS, **values)
+
+
+def chat_message(row):
+    result = json.loads(row['result']) if isinstance(row['result'], str) else row['result']
+    return dict(row, result=result, presentation=present_result(result))
+
+
+def previous_selection(workbook):
+    analysis_id = request.form.get('context_analysis_id', '')
+    if not analysis_id:
+        return None
+    row = db().execute('SELECT result FROM analyses WHERE id=? AND user_id=? AND workbook=?',
+                      (analysis_id, g.workspace_user['id'], workbook['id'])).fetchone()
+    if not row:
+        raise ValueError('The previous answer is no longer available. Choose New topic and name the metric in your question.')
+    result = json.loads(row['result'])
+    plan = result.get('plan')
+    if result.get('version') != workbook['version'] or not plan:
+        raise ValueError('The workbook or previous selection changed. Choose New topic and name the metric in your question.')
+    return {key: plan[key] for key in ('metric', 'operation', 'start', 'end')}
 
 
 def valid_password(password):
@@ -215,8 +236,6 @@ def model(model_id):
             elif request.form.get('action') == 'ask':
                 if not 3 <= len(question) <= 1500:
                     raise ValueError('Enter a question between 3 and 1,500 characters.')
-                if request.form.get('consent') != 'yes':
-                    raise ValueError('Confirm sharing the question and workbook context with your provider.')
                 selection = request.form.get('provider_model', '').split(':', 1)
                 if len(selection) != 2:
                     raise ValueError('Select a connected provider and model.')
@@ -233,10 +252,18 @@ def model(model_id):
                     if not deepseek or explanation_model not in deepseek['models']:
                         raise ValueError('Connect DeepSeek and select one of its explanation models in AI chat.')
                     explanation_key = read_key(g.workspace_user['id'], 'deepseek')
+                scope = '|'.join((model_id, provider + ':' + model_name, explanation_model or ''))
+                permissions = session.get('chat_permissions', [])
+                if request.form.get('consent') != 'yes' and scope not in permissions:
+                    raise ValueError('Confirm sharing the question and workbook context with your provider.')
+                context = previous_selection(workbook)
+                context_options = {'previous_selection': context} if context else {}
                 reserve_analysis(g.workspace_user['id'])
                 result = analyze(provider, key, model_name, question, workbook,
                                  explain=explain, explanation_key=explanation_key,
-                                 explanation_model=explanation_model)
+                                 explanation_model=explanation_model, **context_options)
+                if request.form.get('consent') == 'yes' and request.form.get('remember_consent') == 'yes':
+                    session['chat_permissions'] = [p for p in permissions if p != scope][-9:] + [scope]
                 session['chat_preferences'] = {
                     'provider_model': request.form['provider_model'],
                     'explain': 'yes' if explain else '',
@@ -250,8 +277,15 @@ def model(model_id):
                 db().execute('INSERT INTO analyses VALUES (?,?,?,?,?,?,?,?)',
                     (analysis_id, g.workspace_user['id'], f"{workbook['name']} · {result['metric']}", model_id,
                      question, provider, json.dumps(result, allow_nan=False), int(time.time())))
+            if request.headers.get('Accept') == 'application/json':
+                message = chat_message({'id': analysis_id, 'question': question, 'provider': provider, 'result': result})
+                return jsonify(id=analysis_id, url=url_for('workspace.analysis', analysis_id=analysis_id),
+                               html=render_template('components/workbook_exchange.html', message=message, providers=PROVIDERS),
+                               permissions=session.get('chat_permissions', []))
             return redirect(url_for('workspace.analysis', analysis_id=analysis_id))
         except ValueError as exc:
+            if request.headers.get('Accept') == 'application/json':
+                return jsonify(error=str(exc)), 422
             flash(str(exc), 'error')
     return page('model', workbook=workbook, connections=connections(), question=question)
 

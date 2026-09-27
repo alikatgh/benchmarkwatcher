@@ -15,11 +15,23 @@
 
     <article class="release-entry">
         <time datetime="2026-09-27">September 27, 2026</time>
+        <h2>Conversations and clearer workbook results</h2>
+        <ul>
+            <li>Send questions and read replies in place. Follow-ups can use the previous metric; New topic clears that context.</li>
+            <li>Answers show formatted values, readable commentary and a suggested comparison. Copy an answer or open its chart and sources.</li>
+            <li>Quarterly and annual charts replace the initial wall of source rows. Exact values and cell references remain under Source data; missing values stay as gaps.</li>
+            <li>Chat keeps drafts after errors and prevents duplicate sends while waiting. Interrupted requests never retry automatically.</li>
+            <li>Confirm sharing when sending, with an optional permission for the same workbook and provider setup until sign-out.</li>
+        </ul>
+    </article>
+
+    <article class="release-entry">
+        <time datetime="2026-09-27">September 27, 2026</time>
         <h2>Workbook AI chat and a practical Jev guide</h2>
         <ul>
             <li>AI chat stays in the bottom-right corner throughout Workbook Studio, including saved analyses, the library and AI settings. It stays open unless you minimize it; that choice persists across navigation and refresh.</li>
             <li>Use Jev to select the metric and periods while DeepSeek explains the calculated result. Connect both providers, then choose a selection provider and an optional DeepSeek explanation model.</li>
-            <li>Added a clickable example where Operating Income is available: “Show Operating Income across the available periods.” Clicking fills the question; only Send and save contacts your provider.</li>
+            <li>Added a clickable example where Operating Income is available: “Show Operating Income across the available periods.” Clicking fills the question; only sending a confirmed request contacts your provider.</li>
             <li>Added <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.help_page') }}#jev">Help for Jev</a> and a <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.jev_workbook_story') }}">blog guide</a> explaining setup, supported questions, sharing and provider charges. Jev selects the metric and periods; BenchmarkWatcher calculates from saved workbook cells.</li>
             <li>Moved errors and confirmations into Notifications, keeping questions and the selected provider intact after an error.</li>
             <li>Fixed desktop navigation so the sidebar stays below the header and long menus scroll internally.</li>
