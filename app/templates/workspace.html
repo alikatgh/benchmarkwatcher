@@ -5,7 +5,7 @@
 {% macro token() %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
 {% macro number(point) %}{% if point.value is none %}Unavailable{% elif point.percent %}{{ '{:,.2f}'.format(point.value * 100) }}%{% else %}{{ '{:,.2f}'.format(point.value) }}{% endif %}{% endmacro %}
 {% set notifications = get_flashed_messages(with_categories=true) %}
-<div class="workspace{% if user %} has-chat{% endif %}" data-workspace-mode="{{ mode }}">
+<div class="workspace{% if user and mode != 'recovery_code' %} has-chat{% endif %}" data-workspace-mode="{{ mode }}">
   <nav class="workspace-nav" aria-label="Workbook studio">
     <a href="{{ url_for('workspace.home') }}">Workbook studio</a>
     <div>{% if user %}<span>{{ user.username }}</span><a href="{{ url_for('workspace.settings') }}">AI settings</a>{% endif %}
@@ -84,12 +84,10 @@
   <p class="workspace-notice">{{ result.basis }}</p>
   {% if result.difference is defined %}<section class="workspace-panel"><h2>Change from {{ result.points[0].period }} to {{ result.points[1].period }}</h2><p class="calculated-value">{{ '{:+,.2f}'.format(result.difference) }} <span>{{ result.difference_unit }}</span></p><p>{% if result.relative_change is not none %}{{ '{:+,.2f}'.format(result.relative_change) }}% relative change{% else %}Relative change unavailable because the starting value is zero or negative.{% endif %}</p><p class="muted small">Difference = ending value − starting value. Relative change = (ending ÷ starting − 1) × 100.</p></section>{% endif %}
   <section class="workspace-panel"><h2>{{ result.metric }}</h2><div class="workspace-table" tabindex="0" role="region" aria-label="Calculated values and source cells"><table><thead><tr><th>Workbook period</th><th>Saved value</th><th>Source cell</th><th>Value type</th></tr></thead><tbody>{% for point in result.points %}<tr><td>{{ point.period }}</td><td class="numeric">{{ number(point) }}</td><td><code>{{ point.source }}</code></td><td>{{ 'Saved formula result' if point.formula else 'Entered value' }}</td></tr>{% endfor %}</tbody></table></div></section>
-  {% if result.explanation %}<section class="workspace-panel"><h2>AI explanation</h2><p class="explanation">{{ result.explanation }}</p><p class="muted small">AI-written commentary. Use the source cells and calculated values above to verify it.</p></section>{% endif %}
-  {% if result.explanation_notice %}<p role="status">{{ result.explanation_notice }}</p>{% endif %}
   <details class="workspace-panel"><summary>Source and request details</summary><p>{{ result.filename }}</p><p class="muted small">Workbook SHA-256: <code class="source-version">{{ result.version }}</code>. This saved analysis keeps the values used at the time of the request.</p>{% if result.provider_metadata %}<pre>{{ result.provider_metadata | tojson(indent=2) }}</pre>{% endif %}{% if result.explanation_usage %}<p>Explanation token usage:</p><pre>{{ result.explanation_usage | tojson(indent=2) }}</pre>{% endif %}</details>
   <div class="workspace-actions"><a class="primary" href="{{ url_for('workspace.model', model_id=record.workbook) }}">New analysis of this model</a><details><summary>Delete analysis</summary><form method="post" action="{{ url_for('workspace.delete_analysis', analysis_id=record.id) }}">{{ token() }}<p>This permanently deletes this saved analysis.</p><button type="submit">Confirm deletion</button></form></details></div>
   {% endif %}
-  {% if user %}{% include 'components/workbook_chat.html' %}{% endif %}
+  {% if user and mode != 'recovery_code' %}{% include 'components/workbook_chat.html' %}{% endif %}
 </div>
 <script defer src="{{ url_for('static', filename='js/components/workspace_studio.js') }}"></script>
 {% endblock %}

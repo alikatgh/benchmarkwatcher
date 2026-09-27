@@ -25,13 +25,20 @@
             try { localStorage.setItem(storageKey, String(minimized)); } catch (_) { /* Storage can be unavailable. */ }
             if (!minimized) body.querySelector('#question')?.focus();
         });
+        // On a narrow screen, choosing a source/workbook/settings link is an
+        // explicit request to see the page behind this full-screen panel.
+        dock.addEventListener('click', event => {
+            if (event.target.closest('a') && window.matchMedia('(max-width: 1000px)').matches && !body.hidden) toggle.click();
+        });
     }
     const chat = document.querySelector('.studio-chat-form');
+    const messages = document.querySelector('.studio-chat-messages');
+    if (messages) messages.scrollTop = messages.scrollHeight;
     if (chat) {
         const question = chat.querySelector('#question');
         const send = chat.querySelector('[type=submit]');
         const status = chat.querySelector('.studio-chat-status');
-        chat.querySelectorAll('[data-chat-question]').forEach(example => {
+        (dock || chat).querySelectorAll('[data-chat-question]').forEach(example => {
             example.addEventListener('click', () => {
                 question.value = example.dataset.chatQuestion;
                 question.focus();
@@ -40,7 +47,7 @@
         chat.addEventListener('submit', event => {
             if (send.disabled) { event.preventDefault(); return; }
             send.disabled = true;
-            status.textContent = 'Sending to your provider… Your saved answer will open when ready.';
+            status.textContent = 'Waiting for your provider… Your answer will appear in this chat.';
             status.hidden = false;
         });
         window.addEventListener('pageshow', () => {
@@ -50,11 +57,22 @@
     }
     const explanation = document.getElementById('studio-explanation');
     const explanationModel = document.getElementById('studio-explanation-model');
+    const provider = document.getElementById('provider-model');
+    const providerSummary = document.getElementById('studio-chat-provider-summary');
+    const updateProviderSummary = () => {
+        const label = provider?.selectedOptions[0]?.textContent || 'Provider options';
+        if (providerSummary) providerSummary.textContent = label + (explanation?.querySelector('input').checked ? ' + explanation' : '');
+    };
+    provider?.addEventListener('change', updateProviderSummary);
+    updateProviderSummary();
     if (explanation && explanationModel) {
         const updateExplanation = () => {
             const enabled = explanation.querySelector('input').checked;
             explanationModel.hidden = !enabled;
             explanationModel.querySelector('select').disabled = !enabled;
+            const disclosure = document.querySelector('.studio-consent-explanation');
+            if (disclosure) disclosure.hidden = !enabled;
+            updateProviderSummary();
         };
         explanation.querySelector('input').addEventListener('change', updateExplanation);
         window.addEventListener('pageshow', updateExplanation);
