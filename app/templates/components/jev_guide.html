@@ -1,0 +1,41 @@
+<section id="jev" class="release-entry" aria-labelledby="jev-heading">
+    <h2 id="jev-heading">What is Jev, and why do we use it?</h2>
+    <p class="mb-4 leading-relaxed">Jev is an AI model from TypeSafe. Its Choice interface selects from a supplied list of options. See <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="https://docs.typesafe.ai/api#choice" target="_blank" rel="noopener noreferrer">TypeSafe’s documentation</a>.</p>
+    <p class="mb-4 leading-relaxed">In BenchmarkWatcher, Jev turns your question into a choice of workbook metric, calculation and reporting periods. We use it so you can ask in everyday language while keeping the result tied to the workbook’s existing rows and columns. If the selection is unclear, the app asks you to be more specific.</p>
+    <p class="leading-relaxed"><strong>Jev selects what to calculate. BenchmarkWatcher calculates from saved workbook cells.</strong> The saved analysis shows those cells so you can check the result. Jev does not write an earnings report or refresh company data in this integration.</p>
+</section>
+<section id="connect-jev" class="release-entry" aria-labelledby="connect-jev-heading">
+    <h2 id="connect-jev-heading">Connect TypeSafe / Jev</h2>
+    <ol class="list-decimal list-outside pl-5 space-y-3 mb-4">
+        <li>Sign into your BenchmarkWatcher account and open <strong>AI settings</strong>.</li>
+        <li>Under <strong>TypeSafe / Jev</strong>, enter your API key from TypeSafe. Enter the key in the settings field; do not put it in a chat question.</li>
+        <li>Read the sharing and storage checkbox, then choose <strong>Test and save key</strong>. The TypeSafe connection test makes a small billable AI request.</li>
+        <li>Open a workbook and select <strong>TypeSafe / Jev · jev-latest</strong> under <strong>Use my provider</strong> in the AI chat.</li>
+    </ol>
+    <p class="leading-relaxed">Keys are saved encrypted to the BenchmarkWatcher account that connects them. Your TypeSafe account pays for provider usage; BenchmarkWatcher supplies no shared AI credits. If the provider is missing, check that you signed into the same account and saved a successful connection.</p>
+</section>
+<section id="jev-example" class="release-entry" aria-labelledby="jev-example-heading">
+    <h2 id="jev-example-heading">Try an Operating Income question</h2>
+    <p class="mb-4 leading-relaxed">Open <strong>000600 SK Hynix</strong> in the workbook library. It includes an Operating Income row. In the AI chat, click the example or type:</p>
+    <blockquote class="border-l-4 border-brand-black-60/20 dark:border-white/10 pl-4 my-6 text-lg">Show Operating Income across the available periods.</blockquote>
+    <p class="mb-4 leading-relaxed">Confirm sharing your question and workbook labels with your selected provider, then choose <strong>Send and save</strong>. Clicking the example only fills the question; it does not contact a provider. A successful request opens a saved analysis with the period labels, values and source cells.</p>
+    <p class="leading-relaxed">For another workbook, use a metric that appears in its Metric list. “Show Revenue across the available periods.” works as a question format when that workbook has a Revenue row.</p>
+</section>
+<section id="supported-questions" class="release-entry" aria-labelledby="supported-questions-heading">
+    <h2 id="supported-questions-heading">Which questions work here?</h2>
+    <ul class="mb-4">
+        <li><strong>A series:</strong> “Show Operating Income across the available periods.”</li>
+        <li><strong>One period:</strong> “Show Operating Income for [period label].” Replace the bracketed text with an exact label from the workbook’s period controls.</li>
+        <li><strong>A comparison:</strong> “Compare Operating Income between [first period] and [second period].” Use two named quarters or two named annual periods.</li>
+    </ul>
+    <p class="mb-4 leading-relaxed">Choose “Value in one period” or “Change between From and To” in the calculator to see the available period labels. Ask about one metric at a time.</p>
+    <p class="mb-4 leading-relaxed">“We good with earnings?” does not identify a metric or a calculation, and it asks for a broader assessment than this integration supports. An Operating Income series answers a narrower question; it is not a complete assessment of a company’s earnings. Multi-company research, general earnings assessments and open-ended reports are not supported by this workbook chat yet.</p>
+    <p class="leading-relaxed">If a question fails, open <strong>Notifications</strong> for the reason and edit the retained question. Nothing retries automatically. Jev requests select data; for optional written commentary on a supported calculation, choose DeepSeek and check “Add a DeepSeek explanation.”</p>
+</section>
+<section id="sharing-and-cost" class="release-entry" aria-labelledby="sharing-heading">
+    <h2 id="sharing-heading">What is shared, and what costs money?</h2>
+    <p class="mb-4 leading-relaxed">A Jev workbook request sends your question, the workbook name, and its metric and period labels to TypeSafe. It does not send the numerical cell values. An optional DeepSeek explanation additionally sends the selected cell values and calculated results to DeepSeek, and makes another provider request.</p>
+    <p class="mb-4 leading-relaxed">Your provider’s usage charges apply. The workspace allows up to 30 AI analyses per account per day. To calculate without an AI charge, use <strong>Calculate from this workbook</strong>; its metric and period controls do not contact an AI provider.</p>
+    <p class="leading-relaxed">Saved workbooks can mix historical figures and assumptions. Their values are not live prices or independently verified company results; units follow the original workbook. Check the source cells and assumptions when reading an analysis.</p>
+    {% if config.WORKSPACE_ENABLED %}<p class="mt-6"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('workspace.home') }}">Open the workbook library →</a></p>{% endif %}
+</section>

@@ -327,3 +327,17 @@ def test_provider_errors_never_echo_secrets(status, monkeypatch):
     assert 'SECRET' not in str(error.value)
     assert observed['allow_redirects'] is False
     assert observed['url'] == 'https://api.deepseek.com/models'
+
+
+def test_chat_example_prefers_operating_income_only_when_the_workbook_has_it(workspace, monkeypatch):
+    client = workspace.test_client()
+    register(client)
+    connect(client, monkeypatch)
+    url = model_url(workspace)
+    assert b'data-chat-question="Show Revenue across the available periods."' in client.get(url).data
+    workbook = load_model(workspace.config['MODEL_LIBRARY_DIR'], url.rsplit('/', 1)[-1])
+    workbook['metrics'].append({'id': 'r6', 'label': 'Operating Income', 'cell': 'B6', 'values': {}})
+    monkeypatch.setattr('app.workspace_routes.workbook_or_404', lambda _: workbook)
+    html = client.get(url).get_data(as_text=True)
+    assert 'data-chat-question="Show Operating Income across the available periods."' in html
+    assert 'href="/help#jev"' in html
