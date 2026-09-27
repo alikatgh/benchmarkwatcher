@@ -47,6 +47,7 @@ jobs:
         run: npm run test:e2e
         env:
           CI: 'true'
+          PLAYWRIGHT_FLASK_COMMAND: python -m tests.e2e.server
 
   python-tests:
     runs-on: ubuntu-latest

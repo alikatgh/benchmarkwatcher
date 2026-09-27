@@ -254,6 +254,13 @@ BW.Commodity = {
         this.updateRangeButtons();
         this.updateTypeButtons();
         this.updateViewButtons();
+        if (historyData.length) {
+            const start = document.getElementById('chart-date-start');
+            const end = document.getElementById('chart-date-end');
+            [start, end].forEach(input => { if (input) { input.min = historyData[0].date.slice(0, 10); input.max = historyData[historyData.length - 1].date.slice(0, 10); } });
+            if (start) start.value = start.min;
+            if (end) end.value = end.max;
+        }
 
         // Hide skeleton loader once chart is ready
         const skeleton = document.getElementById('chart-skeleton');
@@ -288,28 +295,50 @@ BW.Commodity = {
         };
     },
 
-    // Filter data by time range (does not mutate inputs)
+    // Windows use UTC calendar dates, anchored to the primary series' last observation.
     filterDataByRange: function (data, range) {
         if (range === 'ALL' || !data || data.length === 0) return data;
-
-        // Use the LATEST data point date as reference, not current date
-        // This handles datasets that aren't up-to-date
-        const d = new Date(data[data.length - 1].date);
-        const y = d.getFullYear();
-        const m = d.getMonth();
-        const day = d.getDate();
-
-        let cutoffDate;
-        switch (range) {
-            case '1W': cutoffDate = new Date(y, m, day - 7); break;
-            case '1M': cutoffDate = new Date(y, m - 1, day); break;
-            case '3M': cutoffDate = new Date(y, m - 3, day); break;
-            case '6M': cutoffDate = new Date(y, m - 6, day); break;
-            case '1Y': cutoffDate = new Date(y - 1, m, day); break;
-            default: return data;
+        const primary = this.fullHistoryData && this.fullHistoryData.length ? this.fullHistoryData : data;
+        const latest = primary[primary.length - 1].date.slice(0, 10);
+        let start, end = latest;
+        if (range === 'custom' && this.customDateWindow) {
+            start = this.customDateWindow.start;
+            end = this.customDateWindow.end;
+        } else {
+            const anchor = new Date(latest + 'T00:00:00Z');
+            const y = anchor.getUTCFullYear(), m = anchor.getUTCMonth(), day = anchor.getUTCDate();
+            let cutoff;
+            if (range === '1W') cutoff = new Date(Date.UTC(y, m, day - 7));
+            else if (range === 'YTD') cutoff = new Date(Date.UTC(y, 0, 1));
+            else {
+                const months = {'1M': 1, '3M': 3, '6M': 6, '1Y': 12, '5Y': 60}[range];
+                if (!months) return data;
+                cutoff = new Date(Date.UTC(y, m - months, 1));
+                const lastDay = new Date(Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth() + 1, 0)).getUTCDate();
+                cutoff.setUTCDate(Math.min(day, lastDay));
+            }
+            start = cutoff.toISOString().slice(0, 10);
         }
+        return data.filter(item => item.date.slice(0, 10) >= start && item.date.slice(0, 10) <= end);
+    },
 
-        return data.filter(item => new Date(item.date) >= cutoffDate);
+    applyCustomDates: function () {
+        const startInput = document.getElementById('chart-date-start');
+        const endInput = document.getElementById('chart-date-end');
+        const error = document.getElementById('chart-date-error');
+        const start = startInput.value, end = endInput.value;
+        const valid = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && !isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value;
+        let message = '';
+        if (!valid(start) || !valid(end)) message = 'Enter valid start and end dates.';
+        else if (start > end) message = 'The start date must be on or before the end date.';
+        else if (!this.fullHistoryData.some(row => row.date.slice(0, 10) >= start && row.date.slice(0, 10) <= end)) message = 'No observations in this window. Choose a wider range.';
+        if (error) error.textContent = message;
+        if (message) return false;
+        this.customDateWindow = {start, end};
+        this.setTimeRange('custom');
+        document.getElementById('chart-date-picker').open = false;
+        document.getElementById('range-custom').focus();
+        return true;
     },
 
     // Calculate and display statistics
@@ -354,6 +383,9 @@ BW.Commodity = {
     updateChart: function () {
         const self = this;
         const filteredData = this.filterDataByRange(this.fullHistoryData, this.currentRange);
+        const valueLabel = document.getElementById('crosshair-value-label');
+        if (valueLabel) valueLabel.textContent = this.currentViewMode === 'percent' ? 'Change from baseline' : 'Value';
+        ['crosshair-date', 'crosshair-price', 'crosshair-change'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
         var labels = filteredData.map(item => item.date);
         var prices = filteredData.map(item => item.price);
 
@@ -503,6 +535,9 @@ BW.Commodity = {
             },
             options: {
                 responsive: true,
+                onResize: function (chart, size) {
+                    chart.options.scales.x.ticks.maxTicksLimit = Math.min(self.chartSettings.xMaxTicks, Math.max(2, Math.floor(size.width / 110)));
+                },
                 maintainAspectRatio: false,
                 animation: {
                     duration: this.chartSettings.enableAnimation ? this.chartSettings.animationDuration : 0
@@ -672,12 +707,13 @@ BW.Commodity = {
                         }
                     }
 
-                    if (dataIndex > 0 && changeEl) {
+                    if (changeEl) { changeEl.textContent = '—'; changeEl.style.color = ''; }
+                    if (dataIndex > 0 && changeEl && Number.isFinite(dataset.data[dataIndex - 1])) {
                         const prev = dataset.data[dataIndex - 1];
                         if (self.currentViewMode === 'percent') {
                             const change = price - prev;
                             const sign = change >= 0 ? '+' : '';
-                            changeEl.textContent = `${sign}${change.toFixed(2)} %`;
+                            changeEl.textContent = `${sign}${change.toFixed(2)} pp`;
                             changeEl.className = 'text-sm font-semibold ml-2';
                             changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
                         } else {
@@ -704,7 +740,7 @@ BW.Commodity = {
         try {
             const seedData = (chartConfig.data.datasets[0] || {}).data || [];
             const seedIdx = seedData.length - 1;
-            if (seedIdx > 0 && seedData[seedIdx] !== null && seedData[seedIdx] !== undefined) {
+            if (seedIdx >= 0 && seedData[seedIdx] !== null && seedData[seedIdx] !== undefined) {
                 chartConfig.options.onHover.call(this.priceChart, null, [{ index: seedIdx, datasetIndex: 0 }]);
             }
         } catch (e) { /* cosmetic seeding only */ }
@@ -741,6 +777,8 @@ BW.Commodity = {
 
     // Update view mode button states
     updateViewButtons: function () {
+        const select = document.getElementById('chart-view-select');
+        if (select) select.value = this.currentViewMode;
         const activeClasses = 'theme-surface theme-text';
         const inactiveClasses = 'text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white hover:bg-brand-black-60/5 dark:hover:bg-white/5';
         const chartViewButtons = [
@@ -923,10 +961,13 @@ BW.Commodity = {
 
     // Update range button states
     updateRangeButtons: function () {
+        const custom = document.getElementById('range-custom');
+        if (custom) { custom.dataset.active = String(this.currentRange === 'custom'); custom.textContent = this.currentRange === 'custom' ? 'Custom dates ▾' : 'Dates ▾'; }
         const self = this;
-        ['1W', '1M', '3M', '6M', '1Y', 'ALL'].forEach(range => {
+        ['1W', '1M', '3M', '6M', 'YTD', '1Y', '5Y', 'ALL'].forEach(range => {
             const btn = document.getElementById(`range-${range}`);
             if (btn) {
+                btn.setAttribute('aria-pressed', String(range === self.currentRange));
                 if (range === self.currentRange) {
                     btn.className = 'range-btn min-h-[44px] px-3 sm:px-4 text-xs font-semibold rounded-lg transition theme-surface theme-text';
                 } else {
@@ -938,6 +979,8 @@ BW.Commodity = {
 
     // Update type button states
     updateTypeButtons: function () {
+        const select = document.getElementById('chart-type-select');
+        if (select) select.value = this.currentChartType;
         const self = this;
         ['line', 'area'].forEach(type => {
             const btn = document.getElementById(`type-${type}`);

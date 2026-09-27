@@ -9,6 +9,7 @@
     const Workspace = {
         catalog: [], catalogLoaded: false, loading: null, loadFailed: false, current: 'benchmarks', searchTrigger: null,
         init() {
+            this.initScrollChrome();
             try { this.catalog = JSON.parse($('workspace-benchmarks')?.textContent || '[]'); } catch (_) { this.catalog = []; }
             this.renderOverview();
             document.addEventListener('click', event => {
@@ -68,6 +69,20 @@
             this.initSearch(); this.navigate(false, true);
             if ($('index-page-state')) this.loadCatalog();
         },
+        initScrollChrome() {
+            let scheduled = false;
+            const update = () => {
+                scheduled = false;
+                const table = document.querySelector('.tw-table-region');
+                const inTable = table && table.getClientRects().length && table.scrollTop > 32;
+                const compact = document.documentElement.classList.contains('bw-scrolled');
+                document.documentElement.classList.toggle('bw-scrolled', Boolean(inTable || window.scrollY > (compact ? 20 : 96)));
+            };
+            const schedule = () => { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } };
+            document.addEventListener('scroll', schedule, { passive: true, capture: true });
+            window.addEventListener('resize', schedule, { passive: true });
+            update();
+        },
         go(url, focus = true) { BW.BenchmarkDetail?.close(); if (url.href !== location.href) history.pushState(null, '', url); this.navigate(focus); },
         navigate(focus, initial = false) {
             if (!$('index-page-state')) return;
@@ -75,6 +90,7 @@
             const params = new URLSearchParams(location.search);
             const requested = params.get('workspace'); this.current = ['research','watchlist'].includes(requested) ? requested : 'benchmarks';
             const research = this.current === 'research';
+            if (research) BW.TableWorkspace?.closePanels(false);
             if (!research) $('research-workspace').querySelectorAll('dialog[open]').forEach(dialog => BW.ResearchWorkspace?.closeDialog(dialog));
             $('benchmark-workspace').hidden = research; $('research-workspace').hidden = !research;
             if (!research && BW.TableWorkspace?.ready) {

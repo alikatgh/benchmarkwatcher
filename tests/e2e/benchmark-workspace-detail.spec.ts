@@ -108,3 +108,50 @@ test('320px dark details retain readable controls and a contained chart', async 
     expect(accessibility.violations.filter(issue => issue.impact === 'serious' || issue.impact === 'critical')).toEqual([]);
     await page.screenshot({ path: '/private/tmp/benchmark-detail-narrow-dark.png', fullPage: false });
 });
+
+test('detail pane resizes by dragging and keyboard, keeps its chart state, and restores width after reload', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await browse(page); await openFirst(page);
+    const detail = page.locator('#benchmark-detail');
+    const handle = page.getByRole('separator', { name: 'Resize benchmark details' });
+    const chart = detail.locator('.benchmark-detail-plot');
+    await expect(handle).toHaveAttribute('aria-valuenow', '560');
+    await detail.locator('.benchmark-detail-observations summary').click();
+    const box = (await handle.boundingBox())!;
+    const initialChartWidth = (await chart.boundingBox())!.width;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 - 200, box.y + box.height / 2, { steps: 8 }); await page.mouse.up();
+    await expect(handle).toHaveAttribute('aria-valuenow', '760');
+    expect((await chart.boundingBox())!.width).toBeGreaterThan(initialChartWidth + 190);
+    await expect(detail.locator('.benchmark-detail-observations')).toHaveAttribute('open', '');
+    await expect(page.locator('body')).not.toHaveClass(/bw-detail-resizing/);
+    await handle.focus(); await handle.press('ArrowLeft'); await expect(handle).toHaveAttribute('aria-valuenow', '784');
+    await page.reload(); await openFirst(page); await expect(handle).toHaveAttribute('aria-valuenow', '784');
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(handle).toBeHidden();
+    expect((await detail.boundingBox())!.width).toBe(390);
+    expect(await detail.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+});
+
+test('detail chart custom dates and presentation settings remain usable at 320px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 900 });
+    await browse(page); await openFirst(page);
+    const detail = page.locator('#benchmark-detail');
+    const latest = (await detail.locator('.benchmark-detail-table tbody tr td').first().textContent())!.trim();
+    await detail.getByRole('button', { name: 'Custom', exact: true }).click();
+    await detail.getByLabel('From', { exact: true }).fill(latest);
+    await detail.getByLabel('To', { exact: true }).fill(latest);
+    await detail.getByRole('button', { name: 'Apply dates', exact: true }).click();
+    await expect(detail.locator('[data-detail-range="CUSTOM"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(detail.locator('.benchmark-detail-table tbody tr')).toHaveCount(1);
+    await expect(detail.locator('#benchmark-detail-observation')).toBeDisabled();
+    await detail.getByLabel('Chart type', { exact: true }).selectOption('area');
+    await detail.getByLabel('Observation dots', { exact: true }).uncheck();
+    await expect(detail.getByLabel('Chart type', { exact: true })).toHaveValue('area');
+    await expect(detail.getByLabel('Observation dots', { exact: true })).not.toBeChecked();
+    await detail.getByLabel('From', { exact: true }).fill('2099-12-31');
+    await detail.getByRole('button', { name: 'Apply dates', exact: true }).click();
+    await expect(detail.locator('#benchmark-chart-date-error')).toContainText('on or before');
+    expect(await detail.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});

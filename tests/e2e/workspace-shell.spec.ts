@@ -47,9 +47,15 @@ test('homepage light and dark surfaces meet serious WCAG checks', async ({page})
   test.setTimeout(90000);
   await page.goto('/?view=compact');
   for (let i=0;i<2;i++) {
+    // Check settled surfaces rather than intermediate theme-transition colors.
+    await page.evaluate(async () => {
+      const finite = document.getAnimations().filter(animation =>
+        Number.isFinite(animation.effect?.getComputedTiming().endTime));
+      await Promise.all(finite.map(animation => animation.finished.catch(() => {})));
+    });
     const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).analyze();
     const issues=result.violations.filter(v=>['critical','serious'].includes(v.impact || ''));
-    expect(issues.map(v=>({id:v.id,nodes:v.nodes.map(n=>n.target)}))).toEqual([]);
+    expect(issues.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))).toEqual([]);
     await page.locator('#quick-theme-toggle').click();
   }
 });
@@ -91,4 +97,18 @@ test('Back while editing Research closes its modal and keeps the draft', async (
   await expect(page.locator('#rw-editor')).not.toHaveAttribute('open','');
   await page.locator('[data-workspace="research"]').click();
   await expect(page.locator('#rw-table-body')).toContainText('Retain the navigation draft');
+});
+
+
+test('Back from a benchmark view dialog closes the modal before showing Research', async ({page}) => {
+    await page.goto('/?workspace=research');
+    await page.locator('[data-workspace="benchmarks"]').first().click();
+    await page.locator('#tw-new-view').click();
+    await expect(page.locator('#tw-view-menu')).toBeVisible();
+    await page.goBack();
+    await expect(page.locator('#research-workspace')).toBeVisible();
+    await expect(page.locator('#tw-view-menu')).not.toBeVisible();
+    await expect(page.locator('#tw-view-menu')).not.toHaveAttribute('open', '');
+    await page.locator('[data-rw-action="new"]').first().click();
+    await expect(page.locator('#rw-editor')).toBeVisible();
 });

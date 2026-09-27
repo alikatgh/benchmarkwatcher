@@ -110,3 +110,6 @@ test-results/
 node_modules/
 package-lock.json
 passenger_boot_error.log
+
+# Local task checkouts
+.worktrees/

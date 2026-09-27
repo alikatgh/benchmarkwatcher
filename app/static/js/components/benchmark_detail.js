@@ -3,11 +3,16 @@
     'use strict';
     window.BW = window.BW || {};
     const STORAGE_KEY = 'bw.watchlist.v1';
+    const WIDTH_KEY = 'bw.detail.widths.v1';
+    const CHART_KEY = 'bw.detail.chart.v1';
+    const DEFAULT_WIDTHS = { detail: 560, compare: 720 };
     const COLORS = ['#4285f4', '#b05aca', '#d77813', '#279888'];
     const state = {
         ids: [], watchlist: null, watchSaved: true, records: [], range: '1Y',
         mode: 'indexed', seq: 0, controller: null, trigger: null,
-        inertNodes: [], open: false, initialized: false, noticeTimer: null, noticeHome: null
+        inertNodes: [], open: false, initialized: false, noticeTimer: null, noticeHome: null,
+        widths: { ...DEFAULT_WIDTHS }, width: 560, drag: null,
+        custom: { start: '', end: '' }, chartStyle: 'line', showDots: true, settingsOpen: false, inspectedDate: null
     };
     const byId = id => document.getElementById(id);
     const pane = () => byId('benchmark-detail');
@@ -123,6 +128,69 @@
     function modal() {
         return typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 1279px)').matches : window.innerWidth < 1280;
     }
+    function widthMode() { return state.ids.length > 1 ? 'compare' : 'detail'; }
+    function widthBounds() {
+        const viewport = Math.max(0, window.innerWidth);
+        if (viewport < 768) return { min: viewport, max: viewport, mobile: true };
+        return { min: 360, max: Math.min(1120, viewport - (viewport >= 1280 ? 480 : 32)), mobile: false };
+    }
+    function applyWidth(value) {
+        const bounds = widthBounds();
+        state.width = Math.round(Math.max(bounds.min, Math.min(bounds.max, value)));
+        document.documentElement.style.setProperty('--bw-detail-width', state.width + 'px');
+        const handle = byId('benchmark-detail-resize');
+        if (handle) {
+            handle.hidden = bounds.mobile;
+            handle.tabIndex = bounds.mobile ? -1 : 0;
+            handle.setAttribute('aria-valuemin', String(bounds.min));
+            handle.setAttribute('aria-valuemax', String(bounds.max));
+            handle.setAttribute('aria-valuenow', String(state.width));
+            handle.setAttribute('aria-valuetext', state.width + ' pixels wide');
+        }
+    }
+    function saveWidth() {
+        state.widths[widthMode()] = state.width;
+        try { localStorage.setItem(WIDTH_KEY, JSON.stringify({ version: 1, ...state.widths })); }
+        catch (_) { /* A blocked preference store must never prevent resizing. */ }
+    }
+    function finishResize(save) {
+        if (!state.drag) return;
+        const pointerId = state.drag.pointerId;
+        state.drag = null;
+        document.body.classList.remove('bw-detail-resizing');
+        const handle = byId('benchmark-detail-resize');
+        if (handle?.hasPointerCapture?.(pointerId)) handle.releasePointerCapture(pointerId);
+        if (save) saveWidth(); else applyWidth(state.widths[widthMode()]);
+    }
+    function startResize(event) {
+        if (!state.open || widthBounds().mobile || event.button !== 0 || event.isPrimary === false) return;
+        event.preventDefault();
+        state.drag = { pointerId: event.pointerId, x: event.clientX, width: state.width };
+        document.body.classList.add('bw-detail-resizing');
+        const handle = byId('benchmark-detail-resize');
+        handle.focus({ preventScroll: true });
+        handle.setPointerCapture?.(event.pointerId);
+    }
+    function moveResize(event) {
+        if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+        event.preventDefault();
+        applyWidth(state.drag.width + state.drag.x - event.clientX);
+    }
+    function endResize(event) {
+        if (state.drag && state.drag.pointerId === event.pointerId) finishResize(event.type !== 'pointercancel');
+    }
+    function resizeKey(event) {
+        if (!state.open || widthBounds().mobile) return;
+        const step = event.shiftKey ? 64 : 24;
+        const bounds = widthBounds();
+        const next = { ArrowLeft: state.width + step, ArrowRight: state.width - step, Home: bounds.min, End: bounds.max }[event.key];
+        if (next === undefined) return;
+        event.preventDefault(); applyWidth(next); saveWidth();
+    }
+    function onViewportResize() {
+        if (!state.open) return;
+        finishResize(false); applyWidth(state.widths[widthMode()]); syncModal();
+    }
     function syncModal() {
         if (!state.open || !pane()) return;
         const isModal = modal();
@@ -147,7 +215,7 @@
         if (!state.open) return;
         if (event.key === 'Escape' && !event.defaultPrevented) {
             event.preventDefault();
-            close();
+            if (state.drag) finishResize(false); else close();
         } else if (event.key === 'Tab' && modal()) {
             const focusable = Array.from(pane().querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),summary,[tabindex="0"]'))
                 .filter(node => !node.hidden && !node.closest('[hidden]') && (!node.closest('details:not([open])') || node.tagName === 'SUMMARY'));
@@ -159,7 +227,9 @@
         }
     }
     function close() {
+        finishResize(false);
         state.open = false;
+        document.documentElement.style.removeProperty('--bw-detail-width');
         state.seq += 1;
         if (state.controller) state.controller.abort();
         restoreBackground();
@@ -175,6 +245,7 @@
     function begin(ids, trigger) {
         init();
         if (!pane()) return Promise.resolve(false);
+        finishResize(false);
         state.ids = ids;
         state.records = [];
         state.mode = 'indexed';
@@ -183,6 +254,7 @@
         pane().hidden = false;
         document.body.classList.add('bw-detail-open');
         document.body.classList.toggle('bw-compare-open', ids.length > 1);
+        applyWidth(state.widths[widthMode()]);
         syncModal();
         byId('benchmark-detail-context').textContent = ids.length > 1 ? 'Compare benchmarks' : 'Benchmark details';
         byId('benchmark-detail-title').textContent = ids.length > 1 ? 'Compare ' + ids.length + ' benchmarks' : titleFromRow(ids[0]);
@@ -304,34 +376,99 @@
         if (record.is_daily === false || record.frequency === 'monthly') return 'Monthly observations';
         return record.frequency || 'Cadence not supplied';
     }
+    function rangeWindow(records) {
+        const timestamps = records.filter(record => !record.error).flatMap(record => history(record).map(point => dateValue(point.date)));
+        const latest = timestamps.length ? timestamps.reduce((maximum, time) => Math.max(maximum, time), -Infinity) : null;
+        if (state.range === 'CUSTOM') return { start: dateValue(state.custom.start), end: dateValue(state.custom.end) };
+        if (latest === null || state.range === 'ALL') return { start: -Infinity, end: Infinity };
+        const date = new Date(latest);
+        if (state.range === 'YTD') return { start: Date.UTC(date.getUTCFullYear(), 0, 1), end: latest };
+        const months = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12, '5Y': 60 }[state.range] || 12;
+        const day = date.getUTCDate();
+        date.setUTCDate(1); date.setUTCMonth(date.getUTCMonth() - months);
+        const lastDay = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)).getUTCDate();
+        date.setUTCDate(Math.min(day, lastDay));
+        return { start: date.getTime(), end: latest };
+    }
     function chartData(records) {
-        const all = records.filter(record => !record.error).map(record => ({ record, points: history(record) }));
-        const timestamps = all.flatMap(series => series.points.map(point => dateValue(point.date)));
-        const latest = timestamps.length ? timestamps.reduce((maximum, value) => Math.max(maximum, value), -Infinity) : null;
-        let cutoff = -Infinity;
-        if (latest !== null && state.range !== 'ALL') {
-            const date = new Date(latest);
-            date.setUTCFullYear(date.getUTCFullYear() - (state.range === '5Y' ? 5 : 1));
-            cutoff = date.getTime();
-        }
-        return all.map(series => ({ ...series, points: series.points.filter(point => dateValue(point.date) >= cutoff) }));
+        const window = rangeWindow(records);
+        return records.filter(record => !record.error).map(record => ({ record,
+            points: history(record).filter(point => dateValue(point.date) >= window.start && dateValue(point.date) <= window.end)
+        }));
+    }
+    function redrawChart(focusSelector) {
+        const scroll = pane().scrollTop;
+        const tables = new Set(Array.from(pane().querySelectorAll('.benchmark-detail-observations[open]')).map(node => node.querySelector('caption').textContent));
+        if (state.records.length > 1) renderComparison(); else renderHistory();
+        pane().querySelectorAll('.benchmark-detail-observations').forEach(node => { node.open = tables.has(node.querySelector('caption').textContent); });
+        if (focusSelector) pane().querySelector(focusSelector)?.focus({ preventScroll: true });
+        pane().scrollTop = scroll;
+    }
+    function saveChartSettings() {
+        try { localStorage.setItem(CHART_KEY, JSON.stringify({ version: 1, style: state.chartStyle, dots: state.showDots })); }
+        catch (_) { /* Layout preferences remain usable for this tab. */ }
     }
     function ranges() {
         const controls = element('div', 'benchmark-detail-ranges');
-        controls.setAttribute('role', 'group');
-        controls.setAttribute('aria-label', 'History range');
-        ['1Y', '5Y', 'ALL'].forEach(range => {
-            const control = button(range === 'ALL' ? 'All' : range, () => {
-                state.range = range;
-                if (state.records.length > 1) renderComparison(); else renderHistory();
-                const active = pane().querySelector('[data-detail-range="' + range + '"]');
-                if (active) active.focus({ preventScroll: true });
+        controls.setAttribute('role', 'group'); controls.setAttribute('aria-label', 'History range');
+        ['1M', '3M', '6M', 'YTD', '1Y', '5Y', 'ALL', 'CUSTOM'].forEach(range => {
+            const control = button(range === 'ALL' ? 'All' : range === 'CUSTOM' ? 'Custom' : range, () => {
+                if (range === 'CUSTOM') {
+                    state.settingsOpen = true; byId('benchmark-chart-settings').open = true;
+                    byId('benchmark-chart-start').focus({ preventScroll: true }); return;
+                }
+                state.range = range; redrawChart('[data-detail-range="' + range + '"]');
             });
             control.dataset.detailRange = range;
-            control.setAttribute('aria-pressed', String(range === state.range));
-            controls.append(control);
+            control.setAttribute('aria-pressed', String(range === state.range)); controls.append(control);
         });
         return controls;
+    }
+    function chartSettings() {
+        const details = element('details', 'benchmark-detail-settings');
+        details.id = 'benchmark-chart-settings'; details.open = state.settingsOpen;
+        details.append(element('summary', '', 'Chart settings'));
+        details.addEventListener('toggle', () => { if (details.isConnected) state.settingsOpen = details.open; });
+        const form = element('form', 'benchmark-detail-date-form');
+        const startLabel = element('label', '', 'From'); startLabel.htmlFor = 'benchmark-chart-start';
+        const endLabel = element('label', '', 'To'); endLabel.htmlFor = 'benchmark-chart-end';
+        const start = element('input'); start.type = 'date'; start.id = startLabel.htmlFor; start.required = true;
+        const end = element('input'); end.type = 'date'; end.id = endLabel.htmlFor; end.required = true;
+        const all = state.records.filter(record => !record.error).flatMap(record => history(record)).map(point => point.date).sort();
+        const window = rangeWindow(state.records);
+        start.value = Number.isFinite(window.start) ? new Date(window.start).toISOString().slice(0, 10) : all[0] || '';
+        end.value = Number.isFinite(window.end) ? new Date(window.end).toISOString().slice(0, 10) : all[all.length - 1] || '';
+        const startGroup = element('div'); startGroup.append(startLabel, start);
+        const endGroup = element('div'); endGroup.append(endLabel, end);
+        const apply = button('Apply dates', () => {}); apply.type = 'submit'; apply.id = 'benchmark-chart-apply';
+        const error = element('p', 'benchmark-detail-date-error'); error.id = 'benchmark-chart-date-error'; error.setAttribute('role', 'alert'); error.hidden = true;
+        [start, end].forEach(input => input.setAttribute('aria-describedby', error.id)); form.noValidate = true;
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+            const from = dateValue(start.value), to = dateValue(end.value);
+            const invalid = from === null || to === null || from > to;
+            [start, end].forEach(input => input.setAttribute('aria-invalid', String(invalid)));
+            if (invalid) {
+                error.textContent = from === null || to === null ? 'Enter valid start and end dates.' : 'Start date must be on or before end date.';
+                error.hidden = false; (from === null || from > to ? start : end).focus(); return;
+            }
+            state.custom = { start: start.value, end: end.value }; state.range = 'CUSTOM'; state.settingsOpen = true;
+            redrawChart('#benchmark-chart-apply');
+        });
+        form.append(startGroup, endGroup, apply, error);
+        const presentation = element('div', 'benchmark-detail-presentation');
+        const styleLabel = element('label', '', 'Chart type'); styleLabel.htmlFor = 'benchmark-chart-style';
+        const select = element('select'); select.id = styleLabel.htmlFor;
+        [['line', 'Line'], ['area', 'Area']].forEach(([value, label]) => { const option = element('option', '', label); option.value = value; select.append(option); });
+        select.value = state.chartStyle;
+        select.addEventListener('change', () => { state.chartStyle = select.value; state.settingsOpen = true; saveChartSettings(); redrawChart('#benchmark-chart-style'); });
+        const dotsLabel = element('label', 'benchmark-detail-dots');
+        const dots = element('input'); dots.type = 'checkbox'; dots.id = 'benchmark-chart-dots'; dots.checked = state.showDots;
+        dots.addEventListener('change', () => { state.showDots = dots.checked; state.settingsOpen = true; saveChartSettings(); redrawChart('#benchmark-chart-dots'); });
+        dotsLabel.append(dots, document.createTextNode('Observation dots'));
+        presentation.append(styleLabel, select, dotsLabel);
+        details.append(form, presentation, element('p', 'benchmark-detail-chart-note', 'Ranges use the latest source observation, not today. Custom dates include both endpoints. Gaps remain unfilled.'));
+        return details;
     }
     function svgNode(tag, attrs, content) {
         const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -359,18 +496,27 @@
         svg.append(svgNode('text', { x: 56, y: 209 }, new Date(minTime).toISOString().slice(0, 10)), svgNode('text', { x: 504, y: 209, 'text-anchor': 'end' }, new Date(maxTime).toISOString().slice(0, 10)));
         series.forEach((item, index) => {
             const color = item.color || COLORS[index % COLORS.length];
-            let path = '', previous = null;
+            const segments = []; let segment = [], previous = null;
             item.points.forEach(point => {
-                if (point.value === null) { previous = null; return; }
+                if (point.value === null) { if (segment.length) segments.push(segment); segment = []; previous = null; return; }
                 const gap = previous && dateValue(point.date) - dateValue(previous.date);
                 const maxGap = (item.record.is_daily === true ? 7 : 62) * 86400000;
-                path += (!previous || gap > maxGap ? 'M' : 'L') + x(point.date).toFixed(2) + ',' + y(point.value).toFixed(2) + ' ';
-                const dot = svgNode('circle', { cx: x(point.date), cy: y(point.value), r: series.length > 1 ? 2 : 1.5, fill: color });
+                if (previous && gap > maxGap) { if (segment.length) segments.push(segment); segment = []; }
+                segment.push(point); previous = point;
+            });
+            if (segment.length) segments.push(segment);
+            const paths = segments.map(points => points.map((point, i) => (i ? 'L' : 'M') + x(point.date).toFixed(2) + ',' + y(point.value).toFixed(2)).join(' '));
+            if (state.chartStyle === 'area') segments.forEach((points, i) => {
+                if (points.length < 2) return;
+                svg.append(svgNode('path', { d: paths[i] + ' L' + x(points[points.length - 1].date).toFixed(2) + ',178 L' + x(points[0].date).toFixed(2) + ',178 Z', fill: color, 'fill-opacity': .1, stroke: 'none', class: 'benchmark-detail-area', 'aria-hidden': 'true' }));
+            });
+            svg.append(svgNode('path', { d: paths.join(' '), fill: 'none', stroke: color, 'stroke-width': 1.8, 'stroke-linejoin': 'round', 'stroke-dasharray': series.length > 1 ? (['none', '6 3', '2 3', '8 3 2 3'][state.ids.indexOf(item.record.id)] || 'none') : 'none', class: 'benchmark-detail-line' }));
+            item.points.filter(point => point.value !== null).forEach(point => {
+                // Transparent hit targets retain source-value hover text when dots are hidden.
+                const dot = svgNode('circle', { cx: x(point.date), cy: y(point.value), r: state.showDots ? (series.length > 1 ? 2 : 1.5) : 5, fill: state.showDots ? color : 'transparent', class: 'benchmark-detail-observation-dot' });
                 dot.append(svgNode('title', {}, (item.record.name || item.record.id) + ': ' + point.date + ' · ' + format(point.price) + ' ' + unit(item.record) + (indexed ? ' · Index ' + format(point.value) : '')));
                 svg.append(dot);
-                previous = point;
             });
-            svg.append(svgNode('path', { d: path, fill: 'none', stroke: color, 'stroke-width': 1.8, 'stroke-linejoin': 'round', 'stroke-dasharray': series.length > 1 ? (['none', '6 3', '2 3', '8 3 2 3'][state.ids.indexOf(item.record.id)] || 'none') : 'none' }));
         });
         return svg;
     }
@@ -413,11 +559,11 @@
         const series = chartData([record])[0];
         const points = series.points.map(point => ({ ...point, value: point.price }));
         const heading = element('div', 'benchmark-detail-chart-head');
-        heading.append(element('h3', '', 'Reference history'), ranges());
-        container.replaceChildren(heading, plot([{ record, points, color: 'var(--theme-accent,#1967d2)' }], false));
+        heading.append(element('h3', '', 'Reference history'));
+        container.replaceChildren(heading, ranges(), chartSettings(), plot([{ record, points, color: 'var(--theme-accent,#1967d2)' }], false));
         const usable = points.filter(point => point.price !== null);
         if (usable.length) {
-            container.append(element('p', 'benchmark-detail-chart-note', 'Range ends at the latest published observation. ' + (usable.length === 1 ? 'Only one observation; no change is calculated.' : 'Dots show actual observations. Extended gaps are left open.')));
+            container.append(element('p', 'benchmark-detail-chart-note', (state.range === 'CUSTOM' ? 'Custom window: ' + state.custom.start + ' to ' + state.custom.end + '. ' : 'Range ends at the latest published observation. ') + (usable.length === 1 ? 'Only one observation; no change is calculated.' : 'Extended gaps are left open.')));
             const picker = element('div', 'benchmark-detail-point');
             const label = element('label', '', 'Explore an observation');
             label.htmlFor = 'benchmark-detail-observation';
@@ -425,9 +571,12 @@
             output.htmlFor = 'benchmark-detail-observation';
             const input = element('input');
             input.id = 'benchmark-detail-observation'; input.type = 'range'; input.min = '0'; input.max = String(usable.length - 1); input.value = input.max; input.step = '1';
+            const selected = usable.findIndex(point => point.date === state.inspectedDate);
+            if (selected >= 0) input.value = String(selected);
             input.disabled = usable.length === 1;
             const update = () => {
                 const point = usable[Number(input.value)];
+                state.inspectedDate = point.date;
                 const text = point.date + ' · ' + format(point.price) + ' ' + unit(record);
                 output.textContent = text; input.setAttribute('aria-valuetext', text);
             };
@@ -448,8 +597,8 @@
         byId('benchmark-detail-actions').replaceChildren(button('Watch all', () => addToWatchlist(state.ids)), researchButton);
         const section = element('section');
         const heading = element('div', 'benchmark-detail-chart-head');
-        heading.append(element('h3', '', state.mode === 'indexed' ? 'Indexed histories' : 'Reference values'), ranges());
-        section.append(heading);
+        heading.append(element('h3', '', state.mode === 'indexed' ? 'Indexed histories' : 'Reference values'));
+        section.append(heading, ranges(), chartSettings());
         const modes = element('div', 'benchmark-detail-mode');
         [['indexed', 'Index · first value = 100'], ['absolute', 'Absolute values']].forEach(([mode, label]) => {
             const control = button(label, () => {
@@ -513,6 +662,26 @@
     function init() {
         if (!pane() || state.initialized) return;
         state.initialized = true;
+        try {
+            const saved = JSON.parse(localStorage.getItem(WIDTH_KEY) || 'null');
+            if (saved?.version === 1) Object.keys(DEFAULT_WIDTHS).forEach(key => {
+                if (typeof saved[key] === 'number' && Number.isFinite(saved[key]) && saved[key] >= 360 && saved[key] <= 1120) state.widths[key] = saved[key];
+            });
+        } catch (_) { /* Ignore unreadable layout preferences. */ }
+        try {
+            const saved = JSON.parse(localStorage.getItem(CHART_KEY) || 'null');
+            if (saved?.version === 1) {
+                if (['line', 'area'].includes(saved.style)) state.chartStyle = saved.style;
+                if (typeof saved.dots === 'boolean') state.showDots = saved.dots;
+            }
+        } catch (_) { /* Ignore unreadable chart preferences. */ }
+        const handle = byId('benchmark-detail-resize');
+        handle?.addEventListener('pointerdown', startResize);
+        handle?.addEventListener('keydown', resizeKey);
+        handle?.addEventListener('lostpointercapture', endResize);
+        document.addEventListener('pointermove', moveResize);
+        document.addEventListener('pointerup', endResize);
+        document.addEventListener('pointercancel', endResize);
         const notice = byId('benchmark-detail-notice');
         state.noticeHome = { parent: notice.parentNode, next: notice.nextSibling };
         pane().querySelector('[data-detail-action="close"]').addEventListener('click', close);
@@ -520,7 +689,7 @@
         byId('benchmark-detail-notice').querySelector('[data-detail-action="retry-save"]').addEventListener('click', () => persistWatchlist('Watchlist saved.'));
         byId('benchmark-detail-notice').querySelector('[data-detail-action="dismiss-notice"]').addEventListener('click', () => { byId('benchmark-detail-notice').hidden = true; });
         document.addEventListener('keydown', onKey);
-        window.addEventListener('resize', syncModal);
+        window.addEventListener('resize', onViewportResize);
         window.addEventListener('storage', onStorage);
         getWatchlist();
     }
@@ -529,7 +698,14 @@
         clearTimeout(state.noticeTimer);
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('DOMContentLoaded', init);
-        window.removeEventListener('resize', syncModal);
+        window.removeEventListener('resize', onViewportResize);
+        const handle = byId('benchmark-detail-resize');
+        handle?.removeEventListener('pointerdown', startResize);
+        handle?.removeEventListener('keydown', resizeKey);
+        handle?.removeEventListener('lostpointercapture', endResize);
+        document.removeEventListener('pointermove', moveResize);
+        document.removeEventListener('pointerup', endResize);
+        document.removeEventListener('pointercancel', endResize);
         window.removeEventListener('storage', onStorage);
     }
     BW.BenchmarkDetail = { init, open, close, compare, toggleWatch, addToWatchlist, getWatchlist, destroy };

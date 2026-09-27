@@ -32,12 +32,20 @@ def _versioned_url_for(endpoint, **values):
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    if app.config.get('TRUST_PROXY_HEADERS'):
+        from werkzeug.middleware.proxy_fix import ProxyFix
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=0, x_port=0, x_prefix=0)
 
     cache.init_app(app)
     limiter.init_app(app)
 
     from app import routes
     app.register_blueprint(routes.bp)
+
+    # Opt-in account workspace; public benchmark routes remain available.
+    if app.config.get('WORKSPACE_ENABLED', os.getenv('WORKSPACE_ENABLED') == '1'):
+        from app.workspace_store import init_workspace
+        init_workspace(app)
 
     # --- Static asset cache-busting ------------------------------------
     # Append each static file's mtime as ?v= so a deploy invalidates the

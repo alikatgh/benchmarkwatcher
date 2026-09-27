@@ -38,6 +38,9 @@ class Config:
 
     RATELIMIT_HEADERS_ENABLED = True
     RATELIMIT_STORAGE_URI = os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
+    # Enable only behind a single trusted proxy, with Gunicorn bound to loopback.
+    TRUST_PROXY_HEADERS = os.environ.get('TRUST_PROXY_HEADERS') == '1'
+    RATELIMIT_KEY_PREFIX = 'benchmarkwatcher'
     PUBLIC_API_LIST_RATE_LIMIT = os.environ.get('PUBLIC_API_LIST_RATE_LIMIT', '60 per minute')
     PUBLIC_API_DETAIL_RATE_LIMIT = os.environ.get('PUBLIC_API_DETAIL_RATE_LIMIT', '120 per minute')
     INTERNAL_API_RATE_LIMIT = os.environ.get('INTERNAL_API_RATE_LIMIT', '30 per minute')
