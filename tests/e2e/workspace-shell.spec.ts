@@ -1,6 +1,25 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test('desktop navigation stays below the header at the page end and scrolls internally', async ({page}) => {
+  await page.setViewportSize({width:1440,height:500});
+  await page.goto('/?view=compact');
+  await expect(page.locator('#table-body tr').first()).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0,document.documentElement.scrollHeight));
+  const sidebar=page.locator('.bw-sidebar');
+  await expect(sidebar).toHaveCSS('position','fixed');
+  await expect(sidebar).toHaveCSS('overflow-y','auto');
+  await expect.poll(async () => {
+    const header=await page.locator('.bw-header').boundingBox(), rail=await sidebar.boundingBox();
+    return Math.abs(rail!.y-(header!.y+header!.height));
+  }).toBeLessThanOrEqual(1);
+  const pageScroll=await page.evaluate(()=>window.scrollY);
+  await sidebar.hover();await page.mouse.wheel(0,500);
+  await expect.poll(()=>sidebar.evaluate(node=>node.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(()=>window.scrollY)).toBe(pageScroll);
+  await expect(sidebar.getByText('What’s new',{exact:true})).toBeInViewport();
+});
+
 test('workspace navigation preserves browser back and category links', async ({page}) => {
   await page.goto('/?view=compact');
   await page.locator('[data-workspace-category="energy"]').click();
