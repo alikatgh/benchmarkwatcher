@@ -1,6 +1,6 @@
 <footer role="contentinfo" class="bw-footer">
     <div class="bw-footer-inner">
-    <div class="bw-footer-top"><strong>BenchmarkWatcher</strong><nav aria-label="More information">
+    <div class="bw-footer-top"><div class="bw-footer-brand"><img src="{{ url_for('static', filename='images/favicon.png') }}" width="22" height="22" alt=""><strong>BenchmarkWatcher</strong></div><nav aria-label="More information">
         {% if config.WORKSPACE_ENABLED %}<a href="{{ url_for('workspace.home') }}">{{ 'Workbook studio' if config.WORKBOOK_LIBRARY_ENABLED else 'Company research' }}</a>{% endif %}
         <a href="{{ url_for('main.help_page') }}">Help</a><a href="{{ url_for('main.blog') }}">Blog</a><a href="{{ url_for('main.changelog') }}">Changelog</a>
         <a href="https://github.com/alikatgh/benchmarkwatcher" target="_blank" rel="noopener noreferrer">GitHub ↗</a>

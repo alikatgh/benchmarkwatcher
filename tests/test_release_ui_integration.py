@@ -77,6 +77,7 @@ def test_october_guides_are_public_and_discoverable(app_client, workspace, tmp_p
     stories = {
         '/blog/company-research-from-sec-filings': 'From a ticker to the filing behind a number',
         '/blog/d3-charts-and-visual-explorer': 'More ways to read the same observations with D3',
+        '/blog/a-new-mark-for-benchmarkwatcher': 'A new mark for BenchmarkWatcher',
     }
     for client in (app_client, workspace.test_client()):
         for path, title in stories.items():

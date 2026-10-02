@@ -330,13 +330,21 @@ def d3_visuals_story():
                            meta_description='Explore D3 histories, distributions, monthly heatmaps and coverage views, with exact values, publication gaps and source dates kept visible.')
 
 
+@bp.route('/blog/a-new-mark-for-benchmarkwatcher')
+def new_icon_story():
+    """Explain the shared brand symbol and its use across icon sizes."""
+    return render_template('blog/new-icon.html',
+                           meta_title='A new mark for BenchmarkWatcher | BenchmarkWatcher',
+                           meta_description='Meet the new BenchmarkWatcher icon: a reference stem and three observation points, fitted for the website, browser tab and mobile app.')
+
+
 @bp.route('/favicon.ico')
 def favicon():
-    """Serve favicon to avoid browser 404 noise in console."""
+    """Serve the dedicated multi-size brand favicon."""
     return send_from_directory(
         os.path.join(bp.root_path, 'static', 'images'),
-        'og-image.png',
-        mimetype='image/png'
+        'favicon.ico',
+        mimetype='image/x-icon'
     )
 
 
@@ -353,7 +361,8 @@ def sitemap():
     root = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
     paths = ['/', '/changelog', url_for('main.blog'), url_for('main.research_workspace_story'),
              url_for('main.help_page'), url_for('main.jev_workbook_story'),
-             url_for('main.company_research_story'), url_for('main.d3_visuals_story')]
+             url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
+             url_for('main.new_icon_story')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):
