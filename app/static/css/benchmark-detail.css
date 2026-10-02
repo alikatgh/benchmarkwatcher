@@ -32,7 +32,7 @@
 .benchmark-detail .benchmark-detail-ranges button[aria-pressed="true"] {color:var(--theme-accent,#1967d2);font-weight:650;}
 .benchmark-detail-ranges button[aria-pressed="true"]::after {content:"";position:absolute;bottom:0;left:10px;right:10px;height:2px;background:currentColor;border-radius:2px;}
 .benchmark-detail-ranges button:focus-visible {outline-offset:-3px;}
-.benchmark-detail-chart-surface {margin:8px 0 12px;padding:12px 14px 10px;border:1px solid var(--theme-border,#e2e6ea);border-radius:8px;background:color-mix(in srgb,var(--theme-bg,#f7f9fc) 72%,var(--theme-surface,#fff));}
+.benchmark-detail-chart-surface {margin:8px 0 12px;padding:12px 14px 10px;border:1px solid var(--theme-border,#e2e6ea);border-radius:8px;background:var(--theme-bg,#f7f9fc);}
 .benchmark-detail-chart-surface .benchmark-detail-plot {margin-top:2px;}
 .benchmark-detail-chart-surface .benchmark-detail-readout {min-height:64px;}
 .benchmark-detail-plot {display:block;width:100%;height:auto;min-height:160px;margin:8px 0 0;overflow:visible;}

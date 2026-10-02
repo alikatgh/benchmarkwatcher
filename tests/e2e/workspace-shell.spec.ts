@@ -129,6 +129,7 @@ test('shared controls stay distinguishable and accessible across all themes', as
     const selected=page.locator('.tw-context .range-btn[aria-pressed="true"]');
     const idle=page.locator('.tw-context .range-btn[aria-pressed="false"]').first();
     const background=(node:Element)=>getComputedStyle(node).backgroundColor;
+    expect(await page.locator('body').evaluate(background), `${theme}: canvas must differ from data panels`).not.toBe(await page.locator('.bw-overview').evaluate(background));
     expect(await selected.evaluate(background), `${theme}: selected range must stand out`).not.toBe(await idle.evaluate(background));
     await page.keyboard.press('Tab');
     await idle.focus();

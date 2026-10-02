@@ -36,11 +36,19 @@ test('desktop opens contextual source history, watches persistently, and returns
     await expect(page.locator('#benchmark-detail [data-watch-id]')).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('detail keeps history close to the quote and chart controls usable', async ({page}) => {
+test('detail keeps history close to the quote and chart controls usable', async ({page},testInfo) => {
     await page.setViewportSize({width:1440,height:900});
     await browse(page);
     await openFirst(page);
     const detail = page.locator('#benchmark-detail');
+    await page.addStyleTag({content:'*,:before,:after{transition:none!important;animation:none!important}'});
+    const background=(node:Element)=>getComputedStyle(node).backgroundColor;
+    for (const theme of ['ft','dark']) {
+        await page.evaluate(theme => (window as any).setTheme(theme),theme);
+        await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
+        expect(await detail.evaluate(background),`${theme}: plot surface must differ from panel`).not.toBe(await detail.locator('.benchmark-detail-chart-surface').evaluate(background));
+        await page.screenshot({path:testInfo.outputPath(`${theme}-detail-surfaces.png`),fullPage:false});
+    }
     await expect(detail.getByRole('heading',{name:'Reference history'})).toBeInViewport();
     await detail.locator('#benchmark-chart-settings > summary').click();
     await expect(detail.locator('#benchmark-chart-start')).toBeVisible();

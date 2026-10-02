@@ -34,7 +34,7 @@ html[data-theme] .company-report-heading h1{font-size:26px;letter-spacing:-.7px;
 .company-periods button[aria-pressed=true]{border-bottom-color:var(--theme-accent)!important;color:var(--theme-accent);font-weight:600}
 .company-range-label{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--theme-text-muted)}
 .company-range-label select{font-size:11px!important;padding:5px 8px!important;min-height:32px!important;width:auto!important}
-.company-chart{width:100%;height:290px;margin:10px 0 4px}
+.company-chart{width:100%;height:290px;margin:10px 0 4px;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px}
 .company-chart>svg{display:block;width:100%;height:100%}
 .company-chart .bw-d3-axis text{font-size:11px}
 .company-workspace #company-chart-caption{font-size:11px;line-height:1.6;margin:6px 0 0}
@@ -46,7 +46,7 @@ html[data-theme] .company-report-heading h1{font-size:26px;letter-spacing:-.7px;
 .company-sections button{border:0!important;border-radius:0!important;background:none!important;padding:9px 0!important;min-height:36px;border-bottom:2px solid transparent!important;flex-shrink:0;color:var(--theme-text-muted);font-size:12px}
 .company-sections button[aria-pressed=true]{border-bottom-color:var(--theme-accent)!important;color:var(--theme-text);font-weight:600}
 .company-workspace #company-table-note{font-size:11px;margin:10px 0}
-.company-table-wrap{width:100%;overflow:auto;overscroll-behavior-x:contain}
+.company-table-wrap{width:100%;overflow:auto;overscroll-behavior-x:contain;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px}
 .company-table-wrap table{width:100%;font-size:12px}
 .company-table-wrap th,.company-table-wrap td{padding:8px 12px;text-align:right;font-variant-numeric:tabular-nums}
 .company-table-wrap thead th{font-weight:500;font-size:11px}
