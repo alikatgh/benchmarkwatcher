@@ -187,7 +187,7 @@
     opener.addEventListener('click', () => showChat(chat.hidden)); $('#company-chat-close').addEventListener('click', () => showChat(false));
     chat.addEventListener('keydown', event => { if (event.key === 'Escape') showChat(false); });
     $('#company-provider').addEventListener('change', () => { const remote = $('#company-provider').value !== 'local'; $('#company-consent').hidden = !remote; form.elements.consent.required = remote; form.elements.consent.checked = false; });
-    $('#company-new-topic').addEventListener('click', () => { form.elements.previous.value = ''; $('#company-chat-status').textContent = 'New topic. Name the metric you want to explore.'; question.focus(); });
+    $('#company-new-topic').addEventListener('click', () => { form.elements.previous.value = ''; const status = $('#company-chat-status'); status.classList.remove('sr-only'); status.textContent = 'New topic. Name the metric you want to explore.'; question.focus(); });
     chat.addEventListener('click', event => { const suggestion = event.target.closest('[data-question]'); if (suggestion) { question.value = suggestion.dataset.question; question.focus(); } });
     function answerCharts() {
         chat.querySelectorAll('.company-answer-data').forEach(details => {
@@ -210,14 +210,14 @@
     form.addEventListener('submit', async event => {
         event.preventDefault(); if (asking) return; asking = true;
         const button = form.querySelector('[type=submit]'), status = $('#company-chat-status'), data = new FormData(form), provider = $('#company-provider');
-        button.disabled = true; question.readOnly = true; provider.disabled = true; status.textContent = 'Preparing your answer…';
+        button.disabled = true; question.readOnly = true; provider.disabled = true; status.classList.remove('sr-only'); status.textContent = 'Preparing your answer…';
         try {
             const result = await jsonFetch(form.action, { method: 'POST', body: data });
             $('#company-conversation').querySelector('.company-chat-intro')?.remove();
             const template = document.createElement('template'); template.innerHTML = result.html;
             $('#company-conversation').append(template.content); form.elements.previous.value = result.id; question.value = ''; form.elements.consent.checked = false;
-            status.textContent = 'Answer saved.'; answerCharts(); $('#company-conversation').scrollTop = $('#company-conversation').scrollHeight;
-        } catch (error) { status.textContent = error.message; }
+            status.textContent = 'Answer saved.'; status.classList.add('sr-only'); answerCharts(); $('#company-conversation').scrollTop = $('#company-conversation').scrollHeight;
+        } catch (error) { status.classList.remove('sr-only'); status.textContent = error.message; }
         finally { button.disabled = false; question.readOnly = false; provider.disabled = false; asking = false; question.focus(); }
     });
     question.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); } });

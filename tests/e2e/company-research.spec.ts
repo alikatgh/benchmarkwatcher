@@ -92,6 +92,7 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   await question.fill('Compare revenue in 2024 and 2025');
   await page.getByRole('button',{name:'Send question ↑'}).click();
   await expect(page.locator('.company-exchange')).toContainText('200M USD');
+  await expect(page.locator('#company-chat-status')).toHaveClass(/sr-only/);
   await question.fill('Compare Q1 2025 and Q2 2025');
   await question.press('Enter');
   await expect(page.locator('.company-exchange').last()).toContainText('42M USD');
@@ -115,7 +116,7 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   expect(errors).toEqual([]);
 });
 
-test('unavailable issuers, sector-specific rows and optional provider consent',async({page})=>{
+test('unavailable issuers, sector-specific rows and optional provider consent',async({page},info)=>{
   await account(page);
   await page.getByLabel('Company name, ticker or SEC CIK').fill('MISS');
   await page.locator('#company-results').getByRole('button').click();
@@ -134,6 +135,9 @@ test('unavailable issuers, sector-specific rows and optional provider consent',a
   await page.goto(reportURL);
   await openChat(page);
   await page.locator('#company-provider').selectOption('deepseek:fixture-chat');
+  await expect(page.locator('#company-consent')).toBeVisible();
+  expect((await page.locator('#company-chat-form').boundingBox())!.height).toBeLessThan(270);
+  await page.screenshot({path:info.outputPath('company-paid-composer.png'),fullPage:false});
   await page.getByLabel('Question about this report').fill('Discuss this company');
   await page.getByRole('button',{name:'Send question ↑'}).click();
   await expect(page.locator('.company-exchange')).toHaveCount(0);

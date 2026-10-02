@@ -44,11 +44,15 @@ html[data-theme] body #tw-query:focus-visible{outline:none!important}
 .tw-controls-toggle{font-size:12px!important;flex-shrink:0;padding:4px 6px;min-height:32px}
 .tw-control-shell button{transition:background-color .15s,color .15s,border-color .15s}
 .tw-control-shell button:active{transform:none}
-.tw-control-heading .tw-button{--button-bg:var(--theme-surface);--button-border:transparent;--button-text:var(--theme-text-muted);--button-hover-border:transparent;--button-expanded-bg:var(--theme-surface);--button-expanded-text:var(--theme-text-muted);--button-expanded-border:transparent;border:0;min-height:32px;margin-block:8px;font-size:12px!important}
+.tw-control-heading .tw-button{--button-bg:transparent;--button-border:transparent;--button-text:var(--theme-text-muted);--button-hover:var(--control-hover);--button-hover-border:transparent;--button-expanded-bg:transparent;--button-expanded-text:var(--theme-text);--button-expanded-border:transparent;border:1px solid transparent;min-height:32px;margin-block:8px;font-size:12px!important}
+.tw-viewbar>#tw-new-view{--button-bg:var(--control-primary);--button-border:var(--control-primary);--button-text:var(--control-on-primary);--button-hover:var(--control-primary-hover);--button-hover-border:var(--control-primary-hover);--button-expanded-bg:var(--control-selected-bg);--button-expanded-text:var(--control-selected-text);--button-expanded-border:var(--control-selected-border);border-radius:6px;padding-inline:11px}
+.tw-viewbar>#tw-view-menu-button,.tw-control-heading>.tw-controls-toggle{--button-bg:var(--control-panel);--button-border:var(--control-border);--button-text:var(--control-text);--button-hover:var(--control-hover);--button-hover-border:var(--control-hover-border);border-radius:6px;padding-inline:10px}
+.tw-viewbar>#tw-view-menu-button{--button-expanded-bg:var(--control-selected-bg);--button-expanded-text:var(--control-selected-text);--button-expanded-border:var(--control-selected-border)}
+.tw-control-heading>.tw-controls-toggle{--button-expanded-bg:var(--control-panel);--button-expanded-text:var(--control-text);--button-expanded-border:var(--control-border)}
 .tw-view{--button-bg:var(--theme-surface);--button-text:var(--theme-text-muted);--button-border:transparent;--button-hover-border:transparent;--button-selected-bg:var(--theme-surface);--button-selected-border:transparent;--button-selected-hover:var(--control-hover)}
 .tw-views .tw-view:focus-visible{outline-offset:-3px}
 .tw-view[aria-pressed=true]::after{content:"";position:absolute;bottom:0;left:10px;right:10px;height:3px;background:var(--control-primary);border-radius:3px 3px 0 0}
-.tw-tools .tw-button{--button-bg:var(--theme-surface);--button-border:var(--theme-border);--button-hover-border:var(--control-border)}
+.tw-tools .tw-button{--button-bg:var(--control-panel);--button-text:var(--control-text);--button-border:var(--control-border);--button-hover:var(--control-hover);--button-hover-border:var(--control-hover-border);--button-expanded-bg:var(--control-selected-bg);--button-expanded-text:var(--control-selected-text);--button-expanded-border:var(--control-selected-border)}
 .tw-context .range-btn{--button-bg:var(--control-panel);--button-border:transparent;--button-hover-border:transparent;--button-selected-border:transparent}
 .tw-chips:empty{display:none}
 .tw-controls-collapsed .tw-control-heading{border-bottom:0}
