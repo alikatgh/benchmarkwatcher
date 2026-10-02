@@ -1,7 +1,6 @@
 {% macro number(point) %}{% if point.value is none %}Unavailable{% elif point.percent %}{{ '{:,.2f}'.format(point.value * 100) }}%{% else %}{{ '{:,.2f}'.format(point.value) }}{% endif %}{% endmacro %}
 <section class="studio-result-overview" aria-label="Analysis overview">
   <div class="studio-section-heading"><h2>{{ result.metric }}</h2><span class="muted small">{{ result.points|length }} saved {{ 'period' if result.points|length == 1 else 'periods' }}</span></div>
-  <p class="muted small">Quarterly and annual values are shown separately. Period labels and units follow the workbook; dates alone do not distinguish historical figures from assumptions.</p>
   {% for group in presentation.groups %}
   <figure class="studio-series">
     <figcaption><div><h3>{{ group.label }}</h3><span class="muted small">{{ group.unit }}</span></div><div class="studio-series-range"><span>{{ group.first.period }} <strong>{{ group.first.display }}</strong></span>{% if group.points|length > 1 %}<span aria-hidden="true">→</span><span>{{ group.last.period }} <strong>{{ group.last.display }}</strong></span>{% endif %}</div></figcaption>
@@ -10,6 +9,7 @@
     {% elif not group.count %}<p class="muted">No usable saved values for these periods.</p>{% endif %}
   </figure>
   {% endfor %}
+  <p class="studio-result-note muted small">Quarterly and annual values are shown separately. Period labels and units follow the workbook; dates alone do not distinguish historical figures from assumptions.</p>
   {% if presentation.missing %}<p class="muted small">{{ presentation.missing }} periods have no saved value. Gaps are left open in the chart.</p>{% endif %}
 </section>
 <details class="workspace-panel studio-source-data"><summary>Source data <span class="muted small">{{ result.points|length }} {{ 'period' if result.points|length == 1 else 'periods' }} · exact values &amp; cells</span></summary>

@@ -188,20 +188,21 @@
         document.querySelectorAll('[data-workbook-chart]').forEach(target => {
             if (target.dataset.d3Ready) return;
             const points = JSON.parse(target.dataset.points || '[]'); target.dataset.d3Ready = 'true';
-            const controls = el('div', '', 'bw-visual-controls');
+            const controls = el('div', '', 'studio-chart-controls');
             const select = selector(controls, 'Chart type', [['line', 'Line'], ['area', 'Area'], ['bar', 'Bars'], ['scatter', 'Dots']]);
-            target.before(controls);
+            const caption = target.closest('figure')?.querySelector('figcaption');
+            if (caption) caption.append(controls); else target.before(controls);
             function draw() {
-                const width = Math.max(320, target.clientWidth || 760), height = 240, svg = V.root(target, width, height, target.dataset.label + '. Exact values in Source data.');
+                const width = Math.max(260, target.clientWidth || 760), height = 230, svg = V.root(target, width, height, target.dataset.label + '. Exact values in Source data.');
                 const rows = points.map((p, index) => ({...p, index, value: p.value === null ? null : V.numeric(p.value) * (p.percent ? 100 : 1)}));
-                const x = d.scalePoint().domain(rows.map(p => p.index)).range([70, width - 24]).padding(.3), y = d.scaleLinear().domain(V.domain(rows.map(p => p.value), select.value === 'bar')).range([190, 24]);
-                V.axes(svg, x, y, width, height, {left:70, xValues: rows.filter((p, i) => i % Math.max(1, Math.ceil(rows.length / (width < 500 ? 3 : 6))) === 0 || i === rows.length - 1).map(p => p.index), xFormat: i => rows[i].period});
+                const x = d.scalePoint().domain(rows.map(p => p.index)).range([8, width - 58]).padding(.2), y = d.scaleLinear().domain(V.domain(rows.map(p => p.value), select.value === 'bar')).range([192, 16]);
+                V.axes(svg, x, y, width, height, {left:8, right:width - 58, finance:true, yAxisPosition:'right', yTicks:4, xValues: rows.filter((p, i) => i % Math.max(1, Math.ceil(rows.length / (width < 500 ? 3 : 6))) === 0 || i === rows.length - 1).map(p => p.index), xFormat: i => rows[i].period});
                 const defined = p => p.value !== null;
-                if (select.value === 'area') svg.append('path').datum(rows).attr('d', d.area().defined(defined).x(p => x(p.index)).y0(190).y1(p => y(p.value))).attr('fill', V.color()).attr('opacity', .12);
+                if (select.value === 'area') svg.append('path').datum(rows).attr('d', d.area().defined(defined).x(p => x(p.index)).y0(192).y1(p => y(p.value))).attr('fill', V.color()).attr('opacity', .12);
                 if (['line', 'area'].includes(select.value)) svg.append('path').datum(rows).attr('d', d.line().defined(defined).x(p => x(p.index)).y(p => y(p.value))).attr('class', 'bw-d3-line').attr('fill', 'none').attr('stroke', V.color()).attr('stroke-width', 2);
                 const valid = rows.filter(defined);
                 if (select.value === 'bar') titleMarks(svg.selectAll('rect').data(valid).join('rect').attr('x', p => x(p.index) - 10).attr('width', Math.min(20, 500 / rows.length)).attr('y', p => Math.min(y(0), y(p.value))).attr('height', p => Math.abs(y(p.value) - y(0))).attr('fill', V.color()), p => p.period + ': ' + p.display + ' · ' + p.source);
-                else titleMarks(svg.selectAll('circle').data(valid).join('circle').attr('cx', p => x(p.index)).attr('cy', p => y(p.value)).attr('r', 4).attr('fill', V.color()), p => p.period + ': ' + p.display + ' · ' + p.source);
+                else titleMarks(svg.selectAll('circle').data(valid).join('circle').attr('cx', p => x(p.index)).attr('cy', p => y(p.value)).attr('r', select.value === 'scatter' ? 4 : 2.5).attr('fill', V.color()), p => p.period + ': ' + p.display + ' · ' + p.source);
             }
             select.addEventListener('change', draw); redraws.set(target, draw); draw();
             if (typeof ResizeObserver !== 'undefined') {
