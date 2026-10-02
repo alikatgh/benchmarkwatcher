@@ -192,10 +192,10 @@
             const select = selector(controls, 'Chart type', [['line', 'Line'], ['area', 'Area'], ['bar', 'Bars'], ['scatter', 'Dots']]);
             target.before(controls);
             function draw() {
-                const width = 760, height = 240, svg = V.root(target, width, height, target.dataset.label + '. Exact values in Source data.');
+                const width = Math.max(320, target.clientWidth || 760), height = 240, svg = V.root(target, width, height, target.dataset.label + '. Exact values in Source data.');
                 const rows = points.map((p, index) => ({...p, index, value: p.value === null ? null : V.numeric(p.value) * (p.percent ? 100 : 1)}));
-                const x = d.scalePoint().domain(rows.map(p => p.index)).range([86, 696]).padding(.3), y = d.scaleLinear().domain(V.domain(rows.map(p => p.value), select.value === 'bar')).range([190, 24]);
-                V.axes(svg, x, y, width, height, {left:86, xValues: rows.filter((p, i) => i % Math.max(1, Math.ceil(rows.length / 6)) === 0 || i === rows.length - 1).map(p => p.index), xFormat: i => rows[i].period});
+                const x = d.scalePoint().domain(rows.map(p => p.index)).range([70, width - 24]).padding(.3), y = d.scaleLinear().domain(V.domain(rows.map(p => p.value), select.value === 'bar')).range([190, 24]);
+                V.axes(svg, x, y, width, height, {left:70, xValues: rows.filter((p, i) => i % Math.max(1, Math.ceil(rows.length / (width < 500 ? 3 : 6))) === 0 || i === rows.length - 1).map(p => p.index), xFormat: i => rows[i].period});
                 const defined = p => p.value !== null;
                 if (select.value === 'area') svg.append('path').datum(rows).attr('d', d.area().defined(defined).x(p => x(p.index)).y0(190).y1(p => y(p.value))).attr('fill', V.color()).attr('opacity', .12);
                 if (['line', 'area'].includes(select.value)) svg.append('path').datum(rows).attr('d', d.line().defined(defined).x(p => x(p.index)).y(p => y(p.value))).attr('class', 'bw-d3-line').attr('fill', 'none').attr('stroke', V.color()).attr('stroke-width', 2);
@@ -204,6 +204,14 @@
                 else titleMarks(svg.selectAll('circle').data(valid).join('circle').attr('cx', p => x(p.index)).attr('cy', p => y(p.value)).attr('r', 4).attr('fill', V.color()), p => p.period + ': ' + p.display + ' · ' + p.source);
             }
             select.addEventListener('change', draw); redraws.set(target, draw); draw();
+            if (typeof ResizeObserver !== 'undefined') {
+                let width = target.clientWidth;
+                const observer = new ResizeObserver(() => {
+                    if (!target.isConnected) { observer.disconnect(); return; }
+                    if (target.clientWidth > 0 && target.clientWidth !== width) { width = target.clientWidth; draw(); }
+                });
+                observer.observe(target);
+            }
         });
     }
     async function dashboard() {
