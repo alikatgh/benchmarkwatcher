@@ -123,14 +123,14 @@ html[data-theme] .benchmark-detail-point input::-moz-range-thumb {background:var
 html[data-theme] body :is(.bw-sidebar nav a[aria-current="page"],.bw-studio-link[aria-current="page"]) {
   background-color:var(--control-selected-bg)!important;color:var(--control-selected-text)!important;
 }
-html[data-theme] body :is(.benchmark-detail-settings,.benchmark-detail-observations,.profile-method)>summary {
+html[data-theme] body .profile-method>summary {
   padding:7px 10px;min-height:36px;border:1px solid var(--control-border);border-radius:5px;
   background:var(--control-bg);color:var(--control-text);width:fit-content;
 }
-html[data-theme] body :is(.benchmark-detail-settings,.benchmark-detail-observations,.profile-method)[open]>summary {
+html[data-theme] body .profile-method[open]>summary {
   background:var(--control-selected-bg);color:var(--control-selected-text);border-color:var(--control-selected-border);
 }
-@media(pointer:coarse) {html[data-theme] body :is(.benchmark-detail-settings,.benchmark-detail-observations,.profile-method)>summary {min-height:44px;}}
+@media(pointer:coarse) {html[data-theme] body .profile-method>summary {min-height:44px;}}
 @media(max-width:540px) {.bw-header-actions {gap:4px;}}
 @media(forced-colors:active) {
   html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link) {border:1px solid ButtonText!important;}

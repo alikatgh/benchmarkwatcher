@@ -9,6 +9,7 @@
     const Workspace = {
         catalog: [], catalogLoaded: false, loading: null, loadFailed: false, current: 'benchmarks', searchTrigger: null,
         init() {
+            this.initSidebar();
             this.initScrollChrome();
             try { this.catalog = JSON.parse($('workspace-benchmarks')?.textContent || '[]'); } catch (_) { this.catalog = []; }
             this.renderOverview();
@@ -68,6 +69,24 @@
             });
             this.initSearch(); this.navigate(false, true);
             if ($('index-page-state')) this.loadCatalog();
+        },
+        initSidebar() {
+            const toggle = $('bw-sidebar-toggle');
+            if (!toggle) return;
+            const key = 'bw.sidebar.collapsed.v1';
+            const setCollapsed = collapsed => {
+                document.body.classList.toggle('bw-sidebar-collapsed', collapsed);
+                toggle.setAttribute('aria-expanded', String(!collapsed));
+                toggle.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
+                toggle.title = collapsed ? 'Expand navigation' : 'Collapse navigation';
+            };
+            try { setCollapsed(localStorage.getItem(key) === 'true'); }
+            catch (_) { setCollapsed(false); }
+            toggle.addEventListener('click', () => {
+                const collapsed = !document.body.classList.contains('bw-sidebar-collapsed');
+                setCollapsed(collapsed);
+                try { localStorage.setItem(key, String(collapsed)); } catch (_) { /* Keep this tab usable. */ }
+            });
         },
         initScrollChrome() {
             let scheduled = false;
