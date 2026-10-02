@@ -29,6 +29,11 @@ test('workspace controls, panels and dialogs use brief motion', async ({ page },
   await page.screenshot({ path: testInfo.outputPath('settings-dialog-motion.png') });
   await page.getByRole('button', { name: 'Close settings', exact: true }).click();
   await expect(page.locator('#settings-button')).toBeFocused();
+
+  await page.locator('[data-workspace="research"]').first().click();
+  await page.locator('[data-rw-action="new"]').first().click();
+  await expect(page.locator('#rw-editor')).toBeVisible();
+  await expect(page.locator('#rw-editor')).toHaveCSS('animation-name', 'bw-dialog-in');
 });
 
 test('reduced motion leaves controls and panels immediately usable', async ({ page }) => {
