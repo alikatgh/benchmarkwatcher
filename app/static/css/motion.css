@@ -29,14 +29,16 @@ html[data-theme] body :is(.tw-button,.range-btn,.bw-icon-button,.benchmark-detai
 @keyframes bw-drawer-in {from {opacity:.8;right:-18px;}to {opacity:1;right:0;}}
 @keyframes bw-fade-in {from {opacity:0;}to {opacity:1;}}
 
-:is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open] {
+:is(.tw-view-dialog,.bw-search-dialog,.rw-dialog,.studio-consent-dialog,#company-source)[open] {
   animation:bw-dialog-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;
 }
-:is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open]::backdrop {
+:is(.tw-view-dialog,.bw-search-dialog,.rw-dialog,.studio-consent-dialog,#company-source)[open]::backdrop {
   animation:bw-fade-in var(--bw-motion-panel) ease both;
 }
 #settings-modal:not([hidden]) {animation:bw-fade-in var(--bw-motion-panel) ease both;}
 #settings-modal:not([hidden])>.bw-popup-surface {animation:bw-dialog-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;}
+#chart-settings-modal:not(.hidden) {animation:bw-fade-in var(--bw-motion-panel) ease both;}
+#chart-settings-modal:not(.hidden)>.bw-popup-surface {animation:bw-fade-in var(--bw-motion-panel) ease backwards;}
 @keyframes bw-dialog-in {from {opacity:.6;transform:translateY(9px) scale(.985);}to {opacity:1;transform:translateY(0) scale(1);}}
 
 @media (prefers-reduced-motion:reduce) {
@@ -45,7 +47,8 @@ html[data-theme] body :is(.tw-button,.range-btn,.bw-icon-button,.benchmark-detai
   html[data-theme] body :is(.tw-button,.range-btn,.bw-icon-button,.benchmark-detail-actions button,.benchmark-detail-ranges button):active:not(:disabled) {transform:none;}
   .tw-view[aria-pressed="true"]::after,.benchmark-detail-ranges button[aria-pressed="true"]::after,
   .tw-panel:not([hidden]),.benchmark-detail-chart-surface,.benchmark-detail:not([hidden]),.benchmark-detail-backdrop:not([hidden]),
-  :is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open],
-  :is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open]::backdrop,
-  #settings-modal:not([hidden]),#settings-modal:not([hidden])>.bw-popup-surface {animation:none;}
+  :is(.tw-view-dialog,.bw-search-dialog,.rw-dialog,.studio-consent-dialog,#company-source)[open],
+  :is(.tw-view-dialog,.bw-search-dialog,.rw-dialog,.studio-consent-dialog,#company-source)[open]::backdrop,
+  #settings-modal:not([hidden]),#settings-modal:not([hidden])>.bw-popup-surface,
+  #chart-settings-modal:not(.hidden),#chart-settings-modal:not(.hidden)>.bw-popup-surface {animation:none;}
 }
