@@ -186,7 +186,7 @@ BW.CompactTable = {
             });
     },
 
-    // Destroy all Chart.js instances
+    // Destroy all D3 instances
     destroyAllCharts: function () {
         Object.keys(this.chartRegistry).forEach(id => {
             if (this.chartRegistry[id]) {
@@ -296,7 +296,7 @@ BW.CompactTable = {
                 </td>
                 <td data-col="trend" class="px-4 py-5">
                     <div class="h-10 w-28 bg-brand-black-60/5 dark:bg-white/5 rounded-lg p-1">
-                        <canvas id="${sparklineId}"></canvas>
+                        <svg id="${sparklineId}" role="img" aria-label="Historical observations"></svg>
                     </div>
                 </td>
                 <td data-col="price" class="px-4 py-5 text-right">
@@ -356,252 +356,23 @@ BW.CompactTable = {
         }
     },
 
-    // Initialize sparkline charts
+    // D3 sparklines share the selected historical range and table preferences.
     initSparklines: function (commodities) {
-        const self = this;
-        requestAnimationFrame(() => {
-            const colors = BW.Theme ? BW.Theme.getSparklineColors() : (() => {
-                const cs = getComputedStyle(document.documentElement);
-                return {
-                    line: cs.getPropertyValue('--sparkline-line').trim() || '#0f5499',
-                    gradientStart: cs.getPropertyValue('--sparkline-grad-start').trim() || 'rgba(15, 84, 153, 0.1)',
-                    gradientEnd: cs.getPropertyValue('--sparkline-grad-end').trim() || 'rgba(15, 84, 153, 0)',
-                    ma: cs.getPropertyValue('--sparkline-ma').trim() || '#990f3d',
-                    up: cs.getPropertyValue('--market-up').trim() || '#0d7680',
-                    down: cs.getPropertyValue('--market-down').trim() || '#990f3d'
-                };
-            })();
-
-            const settings = self.getSettings();
-            const pointsSetting = settings.trend?.points || '30';
-            const useAllPoints = pointsSetting === 'all';
-            const rawPoints = parseInt(pointsSetting);
-            const pointsCount = useAllPoints ? Infinity : (Number.isFinite(rawPoints) && rawPoints > 0 ? rawPoints : 30);
-            const chartType = settings.trend?.type || 'area';
-            const showMA = document.getElementById('trend-ma')?.checked || settings.trend?.showMA || false;
-            const showHighLow = document.getElementById('trend-highlow')?.checked || settings.trend?.showHighLow || false;
-
-            commodities.forEach(commodity => {
-                const commodityId = String(commodity.id || '');
-                const canvasId = `sparkline-${self.safeDomId(commodityId)}`;
-                const canvas = document.getElementById(canvasId);
-                if (!canvas || !commodity.history) return;
-
-                const ctx = canvas.getContext('2d');
-                const allPrices = commodity.history.map(h => h.price);
-                const dataPoints = useAllPoints ? allPrices : allPrices.slice(-pointsCount);
-
-                if (dataPoints.length < 2) {
-                    const container = canvas.parentElement;
-                    if (container) {
-                        canvas.style.display = 'none';
-                        let noDataMsg = container.querySelector('.no-data-msg');
-                        if (!noDataMsg) {
-                            noDataMsg = document.createElement('div');
-                            noDataMsg.className = 'no-data-msg text-2xs text-brand-black-60 italic flex items-center justify-center h-full';
-                            noDataMsg.textContent = 'No data in range';
-                            container.appendChild(noDataMsg);
-                        }
-                    }
-                    return;
-                }
-
-                // Clear no data message
-                const container = canvas.parentElement;
-                if (container) {
-                    const noDataMsg = container.querySelector('.no-data-msg');
-                    if (noDataMsg) noDataMsg.remove();
-                    canvas.style.display = '';
-                }
-
-                // Destroy existing chart
-                if (self.chartRegistry[canvasId]) {
-                    self.chartRegistry[canvasId].destroy();
-                    delete self.chartRegistry[canvasId];
-                }
-
-                // Calculate moving average
-                const maData = [];
-                if (showMA && dataPoints.length >= 7) {
-                    for (let i = 0; i < dataPoints.length; i++) {
-                        if (i < 6) {
-                            maData.push(null);
-                        } else {
-                            const slice = dataPoints.slice(i - 6, i + 1);
-                            const avg = slice.reduce((a, b) => a + b, 0) / 7;
-                            maData.push(avg);
-                        }
-                    }
-                }
-
-                // Find high/low
-                const maxVal = Math.max(...dataPoints);
-                const minVal = Math.min(...dataPoints);
-                const maxIdx = dataPoints.indexOf(maxVal);
-                const minIdx = dataPoints.indexOf(minVal);
-
-                // Create gradient
-                const canvasHeight = canvas.parentElement?.offsetHeight || 40;
-                const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-                gradient.addColorStop(0, colors.gradientStart);
-                gradient.addColorStop(1, colors.gradientEnd);
-
-                // Build datasets
-                const datasets = [];
-                let jsChartType = 'line';
-                let mainDataset = {
-                    data: dataPoints,
-                    borderColor: colors.line,
-                    backgroundColor: gradient,
-                    borderWidth: 1.5,
-                    fill: false,
-                    tension: 0.3,
-                    pointRadius: 0,
-                    pointHoverRadius: 3,
-                    pointHoverBackgroundColor: colors.line,
-                };
-
-                switch (chartType) {
-                    case 'area':
-                        mainDataset.fill = true;
-                        break;
-                    case 'line':
-                        mainDataset.fill = false;
-                        break;
-                    case 'bar':
-                        jsChartType = 'bar';
-                        mainDataset = {
-                            data: dataPoints,
-                            backgroundColor: dataPoints.map((val, i) => {
-                                if (i === 0) return colors.line;
-                                return val >= dataPoints[i - 1] ? colors.up : colors.down;
-                            }),
-                            borderRadius: 1,
-                            borderSkipped: false,
-                        };
-                        break;
-                    case 'step':
-                        mainDataset.stepped = 'before';
-                        mainDataset.tension = 0;
-                        mainDataset.fill = true;
-                        break;
-                    case 'sparkline-range':
-                        mainDataset.fill = {
-                            target: 'origin',
-                            above: colors.gradientStart,
-                            below: 'color-mix(in srgb, ' + (colors.down || 'var(--color-down)') + ' 10%, transparent)'
-                        };
-                        mainDataset.tension = 0.2;
-                        const avgPrice = dataPoints.reduce((a, b) => a + b, 0) / dataPoints.length;
-                        datasets.push({
-                            data: dataPoints.map(() => avgPrice),
-                            borderColor: 'color-mix(in srgb, ' + (colors.line || 'var(--theme-text-muted)') + ' 30%, transparent)',
-                            borderWidth: 1,
-                            borderDash: [3, 3],
-                            fill: false,
-                            pointRadius: 0,
-                        });
-                        break;
-                    case 'none':
-                        canvas.style.display = 'none';
-                        return;
-                }
-
-                // Add high/low markers
-                if (showHighLow && jsChartType === 'line') {
-                    mainDataset.pointRadius = dataPoints.map((_, i) => (i === maxIdx || i === minIdx) ? 4 : 0);
-                    mainDataset.pointBackgroundColor = dataPoints.map((_, i) => {
-                        if (i === maxIdx) return colors.up;
-                        if (i === minIdx) return colors.down;
-                        return colors.line;
-                    });
-                    mainDataset.pointBorderColor = mainDataset.pointBackgroundColor;
-                }
-
-                datasets.unshift(mainDataset);
-
-                // Add MA line
-                if (showMA && maData.length > 0 && jsChartType === 'line') {
-                    datasets.push({
-                        data: maData,
-                        borderColor: colors.ma,
-                        borderWidth: 1,
-                        borderDash: [2, 2],
-                        fill: false,
-                        tension: 0.3,
-                        pointRadius: 0,
-                        spanGaps: true,
-                    });
-                }
-
-                // Create chart
-                try {
-                    self.chartRegistry[canvasId] = new Chart(ctx, {
-                        type: jsChartType,
-                        data: {
-                            labels: dataPoints.map((_, i) => i),
-                            datasets: datasets
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: { duration: 300 },
-                            plugins: { legend: { display: false }, tooltip: { enabled: false } },
-                            scales: { x: { display: false }, y: { display: false } },
-                            interaction: { intersect: false, mode: 'index' }
-                        }
-                    });
-                } catch (e) {
-                    console.warn('BW.CompactTable: Failed to create sparkline chart for', canvasId, e);
-                }
-            });
+        this.sparklineData = commodities;
+        const settings = this.getSettings().trend || {};
+        const count = settings.points === 'all' ? Infinity : (parseInt(settings.points) || 30);
+        commodities.forEach(commodity => {
+            const id = 'sparkline-' + this.safeDomId(String(commodity.id || ''));
+            const svg = document.getElementById(id);
+            if (!svg || !BW.Visuals) return;
+            const observations = count === Infinity ? (commodity.history || []) : (commodity.history || []).slice(-count);
+            BW.Visuals.sparkline(svg, observations, {type: settings.type || 'area', gapDays: commodity.is_daily ? 7 : 62, showMA: settings.showMA, showHighLow: settings.showHighLow});
+            this.chartRegistry[id] = {destroy() { svg.replaceChildren(); }};
         });
     },
 
-    // Refresh sparkline colors on theme change (called by BW.Sparkline.refresh)
     refreshSparklines: function () {
-        const colors = BW.Theme ? BW.Theme.getSparklineColors() : (() => {
-            const cs = getComputedStyle(document.documentElement);
-            return {
-                line: cs.getPropertyValue('--sparkline-line').trim() || '#0f5499',
-                gradientStart: cs.getPropertyValue('--sparkline-grad-start').trim() || 'rgba(15, 84, 153, 0.1)',
-                gradientEnd: cs.getPropertyValue('--sparkline-grad-end').trim() || 'rgba(15, 84, 153, 0)'
-            };
-        })();
-
-        Object.keys(this.chartRegistry).forEach(canvasId => {
-            const chart = this.chartRegistry[canvasId];
-            if (!chart || !chart.data || !chart.data.datasets) return;
-
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const canvasHeight = canvas.parentElement?.offsetHeight || 40;
-            const gradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-            gradient.addColorStop(0, colors.gradientStart);
-            gradient.addColorStop(1, colors.gradientEnd);
-
-            // Update main dataset colors
-            const mainDataset = chart.data.datasets[0];
-            if (mainDataset) {
-                mainDataset.borderColor = colors.line;
-                mainDataset.backgroundColor = gradient;
-                if (mainDataset.pointHoverBackgroundColor) {
-                    mainDataset.pointHoverBackgroundColor = colors.line;
-                }
-            }
-
-            // Update MA line if present
-            if (chart.data.datasets.length > 1) {
-                const maDataset = chart.data.datasets.find(d => d.borderDash);
-                if (maDataset) {
-                    maDataset.borderColor = colors.ma;
-                }
-            }
-
-            chart.update('none'); // Update without animation
-        });
+        this.initSparklines(this.sparklineData || []);
     },
 
     // Update range button styles
@@ -731,66 +502,16 @@ BW.CompactTable = {
         }
     },
 
-    // Trend chart preview
+    // Preview uses the same D3 renderer as the table.
     updateTrendPreview: function () {
-        const type = document.getElementById('trend-type')?.value || 'area';
-        const showMA = document.getElementById('trend-ma')?.checked || false;
-        const showHighLow = document.getElementById('trend-highlow')?.checked || false;
         const container = document.getElementById('preview-trend');
-        if (!container) return;
-
-        const points = [[0, 20], [12, 18], [25, 12], [38, 15], [50, 8], [63, 10], [75, 4], [88, 6], [100, 8]];
-        const highIdx = 6;
-        const lowIdx = 0;
-
-        if (type === 'none') {
-            container.innerHTML = '<span class="text-2xs text-brand-black-60 italic">Hidden</span>';
-            return;
-        }
-
-        // Get theme-aware colors for SVG preview
-        const themeColors = BW.Theme ? BW.Theme.getSparklineColors() : { line: '#0f5499', ma: '#990f3d', up: '#0d7680', down: '#990f3d' };
-
-        let svg = '<svg class="w-full h-8" viewBox="0 0 100 24">';
-        svg += `<defs><linearGradient id="sparkGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="${themeColors.line}" stop-opacity="0.3" /><stop offset="100%" stop-color="${themeColors.line}" stop-opacity="0" /></linearGradient></defs>`;
-
-        switch (type) {
-            case 'area':
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')} L100,24 L0,24 Z" fill="url(#sparkGrad)" />`;
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
-                break;
-            case 'line':
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
-                break;
-            case 'bar':
-                const barColors = [themeColors.line, themeColors.up, themeColors.down, themeColors.up, themeColors.up, themeColors.down, themeColors.up, themeColors.down, themeColors.up];
-                points.forEach((p, i) => { svg += `<rect x="${p[0] - 4}" y="${p[1]}" width="8" height="${24 - p[1]}" fill="${barColors[i]}" rx="1" />`; });
-                break;
-            case 'step':
-                let stepPath = `M${points[0][0]},${points[0][1]}`;
-                for (let i = 1; i < points.length; i++) { stepPath += ` H${points[i][0]} V${points[i][1]}`; }
-                svg += `<path d="${stepPath} V24 H0 Z" fill="url(#sparkGrad)" />`;
-                svg += `<path d="${stepPath}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
-                break;
-            case 'sparkline-range':
-                svg += `<path d="M${points.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.line}" stroke-width="2" />`;
-                const avgY = points.reduce((a, p) => a + p[1], 0) / points.length;
-                svg += `<line x1="0" y1="${avgY}" x2="100" y2="${avgY}" stroke="var(--theme-text-muted)" stroke-width="1" stroke-dasharray="3,3" />`;
-                break;
-        }
-
-        if (showMA && ['area', 'line', 'step'].includes(type)) {
-            const maPoints = [[25, 16], [38, 13], [50, 11], [63, 10], [75, 7], [88, 6], [100, 7]];
-            svg += `<path d="M${maPoints.map(p => p.join(',')).join(' L')}" fill="none" stroke="${themeColors.ma}" stroke-width="1.5" stroke-dasharray="2,2" />`;
-        }
-
-        if (showHighLow && type !== 'bar') {
-            svg += `<circle cx="${points[highIdx][0]}" cy="${points[highIdx][1]}" r="4" fill="${themeColors.up}" />`;
-            svg += `<circle cx="${points[lowIdx][0]}" cy="${points[lowIdx][1]}" r="4" fill="${themeColors.down}" />`;
-        }
-
-        svg += '</svg>';
-        container.innerHTML = svg;
+        if (!container || !BW.Visuals) return;
+        container.replaceChildren();
+        BW.Visuals.sparkline(container, [4, 6, 12, 9, 16, 14, 20, 18, 16], {
+            type: document.getElementById('trend-type')?.value || 'area',
+            showMA: document.getElementById('trend-ma')?.checked,
+            showHighLow: document.getElementById('trend-highlow')?.checked
+        });
     },
 
     // Price preview

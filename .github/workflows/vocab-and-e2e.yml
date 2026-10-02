@@ -49,6 +49,10 @@ jobs:
         env:
           CI: 'true'
           PLAYWRIGHT_FLASK_COMMAND: .venv/bin/python -m tests.e2e.server
+      - name: Verify D3 visualizations
+        run: npm run test:visuals
+        env:
+          CI: 'true'
       - name: Verify workbook chat journey
         run: npm run test:chat
         env:

@@ -41,15 +41,16 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.css') }}">
     <!-- Warm the font connections early; load the font via <link> (parallel,
          non-blocking) instead of a render-blocking @import inside <style>.
-         No jsdelivr preconnect: all scripts (Chart.js + PptxGenJS) are now
+         No jsdelivr preconnect: all scripts (D3 + PptxGenJS) are now
          self-hosted, so a CDN preconnect would warm an unused connection. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-    <!-- defer: non-render-blocking. Chart.js is used by the compact-view
-         sparklines + the detail chart, both of which run on DOMContentLoaded
-         (after deferred scripts execute), so ordering stays correct. -->
-    <script defer src="{{ url_for('static', filename='js/vendor/chart.umd.min.js') }}"></script>
+    <!-- Pinned, same-origin D3; shared by every data visualization. -->
+    <script defer src="{{ url_for('static', filename='js/vendor/d3.v7.9.0.min.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/core/visuals.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/components/visual_explorer.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visuals.css') }}">
     <style>
         :root {
             /* Base brand colors */

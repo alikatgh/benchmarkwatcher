@@ -82,7 +82,7 @@ def create_app(config_class=Config):
 
         The CSP is permissive — 'unsafe-inline' is required by the inline
         <script>, inline <style>, and ~40 inline style= attributes. All scripts
-        are now same-origin ('self'): Chart.js/zoom/date-fns AND PptxGenJS (the
+        are now same-origin ('self'): D3 AND PptxGenJS (the
         PowerPoint export) are vendored under static/js/vendor, so no CDN origin
         is allow-listed in script-src. Only Google Fonts (style-src/font-src) is
         external. It blocks arbitrary external script/connect/frame origins,

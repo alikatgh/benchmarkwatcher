@@ -271,6 +271,9 @@ test('remembered consent follows the sharing scope and charts keep source data a
   if (testInfo.project.name === 'desktop') await page.getByRole('button', { name: 'Minimize AI chat' }).click();
   await expect(page.getByRole('region', { name: 'Analysis overview' })).toBeVisible();
   await expect(page.locator('.studio-analysis-step[open] .studio-series-chart')).toHaveCount(2);
+  await expect(page.locator('.studio-analysis-step[open] .studio-series-chart svg.bw-d3-chart')).toHaveCount(2);
+  await page.locator('.studio-analysis-step[open]').getByRole('combobox', {name:'Chart type',exact:true}).first().selectOption('bar');
+  await expect(page.locator('.studio-analysis-step[open] .studio-series-chart').first().locator('rect').first()).toBeAttached();
   const source = page.getByRole('region', { name: 'Calculated values and source cells' });
   await expect(source).toBeHidden();
   await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();

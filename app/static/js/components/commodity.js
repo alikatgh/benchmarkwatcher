@@ -1,89 +1,9 @@
 /**
  * BenchmarkWatcher - Commodity Detail Component
- * Handles the commodity detail page with interactive Chart.js chart
+ * Handles the commodity detail page with interactive D3 chart
  */
 
 window.BW = window.BW || {};
-
-// ── Custom Chart.js Plugins ──────────────────────────────────────────
-
-/**
- * Crosshair Plugin — draws a vertical dashed line at the hovered data point.
- * Inspired by FT.com chart interaction style.
- */
-const crosshairPlugin = {
-    id: 'crosshairLine',
-    afterDraw(chart) {
-        const tooltip = chart.tooltip;
-        if (!tooltip || !tooltip.getActiveElements().length) return;
-
-        const ctx = chart.ctx;
-        const x = tooltip.getActiveElements()[0].element.x;
-        const topY = chart.scales.y.top;
-        const bottomY = chart.scales.y.bottom;
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.setLineDash([4, 4]);
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = chart._bwCrosshairColor || 'rgba(0,0,0,0.25)';
-        ctx.moveTo(x, topY);
-        ctx.lineTo(x, bottomY);
-        ctx.stroke();
-        ctx.restore();
-    }
-};
-
-/**
- * Zero Line Plugin — draws a prominent horizontal line at y=0 in percent mode.
- * Makes it immediately clear where break-even is.
- */
-const zeroLinePlugin = {
-    id: 'zeroLine',
-    afterDraw(chart) {
-        if (!chart._bwShowZeroLine) return;
-        const yScale = chart.scales.y;
-        if (yScale.min > 0 || yScale.max < 0) return; // zero not in view
-
-        const ctx = chart.ctx;
-        const y = yScale.getPixelForValue(0);
-
-        ctx.save();
-        ctx.beginPath();
-        ctx.setLineDash([]);
-        ctx.lineWidth = 1.5;
-        ctx.strokeStyle = chart._bwZeroLineColor || 'rgba(0,0,0,0.3)';
-        ctx.moveTo(yScale.left, y);
-        ctx.lineTo(yScale.right + chart.width, y);
-        ctx.stroke();
-        ctx.restore();
-    }
-};
-
-/**
- * Source Watermark Plugin — draws subtle attribution text in the bottom-left.
- */
-const watermarkPlugin = {
-    id: 'watermark',
-    afterDraw(chart) {
-        if (!chart._bwWatermark) return;
-        const ctx = chart.ctx;
-        const area = chart.chartArea;
-
-        ctx.save();
-        ctx.font = '10px Inter, sans-serif';
-        ctx.fillStyle = chart._bwWatermarkColor || 'rgba(0,0,0,0.18)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(chart._bwWatermark, area.left + 6, area.bottom - 6);
-        ctx.restore();
-    }
-};
-
-// Register all custom plugins globally (guarded for test environments without Chart.js)
-if (typeof Chart !== 'undefined' && Chart.register) {
-    Chart.register(crosshairPlugin, zeroLinePlugin, watermarkPlugin);
-}
 
 BW.Commodity = {
     // State
@@ -93,7 +13,7 @@ BW.Commodity = {
     priceChart: null,
     fullHistoryData: null,
     chartColors: null,
-    ctx: null,
+    chartElement: null,
     currency: 'USD',
     commodityName: 'commodity',
     commodityId: '',
@@ -231,14 +151,14 @@ BW.Commodity = {
 
     // Initialize with data
     init: function (historyData, currency, commodityName, commodityId) {
-        this.fullHistoryData = historyData;
+        this.fullHistoryData = BW.Visuals.history(historyData).map(point => ({ ...point, price: point.value }));
         this.currency = currency || 'USD';
         this.commodityName = commodityName || 'commodity';
         this.commodityId = commodityId || '';
 
         const canvas = document.getElementById('priceChart');
         if (!canvas) return;
-        this.ctx = canvas.getContext('2d');
+        this.chartElement = canvas;
 
         // Start with the page theme; an explicitly saved chart style can override it.
         const pageTheme = document.documentElement.getAttribute('data-theme') || 'light';
@@ -379,379 +299,64 @@ BW.Commodity = {
         }
     },
 
-    // Update chart
+    // All series retain their actual observation dates; missing values are never filled.
     updateChart: function () {
-        const self = this;
-        const filteredData = this.filterDataByRange(this.fullHistoryData, this.currentRange);
+        const V = BW.Visuals;
+        const target = document.getElementById('priceChart');
+        if (!target || !V) return;
+        const filtered = this.filterDataByRange(this.fullHistoryData, this.currentRange) || [];
+        const settings = this.chartSettings;
+        const primaryUnit = target.dataset.unit || '';
+        const mixedUnits = Object.values(this.comparisonData).some(record => record.currency !== this.currency || record.unit !== primaryUnit);
+        if (mixedUnits) this.currentViewMode = 'percent';
+        const percent = this.currentViewMode === 'percent';
+        const viewSelect = document.getElementById('chart-view-select');
+        if (viewSelect) { viewSelect.value = this.currentViewMode; viewSelect.querySelector('option[value=price]').disabled = mixedUnits; }
+        let comparisonNote = document.getElementById('d3-comparison-note');
+        if (!comparisonNote) { comparisonNote = document.createElement('p'); comparisonNote.id = 'd3-comparison-note'; comparisonNote.className = 'bw-visual-note'; target.parentElement.after(comparisonNote); }
+        comparisonNote.textContent = mixedUnits ? 'Different units: comparing percentage changes from each series’ first available positive value. Baseline dates may differ; missing observations are not filled.' : '';
         const valueLabel = document.getElementById('crosshair-value-label');
-        if (valueLabel) valueLabel.textContent = this.currentViewMode === 'percent' ? 'Change from baseline' : 'Value';
-        ['crosshair-date', 'crosshair-price', 'crosshair-change'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
-        var labels = filteredData.map(item => item.date);
-        var prices = filteredData.map(item => item.price);
-
-        // Calculate percentage change from first data point
-        var basePrice = prices.length > 0 ? prices[0] : 1;
-        var percentages = prices.map(p => ((p - basePrice) / basePrice) * 100);
-        var chartData = this.currentViewMode === 'percent' ? percentages : prices;
-        const dataLabel = this.currentViewMode === 'percent' ? 'Change %' : 'Price';
-
-        this.calculateStats(filteredData);
-
-        // Pre-compute alpha colors using helper
-        const fillHexAlpha = this.hexWithAlpha(this.chartSettings.fillColor, this.chartSettings.fillOpacity);
-        const gridHexAlpha = this.hexWithAlpha(this.chartSettings.gridColor, this.chartSettings.gridOpacity);
-
-        // Build comparison datasets with unified timeline
-        // Handles mixed-frequency data (daily vs monthly) using LOCF interpolation
-        var compDatasets = [];
-        var compIds = Object.keys(this.comparisonData);
-
-        // If comparisons exist, build a unified date axis from all datasets
-        if (compIds.length > 0) {
-            // Collect all unique dates from main + comparison datasets
-            var allDatesSet = {};
-            for (var li = 0; li < labels.length; li++) {
-                allDatesSet[labels[li]] = true;
+        if (valueLabel) valueLabel.textContent = percent ? 'Change from baseline' : 'Value';
+        this.calculateStats(filtered.filter(p => p.price !== null));
+        const records = [{name: this.commodityName, history: filtered, color: settings.lineColor, currency: this.currency, unit: primaryUnit, is_daily: target.dataset.daily === 'true'},
+            ...Object.values(this.comparisonData).map(record => ({ ...record, history: this.filterDataByRange(record.history, this.currentRange) }))];
+        const series = records.map(record => {
+            const observations = V.history(record.history);
+            const baseline = observations.find(p => p.value !== null)?.value;
+            return {name: record.name, color: record.color, gapDays: record.is_daily ? 7 : 62, unit: percent ? '%' : [record.currency || this.currency, record.unit].filter(Boolean).join(' / '),
+                points: observations.map(p => ({...p, value: percent ? (baseline > 0 && p.value !== null ? (p.value / baseline - 1) * 100 : null) : p.value}))};
+        });
+        this.priceChart?.destroy();
+        this.priceChart = V.timeSeries(target, series, {
+            type: this.currentChartType === 'area' && !settings.enableFill ? 'line' : this.currentChartType,
+            height: Math.min(settings.chartHeight, target.parentElement.clientHeight || settings.chartHeight),
+            label: this.commodityName + ' historical observations. Use left and right arrow keys to inspect observations.',
+            color: settings.lineColor, fillColor: settings.fillColor, fillOpacity: settings.fillOpacity / 100,
+            lineWidth: settings.lineWidth, pointRadius: settings.pointRadius,
+            grid: settings.showHGrid, verticalGrid: settings.showVGrid, gridColor: this.hexWithAlpha(settings.gridColor, settings.gridOpacity),
+            xTicks: settings.xMaxTicks, yTicks: settings.yMaxTicks, yAxisPosition: settings.yAxisPosition, axisFontSize: settings.axisFontSize,
+            tension: settings.tension / 100, animation: settings.enableAnimation ? settings.animationDuration : 0,
+            tooltipBg: settings.tooltipBg, tooltipText: settings.tooltipText, tooltipRadius: settings.tooltipRadius, tooltipPadding: settings.tooltipPadding,
+            zero: percent, zoom: settings.enableZoom, pan: settings.enablePan, modifier: settings.zoomModifier,
+            onInspect: (point, series) => {
+                if (!point) return;
+                const date = document.getElementById('crosshair-date'), value = document.getElementById('crosshair-price'), change = document.getElementById('crosshair-change');
+                if (date) date.textContent = point.date;
+                if (value) value.textContent = V.format(point.value) + ' ' + series.unit;
+                const index = series.points.indexOf(point), prev = series.points[index - 1];
+                if (change) change.textContent = prev && prev.value !== null ? V.format(point.value - prev.value) + (percent ? ' pp' : ' ' + series.unit) : '—';
             }
-            for (var ci = 0; ci < compIds.length; ci++) {
-                var compHist = this.filterDataByRange(this.comparisonData[compIds[ci]].history, this.currentRange);
-                for (var ch = 0; ch < compHist.length; ch++) {
-                    allDatesSet[compHist[ch].date] = true;
-                }
-            }
-            // Sort all dates chronologically to form unified timeline
-            var unifiedDates = Object.keys(allDatesSet).sort();
-
-            // Re-align main dataset to unified timeline using LOCF
-            var mainDateMap = {};
-            for (var mi = 0; mi < filteredData.length; mi++) {
-                mainDateMap[filteredData[mi].date] = filteredData[mi].price;
-            }
-            var unifiedMainPrices = [];
-            var lastMainPrice = null;
-            for (var ui = 0; ui < unifiedDates.length; ui++) {
-                if (mainDateMap[unifiedDates[ui]] !== undefined) {
-                    lastMainPrice = mainDateMap[unifiedDates[ui]];
-                }
-                unifiedMainPrices.push(lastMainPrice);
-            }
-
-            // Override labels and chart data with unified versions
-            labels = unifiedDates;
-            prices = unifiedMainPrices;
-            var newBasePrice = prices.length > 0 ? prices[0] : 1;
-            if (this.currentViewMode === 'percent') {
-                chartData = prices.map(function (p) { return p !== null ? ((p - newBasePrice) / newBasePrice) * 100 : null; });
-            } else {
-                chartData = prices;
-            }
-        }
-
-        for (var ci = 0; ci < compIds.length; ci++) {
-            var comp = this.comparisonData[compIds[ci]];
-            var compFiltered = this.filterDataByRange(comp.history, this.currentRange);
-
-            // Build date->price map for LOCF (Last Observation Carried Forward)
-            var compDateMap = {};
-            for (var cj = 0; cj < compFiltered.length; cj++) {
-                compDateMap[compFiltered[cj].date] = compFiltered[cj].price;
-            }
-
-            // Align to unified timeline using LOCF interpolation
-            // This handles daily-vs-monthly mismatches by carrying forward
-            // the last known price until a new observation appears
-            var compPrices = [];
-            var lastKnown = null;
-            var firstCompDate = compFiltered.length > 0 ? compFiltered[0].date : null;
-            for (var ck = 0; ck < labels.length; ck++) {
-                var dateKey = labels[ck];
-                if (compDateMap[dateKey] !== undefined) {
-                    lastKnown = compDateMap[dateKey];
-                }
-                // Only start carrying forward after the first actual data point
-                // to avoid a flat line before data begins
-                if (lastKnown !== null && firstCompDate && dateKey >= firstCompDate) {
-                    compPrices.push(lastKnown);
-                } else {
-                    compPrices.push(null);
-                }
-            }
-
-            // In percent mode, compute % change from first non-null value
-            var compChartData;
-            if (this.currentViewMode === 'percent') {
-                var compBase = null;
-                for (var cb = 0; cb < compPrices.length; cb++) {
-                    if (compPrices[cb] !== null) { compBase = compPrices[cb]; break; }
-                }
-                compChartData = compPrices.map(function (p) {
-                    return p !== null && compBase !== null && compBase !== 0 ? ((p - compBase) / compBase) * 100 : null;
-                });
-            } else {
-                compChartData = compPrices;
-            }
-
-            compDatasets.push({
-                label: comp.name,
-                data: compChartData,
-                borderColor: comp.color,
-                backgroundColor: 'transparent',
-                borderWidth: 1.5,
-                fill: false,
-                tension: this.chartSettings.tension / 100,
-                pointRadius: 0,
-                pointHoverRadius: 4,
-                pointHoverBackgroundColor: comp.color,
-                pointHoverBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').trim() || '#fff',
-                pointHoverBorderWidth: 2,
-                borderDash: [4, 2],
-                spanGaps: true,
-                yAxisID: this.currentViewMode === 'percent' ? 'y' : 'y2',
+        });
+        if (BW.VisualExplorer) BW.VisualExplorer.detail(filtered, this.commodityName, [this.currency, primaryUnit].filter(Boolean).join(' / '));
+        if (!this.chartResizeObserver && typeof ResizeObserver !== 'undefined') {
+            let size = target.clientWidth;
+            this.chartResizeObserver = new ResizeObserver(() => {
+                if (Math.abs(target.clientWidth - size) < 1) return;
+                size = target.clientWidth;
+                this.updateChart();
             });
+            this.chartResizeObserver.observe(target);
         }
-
-        var useSecondYAxis = this.currentViewMode !== 'percent' && compDatasets.length > 0;
-
-        const chartConfig = {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: dataLabel,
-                    data: chartData,
-                    borderColor: this.chartSettings.lineColor,
-                    backgroundColor: (this.currentChartType === 'area' && this.chartSettings.enableFill)
-                        ? (fillHexAlpha || this.chartSettings.fillColor)
-                        : 'transparent',
-                    borderWidth: this.chartSettings.lineWidth,
-                    fill: this.currentChartType === 'area' && this.chartSettings.enableFill,
-                    tension: this.chartSettings.tension / 100,
-                    pointRadius: this.chartSettings.pointRadius,
-                    pointHoverRadius: 6,
-                    pointHoverBackgroundColor: this.chartSettings.lineColor,
-                    pointHoverBorderColor: getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').trim() || '#fff',
-                    pointHoverBorderWidth: 2,
-                }].concat(compDatasets)
-            },
-            options: {
-                responsive: true,
-                onResize: function (chart, size) {
-                    chart.options.scales.x.ticks.maxTicksLimit = Math.min(self.chartSettings.xMaxTicks, Math.max(2, Math.floor(size.width / 110)));
-                },
-                maintainAspectRatio: false,
-                animation: {
-                    duration: this.chartSettings.enableAnimation ? this.chartSettings.animationDuration : 0
-                },
-                interaction: { intersect: false, mode: 'index' },
-                plugins: {
-                    legend: { display: compDatasets.length > 0, position: 'top', labels: { boxWidth: 12, font: { size: 11, family: 'Inter' }, usePointStyle: true, pointStyle: 'line' } },
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: this.chartSettings.tooltipBg,
-                        titleColor: this.chartSettings.tooltipText,
-                        bodyColor: this.chartSettings.tooltipText,
-                        borderColor: this.chartSettings.lineColor,
-                        borderWidth: 1,
-                        titleFont: { size: 10, weight: '600', family: 'Inter' },
-                        bodyFont: { size: 13, weight: '700', family: 'Inter' },
-                        footerFont: { size: 10, weight: '500', family: 'Inter' },
-                        footerColor: this.chartSettings.tooltipText,
-                        padding: { top: 10, bottom: 10, left: 14, right: 14 },
-                        cornerRadius: 4,
-                        caretSize: 0,
-                        displayColors: compDatasets.length > 0,
-                        callbacks: {
-                            title: function (context) {
-                                const date = new Date(context[0].label);
-                                return date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
-                            },
-                            label: function (context) {
-                                const val = context.parsed.y;
-                                if (val === null || val === undefined) return null;
-                                var prefix = compDatasets.length > 0 ? (context.dataset.label + ': ') : '';
-                                if (self.currentViewMode === 'percent') {
-                                    var sign = val >= 0 ? '+' : '';
-                                    return prefix + sign + val.toFixed(2) + '%';
-                                } else {
-                                    return prefix + val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + self.currency;
-                                }
-                            },
-                            afterLabel: function (context) {
-                                if (context.dataIndex > 0) {
-                                    const prev = context.dataset.data[context.dataIndex - 1];
-                                    const curr = context.parsed.y;
-                                    if (prev === null || prev === undefined) return '';
-                                    if (self.currentViewMode === 'percent') {
-                                        const change = curr - prev;
-                                        const sign = change >= 0 ? '+' : '';
-                                        return sign + change.toFixed(2) + 'pp';
-                                    } else {
-                                        const change = curr - prev;
-                                        const changePercent = prev !== 0 ? ((change / prev) * 100).toFixed(2) : 'N/A';
-                                        const sign = change >= 0 ? '+' : '';
-                                        return sign + change.toFixed(2) + ' (' + sign + changePercent + '%)';
-                                    }
-                                }
-                                return '';
-                            }
-                        }
-                    },
-                    zoom: {
-                        pan: { enabled: this.chartSettings.enablePan, mode: 'x' },
-                        zoom: {
-                            wheel: {
-                                enabled: this.chartSettings.enableZoom,
-                                modifierKey: this.chartSettings.zoomModifier === 'none' ? undefined : this.chartSettings.zoomModifier
-                            },
-                            pinch: { enabled: this.chartSettings.enableZoom },
-                            mode: 'x'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        // Real time axis (not data-index) so non-uniform-density history
-                        // isn't visually warped. Labels are ISO date strings, parsed by
-                        // the date-fns adapter; Chart.js auto-picks the unit + format.
-                        type: 'time',
-                        time: {
-                            tooltipFormat: 'MMM d, yyyy',
-                            displayFormats: {
-                                day: 'MMM d',
-                                week: 'MMM d',
-                                month: 'MMM yyyy',
-                                quarter: 'MMM yyyy',
-                                year: 'yyyy'
-                            }
-                        },
-                        grid: { display: this.chartSettings.showVGrid, color: (gridHexAlpha || this.chartSettings.gridColor) },
-                        ticks: {
-                            maxTicksLimit: this.chartSettings.xMaxTicks,
-                            font: { size: this.chartSettings.axisFontSize, weight: '600', family: 'Inter' },
-                            color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
-                            autoSkip: true,
-                            maxRotation: 0
-                        }
-                    },
-                    y: {
-                        position: this.chartSettings.yAxisPosition,
-                        grid: {
-                            display: this.chartSettings.showHGrid,
-                            color: (gridHexAlpha || this.chartSettings.gridColor),
-                            drawTicks: false,
-                            lineWidth: 1
-                        },
-                        border: { display: false },
-                        ticks: {
-                            font: { size: this.chartSettings.axisFontSize, weight: '600', family: 'Inter' },
-                            color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
-                            padding: 10,
-                            maxTicksLimit: this.chartSettings.yMaxTicks,
-                            callback: function (value) {
-                                if (self.currentViewMode === 'percent') {
-                                    return (value >= 0 ? '+' : '') + value.toFixed(1) + '%';
-                                }
-                                var abs = Math.abs(value);
-                                var sign = value < 0 ? '-' : '';
-                                if (abs >= 1e9) return sign + (abs / 1e9).toFixed(1) + 'B';
-                                if (abs >= 1e6) return sign + (abs / 1e6).toFixed(1) + 'M';
-                                if (abs >= 1e4) return sign + (abs / 1e3).toFixed(1) + 'K';
-                                return value.toLocaleString();
-                            }
-                        }
-                    },
-                    y2: {
-                        display: useSecondYAxis,
-                        position: this.chartSettings.yAxisPosition === 'right' ? 'left' : 'right',
-                        grid: { display: false },
-                        border: { display: false },
-                        ticks: {
-                            font: { size: this.chartSettings.axisFontSize - 1, weight: '600', family: 'Inter' },
-                            color: this.chartColors?.text || getComputedStyle(document.documentElement).getPropertyValue('--theme-text-muted').trim() || '#666',
-                            padding: 10,
-                            maxTicksLimit: this.chartSettings.yMaxTicks,
-                            callback: function (value) { return value.toLocaleString(); }
-                        }
-                    }
-                },
-                onHover: function (event, elements) {
-                    if (!elements || elements.length === 0) return;
-                    const el = elements[0];
-                    const dataIndex = el.index;
-                    const dataset = this.data.datasets[el.datasetIndex];
-                    const price = dataset.data[dataIndex];
-                    const date = this.data.labels[dataIndex];
-
-                    if (price === null || price === undefined) return;
-
-                    const infoEl = document.getElementById('crosshair-info');
-                    const dateEl = document.getElementById('crosshair-date');
-                    const priceEl = document.getElementById('crosshair-price');
-                    const changeEl = document.getElementById('crosshair-change');
-
-                    const showAnyCrosshairField =
-                        self.chartSettings.showCrosshairDate ||
-                        self.chartSettings.showCrosshairPrice ||
-                        self.chartSettings.showCrosshairChange;
-
-                    if (!showAnyCrosshairField) return;
-
-                    if (infoEl) infoEl.classList.remove('hidden');
-                    if (dateEl) dateEl.textContent = new Date(date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-
-                    if (priceEl) {
-                        if (self.currentViewMode === 'percent') {
-                            priceEl.textContent = price.toFixed(2) + ' %';
-                        } else {
-                            priceEl.textContent = price.toLocaleString() + ' ' + self.currency;
-                        }
-                    }
-
-                    if (changeEl) { changeEl.textContent = '—'; changeEl.style.color = ''; }
-                    if (dataIndex > 0 && changeEl && Number.isFinite(dataset.data[dataIndex - 1])) {
-                        const prev = dataset.data[dataIndex - 1];
-                        if (self.currentViewMode === 'percent') {
-                            const change = price - prev;
-                            const sign = change >= 0 ? '+' : '';
-                            changeEl.textContent = `${sign}${change.toFixed(2)} pp`;
-                            changeEl.className = 'text-sm font-semibold ml-2';
-                            changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
-                        } else {
-                            const change = price - prev;
-                            const changePercent = prev !== 0 ? ((change / prev) * 100).toFixed(2) : 'N/A';
-                            const sign = change >= 0 ? '+' : '';
-                            changeEl.textContent = `${sign}${change.toFixed(2)} (${sign}${changePercent}%)`;
-                            changeEl.className = 'text-sm font-semibold ml-2';
-                            changeEl.style.color = change >= 0 ? self.chartSettings.upColor : self.chartSettings.downColor;
-                        }
-                    }
-                }
-            }
-        };
-
-        if (this.priceChart) {
-            this.priceChart.destroy();
-        }
-
-        this.priceChart = new Chart(this.ctx, chartConfig);
-
-        // Seed the crosshair readout with the latest point so the panel never
-        // shows "--" placeholders before the first hover.
-        try {
-            const seedData = (chartConfig.data.datasets[0] || {}).data || [];
-            const seedIdx = seedData.length - 1;
-            if (seedIdx >= 0 && seedData[seedIdx] !== null && seedData[seedIdx] !== undefined) {
-                chartConfig.options.onHover.call(this.priceChart, null, [{ index: seedIdx, datasetIndex: 0 }]);
-            }
-        } catch (e) { /* cosmetic seeding only */ }
-
-        // Pass metadata to chart instance for plugins
-        const isDark = document.documentElement.classList.contains('dark');
-        this.priceChart._bwCrosshairColor = isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)';
-        this.priceChart._bwShowZeroLine = this.currentViewMode === 'percent';
-        this.priceChart._bwZeroLineColor = isDark ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)';
-        this.priceChart._bwWatermark = 'benchmarkwatcher.online';
-        this.priceChart._bwWatermarkColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.15)';
     },
 
     // Set time range
@@ -912,13 +517,15 @@ BW.Commodity = {
             this.exportImageTimer = null;
         }
 
-        this.exportImageTimer = setTimeout(function () {
+        this.exportImageTimer = setTimeout(async function () {
             if (activeExportSeq !== this.exportImageSeq) return;
             if (!this.priceChart || typeof this.priceChart.toBase64Image !== 'function') return;
             var link = document.createElement('a');
             link.download = (this.commodityName || 'commodity') + '-price-chart.png';
-            link.href = this.priceChart.toBase64Image();
-            link.click();
+            try {
+                link.href = await this.priceChart.toBase64Image();
+                if (activeExportSeq === this.exportImageSeq) link.click();
+            } catch (_) { alert('The chart image could not be created. Please try again.'); }
             this.exportImageTimer = null;
         }.bind(this), 100);
     },
@@ -930,13 +537,13 @@ BW.Commodity = {
             console.warn('No chart available to export.');
             return;
         }
-        var run = function () {
+        var run = async function () {
             var pptx = new PptxGenJS();
             var slide = pptx.addSlide();
             slide.addText(self.commodityName || 'Commodity', {
                 x: 0.5, y: 0.3, fontSize: 22, bold: true, color: '333333'
             });
-            var imgData = self.priceChart.toBase64Image('image/png', 1);
+            var imgData = await self.priceChart.toBase64Image();
             slide.addImage({ data: imgData, x: 0.3, y: 0.9, w: 9.2, h: 4.5 });
             pptx.writeFile({ fileName: (self.commodityName || 'commodity') + '-chart.pptx' });
         };
@@ -1458,6 +1065,7 @@ BW.Commodity = {
                 self.comparisonData[id] = {
                     name: name,
                     history: data.history || [],
+                    currency: data.currency, unit: data.unit, is_daily: data.is_daily,
                     color: color
                 };
                 self.updateChart();

@@ -13,7 +13,7 @@ const flaskCommand = process.env.PLAYWRIGHT_FLASK_COMMAND || `python -m flask --
 export default defineConfig({
     testDir: './tests/e2e',
     // Authenticated workbook tests always use their isolated fixture config.
-    testIgnore: 'workbook-chat.spec.ts',
+    testIgnore: ['workbook-chat.spec.ts', 'd3-visuals.spec.ts'],
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
@@ -22,6 +22,7 @@ export default defineConfig({
     outputDir: 'test-results/public',
 
     use: {
+        channel: process.env.PLAYWRIGHT_CHANNEL,
         baseURL,
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',

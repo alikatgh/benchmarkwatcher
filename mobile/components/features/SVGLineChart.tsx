@@ -1,4 +1,6 @@
 import React from 'react';
+import { scaleLinear } from 'd3-scale';
+import { line, area, curveLinear, curveMonotoneX } from 'd3-shape';
 import { View, Text, Pressable, ScrollView, StyleSheet, useColorScheme } from 'react-native';
 import Svg, { Path, Line, Circle, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { ComparisonSeries } from '../../types/commodity';
@@ -75,39 +77,9 @@ function formatSeriesChange(change: number, viewMode: string, currency?: string)
     return currency ? `${valueLabel} ${currency}` : valueLabel;
 }
 
-function niceTicks(min: number, max: number, count = 4): number[] {
-    const step = (max - min) / count;
-    return Array.from({ length: count + 1 }, (_, i) => min + i * step);
-}
-
 function buildPath(pts: { x: number; y: number }[], smooth: boolean): string {
-    if (pts.length === 0) return '';
-    if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
-
-    let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
-
-    if (!smooth) {
-        for (let i = 1; i < pts.length; i++) {
-            d += ` L ${pts[i].x.toFixed(1)} ${pts[i].y.toFixed(1)}`;
-        }
-        return d;
-    }
-
-    // Catmull-Rom → Cubic Bezier
-    for (let i = 0; i < pts.length - 1; i++) {
-        const p0 = pts[Math.max(i - 1, 0)];
-        const p1 = pts[i];
-        const p2 = pts[i + 1];
-        const p3 = pts[Math.min(i + 2, pts.length - 1)];
-
-        const cp1x = p1.x + (p2.x - p0.x) / 6;
-        const cp1y = p1.y + (p2.y - p0.y) / 6;
-        const cp2x = p2.x - (p3.x - p1.x) / 6;
-        const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-        d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
-    }
-    return d;
+    return line<{x: number; y: number}>().defined(p => Number.isFinite(p.x) && Number.isFinite(p.y))
+        .x(p => p.x).y(p => p.y).curve(smooth ? curveMonotoneX : curveLinear)(pts) || '';
 }
 
 export default function SVGLineChart({
@@ -157,20 +129,21 @@ export default function SVGLineChart({
 
     const yMin = autoFitBounds ? rawMin - pad : Math.min(0, rawMin - pad);
     const yMax = rawMax + pad;
-    const yRange = yMax - yMin;
 
     const n = data.length;
-    const scaleX = (i: number) => PAD.left + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW);
-    const scaleY = (v: number) => PAD.top + (1 - (v - yMin) / yRange) * innerH;
+    const timestamps = data.map(p => Date.parse(p.date));
+    const validDates = timestamps.every(Number.isFinite);
+    const x = scaleLinear().domain(validDates ? [timestamps[0], timestamps[n - 1]] : [0, n - 1]).range([PAD.left, PAD.left + innerW]);
+    const scaleX = (i: number) => x(validDates ? timestamps[i] : i);
+    const scaleY = scaleLinear().domain([yMin, yMax]).range([PAD.top + innerH, PAD.top]);
 
     const pts = data.map((d, i) => ({ x: scaleX(i), y: scaleY(d.value) }));
     const linePath = buildPath(pts, smoothCurve);
 
-    const fillPath = pts.length > 1
-        ? `${linePath} L ${pts[n - 1].x.toFixed(1)} ${chartBottom} L ${pts[0].x.toFixed(1)} ${chartBottom} Z`
-        : '';
+    const fillPath = area<{x: number; y: number}>().defined(p => Number.isFinite(p.x) && Number.isFinite(p.y))
+        .x(p => p.x).y0(chartBottom).y1(p => p.y).curve(smoothCurve ? curveMonotoneX : curveLinear)(pts) || '';
 
-    const ticks = niceTicks(yMin, yMax, 4);
+    const ticks = scaleY.ticks(4);
     const showDots = n <= 60;
 
     // Find high/low indices for marker annotations
@@ -229,10 +202,10 @@ export default function SVGLineChart({
             const cPad = cRange === 0 ? (Math.abs(cMax) * 0.1 || 1) : cRange * 0.08;
             const cyMin = cMin - cPad;
             const cyMax = cMax + cPad;
-            const cyRange = cyMax - cyMin;
+            const comparisonY = scaleLinear().domain([cyMin, cyMax]).range([PAD.top + innerH, PAD.top]);
             compPts = alignedValues.map(av => ({
                 x: scaleX(av.index),
-                y: PAD.top + (1 - (av.value - cyMin) / cyRange) * innerH,
+                y: comparisonY(av.value),
             }));
         }
 
@@ -249,7 +222,8 @@ export default function SVGLineChart({
         const touchX = evt.nativeEvent.locationX;
         const chartX = Math.max(0, touchX - PAD.left);
         const t = Math.max(0, Math.min(1, chartX / innerW));
-        const index = Math.round(t * (n - 1));
+        const targetX = PAD.left + t * innerW;
+        const index = pts.reduce((best, point, i) => Math.abs(point.x - targetX) < Math.abs(pts[best].x - targetX) ? i : best, 0);
         if (selectedPoint?.index === index) {
             onSelectPoint(null);
         } else {

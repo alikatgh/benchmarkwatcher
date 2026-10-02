@@ -459,7 +459,7 @@
         const presentation = element('div', 'benchmark-detail-presentation');
         const styleLabel = element('label', '', 'Chart type'); styleLabel.htmlFor = 'benchmark-chart-style';
         const select = element('select'); select.id = styleLabel.htmlFor;
-        [['line', 'Line'], ['area', 'Area']].forEach(([value, label]) => { const option = element('option', '', label); option.value = value; select.append(option); });
+        [['line', 'Line'], ['area', 'Area'], ['step', 'Step'], ['scatter', 'Dots'], ['bar', 'Bars']].forEach(([value, label]) => { const option = element('option', '', label); option.value = value; select.append(option); });
         select.value = state.chartStyle;
         select.addEventListener('change', () => { state.chartStyle = select.value; state.settingsOpen = true; saveChartSettings(); redrawChart('#benchmark-chart-style'); });
         const dotsLabel = element('label', 'benchmark-detail-dots');
@@ -477,48 +477,15 @@
         return node;
     }
     function plot(series, indexed) {
-        const svg = svgNode('svg', { viewBox: '0 0 520 220', class: 'benchmark-detail-plot', role: 'img', 'aria-label': indexed ? 'Indexed reference histories. Actual dates and values are available in observation tables below.' : 'Reference history. Actual dates and values are available in the observation table below.' });
-        const values = series.flatMap(item => item.points.filter(point => point.value !== null));
-        if (!values.length) return element('p', 'benchmark-detail-empty', 'No usable observations in this range. Try a wider range or view the source.');
-        const times = values.map(point => dateValue(point.date));
-        const minTime = times.reduce((result, value) => Math.min(result, value), Infinity);
-        const maxTime = times.reduce((result, value) => Math.max(result, value), -Infinity);
-        const min = values.reduce((result, point) => Math.min(result, point.value), Infinity);
-        const max = values.reduce((result, point) => Math.max(result, point.value), -Infinity);
-        const spread = max - min || Math.max(Math.abs(min) * .05, 1);
-        const low = min - spread * .1, high = max + spread * .1;
-        const x = date => 56 + ((dateValue(date) - minTime) / (maxTime - minTime || 1)) * 448;
-        const y = value => 178 - ((value - low) / (high - low)) * 160;
-        [low, (low + high) / 2, high].forEach(value => {
-            svg.append(svgNode('line', { x1: 56, x2: 504, y1: y(value), y2: y(value), stroke: 'var(--theme-border,#e2e6ea)', 'stroke-width': 1 }));
-            svg.append(svgNode('text', { x: 48, y: y(value) + 4, 'text-anchor': 'end' }, value.toLocaleString(undefined, { maximumFractionDigits: 1, notation: Math.abs(value) >= 10000 ? 'compact' : 'standard' })));
-        });
-        svg.append(svgNode('text', { x: 56, y: 209 }, new Date(minTime).toISOString().slice(0, 10)), svgNode('text', { x: 504, y: 209, 'text-anchor': 'end' }, new Date(maxTime).toISOString().slice(0, 10)));
-        series.forEach((item, index) => {
-            const color = item.color || COLORS[index % COLORS.length];
-            const segments = []; let segment = [], previous = null;
-            item.points.forEach(point => {
-                if (point.value === null) { if (segment.length) segments.push(segment); segment = []; previous = null; return; }
-                const gap = previous && dateValue(point.date) - dateValue(previous.date);
-                const maxGap = (item.record.is_daily === true ? 7 : 62) * 86400000;
-                if (previous && gap > maxGap) { if (segment.length) segments.push(segment); segment = []; }
-                segment.push(point); previous = point;
-            });
-            if (segment.length) segments.push(segment);
-            const paths = segments.map(points => points.map((point, i) => (i ? 'L' : 'M') + x(point.date).toFixed(2) + ',' + y(point.value).toFixed(2)).join(' '));
-            if (state.chartStyle === 'area') segments.forEach((points, i) => {
-                if (points.length < 2) return;
-                svg.append(svgNode('path', { d: paths[i] + ' L' + x(points[points.length - 1].date).toFixed(2) + ',178 L' + x(points[0].date).toFixed(2) + ',178 Z', fill: color, 'fill-opacity': .1, stroke: 'none', class: 'benchmark-detail-area', 'aria-hidden': 'true' }));
-            });
-            svg.append(svgNode('path', { d: paths.join(' '), fill: 'none', stroke: color, 'stroke-width': 1.8, 'stroke-linejoin': 'round', 'stroke-dasharray': series.length > 1 ? (['none', '6 3', '2 3', '8 3 2 3'][state.ids.indexOf(item.record.id)] || 'none') : 'none', class: 'benchmark-detail-line' }));
-            item.points.filter(point => point.value !== null).forEach(point => {
-                // Transparent hit targets retain source-value hover text when dots are hidden.
-                const dot = svgNode('circle', { cx: x(point.date), cy: y(point.value), r: state.showDots ? (series.length > 1 ? 2 : 1.5) : 5, fill: state.showDots ? color : 'transparent', class: 'benchmark-detail-observation-dot' });
-                dot.append(svgNode('title', {}, (item.record.name || item.record.id) + ': ' + point.date + ' · ' + format(point.price) + ' ' + unit(item.record) + (indexed ? ' · Index ' + format(point.value) : '')));
-                svg.append(dot);
-            });
-        });
-        return svg;
+        if (!series.some(item => item.points.some(p => p.value !== null))) return element('p', 'benchmark-detail-empty', 'No usable observations in this range. Try a wider range or view the source.');
+        const plot = BW.Visuals.timeSeries(null, series.map(item => ({
+            name: item.record.name || item.record.id, color: item.color,
+            unit: indexed ? 'index' : unit(item.record), gapDays: item.record.is_daily ? 7 : 62,
+            points: item.points
+        })), {width: 520, height: 260, type: state.chartStyle, dots: state.showDots,
+            label: indexed ? 'Indexed reference histories. Actual dates and values are available in observation tables below.' : 'Reference history. Actual dates and values are available in the observation table below.'});
+        plot.svg.classList.add('benchmark-detail-plot');
+        return plot.svg;
     }
     function observationTable(record, points, indexed) {
         const details = element('details', 'benchmark-detail-observations');
@@ -671,7 +638,7 @@
         try {
             const saved = JSON.parse(localStorage.getItem(CHART_KEY) || 'null');
             if (saved?.version === 1) {
-                if (['line', 'area'].includes(saved.style)) state.chartStyle = saved.style;
+                if (['line', 'area', 'step', 'scatter', 'bar'].includes(saved.style)) state.chartStyle = saved.style;
                 if (typeof saved.dots === 'boolean') state.showDots = saved.dots;
             }
         } catch (_) { /* Ignore unreadable chart preferences. */ }

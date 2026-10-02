@@ -240,7 +240,7 @@
                     </form>
                 </details>
                 <div class="chart-control-group chart-display-controls">
-                    <label class="chart-select-label">Plot <select id="chart-type-select" onchange="setChartType(this.value)"><option value="line">Line</option><option value="area">Area</option></select></label>
+                    <label class="chart-select-label">Plot <select id="chart-type-select" onchange="setChartType(this.value)"><option value="line">Line</option><option value="area">Area</option><option value="step">Step</option><option value="bar">Bars</option><option value="scatter">Dots</option></select></label>
                     <label class="chart-select-label">Show <select id="chart-view-select" onchange="setViewMode(this.value)"><option value="price">Value</option><option value="percent">% change</option></select></label>
                 </div>
             </div>
@@ -317,8 +317,8 @@
                     class="absolute inset-0 animate-pulse bg-brand-black-60/5 dark:bg-white/5 rounded-xl flex items-center justify-center">
                     <div class="text-sm text-brand-black-60 dark:text-brand-black-60 font-ui">Loading chart...</div>
                 </div>
-                <canvas id="priceChart" role="img"
-                    aria-label="Price chart showing {{ commodity.name }} benchmark prices over time. Use the range buttons above to change time period."></canvas>
+                <div id="priceChart" data-unit="{{ commodity.unit }}" data-daily="{{ commodity.is_daily|tojson }}"
+                    aria-label="Price chart showing {{ commodity.name }} benchmark prices over time. Use the range buttons above to change time period."></div>
             </div>
 
             <!-- Compare Commodities Bar -->
@@ -946,12 +946,6 @@
     </details>
 </div>
 
-<script defer src="{{ url_for('static', filename='js/vendor/chartjs-plugin-zoom.min.js') }}"></script>
-<!-- date-fns adapter: lets the price chart use a real time x-axis (linear in time,
-     not in data-index) so non-uniform-density history isn't visually warped. -->
-<script defer src="{{ url_for('static', filename='js/vendor/chartjs-adapter-date-fns.bundle.min.js') }}"></script>
-
-<!-- Data passed via JSON for external JS -->
 <script id="commodity-history" type="application/json">
 {{ commodity.history | tojson }}
 </script>

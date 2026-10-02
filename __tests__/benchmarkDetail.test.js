@@ -24,6 +24,8 @@ beforeEach(() => {
     global.BW = {};
     window.matchMedia = jest.fn(() => ({ matches: false }));
     global.fetch = jest.fn(async url => response(sample(url.split('/').pop())));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/vendor/d3.v7.9.0.min.js'), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/core/visuals.js'), 'utf8'));
     window.eval(script);
     BW.BenchmarkDetail.init();
 });
@@ -226,7 +228,7 @@ test('range changes reveal older history and explicit missing values break the c
     ] })));
     await BW.BenchmarkDetail.open('gold');
     expect(document.querySelector('table').textContent).not.toContain('2020-01-01');
-    expect(document.querySelector('svg path').getAttribute('d').match(/M/g)).toHaveLength(2);
+    expect(document.querySelector('.benchmark-detail-line').getAttribute('d').match(/M/g)).toHaveLength(2);
     click('All');
     expect(document.querySelector('table').textContent).toContain('2020-01-01');
     expect(document.querySelector('table').textContent).not.toContain('not-a-date');
@@ -245,6 +247,8 @@ function resizeKey(key, shiftKey = false) {
 function rebootDetail() {
     BW.BenchmarkDetail.destroy();
     document.body.innerHTML = '<main id="table-shell"></main>' + template;
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/vendor/d3.v7.9.0.min.js'), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/core/visuals.js'), 'utf8'));
     window.eval(script); BW.BenchmarkDetail.init();
 }
 function customDates(start, end) {
