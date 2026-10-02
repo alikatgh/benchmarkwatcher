@@ -271,6 +271,8 @@
 .workspace:has(.studio-analysis-canvas:not([hidden])) {padding-top:12px;}
 .workspace:has(.studio-analysis-canvas:not([hidden])) .workspace-nav {padding-bottom:10px;margin-bottom:18px;font-size:12px;}
 .workspace .studio-canvas-heading>div>p {margin:0;font-size:11px;}
+/* Specialty themes color every header; this heading belongs to the analysis surface. */
+.workspace .studio-canvas-heading {background:transparent!important;}
 .studio-canvas-heading>a {flex-shrink:0;font-size:12px;}
 .workspace .studio-canvas-basis>summary {font-size:11px;font-weight:400;min-height:28px;line-height:1.7;padding:4px 0;}
 .workspace .studio-canvas-basis>p {font-size:12px;max-width:75ch;}
