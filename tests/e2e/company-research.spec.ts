@@ -149,6 +149,9 @@ test('Profile shows provider usage and saves controls that block paid calls', as
   await account(page);
   await page.getByRole('link', { name: /^Profile for / }).click();
   await expect(page.getByText('No API requests recorded for this period.', { exact: false })).toBeVisible();
+  const footerBox=await page.getByRole('contentinfo').boundingBox();
+  expect(footerBox!.x).toBe(0);
+  expect(footerBox!.width).toBe(page.viewportSize()!.width);
   await page.getByRole('link', { name: 'AI settings', exact: true }).click();
   const connection = page.locator('form:has(#key-typesafe)');
   await connection.locator('input[type=password]').fill('fixture-typesafe-key');

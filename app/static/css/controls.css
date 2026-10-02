@@ -54,15 +54,14 @@ html[data-theme="bloomberg"] {
 /* Secondary actions have a visible surface and boundary, even at rest. */
 html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link,.rw-button),
 html[data-theme] body :where(.profile-periods,.bw-layout-switch)>a {
-  background-color:var(--control-bg)!important;
-  color:var(--control-text)!important;
-  border-color:var(--control-border)!important;
+  background-color:var(--button-bg,var(--control-bg))!important;
+  color:var(--button-text,var(--control-text))!important;
+  border-color:var(--button-border,var(--control-border))!important;
   opacity:1;filter:none;box-shadow:none;
 }
-html[data-theme] body button {border-width:1px;border-style:solid;}
 html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link,.rw-button):hover:not(:disabled):not([aria-disabled="true"]),
 html[data-theme] body :where(.profile-periods,.bw-layout-switch)>a:hover {
-  background-color:var(--control-hover)!important;border-color:var(--control-hover-border)!important;
+  background-color:var(--button-hover,var(--control-hover))!important;border-color:var(--button-hover-border,var(--control-hover-border))!important;
   opacity:1;filter:none;
 }
 /* Inline table values and result rows keep their data layout, with a hover cue. */
@@ -84,21 +83,17 @@ html[data-theme] body :is(.primary,.tw-primary,.rw-primary,.theme-accent-bg,.stu
 html[data-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],button[data-active="true"],.bw-layout-switch a[aria-current],.profile-periods a[aria-current]),
 html[data-theme] body :is(.tw-context,.chart-controls,.range-toolbar,.benchmark-detail) :is([aria-pressed="true"],.range-btn.theme-surface,.type-btn.theme-surface),
 html[data-theme] body #settings-modal .theme-btn[data-active="true"] {
-  background-color:var(--control-selected-bg)!important;color:var(--control-selected-text)!important;
-  border-color:var(--control-selected-border)!important;font-weight:600;
+  background-color:var(--button-selected-bg,var(--control-selected-bg))!important;color:var(--button-selected-text,var(--control-selected-text))!important;
+  border-color:var(--button-selected-border,var(--control-selected-border))!important;font-weight:600;
 }
 html[data-theme] body #settings-modal .theme-btn[data-active="true"] :is(.theme-text,.theme-text-muted) {color:var(--control-selected-text)!important;}
 html[data-theme] body #settings-modal .theme-text-muted {color:var(--control-text)!important;}
-html[data-theme] body :is(.tw-view,.range-btn,.type-btn,.view-btn,.period-btn,.quick-filter-btn,.grid-range-btn)[aria-pressed="true"],
-html[data-theme] body :is(.company-periods button[aria-pressed="true"],.profile-periods a[aria-current]) {
-  text-decoration:underline;text-decoration-color:currentColor;text-underline-offset:4px;
-}
 html[data-theme] body :is(.tw-button,.bw-icon-button,.rw-button)[aria-expanded="true"] {
-  background-color:var(--control-selected-bg)!important;color:var(--control-selected-text)!important;
-  border-color:var(--control-selected-border)!important;
+  background-color:var(--button-expanded-bg,var(--control-selected-bg))!important;color:var(--button-expanded-text,var(--control-selected-text))!important;
+  border-color:var(--button-expanded-border,var(--control-selected-border))!important;
 }
 html[data-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],button[data-active="true"],.tw-button[aria-expanded="true"],.bw-layout-switch a[aria-current],.profile-periods a[aria-current]):hover:not(:disabled):not([aria-disabled="true"]) {
-  background-color:var(--control-selected-hover)!important;color:var(--control-selected-text)!important;
+  background-color:var(--button-selected-hover,var(--control-selected-hover))!important;color:var(--button-selected-text,var(--control-selected-text))!important;
 }
 html[data-theme] body :is(.tw-danger,.rw-danger,.ui-danger) {
   background-color:var(--control-danger-bg)!important;color:var(--control-danger-text)!important;

@@ -1,6 +1,29 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test('footer fills the available page width and stays reachable on desktop and mobile', async ({page}) => {
+  for (const width of [1440,390]) {
+    await page.setViewportSize({width,height:1000});
+    for (const path of ['/?view=compact','/help','/changelog']) {
+      await page.goto(path);
+      const footer=page.getByRole('contentinfo');
+      await footer.scrollIntoViewIfNeeded();
+      const geometry=await footer.evaluate(node=>{
+        const box=node.getBoundingClientRect();
+        const sidebar=document.querySelector('.bw-sidebar');
+        const rail=sidebar && getComputedStyle(sidebar).position==='fixed' ? sidebar.getBoundingClientRect().right : 0;
+        return {left:box.left,right:box.right,viewport:innerWidth,rail,overflow:document.documentElement.scrollWidth-innerWidth};
+      });
+      expect(Math.abs(geometry.left-geometry.rail),path).toBeLessThanOrEqual(1);
+      expect(Math.abs(geometry.right-geometry.viewport),path).toBeLessThanOrEqual(1);
+      expect(geometry.overflow,path).toBeLessThanOrEqual(1);
+      await expect(footer.getByRole('link',{name:'Changelog',exact:true})).toBeInViewport();
+      await footer.getByRole('link',{name:'Changelog',exact:true}).focus();
+      await expect(footer.getByRole('link',{name:'Changelog',exact:true})).toBeFocused();
+    }
+  }
+});
+
 test('desktop navigation stays below the header at the page end and scrolls internally', async ({page}) => {
   await page.setViewportSize({width:1440,height:500});
   await page.goto('/?view=compact');
