@@ -36,6 +36,22 @@ test('desktop opens contextual source history, watches persistently, and returns
     await expect(page.locator('#benchmark-detail [data-watch-id]')).toHaveAttribute('aria-pressed', 'true');
 });
 
+test('detail keeps history close to the quote and chart controls usable', async ({page}) => {
+    await page.setViewportSize({width:1440,height:900});
+    await browse(page);
+    await openFirst(page);
+    const detail = page.locator('#benchmark-detail');
+    await expect(detail.getByRole('heading',{name:'Reference history'})).toBeInViewport();
+    await detail.locator('#benchmark-chart-settings > summary').click();
+    await expect(detail.locator('#benchmark-chart-start')).toBeVisible();
+    await detail.locator('#benchmark-chart-style').selectOption('area');
+    await expect(detail.locator('#benchmark-chart-settings')).toHaveAttribute('open','');
+    await detail.locator('#benchmark-chart-dots').check();
+    await expect(detail.locator('#benchmark-chart-dots')).toBeChecked();
+    await detail.locator('.benchmark-detail-observations > summary').click();
+    await expect(detail.locator('.benchmark-detail-observations table')).toBeVisible();
+});
+
 test('selected benchmarks compare with explicit sources, units, baseline dates, and real tables', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 1000 });
     await browse(page);

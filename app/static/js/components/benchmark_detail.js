@@ -344,7 +344,9 @@
         byId('benchmark-detail-category').textContent = record.category || 'Public benchmark';
         byId('benchmark-detail-actions').replaceChildren(watchButton(record), pageLink(record));
         const value = element('section');
-        value.append(element('p', 'benchmark-detail-muted', 'Latest reference value'), element('p', 'benchmark-detail-value', format(record.price)), element('p', 'benchmark-detail-unit', unit(record)));
+        const quote = element('div', 'benchmark-detail-quote');
+        quote.append(element('p', 'benchmark-detail-value', format(record.price)), element('p', 'benchmark-detail-unit', unit(record)));
+        value.append(element('p', 'benchmark-detail-muted', 'Latest reference value'), quote);
         value.append(facts([['Observation date', record.date], ['Reporting cadence', cadence(record)]]));
         const change = number(record.change_percent);
         if (change !== null && number(record.prev_price) !== null && record.prev_date && record.date) {

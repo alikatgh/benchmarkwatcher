@@ -1,6 +1,32 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+test('sidebar collapses, keeps destinations usable, and restores the saved width', async ({page}) => {
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto('/?view=compact');
+  const sidebar=page.locator('#bw-sidebar');
+  const toggle=page.locator('#bw-sidebar-toggle');
+  await expect(toggle).toHaveAttribute('aria-expanded','true');
+  const expandedWidth=(await sidebar.boundingBox())!.width;
+  await toggle.focus();
+  await toggle.press('Space');
+  await expect(toggle).toHaveAttribute('aria-label','Expand navigation');
+  const collapsedWidth=(await sidebar.boundingBox())!.width;
+  expect(collapsedWidth).toBeLessThan(expandedWidth / 2);
+  await expect(sidebar.getByRole('link',{name:'Watchlist'})).toBeVisible();
+  await sidebar.getByRole('link',{name:'Watchlist'}).click();
+  await expect(page.locator('#bw-page-title')).toHaveText('Your watchlist');
+  await page.reload();
+  await expect(toggle).toHaveAttribute('aria-expanded','false');
+  expect((await sidebar.boundingBox())!.width).toBe(collapsedWidth);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded','true');
+  expect((await sidebar.boundingBox())!.width).toBe(expandedWidth);
+  await page.setViewportSize({width:390,height:844});
+  await expect(toggle).toBeHidden();
+  await expect(sidebar.getByRole('link',{name:'Watchlist'})).toBeVisible();
+});
+
 test('footer fills the available page width and stays reachable on desktop and mobile', async ({page}) => {
   for (const width of [1440,390]) {
     await page.setViewportSize({width,height:1000});
