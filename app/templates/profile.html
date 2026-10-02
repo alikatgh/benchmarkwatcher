@@ -8,9 +8,10 @@
     <a href="{{ url_for('workspace.home') }}">Company research</a>
     <div><a href="{{ url_for('workspace.profile') }}" aria-current="page">Profile</a><a href="{{ url_for('workspace.settings') }}">AI settings</a><form method="post" action="{{ url_for('workspace.logout') }}"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Sign out</button></form></div>
   </nav>
-  <header class="profile-heading"><div><h1>Profile</h1><p class="muted">{{ user.username }} · Private account</p></div><a href="{{ url_for('workspace.settings') }}">Manage AI connections ↗</a></header>
+  <div class="profile-heading"><div><h1>Profile</h1><p class="muted">{{ user.username }} · Private account</p></div><a class="profile-connections ui-secondary" href="{{ url_for('workspace.settings') }}">Manage AI connections ↗</a></div>
   {% for category, message in get_flashed_messages(with_categories=true) %}<p class="profile-feedback" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>{% endfor %}
-  <section aria-labelledby="usage-title">
+  <div class="profile-overview">
+  <section class="profile-usage" aria-labelledby="usage-title">
     <div class="profile-section-heading"><h2 id="usage-title">API usage &amp; cost</h2><nav class="profile-periods" aria-label="Usage period"><a href="{{ url_for('workspace.profile') }}" {% if usage.period == 'month' %}aria-current="page"{% endif %}>This month</a><a href="{{ url_for('workspace.profile', period='all') }}" {% if usage.period == 'all' %}aria-current="page"{% endif %}>All recorded</a></nav></div>
     <p class="muted small">{{ usage.period_label }} · UTC · Requests made through this app only</p>
     <dl class="usage-totals">
@@ -18,17 +19,22 @@
       <div><dt>AI requests</dt><dd>{{ '{:,}'.format(usage.paid_requests) }}<p class="muted small">Includes billable connection tests and failures</p></dd></div>
       <div><dt>Reported tokens</dt><dd>{{ '{:,}'.format(usage.tokens) }}<p class="muted small">Input + output, where reported by the provider</p></dd></div>
     </dl>
-    <p class="profile-coverage muted small">Request tracking began {{ usage.tracking_started }}. Earlier saved answers contribute available token counts, with costs marked unavailable. Earlier failed, deleted and test requests cannot be reconstructed.</p>
+
     {% if usage.providers %}
     <div class="workspace-table" role="region" aria-label="Usage by provider" tabindex="0"><table><thead><tr><th scope="col">Provider</th><th scope="col" class="numeric">Requests</th><th scope="col" class="numeric">Input tokens</th><th scope="col" class="numeric">Output tokens</th><th scope="col" class="numeric">Estimated cost · USD</th></tr></thead><tbody>
       {% for item in usage.providers %}<tr><th scope="row">{{ item.name }}{% if item.unknown_cost %}<small>{{ item.unknown_cost }} unpriced request{{ 's' if item.unknown_cost != 1 }}</small>{% endif %}</th><td class="numeric">{{ '{:,}'.format(item.requests) }}</td><td class="numeric">{{ '{:,}'.format(item.input_tokens) if item.input_tokens is not none else '—' }}</td><td class="numeric">{{ '{:,}'.format(item.output_tokens) if item.output_tokens is not none else '—' }}</td><td class="numeric">{{ item.cost }}</td></tr>{% endfor %}
     </tbody></table></div>
-    {% else %}<p class="profile-empty">No API requests recorded for this period. Opening saved reports and running built-in calculations do not call an AI provider.</p>{% endif %}
+    {% else %}<div class="profile-empty"><p><strong>No API requests recorded for this period.</strong></p><p class="muted small">Opening saved reports and running built-in calculations do not call an AI provider.</p></div>{% endif %}
+    <p class="profile-coverage muted small">Request tracking began {{ usage.tracking_started }}. Earlier saved answers contribute available token counts, with costs marked unavailable. Earlier failed, deleted and test requests cannot be reconstructed.</p>
   </section>
   <section class="profile-controls" aria-labelledby="controls-title">
-    <div><h2 id="controls-title">Paid AI controls</h2><p>{{ usage.today_used }} of {{ limits.daily_limit }} requests used in the last 24 hours.</p><p class="muted small">Each outbound AI call counts, including connection tests, explanations and failures. Requests stop before contacting the provider when the limit is reached. No automatic paid retries.</p><p class="muted small">This is a request limit, not a dollar cap. Set a spending limit or prepaid balance with your provider for account-wide control. Pausing stops new AI calls here; requests already sent may finish.</p></div>
+    <div class="profile-control-heading"><h2 id="controls-title">Paid AI controls</h2><span class="profile-control-state"{% if limits.paused %} data-paused="true"{% endif %}>{{ 'Paused' if limits.paused else 'Enabled' }}</span></div>
+    <p class="profile-limit-count">{{ usage.today_used }} of {{ limits.daily_limit }} requests used in the last 24 hours.</p>
     <form method="post" class="workspace-form"><input type="hidden" name="csrf" value="{{ csrf }}"><label for="daily_limit">Maximum AI requests per 24 hours</label><input id="daily_limit" name="daily_limit" type="number" min="1" max="{{ limits.maximum }}" value="{{ limits.daily_limit }}" required aria-describedby="limit-help"><p id="limit-help" class="muted small">Choose 1–{{ limits.maximum }}. SEC access and built-in calculations are unaffected.</p><label class="check"><input type="checkbox" name="paused" value="yes" {% if limits.paused %}checked{% endif %}><span>Pause paid AI requests</span></label><button type="submit" class="primary">Save controls</button></form>
+
   </section>
+  </div>
+    <div class="profile-control-notes"><p class="muted small">Each outbound AI call counts, including connection tests, explanations and failures. Requests stop before contacting the provider when the limit is reached. No automatic paid retries.</p><p class="muted small"><strong>This is a request limit, not a dollar cap.</strong> Set a spending limit or prepaid balance with your provider for account-wide control. Pausing stops new AI calls here; requests already sent may finish.</p></div>
   <section class="profile-costs" aria-labelledby="costs-title"><h2 id="costs-title">What can cost money?</h2><dl>
     <div><dt>SEC filings &amp; built-in calculations</dt><dd>No SEC or AI charge. Filings come directly from <a href="https://www.sec.gov/search-filings/edgar-search-assistance/accessing-edgar-data" target="_blank" rel="noopener noreferrer">SEC EDGAR’s free public service</a>. Cached reads make no new SEC request.</dd></div>
     <div><dt>Optional AI providers</dt><dd>Your selected provider bills your connected account. No shared platform key, automatic top-up or payment collection is used by this app. <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer">DeepSeek billing ↗</a> · <a href="https://console.typesafe.ai/" target="_blank" rel="noopener noreferrer">TypeSafe billing ↗</a></dd></div>

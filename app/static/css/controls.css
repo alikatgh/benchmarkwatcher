@@ -1,0 +1,143 @@
+/* Control colors describe a role, independently of chart and brand colors.
+   This owns control colors; component styles continue to own their geometry. */
+:root {
+  --control-bg:#ffffff; --control-text:#263445; --control-border:#9aa6b4;
+  --control-hover:#e9eef5; --control-hover-border:#64768c;
+  --control-primary:#175caa; --control-on-primary:#ffffff; --control-primary-hover:#124c8e;
+  --control-selected-bg:#deebfc; --control-selected-text:#134e8b; --control-selected-border:#4778ad;
+  --control-selected-hover:#cbdef6;
+  --control-focus:#175caa; --control-group:#edf1f6; --control-panel:#f3f5f8;
+  --control-disabled-bg:#e9edf1; --control-disabled-text:#657180;
+  --control-danger-bg:#fce9e7; --control-danger-text:#a12622;
+  --control-success-text:#246741; --control-warning-text:#8b5517;
+}
+html[data-theme="ft"] {
+  --control-bg:#ffffff; --control-text:#343c46; --control-border:#a79f96;
+  --control-hover:#eee9e2; --control-hover-border:#786e64;
+  --control-group:#eee7df; --control-panel:#f5efe8;
+}
+html:is([data-theme="dark"],[data-theme="mono-dark"],[data-theme="bloomberg"]) {
+  color-scheme:dark;
+  --control-bg:#303841; --control-text:#e9eef5; --control-border:#788694;
+  --control-hover:#414e5c; --control-hover-border:#a6b5c6;
+  --control-primary:#a8c7fa; --control-on-primary:#10213b; --control-primary-hover:#c5daff;
+  --control-selected-bg:#284564; --control-selected-text:#d3e5ff; --control-selected-border:#91b8ee;
+  --control-selected-hover:#365777;
+  --control-focus:#a8c7fa; --control-group:#1b232c; --control-panel:#222a34;
+  --control-disabled-bg:#262c33; --control-disabled-text:#99a3b0;
+  --control-danger-bg:#502b2c; --control-danger-text:#ffc5be;
+  --control-success-text:#a4ddb6; --control-warning-text:#f1cd8c;
+}
+html:is([data-theme="light"],[data-theme="mono-light"],[data-theme="ft"]) {color-scheme:light;}
+html[data-theme="mono-light"] {
+  --control-bg:#fff; --control-text:#222; --control-border:#888; --control-hover:#e8e8e8; --control-hover-border:#555;
+  --control-primary:#222; --control-on-primary:#fff; --control-primary-hover:#444;
+  --control-selected-bg:#ddd; --control-selected-text:#111; --control-selected-border:#555; --control-focus:#222;
+  --control-selected-hover:#ccc;
+  --control-group:#eee; --control-panel:#f5f5f5; --control-disabled-bg:#eee; --control-disabled-text:#666;
+}
+html[data-theme="mono-dark"] {
+  --control-bg:#242424; --control-text:#eee; --control-border:#888; --control-hover:#383838; --control-hover-border:#bbb;
+  --control-primary:#eee; --control-on-primary:#111; --control-primary-hover:#fff;
+  --control-selected-bg:#444; --control-selected-text:#fff; --control-selected-border:#bbb; --control-focus:#fff;
+  --control-selected-hover:#555;
+  --control-group:#161616; --control-panel:#191919; --control-disabled-bg:#222; --control-disabled-text:#aaa;
+}
+html[data-theme="bloomberg"] {
+  --control-primary:#ffad5c; --control-on-primary:#191919; --control-primary-hover:#ffc58c;
+  --control-selected-bg:#503922; --control-selected-text:#ffd9b2; --control-selected-border:#d69a60;
+  --control-selected-hover:#634629;
+  --control-focus:#ffad5c; --control-group:#262626; --control-panel:#262626;
+}
+:where(a) {color:var(--theme-accent);}
+
+/* Secondary actions have a visible surface and boundary, even at rest. */
+html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link,.rw-button),
+html[data-theme] body :where(.profile-periods,.bw-layout-switch)>a {
+  background-color:var(--control-bg)!important;
+  color:var(--control-text)!important;
+  border-color:var(--control-border)!important;
+  opacity:1;filter:none;box-shadow:none;
+}
+html[data-theme] body button {border-width:1px;border-style:solid;}
+html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link,.rw-button):hover:not(:disabled):not([aria-disabled="true"]),
+html[data-theme] body :where(.profile-periods,.bw-layout-switch)>a:hover {
+  background-color:var(--control-hover)!important;border-color:var(--control-hover-border)!important;
+  opacity:1;filter:none;
+}
+/* Inline table values and result rows keep their data layout, with a hover cue. */
+html[data-theme] body :is(.company-highlight,.company-results button,.company-table-wrap button,.tw-header-sort,.bw-search-result,.studio-search-popup button,.rw-text-button) {
+  background-color:var(--theme-surface)!important;border-color:transparent!important;
+}
+html[data-theme] body :is(.tw-view,.tw-header-sort,.company-highlight,.bw-search-result,.studio-search-popup button) {border-top-width:0;border-inline-width:0;}
+html[data-theme] body .table-workspace #data-table thead th,
+html[data-theme] body .tw-header-sort {background-color:var(--control-panel)!important;}
+html[data-theme] body :is(.primary,.tw-primary,.rw-primary,.theme-accent-bg,.studio-search-submit) {
+  background-color:var(--control-primary)!important;color:var(--control-on-primary)!important;
+  border-color:var(--control-primary)!important;
+}
+html[data-theme] body :is(.primary,.tw-primary,.rw-primary,.theme-accent-bg,.studio-search-submit):hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color:var(--control-primary-hover)!important;border-color:var(--control-primary-hover)!important;
+}
+
+/* Pressed state is a fill plus weight/underline, not a color-only signal. */
+html[data-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],button[data-active="true"],.bw-layout-switch a[aria-current],.profile-periods a[aria-current]),
+html[data-theme] body :is(.tw-context,.chart-controls,.range-toolbar,.benchmark-detail) :is([aria-pressed="true"],.range-btn.theme-surface,.type-btn.theme-surface),
+html[data-theme] body #settings-modal .theme-btn[data-active="true"] {
+  background-color:var(--control-selected-bg)!important;color:var(--control-selected-text)!important;
+  border-color:var(--control-selected-border)!important;font-weight:600;
+}
+html[data-theme] body #settings-modal .theme-btn[data-active="true"] :is(.theme-text,.theme-text-muted) {color:var(--control-selected-text)!important;}
+html[data-theme] body #settings-modal .theme-text-muted {color:var(--control-text)!important;}
+html[data-theme] body :is(.tw-view,.range-btn,.type-btn,.view-btn,.period-btn,.quick-filter-btn,.grid-range-btn)[aria-pressed="true"],
+html[data-theme] body :is(.company-periods button[aria-pressed="true"],.profile-periods a[aria-current]) {
+  text-decoration:underline;text-decoration-color:currentColor;text-underline-offset:4px;
+}
+html[data-theme] body :is(.tw-button,.bw-icon-button,.rw-button)[aria-expanded="true"] {
+  background-color:var(--control-selected-bg)!important;color:var(--control-selected-text)!important;
+  border-color:var(--control-selected-border)!important;
+}
+html[data-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],button[data-active="true"],.tw-button[aria-expanded="true"],.bw-layout-switch a[aria-current],.profile-periods a[aria-current]):hover:not(:disabled):not([aria-disabled="true"]) {
+  background-color:var(--control-selected-hover)!important;color:var(--control-selected-text)!important;
+}
+html[data-theme] body :is(.tw-danger,.rw-danger,.ui-danger) {
+  background-color:var(--control-danger-bg)!important;color:var(--control-danger-text)!important;
+  border-color:var(--control-danger-text)!important;
+}
+html[data-theme] body :is(button,.primary,.ui-secondary,.rw-button):is(:disabled,[aria-disabled="true"]) {
+  background-color:var(--control-disabled-bg)!important;color:var(--control-disabled-text)!important;
+  border-color:var(--control-border)!important;opacity:1;filter:none;cursor:not-allowed;
+}
+html[data-theme] body :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="color"]),select,textarea) {
+  background-color:var(--control-bg)!important;color:var(--control-text)!important;border-color:var(--control-border)!important;
+}
+html[data-theme] body :is(input,textarea)::placeholder {color:var(--control-disabled-text);opacity:1;}
+html[data-theme] body :is(input,select,textarea):disabled {
+  background-color:var(--control-disabled-bg)!important;color:var(--control-disabled-text)!important;cursor:not-allowed;
+}
+html[data-theme] body :is(input[type="checkbox"],input[type="radio"],input[type="range"]) {accent-color:var(--control-primary);}
+html[data-theme] body :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {
+  outline:2px solid var(--control-focus)!important;outline-offset:3px;
+}
+/* The custom chart scrubber uses the same control colors as native ranges. */
+html[data-theme] .benchmark-detail-point input::-webkit-slider-runnable-track {background:var(--control-border);}
+html[data-theme] .benchmark-detail-point input::-webkit-slider-thumb {background:var(--control-primary);box-shadow:0 0 0 1px var(--control-primary);}
+html[data-theme] .benchmark-detail-point input::-moz-range-track {background:var(--control-border);}
+html[data-theme] .benchmark-detail-point input::-moz-range-thumb {background:var(--control-primary);box-shadow:0 0 0 1px var(--control-primary);}
+/* Navigation and disclosures remain distinct from buttons and content links. */
+html[data-theme] body :is(.bw-sidebar nav a[aria-current="page"],.bw-studio-link[aria-current="page"]) {
+  background-color:var(--control-selected-bg)!important;color:var(--control-selected-text)!important;
+}
+html[data-theme] body :is(.benchmark-detail-settings,.benchmark-detail-observations,.profile-method)>summary {
+  padding:7px 10px;min-height:36px;border:1px solid var(--control-border);border-radius:5px;
+  background:var(--control-bg);color:var(--control-text);width:fit-content;
+}
+html[data-theme] body :is(.benchmark-detail-settings,.benchmark-detail-observations,.profile-method)[open]>summary {
+  background:var(--control-selected-bg);color:var(--control-selected-text);border-color:var(--control-selected-border);
+}
+@media(pointer:coarse) {html[data-theme] body :is(.benchmark-detail-settings,.benchmark-detail-observations,.profile-method)>summary {min-height:44px;}}
+@media(max-width:540px) {.bw-header-actions {gap:4px;}}
+@media(forced-colors:active) {
+  html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link) {border:1px solid ButtonText!important;}
+  html[data-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],a[aria-current]) {outline:2px solid Highlight;outline-offset:-3px;}
+}
