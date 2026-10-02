@@ -1,0 +1,123 @@
+import { test, expect, Page } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { randomUUID } from 'node:crypto';
+
+async function account(page: Page) {
+  await page.goto('/workspace/register');
+  await page.getByLabel('Username', { exact: true }).fill('sec-' + randomUUID().slice(0,8));
+  await page.locator('#password').fill('synthetic account password');
+  await page.getByRole('button', { name: 'Create private workspace' }).click();
+  await page.getByRole('link', { name: 'Continue to workspace' }).click();
+  await expect(page.getByRole('heading', { name: 'Start with a company.' })).toBeVisible();
+}
+async function openCompany(page: Page, ticker = 'AAPL') {
+  await page.getByLabel('Company name, ticker or SEC CIK').fill(ticker);
+  await page.locator('#company-results').getByRole('button', { name: new RegExp(ticker) }).click();
+  await expect(page.locator('#company-chart svg')).toBeVisible();
+}
+test.beforeEach(async ({ context, baseURL }) => {
+  await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
+});
+
+test('ticker search, financial statements, D3 inspection, evidence, export and saved questions', async ({ page }, info) => {
+  const errors: string[]=[];
+  page.on('pageerror', e=>errors.push(e.message));
+  await account(page);
+  await expect(page.getByText('Workbook library')).toHaveCount(0);
+  const input = page.getByLabel('Company name, ticker or SEC CIK');
+  await input.fill('APPL');
+  await expect(page.locator('#company-results')).toContainText('Similar ticker');
+  await input.press('ArrowDown');
+  await expect(page.locator('#company-results button').first()).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Example Devices (synthetic)', exact: true })).toBeVisible();
+  await expect(page.locator('#company-chart .bw-d3-line')).toHaveCount(1);
+  await expect(page.locator('#company-chart-readout')).toContainText('1.4B USD');
+  await page.locator('#company-chart svg').focus();
+  await page.keyboard.press('Home');
+  await expect(page.locator('#company-chart-readout')).toContainText('2020');
+  await page.keyboard.press('End');
+  await expect(page.locator('#company-chart-readout')).toContainText('2025');
+  await page.getByRole('button', { name: 'Quarterly', exact:true }).click();
+  await expect(page.locator('#company-table thead')).toContainText('Q4 2025');
+  await page.locator('#company-chart-type').selectOption('bar');
+  await expect(page.locator('#company-chart .bw-d3-bar')).toHaveCount(12);
+  await page.getByRole('button', { name: 'Cash flow', exact: true }).click();
+  await page.locator('#company-metric').selectOption('free_cash');
+  const source=page.locator('#company-table [data-source-metric=free_cash][data-source-period="Q4-2025"]');
+  await source.click();
+  await expect(page.getByRole('dialog')).toContainText('92,400,000 USD');
+  await expect(page.getByRole('dialog')).toContainText('Operating cash flow minus');
+  await expect(page.getByRole('dialog').getByRole('link')).toHaveCount(4);
+  await page.getByRole('button', { name:'Close source detail' }).click();
+  await expect(source).toBeFocused();
+  await page.getByRole('button', { name: 'Trailing year', exact: true }).click();
+  await expect(page.locator('#company-chart-readout')).toContainText('308M USD');
+  await page.getByRole('button', { name: 'Annual', exact: true }).click();
+  await page.locator('#company-chart-type').selectOption('line');
+  const download = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Export CSV' }).click();
+  expect((await download).suggestedFilename()).toBe('company-0000000001-financials.csv');
+  await page.screenshot({ path: info.outputPath('company-report.png'), fullPage: true });
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
+  // Audit stable theme colors rather than a frame midway through a transition.
+  await page.addStyleTag({ content: '*,:before,:after{transition:none!important;animation:none!important}' });
+  const audit=await new AxeBuilder({page}).include('.company-workspace').withTags(['wcag2a','wcag2aa']).analyze();
+  expect(audit.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
+  await page.getByRole('button',{name:'Ask a question ↗'}).click();
+  const question=page.getByLabel('Question about this report');
+  await question.fill('Compare revenue in 2024 and 2025');
+  await page.getByRole('button',{name:'Send question ↑'}).click();
+  await expect(page.locator('.company-exchange')).toContainText('200M USD');
+  await question.fill('Compare Q1 2025 and Q2 2025');
+  await question.press('Enter');
+  await expect(page.locator('.company-exchange').last()).toContainText('42M USD');
+  await page.locator('.company-exchange').last().locator('.company-answer-data summary').click();
+  await expect(page.locator('.company-exchange').last().locator('svg')).toBeVisible();
+  await page.screenshot({ path: info.outputPath('company-conversation.png'), fullPage: false });
+  await page.getByRole('button',{name:'Close conversation'}).click();
+  await page.reload();
+  await page.addStyleTag({ content: '*,:before,:after{transition:none!important;animation:none!important}' });
+  await page.getByRole('button',{name:'Ask a question ↗'}).click();
+  await expect(page.locator('.company-exchange')).toHaveCount(2);
+  await page.getByRole('button',{name:'Close conversation'}).click();
+  await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
+  const dark=await new AxeBuilder({page}).include('.company-workspace').withTags(['wcag2a','wcag2aa']).analyze();
+  expect(dark.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
+  await page.screenshot({ path: info.outputPath('company-report-dark.png'), fullPage: true });
+  await page.evaluate(() => (window as any).setTheme('ft'));
+  const ft=await new AxeBuilder({page}).include('.company-workspace').withTags(['wcag2a','wcag2aa']).analyze();
+  expect(ft.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
+  await page.screenshot({ path: info.outputPath('company-report-ft.png'), fullPage: true });
+  expect(errors).toEqual([]);
+});
+
+test('unavailable issuers, sector-specific rows and optional provider consent',async({page})=>{
+  await account(page);
+  await page.getByLabel('Company name, ticker or SEC CIK').fill('MISS');
+  await page.locator('#company-results').getByRole('button').click();
+  await expect(page.locator('#company-search-status')).toContainText('No supported annual');
+  await openCompany(page,'JPM');
+  await expect(page.getByRole('button',{name:'Banking',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Banking',exact:true}).click();
+  await expect(page.locator('#company-table')).toContainText('Net interest income');
+  await expect(page.locator('#company-metric option[value=free_cash]')).toHaveCount(0);
+  const reportURL=page.url();
+  await page.locator('.workspace-nav').getByRole('link',{name:'AI settings'}).click();
+  const connection=page.locator('form:has(#key-deepseek)');
+  await connection.locator('input[type=password]').fill('fixture-deepseek-key');
+  await connection.locator('input[type=checkbox]').check();
+  await connection.getByRole('button',{name:'Test and save key'}).click();
+  await page.goto(reportURL);
+  await page.getByRole('button',{name:'Ask a question ↗'}).click();
+  await page.locator('#company-provider').selectOption('deepseek:fixture-chat');
+  await page.getByLabel('Question about this report').fill('Discuss this company');
+  await page.getByRole('button',{name:'Send question ↑'}).click();
+  await expect(page.locator('.company-exchange')).toHaveCount(0);
+  await page.locator('#company-consent input').check();
+  await page.getByRole('button',{name:'Send question ↑'}).click();
+  await expect(page.locator('.company-exchange')).toContainText('AI interpretation');
+  await expect(page.locator('.company-exchange')).toContainText('[S1]');
+  await expect(page.locator('#company-consent input')).not.toBeChecked();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
+});

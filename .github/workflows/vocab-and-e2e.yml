@@ -57,6 +57,10 @@ jobs:
         run: npm run test:chat
         env:
           CI: 'true'
+      - name: Verify SEC company research
+        run: npm run test:companies
+        env:
+          CI: 'true'
       - name: Keep browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v4

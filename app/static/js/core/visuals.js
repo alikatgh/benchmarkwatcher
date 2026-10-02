@@ -93,7 +93,7 @@
             const duration = +x.domain()[1] - +x.domain()[0];
             const magnitude = Math.max(...y.domain().map(Math.abs));
             axes(grid, x, y, width, height, {...options, left, right,
-                ...(options.finance ? {yFormat: y.tickFormat(4, magnitude >= 1e6 ? '~s' : magnitude < .001 ? '.2~g' : ',~f'), xFormat: d.utcFormat(duration > 3 * 365 * DAY ? '%Y' : duration > 100 * DAY ? '%b %y' : '%d %b')} : {})});
+                ...(options.finance ? {yFormat: options.yFormat || y.tickFormat(4, magnitude >= 1e6 ? '~s' : magnitude < .001 ? '.2~g' : ',~f'), xFormat: d.utcFormat(duration > 3 * 365 * DAY ? '%Y' : duration > 100 * DAY ? '%b %y' : '%d %b')} : {})});
             if (options.finance && options.type !== 'bar') marks.append('line').attr('class', 'bw-d3-baseline')
                 .attr('x1', left).attr('x2', right).attr('y1', y(values[0].value)).attr('y2', y(values[0].value))
                 .attr('stroke', 'currentColor').attr('stroke-opacity', .25).attr('stroke-dasharray', '2 4');

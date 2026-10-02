@@ -40,6 +40,14 @@ If you are looking for real-time prices, trading tools, or technical indicators,
 
 ## Data Sources
 
+The private **Company research** workspace also turns a company ticker into
+historical financial statements, D3 charts, source-linked calculations and saved
+questions using public SEC filings. Built-in analysis needs no AI key. Optional
+commentary uses the user's connected provider with explicit sharing consent.
+Coverage depends on SEC disclosures; it does not include every global company or
+live share prices. See [company research](docs/COMPANY_RESEARCH.md) for methods,
+coverage and a synthetic local preview.
+
 All data comes from freely accessible public sources:
 
 | Category | Commodity | Source | Update Frequency |

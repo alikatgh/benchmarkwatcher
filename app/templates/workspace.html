@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Workbook studio | BenchmarkWatcher{% endblock %}
+{% block title %}{{ 'Workbook studio' if config.WORKBOOK_LIBRARY_ENABLED else 'Company research' }} | BenchmarkWatcher{% endblock %}
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">
 {% macro token() %}<input type="hidden" name="csrf" value="{{ csrf }}">{% endmacro %}
 {% macro number(point) %}{% if point.value is none %}Unavailable{% elif point.percent %}{{ '{:,.2f}'.format(point.value * 100) }}%{% else %}{{ '{:,.2f}'.format(point.value) }}{% endif %}{% endmacro %}
 {% set notifications = get_flashed_messages(with_categories=true) %}
-<div class="workspace{% if user and mode != 'recovery_code' %} has-chat{% endif %}" data-workspace-mode="{{ mode }}">
-  <nav class="workspace-nav" aria-label="Workbook studio">
-    <a href="{{ url_for('workspace.home') }}">Workbook studio</a>
+<div class="workspace{% if user and mode != 'recovery_code' and config.WORKBOOK_LIBRARY_ENABLED %} has-chat{% endif %}" data-workspace-mode="{{ mode }}">
+  <nav class="workspace-nav" aria-label="Research workspace">
+    <a href="{{ url_for('workspace.home') }}">{{ 'Workbook studio' if config.WORKBOOK_LIBRARY_ENABLED else 'Company research' }}</a>
     <div>{% if user %}<span>{{ user.username }}</span><a href="{{ url_for('workspace.settings') }}">AI settings</a>{% endif %}
     <details class="workspace-notifications" {% if notifications %}open{% endif %}>
       <summary>Notifications{% if notifications %} <span class="notification-count">{{ notifications|length }}</span>{% endif %}</summary>
@@ -21,7 +21,7 @@
   {% if mode in ['login', 'register', 'recover'] %}
   <section class="workspace-auth">
     <h1>{{ {'login':'Welcome back', 'register':'Your research, in one place', 'recover':'Recover your account'}[mode] }}</h1>
-    <p class="muted">{% if mode == 'register' %}Save analyses and connect your own AI providers. Your workspace is private.{% elif mode == 'recover' %}Use the recovery code you saved when creating your account.{% else %}Sign in to your models, provider connections, and saved analyses.{% endif %}</p>
+    <p class="muted">{% if mode == 'register' %}Save analyses and connect your own AI providers. Your workspace is private.{% elif mode == 'recover' %}Use the recovery code you saved when creating your account.{% else %}Sign in to your company reports, provider connections, and saved analyses.{% endif %}</p>
     <form method="post" class="workspace-form">{{ token() }}
       <label for="username">Username</label><input id="username" name="username" autocomplete="username" required minlength="3" maxlength="40" pattern="[a-zA-Z0-9][a-zA-Z0-9_.-]{2,39}">
       {% if mode == 'recover' %}<label for="recovery">Recovery code</label><input id="recovery" name="recovery" type="password" autocomplete="off" required maxlength="100">{% endif %}
@@ -37,7 +37,7 @@
   <h1>Your AI connections</h1><p class="muted">Bring your own API key. Your provider bills your account directly. BenchmarkWatcher supplies no AI credits or shared keys.</p>
   <div class="provider-grid">
   {% for id, name in providers.items() %}{% set linked = connections | selectattr('provider', 'equalto', id) | list %}
-  <section class="workspace-panel"><h2>{{ name }}</h2><p>{{ 'Questions and optional written explanations.' if id == 'deepseek' else 'Structured selection of workbook metrics and reporting periods.' }}</p>
+  <section class="workspace-panel"><h2>{{ name }}</h2><p>{{ 'Questions and optional written explanations.' if id == 'deepseek' else 'Structured selection of financial metrics and reporting periods.' }}</p>
     {% if linked %}<p class="connection-status">Connected{% if user.default_provider == id %} · Default{% endif %}</p><p class="muted">{{ linked[0].models | join(', ') }}</p>
     <div class="workspace-actions"><form method="post">{{ token() }}<input type="hidden" name="provider" value="{{ id }}"><button name="action" value="default">Make default</button></form><form method="post">{{ token() }}<input type="hidden" name="provider" value="{{ id }}"><button name="action" value="remove">Remove saved key</button></form></div>{% endif %}
     <form method="post" class="workspace-form">{{ token() }}<input type="hidden" name="provider" value="{{ id }}">
@@ -86,7 +86,7 @@
   {% endif %}
   </div>
   {% if user and mode != 'recovery_code' and (chat_workbook or mode == 'analysis') %}{% include 'components/workbook_canvas.html' %}{% endif %}
-  {% if user and mode != 'recovery_code' %}{% include 'components/workbook_chat.html' %}{% endif %}
+  {% if user and mode != 'recovery_code' and config.WORKBOOK_LIBRARY_ENABLED %}{% include 'components/workbook_chat.html' %}{% endif %}
 </div>
 <script defer src="{{ url_for('static', filename='js/components/workspace_studio.js') }}"></script>
 {% if mode == 'home' %}<script defer src="{{ url_for('static', filename='js/components/workbook_search.js') }}"></script>{% endif %}

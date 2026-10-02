@@ -8,7 +8,7 @@
     {% set page_description = meta_description|default(page_description, true) %}
     {% if request.blueprint == 'workspace' %}
     {% set page_title = 'Research workspace | BenchmarkWatcher' %}
-    {% set page_description = 'A private workspace for company models, source-backed calculations, and your own AI providers.' %}
+    {% set page_description = 'Research companies with public SEC filings, source-backed financial calculations, and optional AI commentary.' %}
     {% endif %}
     {% set canonical_url = 'https://benchmarkwatcher.online' ~ request.path %}
     <link rel="canonical" href="{{ canonical_url }}">
