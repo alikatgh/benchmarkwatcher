@@ -35,9 +35,11 @@ function checkPlaceholders(filePath, patterns) {
     if (pattern.test(content)) {
       addBlocker(
         `Placeholder value detected in ${filePath}`,
-        detectedApiUrl
-          ? `Run: npm run api:set -- ${detectedApiUrl}`
-          : 'Run: npm run api:set -- https://YOUR_REAL_API_DOMAIN'
+        filePath.includes('METADATA')
+          ? 'Replace it with a verified, live store listing contact or policy URL'
+          : detectedApiUrl
+            ? `Run: npm run api:set -- ${detectedApiUrl}`
+            : 'Set the public API URL in app.json and .env.example'
       );
       return;
     }
@@ -100,8 +102,26 @@ if (!runCheck('Expo public config resolves', 'npx expo config --type public')) {
 // 2) Placeholder checks
 checkPlaceholders('app.json', [/your-api-domain\.example/i]);
 checkPlaceholders('.env.example', [/your-api-domain\.example/i]);
-checkPlaceholders('APP_STORE_METADATA_TEMPLATE.md', [/your-domain\.example/i]);
-checkPlaceholders('PLAY_STORE_METADATA_TEMPLATE.md', [/your-domain\.example/i, /support@your-domain\.example/i]);
+checkPlaceholders('APP_STORE_METADATA_TEMPLATE.md', [/your-domain\.example/i, /benchmarkwatching\.com/i]);
+checkPlaceholders('PLAY_STORE_METADATA_TEMPLATE.md', [/your-domain\.example/i, /support@your-domain\.example/i, /benchmarkwatching\.com/i]);
+
+// Expo inlines EXPO_PUBLIC_* values during the cloud build. A local .env does
+// not make the production EAS profile safe to ship.
+try {
+  const eas = JSON.parse(readFileSync(join(root, 'eas.json'), 'utf8'));
+  const apiUrl = eas.build?.production?.env?.EXPO_PUBLIC_API_URL;
+  if (typeof apiUrl !== 'string' || !/^https:\/\//i.test(apiUrl) || /your-api-domain\.example/i.test(apiUrl)) {
+    addBlocker('Production EAS API URL is missing or invalid', 'Set build.production.env.EXPO_PUBLIC_API_URL in eas.json to the live HTTPS API URL');
+  } else {
+    const app = JSON.parse(readFileSync(join(root, 'app.json'), 'utf8'));
+    const example = readFileSync(join(root, '.env.example'), 'utf8');
+    if (app.expo?.extra?.apiBaseUrl !== apiUrl || !example.split('\n').includes(`EXPO_PUBLIC_API_URL=${apiUrl}`)) {
+      addBlocker('Mobile API URLs do not match', `Run: npm run api:set -- ${apiUrl}`);
+    }
+  }
+} catch {
+  addBlocker('Production EAS profile cannot be read', 'Check mobile/eas.json');
+}
 
 // 3) Expo auth check (developer-side)
 try {
@@ -139,29 +159,7 @@ if (blockers.length) {
     console.log(`- ${blocker.message}`);
     if (blocker.fix) console.log(`  Fix: ${blocker.fix}`);
   }
-  console.log('\nNext steps:');
-  if (detectedApiUrl) {
-    console.log(`- Detected .env API URL: ${detectedApiUrl}`);
-    console.log(`- Apply it everywhere: npm run api:set -- ${detectedApiUrl}`);
-    console.log('- Quick unblock commands:');
-    console.log('  cd mobile');
-    console.log(`  export API_URL=${detectedApiUrl}`);
-    console.log('  npm run api:set -- $API_URL');
-    console.log('  npm run eas:login');
-    console.log('  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value $API_URL');
-    console.log('  npm run preflight:release');
-  } else {
-    console.log('- Set production API URL in app.json/.env.example/.env and EAS secret');
-    console.log('- Quick unblock commands:');
-    console.log('  cd mobile');
-    console.log('  export API_URL=https://YOUR_REAL_API_DOMAIN');
-    console.log('  npm run api:set -- $API_URL');
-    console.log('  npm run eas:login');
-    console.log('  npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value $API_URL');
-    console.log('  npm run preflight:release');
-  }
-  console.log('- Authenticate Expo maintainer account');
-  console.log('- Re-run: npm run preflight:release');
+  console.log('\nResolve the listed blockers, then re-run: npm run preflight:release');
   process.exitCode = 1;
 } else {
   console.log('No blockers found. Ready for build/submit.');

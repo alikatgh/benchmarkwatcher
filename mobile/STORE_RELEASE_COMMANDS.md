@@ -3,7 +3,8 @@
 This project is configured for EAS production builds with:
 - iOS bundle id: `com.benchmarkwatcher.mobile`
 - Android package: `com.benchmarkwatcher.mobile`
-- Production API: `EXPO_PUBLIC_API_URL` (bring your own HTTPS API)
+- Production API: `https://benchmarkwatcher.online` via the public
+  `EXPO_PUBLIC_API_URL` value in `eas.json`.
 
 ## 1) One-time setup
 
@@ -14,10 +15,10 @@ End users of the app do not need to create accounts or log in.
 cd mobile
 npm install
 npm run eas:login
-npm run api:set -- https://your-api-domain.example
 ```
 
-`npm run api:set` now updates all of: `app.json`, `.env.example`, and `.env`.
+`npm run api:set` updates `app.json`, the production EAS profile, `.env.example`,
+and the local `.env` if the public API URL changes later.
 
 ## 2) Verify config before building
 
@@ -35,14 +36,8 @@ npm run test:ci
 
 ## 3) Build binaries
 
-Set API URL for EAS builds (recommended one-time project secret):
-
-```bash
-cd mobile
-npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value https://your-api-domain.example
-```
-
-Then build:
+The production EAS profile supplies the public API URL at build time. Verify
+that it matches the live HTTPS API before building:
 
 ```bash
 npm run eas:build:ios
@@ -56,36 +51,21 @@ npm run eas:submit:ios
 npm run eas:submit:android
 ```
 
-## Optional: force runtime API URL without changing eas.json
-
-```bash
-cd mobile
-EXPO_PUBLIC_API_URL=https://your-api-domain.example eas build -p ios --profile production
-EXPO_PUBLIC_API_URL=https://your-api-domain.example eas build -p android --profile production
-```
-
 ## Notes
-- This repository does not ship a shared public API endpoint by default.
-- You must set a real `EXPO_PUBLIC_API_URL` before running production builds.
+- `EXPO_PUBLIC_API_URL` is a public build-time value, not a secret. Provider
+  keys and store credentials must never be placed in it or committed to source.
 - If `eas submit` asks for missing credentials/metadata, complete them in App Store Connect / Google Play Console.
 - For first iOS submission, ensure app record exists in App Store Connect.
 - For first Android submission, ensure app exists in Play Console and service account access is configured for automated submit.
 
 ## Common preflight blockers
 
-- `Placeholder value detected in app.json/.env.example`
-	- Replace `https://your-api-domain.example` with your real production API URL.
+- `Production EAS API URL is missing or invalid`
+	- Set the public HTTPS API URL in `build.production.env.EXPO_PUBLIC_API_URL` in `eas.json`.
 - `EAS CLI is not logged in`
 	- Run `npm run eas:login` (developer/maintainer only, not app users).
 - Preflight still failing
 	- Re-run `npm run preflight:release` and follow each printed `Fix:` line.
 
-## Quick unblock (current state)
-
-```bash
-cd mobile
-npm run api:set -- https://YOUR_REAL_API_DOMAIN
-npm run eas:login
-npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value https://YOUR_REAL_API_DOMAIN
-npm run preflight:release
-```
+The store listing templates still need verified support and privacy-policy URLs
+before submission. Do not publish the old `benchmarkwatching.com` placeholders.

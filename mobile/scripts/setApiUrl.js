@@ -18,11 +18,16 @@ if (!/^https:\/\//i.test(inputUrl)) {
 
 const root = process.cwd();
 const appJsonPath = join(root, 'app.json');
+const easJsonPath = join(root, 'eas.json');
 const envExamplePath = join(root, '.env.example');
 const envPath = join(root, '.env');
 
 if (!existsSync(appJsonPath)) fail('app.json not found');
+if (!existsSync(easJsonPath)) fail('eas.json not found');
 if (!existsSync(envExamplePath)) fail('.env.example not found');
+
+const easJson = JSON.parse(readFileSync(easJsonPath, 'utf8'));
+if (!easJson.build?.production) fail('Production EAS profile not found');
 
 // Update app.json (expo.extra.apiBaseUrl)
 const appJson = JSON.parse(readFileSync(appJsonPath, 'utf8'));
@@ -30,6 +35,11 @@ if (!appJson.expo) appJson.expo = {};
 if (!appJson.expo.extra) appJson.expo.extra = {};
 appJson.expo.extra.apiBaseUrl = inputUrl;
 writeFileSync(appJsonPath, `${JSON.stringify(appJson, null, 2)}\n`, 'utf8');
+
+// EAS inlines this public value into production binaries during cloud builds.
+if (!easJson.build.production.env) easJson.build.production.env = {};
+easJson.build.production.env.EXPO_PUBLIC_API_URL = inputUrl;
+writeFileSync(easJsonPath, `${JSON.stringify(easJson, null, 2)}\n`, 'utf8');
 
 // Update .env.example
 let envExample = readFileSync(envExamplePath, 'utf8');
@@ -54,8 +64,8 @@ writeFileSync(envPath, env, 'utf8');
 
 console.log('✅ API URL updated in:');
 console.log('- app.json (expo.extra.apiBaseUrl)');
+console.log('- eas.json (production EXPO_PUBLIC_API_URL)');
 console.log('- .env.example (EXPO_PUBLIC_API_URL)');
 console.log('- .env (EXPO_PUBLIC_API_URL)');
 console.log('\nNext:');
-console.log(`- npx eas secret:create --scope project --name EXPO_PUBLIC_API_URL --value ${inputUrl}`);
 console.log('- npm run preflight:release');
