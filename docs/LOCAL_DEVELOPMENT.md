@@ -1,5 +1,11 @@
 # Local development and chat verification
 
+For the current company-first workflow, see [SEC company research](COMPANY_RESEARCH.md).
+Run `npm run test:companies`, or start a synthetic preview with
+`PLAYWRIGHT_PORT=5784 .venv/bin/python -m tests.e2e.server --companies`.
+The workbook instructions below remain useful for legacy saved-analysis regression
+checks; the example-workbook catalog is disabled in the normal product.
+
 From the project root, with Python 3.11+ and Node.js 20+ installed:
 
 ```sh

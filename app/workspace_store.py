@@ -37,6 +37,17 @@ CREATE TABLE IF NOT EXISTS attempts (
  user_id INTEGER NOT NULL REFERENCES users(id), created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS attempts_owner ON attempts(user_id, created_at);
+CREATE TABLE IF NOT EXISTS company_reports (
+ id TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id),
+ cik TEXT NOT NULL, version TEXT NOT NULL, title TEXT NOT NULL,
+ data TEXT NOT NULL, created_at INTEGER NOT NULL, UNIQUE(user_id,cik,version)
+);
+CREATE TABLE IF NOT EXISTS company_messages (
+ id TEXT PRIMARY KEY, report_id TEXT NOT NULL REFERENCES company_reports(id),
+ user_id INTEGER NOT NULL REFERENCES users(id), question TEXT NOT NULL,
+ result TEXT NOT NULL, provider TEXT NOT NULL, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS company_messages_owner ON company_messages(user_id,report_id,created_at);
 """
 
 
@@ -54,6 +65,9 @@ def init_workspace(app):
                       SESSION_COOKIE_SAMESITE='Lax', PERMANENT_SESSION_LIFETIME=timedelta(days=7))
     app.config['SESSION_COOKIE_SECURE'] = app.config.get('WORKSPACE_COOKIE_SECURE', os.getenv('WORKSPACE_LOCAL_HTTP') != '1')
     app.config.setdefault('MODEL_LIBRARY_DIR', os.getenv('MODEL_LIBRARY_DIR', ''))
+    # Example models are internal design references. Legacy fixture/review builds
+    # can explicitly enable their old UI; production does not expose the folder.
+    app.config.setdefault('WORKBOOK_LIBRARY_ENABLED', False)
     app.config.setdefault('MODEL_LIBRARY_SOURCE_URL', os.getenv('MODEL_LIBRARY_SOURCE_URL', ''))
     app.config.setdefault('WORKSPACE_DB', os.getenv('WORKSPACE_DB', str(Path(app.instance_path) / 'workspace.sqlite3')))
     path = Path(app.config['WORKSPACE_DB'])

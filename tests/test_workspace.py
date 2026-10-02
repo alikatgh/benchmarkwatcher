@@ -43,6 +43,7 @@ def workspace(tmp_path):
         CACHE_TYPE = 'NullCache'
         RATELIMIT_ENABLED = False
         WORKSPACE_ENABLED = True
+        WORKBOOK_LIBRARY_ENABLED = True
         WORKSPACE_SESSION_SECRET = 'workspace-session-test-secret-at-least-32'
         WORKSPACE_ENCRYPTION_KEY = Fernet.generate_key().decode()
         WORKSPACE_COOKIE_SECURE = False
@@ -107,6 +108,7 @@ def test_workspace_disabled_and_stable_secrets_required(tmp_path, monkeypatch):
     assert create_app(Disabled).test_client().get('/workspace/').status_code == 404
     class Broken(Disabled):
         WORKSPACE_ENABLED = True
+        WORKBOOK_LIBRARY_ENABLED = True
     with pytest.raises(RuntimeError, match='persistent'):
         create_app(Broken)
 

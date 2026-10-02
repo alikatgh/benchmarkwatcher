@@ -14,7 +14,7 @@ from app import analysis_providers
 from tests.e2e.workbook_fixture import write_workbook, provider_response
 
 
-def main(workbooks=False):
+def main(workbooks=False, companies=False):
     with TemporaryDirectory(prefix='benchmarkwatcher-e2e-') as directory:
         library = Path(directory) / 'models'
         library.mkdir()
@@ -38,7 +38,8 @@ def main(workbooks=False):
             JSON_DATA_DIR = directory
             CACHE_TYPE = 'SimpleCache'
             RATELIMIT_ENABLED = False
-            WORKSPACE_ENABLED = workbooks
+            WORKSPACE_ENABLED = workbooks or companies
+            WORKBOOK_LIBRARY_ENABLED = workbooks
             WORKSPACE_SESSION_SECRET = secrets.token_hex(32)
             WORKSPACE_ENCRYPTION_KEY = Fernet.generate_key().decode()
             WORKSPACE_COOKIE_SECURE = False
@@ -47,8 +48,22 @@ def main(workbooks=False):
             MODEL_LIBRARY_SOURCE_URL = ''
             TESTING = True
 
-        if workbooks:
+        if workbooks or companies:
             analysis_providers._request = provider_response
+        if companies:
+            from app import sec_client, company_financials
+            from tests.sec_fixture import fake_fetch
+            sec_client.fetch = fake_fetch
+            company_financials.fetch = fake_fetch
+            def company_provider(provider, key, payload=None):
+                if provider == 'deepseek' and payload and 'messages' in payload:
+                    context = json.loads(payload['messages'][-1]['content'])
+                    if 'evidence' in context:
+                        return {'choices':[{'finish_reason':'stop','message':{'content':'This synthetic company reports revenue and operating cash flow in the linked filing. The figures are historical; the supplied evidence does not explain their causes. [S1]'}}]}
+                if provider == 'typesafe' and payload and isinstance(payload.get('state'),dict):
+                    return {'model':'jev-latest','answers':{k:{'type':'choice','choice':v,'confidence':1} for k,v in {'metric':'revenue','operation':'series','start':'unspecified','end':'unspecified'}.items()}}
+                return provider_response(provider,key,payload)
+            analysis_providers._request = company_provider
         app = create_app(Config)
         logging.getLogger('werkzeug').setLevel(logging.WARNING)
         print('SYNTHETIC PREVIEW: temporary data; workbook mode uses simulated providers.', flush=True)
@@ -59,4 +74,6 @@ def main(workbooks=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workbooks', action='store_true', help='Enable temporary workbook accounts and simulated providers.')
-    main(workbooks=parser.parse_args().workbooks)
+    parser.add_argument('--companies', action='store_true', help='Enable synthetic SEC filings, accounts and simulated providers.')
+    args=parser.parse_args()
+    main(workbooks=args.workbooks,companies=args.companies)

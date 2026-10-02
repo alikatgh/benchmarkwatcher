@@ -45,7 +45,7 @@ def page(mode, **values):
         chat_workbook = values.get('workbook')
         model_id = chat_workbook['id'] if chat_workbook else (
             values['record']['workbook'] if mode == 'analysis' else session.get('chat_workbook'))
-        if not chat_workbook and model_id:
+        if not chat_workbook and model_id and current_app.config.get('WORKBOOK_LIBRARY_ENABLED'):
             try:
                 chat_workbook = load_model(current_app.config['MODEL_LIBRARY_DIR'], model_id)
             except (KeyError, ValueError):
@@ -205,6 +205,9 @@ def settings():
 
 @bp.get('/')
 def home():
+    if not current_app.config.get('WORKBOOK_LIBRARY_ENABLED'):
+        from app.company_routes import company_home
+        return company_home()
     query = request.args.get('q', '').strip()[:100]
     all_books = catalog(current_app.config['MODEL_LIBRARY_DIR'])
     books = [b for b in all_books if all(term in b['name'].casefold() for term in query.casefold().split())]
@@ -216,6 +219,8 @@ def home():
 
 
 def workbook_or_404(model_id):
+    if not current_app.config.get('WORKBOOK_LIBRARY_ENABLED'):
+        abort(404)
     try:
         return load_model(current_app.config['MODEL_LIBRARY_DIR'], model_id)
     except KeyError:
@@ -410,3 +415,7 @@ def delete_analysis(analysis_id):
         abort(404)
     flash('Analysis deleted.', 'success')
     return redirect(url_for('workspace.home'))
+
+# Company research uses the same authentication, CSRF and private-response hooks.
+from app.company_routes import register_company_routes
+register_company_routes(bp)

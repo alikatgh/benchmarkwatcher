@@ -2,11 +2,21 @@
 {% block title %}Help | BenchmarkWatcher{% endblock %}
 {% block content %}
 <article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    {% if not config.WORKBOOK_LIBRARY_ENABLED %}
+    <header class="mb-6 sm:mb-8"><h1 class="text-2xl sm:text-3xl font-bold mb-4">Help with company research</h1><p class="leading-relaxed theme-text-muted">Start with a company ticker or name. Your report brings together historical financial statements and the filings behind them.</p></header>
+    <section class="release-entry"><h2>Open a financial report</h2><p>Go to <a href="{{ url_for('workspace.home') if config.WORKSPACE_ENABLED else '/workspace/' }}">Company research</a>, sign in, and search for a ticker such as AAPL or a company name. Select the matching company. Similar tickers are suggestions, so check the company name before opening a report.</p><p>No AI key is needed. Reports are saved automatically to your private workspace. Coverage follows SEC filings; some companies and disclosures are unavailable.</p></section>
+    <section class="release-entry"><h2>Read charts and verify values</h2><p>Choose annual, quarterly or trailing-year periods, a metric, and a chart style. The financial tables follow your selected frequency. Select any table value to see its exact amount, unit, calculation method and filing sources. Export CSV includes those sources.</p><p>A dash means unavailable, not zero. Quarterly cash-flow figures may be derived from cumulative disclosures. Business categories can overlap; read their source details before adding them together.</p></section>
+    <section class="release-entry"><h2>Ask a question</h2><p>Try “Show operating income across available years” or “Compare revenue in 2024 and 2025.” Built-in answers use deterministic calculations. Follow-ups can reuse the previous metric; New topic clears that context.</p><p>Connect your own provider in AI settings for optional commentary or metric selection. Each provider request requires confirmation to share the question and public filing evidence, and may incur a charge from your provider. AI interpretation is labeled separately from calculated values.</p></section>
+    <section class="release-entry"><h2>What is included?</h2><p>Historical income statements, balance sheets, cash flow, supported margins and growth, and available business breakdowns. Reporting periods, currencies and coverage follow the company’s disclosures. Reports do not contain current share prices, analyst estimates or future projections.</p><p>Saved reports are dated snapshots. Open Sources, coverage and calculation methods to check the latest available report; SEC responses are cached for up to one hour.</p></section>
+    <details><summary>Earlier workbook-analysis guide</summary>
+    {% else %}
     <header class="mb-6 sm:mb-8">
         <h1 class="text-2xl sm:text-3xl font-bold mb-4">Help with workbook analysis</h1>
         <p class="leading-relaxed theme-text-muted">Choose a metric yourself, or ask your own AI provider to find it for you. Every saved calculation includes its source cells.</p>
         <p class="mt-4 leading-relaxed">Example: <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="#jev-example">Show Operating Income across the available periods.</a></p>
     </header>
+    {% endif %}
     {% include 'components/jev_guide.html' %}
+    {% if not config.WORKBOOK_LIBRARY_ENABLED %}</details>{% endif %}
 </article>
 {% endblock %}

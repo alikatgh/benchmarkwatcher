@@ -1,0 +1,7 @@
+<article class="company-exchange" data-message-id="{{ message.id }}">
+  <h3>{{ message.question }}</h3>
+  <p class="company-answer-kind">{{ 'AI interpretation · Check the linked filings' if message.result.ai else 'Calculated from filings' }}</p>
+  <p class="company-answer-text">{{ message.result.text }}</p>
+  {% for calculation in message.result.calculations %}<details class="company-answer-data"><summary>{{ calculation.metric }} · {{ calculation.points|length }} periods</summary><div class="company-answer-chart" data-calculation="{{ calculation|tojson|forceescape }}"></div><div class="company-table-wrap"><table><caption class="sr-only">{{ calculation.metric }} values</caption><thead><tr><th scope="col">Period</th><th scope="col">{{ calculation.unit }}</th></tr></thead><tbody>{% for point in calculation.points %}<tr><th scope="row">{{ point.period }}</th><td>{{ display_value(point.value,calculation.unit) }}</td></tr>{% endfor %}</tbody></table></div></details>{% endfor %}
+  {% if message.result.sources %}<details class="company-answer-sources"><summary>Filing sources</summary><ol>{% for source in message.result.sources %}<li><a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">[S{{ loop.index }}] {{ source.form }} · {{ source.filed }} ↗</a></li>{% endfor %}</ol></details>{% endif %}
+</article>
