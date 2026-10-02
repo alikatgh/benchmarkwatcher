@@ -1,0 +1,51 @@
+/* Brief feedback for actions and spatial continuity for transient surfaces. */
+:root { --bw-motion-fast:140ms; --bw-motion-panel:210ms; --bw-motion-ease:cubic-bezier(.2,.7,.2,1); }
+
+html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link,.rw-button,.bw-layout-switch a) {
+  transition:background-color var(--bw-motion-fast) ease,border-color var(--bw-motion-fast) ease,color var(--bw-motion-fast) ease,box-shadow var(--bw-motion-fast) ease,transform var(--bw-motion-fast) var(--bw-motion-ease);
+}
+html[data-theme] body :is(.tw-button,.range-btn,.bw-icon-button,.benchmark-detail-actions button,.benchmark-detail-ranges button):active:not(:disabled) {
+  transform:scale(.98);
+}
+.bw-sidebar nav a,.bw-sidebar-bottom a,.bw-observation,.bw-search-result {
+  transition:background-color var(--bw-motion-fast) ease,color var(--bw-motion-fast) ease;
+}
+.bw-sidebar-toggle svg {transition:transform var(--bw-motion-panel) var(--bw-motion-ease);}
+
+/* A selected tab arrives in place; data rows themselves do not animate. */
+.tw-view[aria-pressed="true"]::after,.benchmark-detail-ranges button[aria-pressed="true"]::after {
+  transform-origin:center;
+  animation:bw-indicator-in 180ms var(--bw-motion-ease) both;
+}
+@keyframes bw-indicator-in {from {transform:scaleX(.35);opacity:.35;}to {transform:scaleX(1);opacity:1;}}
+
+.tw-panel:not([hidden]),.benchmark-detail-chart-surface {
+  animation:bw-content-in 170ms var(--bw-motion-ease) backwards;
+}
+@keyframes bw-content-in {from {opacity:.55;transform:translateY(5px);}to {opacity:1;transform:translateY(0);}}
+
+.benchmark-detail:not([hidden]) {animation:bw-drawer-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;}
+.benchmark-detail-backdrop:not([hidden]) {animation:bw-fade-in var(--bw-motion-panel) ease both;}
+@keyframes bw-drawer-in {from {opacity:.8;right:-18px;}to {opacity:1;right:0;}}
+@keyframes bw-fade-in {from {opacity:0;}to {opacity:1;}}
+
+:is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open] {
+  animation:bw-dialog-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;
+}
+:is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open]::backdrop {
+  animation:bw-fade-in var(--bw-motion-panel) ease both;
+}
+#settings-modal:not([hidden]) {animation:bw-fade-in var(--bw-motion-panel) ease both;}
+#settings-modal:not([hidden])>.bw-popup-surface {animation:bw-dialog-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;}
+@keyframes bw-dialog-in {from {opacity:.6;transform:translateY(9px) scale(.985);}to {opacity:1;transform:translateY(0) scale(1);}}
+
+@media (prefers-reduced-motion:reduce) {
+  html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link,.rw-button,.bw-layout-switch a),
+  .bw-sidebar nav a,.bw-sidebar-bottom a,.bw-observation,.bw-search-result,.bw-sidebar-toggle svg {transition:none;}
+  html[data-theme] body :is(.tw-button,.range-btn,.bw-icon-button,.benchmark-detail-actions button,.benchmark-detail-ranges button):active:not(:disabled) {transform:none;}
+  .tw-view[aria-pressed="true"]::after,.benchmark-detail-ranges button[aria-pressed="true"]::after,
+  .tw-panel:not([hidden]),.benchmark-detail-chart-surface,.benchmark-detail:not([hidden]),.benchmark-detail-backdrop:not([hidden]),
+  :is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open],
+  :is(.tw-view-dialog,.bw-search-dialog,.rw-editor-dialog)[open]::backdrop,
+  #settings-modal:not([hidden]),#settings-modal:not([hidden])>.bw-popup-surface {animation:none;}
+}
