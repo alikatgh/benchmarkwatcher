@@ -18,6 +18,19 @@ def test_canonical_pages_and_sitemap(app_client):
     assert 'Sitemap: https://benchmarkwatcher.online/sitemap.xml' in app_client.get('/robots.txt').text
 
 
+def test_brand_icon_has_dedicated_public_assets(app_client):
+    home = app_client.get('/').text
+    assert 'images/brand-mark-white.png' in home
+    assert 'images/favicon.png' in home
+    assert 'images/apple-touch-icon.png' in home
+    assert 'images/og-image.png' in home
+    assert 'b<span>↗</span>' not in home
+    favicon = app_client.get('/favicon.ico')
+    assert favicon.status_code == 200
+    assert favicon.mimetype == 'image/x-icon'
+    assert favicon.data[:4] == b'\x00\x00\x01\x00'
+
+
 def test_long_history_and_non_dollar_units_survive_refresh(tmp_path, monkeypatch):
     from scripts import fetch_daily_data as fetch
     history = [{'date': (date(2000, 1, 1) + timedelta(days=i)).isoformat(), 'price': 100+i/10} for i in range(1200)]

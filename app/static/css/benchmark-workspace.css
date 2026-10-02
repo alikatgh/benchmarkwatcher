@@ -9,8 +9,8 @@ html.bw-scrolled { --bw-header-height:44px; }
 .bw-header>nav:first-child { height:var(--bw-header-height);display:flex;align-items:center;gap:24px;padding:0 24px; }
 .bw-brand { display:flex;align-items:center;gap:9px;font-size:15px;font-weight:650;letter-spacing:-.5px;white-space:nowrap; }
 .bw-brand-light {font-weight:450;}
-.bw-brand-mark {position:relative;display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:var(--theme-accent);color:var(--theme-surface);border-radius:7px;font-size:22px;font-weight:750;line-height:1;}
-.bw-brand-mark>span {font-size:12px;position:absolute;right:3px;top:3px;}
+.bw-brand-mark {display:flex;align-items:center;justify-content:center;width:28px;height:28px;flex-shrink:0;background:#990f3d;border-radius:7px;}
+.bw-brand-mark img {display:block;width:82%;height:82%;object-fit:contain;}
 .bw-search-trigger {margin-left:auto;display:flex;align-items:center;gap:10px;width:min(420px,42vw);height:36px;padding:0 12px;border:1px solid var(--theme-border);border-radius:7px;color:var(--theme-text-muted);font-size:12px;background:var(--theme-bg);text-align:left;}
 .bw-search-trigger kbd {margin-left:auto;white-space:nowrap;font:11px Inter,system-ui,sans-serif;border:1px solid var(--theme-border);padding:1px 5px;border-radius:3px;}
 .bw-header-actions {display:flex;align-items:center;gap:5px;}
@@ -81,6 +81,8 @@ html[data-theme] a.bw-observation {color:var(--theme-text)!important;}
 body:has(.bw-workspace) .bw-footer {margin-left:var(--bw-rail);}
 body:has(.bw-workspace) .bw-footer-inner {max-width:1800px;padding-inline:28px;}
 .bw-footer-top {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px 28px;margin-bottom:14px;}
+.bw-footer-brand {display:flex;align-items:center;gap:8px;}
+.bw-footer-brand img {display:block;width:22px;height:22px;border-radius:5px;}
 .bw-footer strong {color:var(--theme-text);font-size:13px;font-weight:600;}
 .bw-footer nav {display:flex;align-items:center;flex-wrap:wrap;gap:4px 20px;min-width:0;}
 .bw-footer nav a {display:inline-flex;align-items:center;min-height:32px;color:var(--theme-text-muted);font-size:12px;}
