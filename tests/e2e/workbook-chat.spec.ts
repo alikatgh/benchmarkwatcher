@@ -276,6 +276,9 @@ test('remembered consent follows the sharing scope and charts keep source data a
   await expect(page.locator('.studio-analysis-step[open] .studio-series-chart').first().locator('rect').first()).toBeAttached();
   const source = page.getByRole('region', { name: 'Calculated values and source cells' });
   await expect(source).toBeHidden();
+  const lastChart = (await page.locator('.studio-analysis-step[open] .studio-series-chart svg').last().boundingBox())!;
+  const sourceSummary = (await page.locator('.studio-analysis-step[open] .studio-source-data > summary').boundingBox())!;
+  expect(sourceSummary.y).toBeGreaterThanOrEqual(lastChart.y + lastChart.height);
   await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();
   await expect(source).toContainText('Model!C3');
   await page.locator('.studio-analysis-step[open] .studio-source-data > summary').click();
