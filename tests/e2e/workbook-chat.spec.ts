@@ -351,3 +351,45 @@ test('each question automatically draws a saved analysis step and preserves the 
     expect(audit.violations.filter(v => ['serious', 'critical'].includes(v.impact || ''))).toEqual([]);
   }
 });
+
+test('saved workbook results keep charts visible alongside a compact conversation', async ({page}, testInfo) => {
+  await openWorkbook(page);
+  for (let count=1;count<=3;count++) {
+    await dock(page).getByLabel('Your question',{exact:true}).fill(question);
+    await dock(page).getByRole('button',{name:'Send message'}).click();
+    if(count===1) {
+      await page.getByRole('dialog').getByRole('checkbox').check();
+      await page.getByRole('button',{name:'Agree and send'}).click();
+    }
+    await expect(dock(page).getByLabel('AI response',{exact:true})).toHaveCount(count);
+  }
+  if(testInfo.project.name==='mobile') await dock(page).getByRole('button',{name:'Analysis',exact:false}).click();
+  const active=page.locator('.studio-analysis-step[open]');
+  const chart=active.locator('.studio-series-chart svg').first();
+  await page.evaluate(()=>scrollTo(0,0));
+  const viewport=page.viewportSize()!;
+  const bounds=(await chart.boundingBox())!;
+  // Three saved questions should still leave a meaningful portion of the first chart visible.
+  expect(bounds.y).toBeLessThan(viewport.height-140);
+  if(testInfo.project.name==='desktop') {
+    await expectConversationRail(page);
+    expect((await dock(page).boundingBox())!.width).toBeLessThanOrEqual(421);
+  }
+  const chartType=active.getByRole('combobox',{name:'Chart type',exact:true}).first();
+  expect((await chartType.boundingBox())!.width).toBeLessThan(150);
+  await chartType.selectOption('area');
+  await expect(chart.locator('path.bw-d3-line')).toBeAttached();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
+  await page.screenshot({path:testInfo.outputPath('workbook-refinement.png')});
+  await active.locator('.studio-source-data>summary').click();
+  await expect(active.getByRole('region',{name:'Calculated values and source cells'})).toContainText('Model!C3');
+  await active.locator('.studio-source-data>summary').click();
+  await page.addStyleTag({content:'*,:before,:after{transition:none!important;animation:none!important}'});
+  const light=await new AxeBuilder({page}).include('.workspace').withTags(['wcag2a','wcag2aa']).analyze();
+  expect(light.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
+  await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
+  await page.evaluate(()=>scrollTo(0,0));
+  await page.screenshot({path:testInfo.outputPath('workbook-refinement-dark.png')});
+  const dark=await new AxeBuilder({page}).include('.workspace').withTags(['wcag2a','wcag2aa']).analyze();
+  expect(dark.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
+});
