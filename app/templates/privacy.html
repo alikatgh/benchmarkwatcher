@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Privacy | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-3">Privacy</h1>
+        <p class="leading-relaxed theme-text-muted">This page describes how the BenchmarkWatcher website handles information. Last updated <time datetime="2026-10-03">3 October 2026</time>.</p>
+    </header>
+
+    <section class="release-entry" aria-labelledby="privacy-browser">
+        <h2 id="privacy-browser">Browsing and local research</h2>
+        <p>You can read public benchmark data without an account. Watchlists, Research entries and notes, saved views, chart choices and display preferences are stored in your browser. They are not synced to a BenchmarkWatcher account. Clearing site data in your browser removes those local copies; export any Research backup you want to keep first.</p>
+        <p class="mt-3">The site uses a session cookie for signed-in accounts and a preference cookie for the selected view. Your browser may also request font files from Google Fonts. Opening an external source or community link takes you to that site under its own privacy practices.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="privacy-account">
+        <h2 id="privacy-account">Account and saved work</h2>
+        <p>If you create a company-research account, we store your username, password and recovery-code hashes, sign-in sessions, saved company reports, questions and answers, AI connection settings and API request-usage records. Passwords and recovery codes are not stored as plain text. Connected provider keys are encrypted in the server database.</p>
+        <p class="mt-3">These records support sign-in, saved reports, request limits and the usage information shown in Profile. Account and saved-work records are not automatically deleted on a fixed schedule. Email us if you want to ask for access to or removal of your account data.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="privacy-sharing">
+        <h2 id="privacy-sharing">Source and AI requests</h2>
+        <p>BenchmarkWatcher requests public benchmark data and SEC filings from their sources to build the views you open. Connecting an optional AI provider sends your key to that provider for a connection test. Before sending a question and the described public filing or workbook evidence, the app asks for your consent. For workbook questions, you may choose to remember consent for the same provider setup until you sign out. Built-in calculations do not contact an AI provider.</p>
+        <p class="mt-3">DeepSeek and TypeSafe / Jev handle information sent to their services under their own terms and privacy policies. Provider charges, if any, are billed by the provider. Do not include private information in an AI question that you do not want to share with that provider.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="privacy-operations">
+        <h2 id="privacy-operations">Operating the site</h2>
+        <p>Our hosting service may process your IP address and request information in access or error logs to deliver and protect the site. We use HTTPS for the public website. No security measure eliminates every risk; keep your password, recovery code and provider keys private.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="privacy-choices">
+        <h2 id="privacy-choices">Choices and contact</h2>
+        <p>You can use public benchmarks without signing in, remove a saved AI connection in AI settings, and clear browser-stored data through your browser. To ask about account data or this notice, email <a class="text-brand-oxford dark:text-brand-teal underline underline-offset-2" href="mailto:benchmarkwatcher@aulenor.com">benchmarkwatcher@aulenor.com</a>. Please do not post private details in a public GitHub issue.</p>
+        <p class="mt-3">We will update this page when site data handling changes. For product help, visit <a class="text-brand-oxford dark:text-brand-teal underline underline-offset-2" href="{{ url_for('main.support_page') }}">Support</a>.</p>
+    </section>
+</article>
+{% endblock %}
