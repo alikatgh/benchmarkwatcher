@@ -123,4 +123,4 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 - [EIA](https://www.eia.gov/) — U.S. Energy Information Administration
 - [USDA NASS](https://quickstats.nass.usda.gov/) — U.S. Department of Agriculture, National Agricultural Statistics Service
 - [Tailwind CSS](https://tailwindcss.com/) — Styling
-- [Chart.js](https://www.chartjs.org/) — Charts
+- [D3.js](https://d3js.org/) — Data visualizations

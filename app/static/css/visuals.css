@@ -20,7 +20,9 @@
 .bw-visual-data td:last-child{font-variant-numeric:tabular-nums}.bw-d3-cell:focus{stroke:currentColor;stroke-width:2;outline:none}
 @media(max-width:600px){.bw-visual-controls{gap:8px}.bw-visual-lab{margin:18px 0}.bw-visual-controls label{min-width:110px}.bw-d3-chart{font-size:12px}}
 
-.bw-visual-disclosure{margin:16px 0 24px;border-bottom:1px solid var(--theme-border,#ddd)}.bw-visual-disclosure>summary{padding:12px 0;cursor:pointer;font-weight:600;font-size:14px}.bw-visual-disclosure>summary span{margin-left:14px;font-size:12px;font-weight:400;color:var(--theme-text-muted)}.bw-visual-disclosure .bw-visual-lab{border-top:0;margin-top:0;padding-top:8px}
+.bw-visual-disclosure{margin:12px 0 18px;border-bottom:1px solid var(--theme-border,#ddd)}.bw-visual-disclosure>summary{padding:10px 0;cursor:pointer;font-weight:600;font-size:12px}.bw-visual-disclosure>summary span{margin-left:12px;font-size:11px;font-weight:400;color:var(--theme-text-muted)}.bw-visual-disclosure .bw-visual-lab{border-top:0;margin-top:0;padding-top:8px}
+.bw-category-distribution{margin-top:8px;height:6px;border-radius:3px;background:var(--theme-border);overflow:hidden}
+.bw-d3-distribution{height:6px;overflow:hidden}
 
 .bw-visual-disclosure .bw-visual-lab>h2{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 

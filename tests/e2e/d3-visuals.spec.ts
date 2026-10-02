@@ -28,7 +28,10 @@ test('all D3 explorer views, keyboard inspection, range, export and responsive l
 test('dashboard D3 sparklines, explorer fetch, comparison and themes',async({page},testInfo)=>{
   const errors:string[]=[]; page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/?view=compact');
+  await page.addStyleTag({content:'*,:before,:after{transition:none!important;animation:none!important}'});
   await expect(page.locator('#sparkline-gold path').first()).toBeAttached();
+  await expect(page.locator('#market-pulse-categories .bw-d3-distribution').first()).toBeAttached();
+  expect(await page.locator('#market-pulse-categories .bw-d3-segment').count()).toBeGreaterThan(0);
   await page.locator('#bw-visual-explorer>summary').click();
   const lab=page.getByRole('region',{name:'Visual explorer'});
   await expect(lab.locator('.bw-visual-note')).toContainText('120 usable');

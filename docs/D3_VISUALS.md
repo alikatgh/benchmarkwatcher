@@ -3,7 +3,7 @@
 All web data charts use self-hosted D3 7.9.0 (`app/static/js/vendor/`).
 The shared renderer is `app/static/js/core/visuals.js`; explorer views are in
 `app/static/js/components/visual_explorer.js`. No Chart.js script is loaded.
-Existing dormant vendor files are retained, unreferenced. Icons and ordinary
+Unused Chart.js, date-adapter and zoom-plugin bundles have been removed. Icons and ordinary
 interface controls remain HTML/SVG; a temporary canvas rasterizes SVG for PNG
 and PowerPoint export only.
 
@@ -12,6 +12,8 @@ and PowerPoint export only.
 | Surface | D3 views and interactions |
 | --- | --- |
 | Benchmark table and appearance preview | Line, area, step, bars, average reference, optional seven-observation average and high/low markers |
+| Category breadth | D3 stacked bars from published up/flat/down shares; missing shares remain unfilled |
+| Company financial reports and sidebar answers | Line, area, step, bars, dots; annual/quarterly/trailing-year periods; keyboard inspection; exact filing evidence |
 | Full benchmark page | Line, area, step, bars, dots; source-date axes; keyboard inspection; zoom/pan/reset; PNG and PowerPoint export |
 | Detail and comparison pane | Line, area, step, dots, bars; date ranges; absolute values for compatible units; indexed comparison; observation tables |
 | Visual explorer, individual benchmark | Line, area, step, bars, dots, observation-to-observation change, histogram, cumulative distribution, range/quartiles, monthly averages, year/month heatmap, observation coverage |
@@ -46,6 +48,7 @@ views include exact-value tables and PNG export.
 - `npm run test:visuals`: isolated desktop/mobile D3 journeys, PNG downloads,
   all explorer modes, accessible controls and containment. Uses synthetic data.
 - `npm run test:chat`: authenticated workbook journeys with simulated providers.
+- `npm run test:companies`: company reports, native sidebar conversation, responsive layout and filing sources.
 - `npm run test:e2e`: public UI regression suite.
 - `.venv/bin/python -m pytest tests -q`: backend suite.
 - `cd mobile && npm run typecheck`: native source typing.

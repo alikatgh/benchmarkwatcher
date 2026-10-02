@@ -202,6 +202,23 @@
         const marked = options.showHighLow ? [d.least(usable, p => p.value), d.greatest(usable, p => p.value)] : [usable[usable.length - 1]];
         svg.selectAll('circle').data(marked).join('circle').attr('cx', p => x(p.x)).attr('cy', p => y(p.value)).attr('r', 2).attr('fill', color());
     }
+    function distribution(target, input, options = {}) {
+        // Published percentages keep unavailable observations as unfilled space.
+        const svg = root(target, 100, 6, options.label || 'Observation distribution');
+        svg.classed('bw-d3-distribution', true).attr('preserveAspectRatio', 'none');
+        const x = d.scaleLinear().domain([0, 100]).range([0, 100]).clamp(true);
+        let offset = 0;
+        const parts = input.map(part => {
+            const start = offset;
+            offset = Math.min(100, offset + Math.max(0, numeric(part.value) || 0));
+            return { ...part, start, end: offset };
+        });
+        svg.selectAll('rect').data(parts).join('rect').attr('class', 'bw-d3-segment')
+            .attr('x', part => x(part.start)).attr('width', part => x(part.end) - x(part.start))
+            .attr('height', 6).attr('fill', part => part.color)
+            .append('title').text(part => part.label);
+        return svg.node();
+    }
     async function png(svg) {
         const clone = svg.cloneNode(true);
         const originals = [svg, ...svg.querySelectorAll('*')], copies = [clone, ...clone.querySelectorAll('*')];
@@ -222,5 +239,5 @@
             return canvas.toDataURL('image/png');
         } finally { /* Data URLs require no object-URL lifetime or CSP exception. */ }
     }
-    BW.Visuals = { timeSeries, sparkline, history, segments, domain, numeric, format, color, root, axes, empty, png };
+    BW.Visuals = { timeSeries, sparkline, distribution, history, segments, domain, numeric, format, color, root, axes, empty, png };
 })();

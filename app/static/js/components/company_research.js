@@ -97,14 +97,39 @@
             label: metric.label + ', ' + frequency + ' financial history. Use left and right arrow keys to inspect values; source details are in the table.',
             onInspect(point, series, state) { if (!point) return; inspectedDate = state.active ? point.date : null; readout.replaceChildren(node('strong', format(point.value, metric.unit) + (metric.unit === '%' ? '' : ' ' + metric.unit)), node('span', metric.label + ' · ' + (frequency === 'annual' ? 'FY ' : '') + point.period + ' · Ended ' + point.date)); }
         });
-        $('#company-chart-caption').textContent = (metric.definition ? metric.definition + ' ' : '') + (frequency === 'ttm' ? 'Trailing-year flows sum four consecutive quarters; balance-sheet figures are as of the period end. ' : 'Fiscal periods follow the company’s reporting calendar. ') + 'Missing periods remain gaps.';
+        $('#company-chart-caption').textContent = (metric.definition ? metric.definition + ' ' : '') + (frequency === 'ttm' ? 'Trailing year: four consecutive quarters; balances at period end. ' : 'Company fiscal calendar. ') + 'Missing periods remain gaps.';
     }
     function renderTable() {
         const table = $('#company-table'), periods = selectedPeriods(), rows = report.metrics.filter(m => m.section === section);
+        const empty = $('#company-table-empty');
+        const hasValues = rows.some(m => periods.some(p => m.values[p.id]));
+        table.parentElement.hidden = !hasValues;
+        empty.hidden = hasValues;
+        empty.replaceChildren();
+        if (!hasValues) {
+            empty.append(node('p', 'No ' + (frequency === 'ttm' ? 'trailing-year' : frequency) + ' values for ' + report.sections[section].toLowerCase() + ' in this range.'));
+            for (const [key, label] of [['annual', 'annual'], ['quarterly', 'quarterly'], ['ttm', 'trailing-year']]) {
+                if (key !== frequency && rows.some(m => report.periods.some(p => p.frequency === key && m.values[p.id]))) {
+                    empty.append(node('button', 'View ' + label + ' values', { type: 'button', 'data-frequency': key }));
+                }
+            }
+            if ($('#company-range').value !== 'all' && rows.some(m => report.periods.some(p => p.frequency === frequency && m.values[p.id]))) {
+                empty.append(node('button', 'Show all periods', { type: 'button', 'data-all-periods': '' }));
+            }
+        }
         const head = node('thead'), heading = node('tr'); heading.append(node('th', 'Metric', { scope: 'col' }));
-        periods.forEach(p => heading.append(node('th', (frequency === 'annual' ? 'FY ' : '') + p.label, { scope: 'col' })));
+        periods.forEach(p => {
+            const label = p.label.replace(/^TTM /, ''), parts = label.split(' ');
+            const cell = node('th', frequency === 'annual' ? label : parts[0], { scope: 'col', 'aria-label': (frequency === 'annual' ? 'FY ' : '') + p.label });
+            if (parts.length > 1) { cell.append(document.createTextNode(' '), node('small', parts.slice(1).join(' '))); }
+            heading.append(cell);
+        });
         head.append(heading); const body = node('tbody');
-        rows.forEach(metric => {
+        const groups = new Map();
+        rows.forEach(metric => { const key = section === 'business' ? metric.axis || 'Other disclosures' : ''; if (!groups.has(key)) groups.set(key, []); groups.get(key).push(metric); });
+        groups.forEach((group, axis) => {
+          if (axis) { const groupRow = node('tr', undefined, { class: 'company-table-group' }); groupRow.append(node('th', axis, { colspan: periods.length + 1 })); body.append(groupRow); }
+          group.forEach(metric => {
             const row = node('tr'), label = node('th', metric.label, { scope: 'row' }); label.append(node('small', metric.unit)); row.append(label);
             periods.forEach(period => {
                 const cell = node('td'), value = metric.values[period.id];
@@ -112,13 +137,15 @@
                 row.append(cell);
             });
             body.append(row);
+          });
         });
         table.replaceChildren(node('caption', report.sections[section] + ', ' + frequency, { class: 'sr-only' }), head, body);
-        $('#company-table-note').textContent = (section === 'business' ? 'Business categories on different axes overlap. Do not add them together. ' : '') + (periods.length ? 'B = billion, M = million, K = thousand. — = unavailable. ' : 'No periods of this frequency are available. ') + (section === 'business' ? 'Each row’s axis appears in its source detail.' : 'Select a value for exact figures and filing evidence.');
+        $('#company-table-note').textContent = (frequency === 'ttm' ? 'Trailing-year values' : frequency === 'annual' ? 'Fiscal years' : 'Fiscal quarters') + ' · B = billion · M = million · K = thousand · — = unavailable' + (section === 'business' ? '. Disclosure groups overlap; do not add across groups.' : '');
     }
     workspace.addEventListener('click', event => {
         const frequencyButton = event.target.closest('[data-frequency]'), sectionButton = event.target.closest('[data-section]'), metricButton = event.target.closest('[data-chart-metric]');
-        if (frequencyButton) { frequency = frequencyButton.dataset.frequency; workspace.querySelectorAll('[data-frequency]').forEach(b => b.setAttribute('aria-pressed', String(b === frequencyButton))); renderChart(); renderTable(); }
+        if (frequencyButton) { frequency = frequencyButton.dataset.frequency; workspace.querySelectorAll('.company-periods [data-frequency]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.frequency === frequency))); renderChart(); renderTable(); if (!frequencyButton.isConnected) $(`.company-periods [data-frequency="${frequency}"]`).focus({ preventScroll: true }); }
+        if (event.target.closest('[data-all-periods]')) { $('#company-range').value = 'all'; renderChart(); renderTable(); $('#company-range').focus({ preventScroll: true }); }
         if (sectionButton) { section = sectionButton.dataset.section; workspace.querySelectorAll('[data-section]').forEach(b => b.setAttribute('aria-pressed', String(b === sectionButton))); renderTable(); }
         if (metricButton) { $('#company-metric').value = metricButton.dataset.chartMetric; renderChart(); }
         const sourceButton = event.target.closest('[data-source-metric]');
@@ -145,7 +172,18 @@
     new MutationObserver(scheduleChart).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
     renderChart(); renderTable();
     const chat = $('#company-chat'), opener = $('#company-chat-open'), form = $('#company-chat-form'), question = $('#company-question');
-    function showChat(open) { chat.hidden = !open; workspace.classList.toggle('conversation-open', open); opener.setAttribute('aria-expanded', String(open)); if (open) question.focus(); else opener.focus(); }
+    const desktop = window.matchMedia('(min-width:1100px)');
+    let analysisScroll = 0;
+    function showChat(open, focus = true) {
+        if (open && chat.hidden && !desktop.matches) analysisScroll = window.scrollY;
+        chat.hidden = !open;
+        $('.company-report-layout').classList.toggle('conversation-open', open);
+        opener.setAttribute('aria-expanded', String(open));
+        if (!desktop.matches && focus) window.scrollTo({ top: open ? 0 : analysisScroll, behavior: 'instant' });
+        if (focus) (open ? question : opener).focus({ preventScroll: true });
+    }
+    showChat(desktop.matches, false);
+    desktop.addEventListener('change', () => showChat(desktop.matches, chat.contains(document.activeElement)));
     opener.addEventListener('click', () => showChat(chat.hidden)); $('#company-chat-close').addEventListener('click', () => showChat(false));
     chat.addEventListener('keydown', event => { if (event.key === 'Escape') showChat(false); });
     $('#company-provider').addEventListener('change', () => { const remote = $('#company-provider').value !== 'local'; $('#company-consent').hidden = !remote; form.elements.consent.required = remote; form.elements.consent.checked = false; });
@@ -154,11 +192,17 @@
     function answerCharts() {
         chat.querySelectorAll('.company-answer-data').forEach(details => {
             if (details.dataset.bound) return; details.dataset.bound = 'true';
-            details.addEventListener('toggle', () => {
-                if (!details.open) return;
-                const target = details.querySelector('.company-answer-chart'), calc = JSON.parse(target.dataset.calculation);
-                window.BW.Visuals.timeSeries(target, [{ name: calc.metric, unit: calc.unit, gapDays: calc.frequency === 'annual' ? 390 : 115, points: calc.points.map(p => ({ date: p.end, value: p.value })) }], { height: 180, width: target.clientWidth, finance: true, yAxisPosition: 'right', label: calc.metric + ' calculation history' });
-            });
+            const target = details.querySelector('.company-answer-chart'), calc = JSON.parse(target.dataset.calculation);
+            let answerChart, answerFrame;
+            const draw = () => {
+                if (!details.open || !target.clientWidth) return;
+                answerChart?.destroy();
+                answerChart = window.BW.Visuals.timeSeries(target, [{ name: calc.metric, unit: calc.unit, gapDays: calc.frequency === 'annual' ? 390 : 115, points: calc.points.map(p => ({ date: p.end, value: p.value })) }], { height: 180, width: target.clientWidth, finance: true, yAxisPosition: 'right', yFormat: value => format(value, calc.unit), label: calc.metric + ' calculation history' });
+            };
+            const schedule = () => { cancelAnimationFrame(answerFrame); answerFrame = requestAnimationFrame(draw); };
+            details.addEventListener('toggle', schedule);
+            new ResizeObserver(schedule).observe(target);
+            new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
         });
     }
     answerCharts();
