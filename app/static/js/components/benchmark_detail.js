@@ -12,7 +12,8 @@
         mode: 'indexed', seq: 0, controller: null, trigger: null,
         inertNodes: [], open: false, initialized: false, noticeTimer: null, noticeHome: null,
         widths: { ...DEFAULT_WIDTHS }, width: 560, drag: null,
-        custom: { start: '', end: '' }, chartStyle: 'line', showDots: true, settingsOpen: false, inspectedDate: null
+        custom: { start: '', end: '' }, chartStyle: 'line', showDots: false, settingsOpen: false, inspectedDate: null,
+        chart: null, resizeChart: null, chartObserver: null
     };
     const byId = id => document.getElementById(id);
     const pane = () => byId('benchmark-detail');
@@ -217,7 +218,7 @@
             event.preventDefault();
             if (state.drag) finishResize(false); else close();
         } else if (event.key === 'Tab' && modal()) {
-            const focusable = Array.from(pane().querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),summary,[tabindex="0"]'))
+            const focusable = Array.from(pane().querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),summary,[tabindex="0"]'))
                 .filter(node => !node.hidden && !node.closest('[hidden]') && (!node.closest('details:not([open])') || node.tagName === 'SUMMARY'));
             const first = focusable[0];
             const last = focusable[focusable.length - 1];
@@ -226,8 +227,12 @@
             else if (!event.shiftKey && (document.activeElement === last || !pane().contains(document.activeElement))) { event.preventDefault(); first.focus(); }
         }
     }
+    function disposeChart() {
+        state.chart?.destroy(); state.chart = null; state.resizeChart = null;
+    }
     function close() {
         finishResize(false);
+        disposeChart();
         state.open = false;
         document.documentElement.style.removeProperty('--bw-detail-width');
         state.seq += 1;
@@ -246,6 +251,8 @@
         init();
         if (!pane()) return Promise.resolve(false);
         finishResize(false);
+        disposeChart();
+        state.inspectedDate = null;
         state.ids = ids;
         state.records = [];
         state.mode = 'indexed';
@@ -415,7 +422,8 @@
             const control = button(range === 'ALL' ? 'All' : range === 'CUSTOM' ? 'Custom' : range, () => {
                 if (range === 'CUSTOM') {
                     state.settingsOpen = true; byId('benchmark-chart-settings').open = true;
-                    byId('benchmark-chart-start').focus({ preventScroll: true }); return;
+                    byId('benchmark-chart-start').focus({ preventScroll: true });
+                    byId('benchmark-chart-settings').scrollIntoView?.({block:'nearest'}); return;
                 }
                 state.range = range; redrawChart('[data-detail-range="' + range + '"]');
             });
@@ -476,16 +484,28 @@
         if (content !== undefined) node.textContent = content;
         return node;
     }
-    function plot(series, indexed) {
+    function plot(series, indexed, onInspect) {
         if (!series.some(item => item.points.some(p => p.value !== null))) return element('p', 'benchmark-detail-empty', 'No usable observations in this range. Try a wider range or view the source.');
-        const plot = BW.Visuals.timeSeries(null, series.map(item => ({
-            name: item.record.name || item.record.id, color: item.color,
-            unit: indexed ? 'index' : unit(item.record), gapDays: item.record.is_daily ? 7 : 62,
-            points: item.points
-        })), {width: 520, height: 260, type: state.chartStyle, dots: state.showDots,
-            label: indexed ? 'Indexed reference histories. Actual dates and values are available in observation tables below.' : 'Reference history. Actual dates and values are available in the observation table below.'});
-        plot.svg.classList.add('benchmark-detail-plot');
-        return plot.svg;
+        const svg = svgNode('svg', {class: 'benchmark-detail-plot'});
+        const data = series.map(item => ({name: item.record.name || item.record.id, color: item.color,
+            unit: indexed ? 'index' : unit(item.record), gapDays: item.record.is_daily ? 7 : 62, points: item.points}));
+        let width = 0;
+        const draw = () => {
+            const next = Math.round(svg.clientWidth || Math.max(280, (pane().clientWidth || state.width) - (window.innerWidth < 768 ? 40 : 48)));
+            if (width === next) return;
+            width = next;
+            state.chart?.destroy();
+            state.chart = BW.Visuals.timeSeries(svg, data, {width, height: width < 420 ? 230 : 270,
+                type: state.chartStyle, dots: state.showDots, lineWidth: 2, pointRadius: 2,
+                finance: !!onInspect, externalReadout: !!onInspect, yAxisPosition: onInspect ? 'right' : 'left',
+                yTicks: 4, axisFontSize: 11, initialDate: state.inspectedDate, onInspect,
+                label: indexed ? 'Indexed reference histories. Actual dates and values are available in observation tables below.' : 'Reference history. Use left and right arrow keys to inspect observations. Exact values are in the observation table below.'});
+            svg.classList.add('benchmark-detail-plot');
+            if (onInspect) svg.classList.add('benchmark-detail-finance');
+        };
+        state.resizeChart = () => { if (svg.isConnected) draw(); };
+        draw();
+        return svg;
     }
     function observationTable(record, points, indexed) {
         const details = element('details', 'benchmark-detail-observations');
@@ -522,40 +542,64 @@
     function renderHistory() {
         const container = byId('benchmark-detail-history');
         if (!container || !state.records[0] || state.records[0].error) return;
+        disposeChart();
         const record = state.records[0];
         const series = chartData([record])[0];
         const points = series.points.map(point => ({ ...point, value: point.price }));
-        const heading = element('div', 'benchmark-detail-chart-head');
-        heading.append(element('h3', '', 'Reference history'));
-        container.replaceChildren(heading, ranges(), chartSettings(), plot([{ record, points, color: 'var(--theme-accent,#1967d2)' }], false));
         const usable = points.filter(point => point.price !== null);
+        const heading = element('div', 'benchmark-detail-chart-head');
+        heading.append(element('h3', '', 'Reference history'), element('span', 'benchmark-detail-muted', cadence(record)));
+        container.replaceChildren(heading, ranges());
         if (usable.length) {
-            container.append(element('p', 'benchmark-detail-chart-note', (state.range === 'CUSTOM' ? 'Custom window: ' + state.custom.start + ' to ' + state.custom.end + '. ' : 'Range ends at the latest published observation. ') + (usable.length === 1 ? 'Only one observation; no change is calculated.' : 'Extended gaps are left open.')));
-            const picker = element('div', 'benchmark-detail-point');
-            const label = element('label', '', 'Explore an observation');
-            label.htmlFor = 'benchmark-detail-observation';
-            const output = element('output');
-            output.htmlFor = 'benchmark-detail-observation';
+            const readout = element('output', 'benchmark-detail-readout');
+            readout.htmlFor = 'benchmark-detail-observation';
+            readout.setAttribute('aria-live', 'off');
+            const valueGroup = element('div');
+            const date = element('div', 'benchmark-detail-readout-date');
+            const valueRow = element('div', 'benchmark-detail-readout-value');
+            const value = element('strong');
+            valueRow.append(value, element('span', '', unit(record)));
+            valueGroup.append(date, valueRow);
+            const change = element('div', 'benchmark-detail-range-change');
+            const delta = element('strong');
+            change.append(delta, element('span', '', 'vs first in range'));
+            readout.append(valueGroup, change);
             const input = element('input');
-            input.id = 'benchmark-detail-observation'; input.type = 'range'; input.min = '0'; input.max = String(usable.length - 1); input.value = input.max; input.step = '1';
-            const selected = usable.findIndex(point => point.date === state.inspectedDate);
-            if (selected >= 0) input.value = String(selected);
+            input.id = 'benchmark-detail-observation'; input.type = 'range'; input.min = '0'; input.max = String(usable.length - 1); input.step = '1';
             input.disabled = usable.length === 1;
-            const update = () => {
-                const point = usable[Number(input.value)];
-                state.inspectedDate = point.date;
+            const update = (point, series, inspection) => {
+                if (!point) return;
+                state.inspectedDate = inspection?.active ? point.date : null;
+                input.value = String(usable.findIndex(item => item.date === point.date));
                 const text = point.date + ' · ' + format(point.price) + ' ' + unit(record);
-                output.textContent = text; input.setAttribute('aria-valuetext', text);
+                input.setAttribute('aria-valuetext', text);
+                value.textContent = format(point.price);
+                date.textContent = (inspection?.active ? 'Selected' : 'Latest') + ' · ' + new Date(point.time).toLocaleDateString('en', {day:'numeric', month:'short', year:'numeric', timeZone:'UTC'});
+                const baseline = usable[0].price, difference = point.price - baseline;
+                change.hidden = usable.length < 2;
+                change.dataset.direction = difference > 0 ? 'up' : difference < 0 ? 'down' : 'flat';
+                const sign = difference > 0 ? '+' : '';
+                delta.textContent = sign + format(difference) + (baseline > 0 ? ' (' + sign + format(difference / baseline * 100) + '%)' : '');
             };
-            input.addEventListener('input', update); update();
-            picker.append(label, output, input); container.append(picker);
-        }
-        container.append(observationTable(record, points, false));
+            container.append(readout, plot([{record, points, color:'var(--theme-accent,#1967d2)'}], false, update));
+            const picker = element('div', 'benchmark-detail-point');
+            const label = element('label', '', 'Explore an observation'); label.htmlFor = input.id;
+            const hint = element('span', '', 'Drag or use ← →'); hint.id = 'benchmark-detail-chart-help';
+            input.setAttribute('aria-describedby', hint.id);
+            input.addEventListener('input', () => state.chart?.inspectDate(usable[Number(input.value)].date));
+            picker.append(label, hint, input); container.append(picker);
+            const extent = element('div', 'benchmark-detail-chart-extent');
+            extent.append(element('span', '', usable[0].date + ' – ' + usable[usable.length - 1].date), element('span', '', usable.length + ' observations'));
+            container.append(extent);
+            container.append(element('p', 'benchmark-detail-chart-note', (state.range === 'CUSTOM' ? 'Custom window: ' + state.custom.start + ' to ' + state.custom.end + '. ' : 'Range ends at the latest published observation. ') + (usable.length === 1 ? 'Only one observation; no change is calculated.' : 'Extended gaps are left open.')));
+        } else container.append(plot([{record, points}], false));
+        container.append(chartSettings(), observationTable(record, points, false));
     }
     function compatible(records) {
         return records.length > 1 && records.every(record => !record.error && record.currency && record.unit && record.currency === records[0].currency && record.unit === records[0].unit);
     }
     function renderComparison() {
+        disposeChart();
         byId('benchmark-detail-title').textContent = 'Compare benchmarks';
         byId('benchmark-detail-category').textContent = state.ids.length + ' selected · Historical observations';
         const researchRecords = state.records.filter(record => !record.error);
@@ -642,6 +686,10 @@
                 if (typeof saved.dots === 'boolean') state.showDots = saved.dots;
             }
         } catch (_) { /* Ignore unreadable chart preferences. */ }
+        if (window.ResizeObserver) {
+            state.chartObserver = new ResizeObserver(() => { if (state.open) state.resizeChart?.(); });
+            state.chartObserver.observe(byId('benchmark-detail-body'));
+        }
         const handle = byId('benchmark-detail-resize');
         handle?.addEventListener('pointerdown', startResize);
         handle?.addEventListener('keydown', resizeKey);
@@ -662,6 +710,7 @@
     }
     function destroy() {
         close();
+        state.chartObserver?.disconnect();
         clearTimeout(state.noticeTimer);
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('DOMContentLoaded', init);

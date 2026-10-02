@@ -401,3 +401,29 @@ test('switching back to a preset refreshes the editable dates to match that rang
     expect(document.getElementById('benchmark-chart-start').value).toBe('2024-05-01');
     expect(document.getElementById('benchmark-chart-end').value).toBe('2025-05-01');
 });
+
+test('chart, keyboard and slider share one exact observation readout', async () => {
+    await BW.BenchmarkDetail.open('gold');
+    const svg = document.querySelector('.benchmark-detail-plot');
+    const input = document.getElementById('benchmark-detail-observation');
+    const readout = document.querySelector('.benchmark-detail-readout');
+    expect(readout.textContent).toContain('Latest');
+    svg.dispatchEvent(new KeyboardEvent('keydown', {key:'Home', bubbles:true}));
+    expect(input.value).toBe('0');
+    expect(readout.textContent).toContain('100.00');
+    expect(readout.textContent).toContain('Selected');
+    input.value = '1'; input.dispatchEvent(new Event('input'));
+    expect(readout.textContent).toContain('200.00');
+    expect(document.querySelector('.benchmark-detail-range-change').textContent).toContain('+100.00 (+100.00%)');
+    expect(document.querySelector('.bw-d3-crosshair').getAttribute('x1')).toBe(document.querySelector('.bw-d3-focus circle').getAttribute('cx'));
+    svg.dispatchEvent(new Event('pointerleave'));
+    expect(readout.textContent).toContain('Latest');
+    expect(document.querySelector('.bw-d3-crosshair').getAttribute('visibility')).toBe('hidden');
+});
+
+test.each([0,-10])('range readout keeps a nonpositive baseline absolute instead of inventing a percentage (%s)', async baseline => {
+    fetch.mockResolvedValue(response(sample('gold', {history:[{date:'2025-04-01',price:baseline},{date:'2025-05-01',price:5}]})));
+    await BW.BenchmarkDetail.open('gold');
+    expect(document.querySelector('.benchmark-detail-range-change').textContent).not.toContain('%');
+    expect(document.querySelector('.benchmark-detail-readout').textContent).not.toMatch(/NaN|Infinity/);
+});

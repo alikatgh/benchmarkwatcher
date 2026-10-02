@@ -50,3 +50,48 @@ test('dashboard D3 sparklines, explorer fetch, comparison and themes',async({pag
   await expect(page.locator('.benchmark-detail-plot')).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('reference history keeps consistent sizing and synchronized inspection on desktop and touch', async ({page},testInfo) => {
+  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
+  const values=[5.83,5.76,5.79,5.89,5.51,5.86,5.73,5.70,5.86,5.70,5.74,5.72,5.86];
+  const history=values.map((price,i)=>({date:new Date(Date.UTC(2025,7+i,1)).toISOString().slice(0,10),price}));
+  await page.route('**/api/commodity/gold',route=>route.fulfill({json:{data:{id:'gold',name:'Monthly sample',category:'Agriculture',currency:'USD',unit:'bushel',frequency:'monthly',is_daily:false,price:5.86,date:'2026-08-01',history,source_name:'Synthetic review data'}}}));
+  await page.goto('/?view=compact');
+  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  const panel=page.locator('#benchmark-detail'), chart=panel.locator('.benchmark-detail-plot');
+  const readout=panel.locator('.benchmark-detail-readout'), slider=panel.getByLabel('Explore an observation');
+  await expect(readout).toContainText('Latest');
+  await chart.press('Home');await expect(slider).toHaveValue('0');await expect(readout).toContainText('5.83');
+  await slider.press('ArrowRight');await expect(readout).toContainText('5.76');
+  await expect(panel.locator('.benchmark-detail-range-change')).toContainText('-0.07');
+  if(testInfo.project.name==='desktop') {
+    await page.getByRole('separator',{name:'Resize benchmark details'}).press('End');
+    await expect.poll(()=>chart.evaluate(svg=>Math.abs(svg.getBoundingClientRect().width-(svg as SVGSVGElement).viewBox.baseVal.width))).toBeLessThan(2);
+    expect((await chart.boundingBox())!.height).toBeLessThanOrEqual(275);
+    await expect(readout).toContainText('5.76');
+    await chart.hover({position:{x:350,y:100}});await expect(readout).toContainText('Selected');
+    await page.mouse.move(0,0);await expect(readout).toContainText('Latest');
+  } else {
+    await chart.tap();await expect(readout).toContainText('Selected');
+  }
+  await panel.getByRole('button',{name:'1Y',exact:true}).click();
+  // Capture the complete section, including the exact-value table disclosure.
+  await panel.locator('#benchmark-detail-history').screenshot({path:testInfo.outputPath('reference-history.png')});
+  expect(await panel.evaluate(node=>node.scrollWidth-node.clientWidth)).toBeLessThanOrEqual(1);
+  await panel.getByRole('button',{name:'Custom',exact:true}).click();
+  await panel.getByLabel('From',{exact:true}).fill('2026-01-01');
+  await panel.getByLabel('To',{exact:true}).fill('2026-08-01');
+  await panel.getByRole('button',{name:'Apply dates'}).click();
+  await expect(panel.locator('.benchmark-detail-chart-extent')).toContainText('8 observations');
+  await panel.getByLabel('Chart type',{exact:true}).selectOption('area');
+  await expect(panel.locator('.benchmark-detail-area')).toHaveCount(1);
+  await panel.locator('#benchmark-chart-settings>summary').click();
+  await chart.press('End');
+  await expect(readout).toContainText('5.86');
+  const axe=await new AxeBuilder({page}).include('#benchmark-detail-history').analyze();expect(axe.violations).toEqual([]);
+  await panel.getByRole('button',{name:'Close benchmark details'}).click();
+  await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
+  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await panel.locator('#benchmark-detail-history').screenshot({path:testInfo.outputPath('reference-history-dark.png')});
+  expect(errors).toEqual([]);
+});
