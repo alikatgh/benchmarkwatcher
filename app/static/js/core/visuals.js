@@ -43,7 +43,7 @@
         const selection = target ? d.select(target) : d.create('svg');
         const svg = target?.tagName?.toLowerCase() === 'svg' || !target ? selection : selection.selectAll('svg.bw-d3-chart').data([null]).join('svg');
         svg.selectAll('*').remove();
-        svg.attr('class', ((svg.attr('class') || '') + ' bw-d3-chart').trim()).attr('viewBox', `0 0 ${width} ${height}`)
+        svg.classed('bw-d3-chart', true).attr('viewBox', `0 0 ${width} ${height}`)
             .attr('role', 'img').attr('aria-label', label).attr('xmlns', 'http://www.w3.org/2000/svg');
         svg.append('title').text(label);
         return svg;
@@ -52,22 +52,27 @@
         svg.append('text').attr('x', width / 2).attr('y', height / 2).attr('text-anchor', 'middle').attr('fill', 'currentColor').text(message || 'No usable observations in this range.');
     }
     function axes(svg, x, y, width, height, options = {}) {
-        const left = options.left || 70, right = options.right || width - 24, bottom = height - 38;
+        const left = options.left ?? 70, right = options.right ?? width - 24, bottom = height - 38;
         if (options.grid !== false) svg.append('g').attr('class', 'bw-d3-grid').attr('transform', `translate(${left},0)`)
             .call(d.axisLeft(y).ticks(options.yTicks || 5).tickSize(-(right - left)).tickFormat('')).call(g => g.select('.domain').remove());
         svg.append('g').attr('class', 'bw-d3-axis').attr('transform', `translate(${options.yAxisPosition === 'right' ? right : left},0)`).call((options.yAxisPosition === 'right' ? d.axisRight(y) : d.axisLeft(y)).ticks(options.yTicks || 5).tickFormat(options.yFormat || d.format('~s')));
         const axis = d.axisBottom(x);
         if (options.xValues) axis.tickValues(options.xValues);
-        else axis.ticks(Math.max(2, Math.min(options.xTicks || 7, Math.floor(width / 125))));
+        else axis.ticks(options.finance ? Math.max(3, Math.min(7, Math.floor((right - left) / 100))) : Math.max(2, Math.min(options.xTicks || 7, Math.floor(width / 125))));
         if (options.xFormat) axis.tickFormat(options.xFormat);
-        svg.append('g').attr('class', 'bw-d3-axis').attr('transform', `translate(0,${bottom})`).call(axis);
+        const xAxis = svg.append('g').attr('class', 'bw-d3-axis bw-d3-axis-x').attr('transform', `translate(0,${bottom})`).call(axis);
         if (options.verticalGrid) svg.append('g').attr('class', 'bw-d3-grid').attr('transform', `translate(0,${bottom})`).call(d.axisBottom(x).ticks(Math.max(2, Math.floor(width / 125))).tickSize(-(bottom - 24)).tickFormat('')).call(g => g.select('.domain').remove());
         if (options.gridColor) svg.selectAll('.bw-d3-grid line').style('stroke', options.gridColor);
         svg.selectAll('.bw-d3-axis text').style('font-size', (options.axisFontSize || 11) + 'px');
+        if (options.finance) {
+            svg.selectAll('.bw-d3-axis .domain,.bw-d3-axis .tick line').remove();
+            svg.selectAll('.bw-d3-axis text').attr('dy', '.35em');
+            xAxis.selectAll('text').attr('dy', '1.1em').attr('text-anchor', value => x(value) - left < 24 ? 'start' : right - x(value) < 24 ? 'end' : 'middle');
+        }
     }
     function timeSeries(target, input, options = {}) {
         const width = options.width || Math.max(320, target?.clientWidth || 760), height = options.height || 320;
-        const left = options.yAxisPosition === 'right' ? 24 : 70, right = width - (options.yAxisPosition === 'right' ? 70 : 24), top = 32, bottom = height - 38;
+        const left = options.finance ? 8 : options.yAxisPosition === 'right' ? 24 : 70, right = width - (options.yAxisPosition === 'right' ? (options.finance ? 62 : 70) : 24), top = options.finance ? 16 : 32, bottom = height - 38;
         const series = input.map((series, index) => ({ ...series, color: series.color || color(), index, points: history(series.points || []) }));
         const values = series.flatMap(s => s.points.filter(p => p.value !== null));
         const svg = root(target, width, height, options.label || 'Historical observations. Exact values available in the observation table.');
@@ -85,7 +90,13 @@
         const crosshair = svg.append('line').attr('class', 'bw-d3-crosshair').attr('y1', top).attr('y2', bottom).attr('visibility', 'hidden');
         function draw() {
             grid.selectAll('*').remove(); marks.selectAll('*').remove();
-            axes(grid, x, y, width, height, {...options, left, right});
+            const duration = +x.domain()[1] - +x.domain()[0];
+            const magnitude = Math.max(...y.domain().map(Math.abs));
+            axes(grid, x, y, width, height, {...options, left, right,
+                ...(options.finance ? {yFormat: y.tickFormat(4, magnitude >= 1e6 ? '~s' : magnitude < .001 ? '.2~g' : ',~f'), xFormat: d.utcFormat(duration > 3 * 365 * DAY ? '%Y' : duration > 100 * DAY ? '%b %y' : '%d %b')} : {})});
+            if (options.finance && options.type !== 'bar') marks.append('line').attr('class', 'bw-d3-baseline')
+                .attr('x1', left).attr('x2', right).attr('y1', y(values[0].value)).attr('y2', y(values[0].value))
+                .attr('stroke', 'currentColor').attr('stroke-opacity', .25).attr('stroke-dasharray', '2 4');
             series.forEach(s => {
                 const groups = segments(s.points, s.gapDays || 62);
                 const isolated = new Set(groups.filter(group => group.length === 1).map(group => group[0]));
@@ -114,21 +125,32 @@
         draw();
         let selected = values.length - 1;
         const ordered = [...values].sort((a, b) => a.time - b.time);
-        const tooltipBg = svg.append('rect').attr('x', left - 4).attr('y', 0).attr('height', 23).attr('rx', options.tooltipRadius || 0).attr('fill', options.tooltipBg || 'transparent');
-        const readout = svg.append('text').attr('class', 'bw-d3-readout').attr('x', left).attr('y', 15).attr('fill', options.tooltipText || 'currentColor');
-        function inspect(point) {
+        const tooltipBg = svg.append('rect').attr('display', options.externalReadout ? 'none' : null).attr('x', left - 4).attr('y', 0).attr('height', 23).attr('rx', options.tooltipRadius || 0).attr('fill', options.tooltipBg || 'transparent');
+        const readout = svg.append('text').attr('display', options.externalReadout ? 'none' : null).attr('class', 'bw-d3-readout').attr('x', left).attr('y', 15).attr('fill', options.tooltipText || 'currentColor');
+        const focus = options.finance ? svg.append('g').attr('class', 'bw-d3-focus').attr('pointer-events', 'none') : null;
+        function inspect(point, active = true) {
             if (!point) return;
-            crosshair.attr('x1', x(point.time)).attr('x2', x(point.time)).attr('visibility', 'visible');
+            crosshair.attr('x1', x(point.time)).attr('x2', x(point.time)).attr('visibility', active ? 'visible' : 'hidden');
             const matches = series.map(s => ({ series: s, point: s.points.find(p => p.time === point.time && p.value !== null) })).filter(item => item.point);
             readout.text(point.date + ' · ' + matches.map(item => format(item.point.value) + (item.series.unit ? ' ' + item.series.unit : '')).join(' / '));
             tooltipBg.attr('width', Math.min(right-left, readout.text().length * 6 + (options.tooltipPadding || 0)));
-            options.onInspect?.(matches[0]?.point, matches[0]?.series);
+            focus?.selectAll('circle').data(matches).join('circle')
+                .attr('cx', item => x(item.point.time)).attr('cy', item => y(item.point.value)).attr('r', active ? 5 : 3.5)
+                .attr('fill', item => item.series.color).attr('stroke', 'var(--theme-surface,#fff)').attr('stroke-width', 2);
+            options.onInspect?.(matches[0]?.point, matches[0]?.series, {active});
         }
+        function inspectDate(date) {
+            const index = ordered.findIndex(point => point.date === date);
+            if (index >= 0) { selected = index; inspect(ordered[selected]); }
+        }
+        function resetInspection() { selected = ordered.length - 1; inspect(ordered[selected], false); }
         svg.attr('tabindex', options.interactive === false ? null : 0);
         if (options.interactive !== false) {
-            svg.on('pointermove.inspect', event => {
+            svg.on('pointermove.inspect pointerdown.inspect', event => {
                 const time = +x.invert(d.pointer(event, svg.node())[0]);
                 selected = d.bisector(p => p.time).center(ordered, time); inspect(ordered[selected]);
+            }).on('pointerleave.inspect pointercancel.inspect', event => {
+                if (options.finance && (event.type === 'pointercancel' || event.pointerType !== 'touch')) resetInspection();
             }).on('keydown.inspect', event => {
                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                 event.preventDefault();
@@ -146,9 +168,10 @@
                 }).on('zoom', event => { x = event.transform.rescaleX(originalX); draw(); inspect(ordered[selected]); });
             svg.call(zoom).on('dblclick.zoom', null);
         }
-        inspect(ordered[selected]);
+        if (options.initialDate && ordered.some(point => point.date === options.initialDate)) inspectDate(options.initialDate);
+        else inspect(ordered[selected], !options.finance);
         if (options.animation && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) marks.attr('opacity', 0).transition().duration(Math.min(1000, options.animation)).attr('opacity', 1);
-        return { svg: svg.node(), resetZoom() { if (zoom) svg.call(zoom.transform, d.zoomIdentity); }, destroy() { marks.interrupt(); svg.on('.zoom', null).on('.inspect', null); }, toBase64Image() { return png(svg.node()); } };
+        return { svg: svg.node(), inspectDate, resetZoom() { if (zoom) svg.call(zoom.transform, d.zoomIdentity); }, destroy() { marks.interrupt(); svg.on('.zoom', null).on('.inspect', null); }, toBase64Image() { return png(svg.node()); } };
     }
     function sparkline(target, input, options = {}) {
         let points = input.map((p, i) => typeof p === 'object' && p !== null ? { ...p, value: numeric(p.price ?? p.value), x: Date.parse(p.date) || i } : { value: numeric(p), x: i });
