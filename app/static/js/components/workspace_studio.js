@@ -217,6 +217,7 @@
                     const rendered = document.createElement('template');
                     rendered.innerHTML = data.analysis_html;
                     pendingAnalysis.replaceWith(rendered.content);
+                    window.BW?.VisualExplorer?.workbooks();
                     latestAnalysisURL = data.url;
                     revealAnalysis(data.id);
                     canvas.querySelector('.studio-canvas-status').textContent = 'Analysis updated with your latest answer.';

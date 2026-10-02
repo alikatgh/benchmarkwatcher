@@ -19,6 +19,7 @@
         <section id="benchmark-workspace" aria-labelledby="bw-page-title">
             <div class="bw-page-heading"><div><h1 id="bw-page-title">Commodity benchmarks</h1><p id="bw-page-description">A clearer view of energy, metals and agriculture.</p></div><div class="bw-layout-switch" aria-label="Benchmark layout"><a href="{{ url_for('main.index', view='compact', range=date_range, category=selected_category) }}" {% if active_view == 'compact' %}aria-current="page"{% endif %}>Table</a><a href="{{ url_for('main.index', view='grid', range=date_range, category=selected_category) }}" {% if active_view == 'grid' %}aria-current="page"{% endif %}>Cards</a></div></div>
             <section id="bw-overview" class="bw-overview" aria-label="Selected reference observations"></section>
+            <details id="bw-visual-explorer" class="bw-visual-disclosure"><summary>Visual explorer <span>History, distributions, monthly patterns &amp; coverage</span></summary></details>
             <div class="bw-section-heading"><h2 id="bw-table-heading">Explore benchmarks</h2><span>Historical observations · source schedules vary</span></div>
     <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">
         <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4">

@@ -171,7 +171,7 @@
                 if (currency) currency.textContent = [row.dataset.currency, row.dataset.unit].filter(Boolean).join(' / ');
                 row.querySelector('.commodity-icon')?.remove();
                 row.querySelector('.freq-badge')?.remove();
-                const sparkline = row.querySelector('canvas');
+                const sparkline = row.querySelector('svg[id^="sparkline-"]');
                 if (sparkline) { sparkline.parentElement.className = 'tw-sparkline'; sparkline.setAttribute('role', 'img'); sparkline.setAttribute('aria-label', `Historical observations for ${row.dataset.name}`); }
             });
         },

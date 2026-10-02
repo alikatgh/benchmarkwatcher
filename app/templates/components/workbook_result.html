@@ -6,12 +6,7 @@
   <figure class="studio-series">
     <figcaption><div><h3>{{ group.label }}</h3><span class="muted small">{{ group.unit }}</span></div><div class="studio-series-range"><span>{{ group.first.period }} <strong>{{ group.first.display }}</strong></span>{% if group.points|length > 1 %}<span aria-hidden="true">→</span><span>{{ group.last.period }} <strong>{{ group.last.display }}</strong></span>{% endif %}</div></figcaption>
     {% if group.count and group.points|length > 1 %}
-    <svg class="studio-series-chart" viewBox="0 0 760 220" role="img" aria-label="{{ result.metric }}, {{ group.label|lower }} saved values. Exact values available in Source data.">
-      {% for tick in group.ticks %}<line x1="86" x2="696" y1="{{ tick.y }}" y2="{{ tick.y }}" class="studio-chart-grid"/><text x="74" y="{{ tick.y + 4 }}" text-anchor="end">{{ tick.label }}</text>{% endfor %}
-      {% for segment in group.segments %}<polyline points="{{ segment }}" class="studio-chart-line"/>{% endfor %}
-      {% for node in group.nodes %}<circle cx="{{ node.x }}" cy="{{ node.y }}" r="4" class="studio-chart-point"><title>{{ node.period }}: {{ node.display }} · {{ node.source }}</title></circle>{% endfor %}
-      {% for label in group.labels %}<text x="{{ label.x }}" y="208" text-anchor="middle">{{ label.text }}</text>{% endfor %}
-    </svg>
+    <div class="studio-series-chart" data-workbook-chart data-label="{{ result.metric }}, {{ group.label|lower }} saved values" data-unit="{{ group.unit }}" data-points='{{ group.points|tojson }}'></div>
     {% elif not group.count %}<p class="muted">No usable saved values for these periods.</p>{% endif %}
   </figure>
   {% endfor %}

@@ -7,9 +7,10 @@
     "build:css": "npx tailwindcss -c tailwind.web.config.js -i app/static/css/tailwind.input.css -o app/static/css/tailwind.css --minify",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:all": "npm test && npm run test:e2e && npm run test:chat",
+    "test:all": "npm test && npm run test:e2e && npm run test:chat && npm run test:visuals",
     "check:vocab": "node scripts/check-vocab.js --fail-on-warn",
-    "ci:preflight": "npm run check:vocab && npm test && npm run test:e2e && npm run test:chat"
+    "ci:preflight": "npm run check:vocab && npm test && npm run test:e2e && npm run test:chat && npm run test:visuals",
+    "test:visuals": "playwright test --config playwright.d3.config.ts"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.8.0",

@@ -58,6 +58,7 @@ BW.Theme = (function () {
         }
 
         updateThemeButtons(theme);
+        if (BW.VisualExplorer) requestAnimationFrame(() => BW.VisualExplorer.refresh());
 
         // Re-render sparklines with new theme colors
         if (window.BW && BW.Sparkline && typeof BW.Sparkline.refresh === 'function') {
