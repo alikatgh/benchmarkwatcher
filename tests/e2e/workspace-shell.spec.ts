@@ -62,18 +62,32 @@ test('command search finds local research and opens its editor', async ({page}) 
   await expect(page.locator('#rw-editor :focus')).toHaveCount(1);
 });
 
-test('homepage light and dark surfaces meet serious WCAG checks', async ({page}) => {
+test('shared controls stay distinguishable and accessible across all themes', async ({page}) => {
   test.setTimeout(90000);
   await page.goto('/?view=compact');
   // Audit each theme's final colors. Cascading transitions can start after an
   // earlier animation finishes, so waiting on one animation snapshot is racy.
   // Disable motion only; preserve all colors and the full WCAG assertions.
   await page.addStyleTag({content: '*,:before,:after{transition:none!important;animation:none!important}'});
-  for (let i=0;i<2;i++) {
+  for (const theme of ['light','dark','ft','bloomberg','mono-light','mono-dark']) {
+    await page.locator('#settings-button').click();
+    await page.locator(`#theme-${theme}`).click();
+    const settingsAudit=await new AxeBuilder({page}).include('#settings-modal').withTags(['wcag2a','wcag2aa']).analyze();
+    const settingsIssues=settingsAudit.violations.filter(v=>['critical','serious'].includes(v.impact||''));
+    expect(settingsIssues.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})), `${theme}: settings controls`).toEqual([]);
+    await page.getByRole('button',{name:'Apply',exact:true}).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
+    const selected=page.locator('.tw-context .range-btn[aria-pressed="true"]');
+    const idle=page.locator('.tw-context .range-btn[aria-pressed="false"]').first();
+    const background=(node:Element)=>getComputedStyle(node).backgroundColor;
+    expect(await selected.evaluate(background), `${theme}: selected range must stand out`).not.toBe(await idle.evaluate(background));
+    await page.keyboard.press('Tab');
+    await idle.focus();
+    await expect(idle).toHaveCSS('outline-style','solid');
+    await expect(idle).toHaveCSS('outline-width','2px');
     const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).analyze();
     const issues=result.violations.filter(v=>['critical','serious'].includes(v.impact || ''));
     expect(issues.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))).toEqual([]);
-    await page.locator('#quick-theme-toggle').click();
   }
 });
 

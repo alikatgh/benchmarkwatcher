@@ -429,13 +429,6 @@
             color: #888888 !important;
         }
 
-        html[data-theme="bloomberg"] a:not(.theme-btn) {
-            color: #ff9933 !important;
-        }
-
-        html[data-theme="bloomberg"] a:hover {
-            color: #ffb366 !important;
-        }
 
         /* Bloomberg chart axis and labels */
         html[data-theme="bloomberg"] .chart-container text {
@@ -462,13 +455,6 @@
             background-color: rgba(13, 118, 128, 0.1) !important;
         }
 
-        html[data-theme="ft"] a:not(.theme-btn) {
-            color: #990f3d !important;
-        }
-
-        html[data-theme="ft"] a:hover {
-            color: #b31245 !important;
-        }
 
         /* Reduced Motion - Accessibility for vestibular disorders */
         @media (prefers-reduced-motion: reduce) {
@@ -764,6 +750,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/workspace-table.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/research-workspace.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark-detail.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/controls.css') }}">
 </head>
 
 <body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
