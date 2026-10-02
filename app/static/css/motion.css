@@ -24,7 +24,8 @@ html[data-theme] body :is(.tw-button,.range-btn,.bw-icon-button,.benchmark-detai
 }
 @keyframes bw-content-in {from {opacity:.55;transform:translateY(5px);}to {opacity:1;transform:translateY(0);}}
 
-.benchmark-detail:not([hidden]) {animation:bw-drawer-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;}
+.benchmark-detail:not([hidden]) {animation:bw-fade-in var(--bw-motion-panel) ease backwards;}
+@media (min-width:768px) {.benchmark-detail:not([hidden]) {animation:bw-drawer-in var(--bw-motion-panel) var(--bw-motion-ease) backwards;}}
 .benchmark-detail-backdrop:not([hidden]) {animation:bw-fade-in var(--bw-motion-panel) ease both;}
 @keyframes bw-drawer-in {from {opacity:.8;right:-18px;}to {opacity:1;right:0;}}
 @keyframes bw-fade-in {from {opacity:0;}to {opacity:1;}}
