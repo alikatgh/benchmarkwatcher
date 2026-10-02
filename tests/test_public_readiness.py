@@ -31,6 +31,20 @@ def test_brand_icon_has_dedicated_public_assets(app_client):
     assert favicon.data[:4] == b'\x00\x00\x01\x00'
 
 
+def test_support_and_privacy_are_public_and_linked(app_client):
+    home = app_client.get('/').text
+    assert 'href="/support"' in home
+    assert 'href="/privacy"' in home
+    support = app_client.get('/support')
+    privacy = app_client.get('/privacy')
+    assert support.status_code == privacy.status_code == 200
+    assert 'benchmarkwatcher@aulenor.com' in support.text
+    assert 'benchmarkwatcher@aulenor.com' in privacy.text
+    sitemap = app_client.get('/sitemap.xml').text
+    assert 'https://benchmarkwatcher.online/support' in sitemap
+    assert 'https://benchmarkwatcher.online/privacy' in sitemap
+
+
 def test_long_history_and_non_dollar_units_survive_refresh(tmp_path, monkeypatch):
     from scripts import fetch_daily_data as fetch
     history = [{'date': (date(2000, 1, 1) + timedelta(days=i)).isoformat(), 'price': 100+i/10} for i in range(1200)]

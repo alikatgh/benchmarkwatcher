@@ -306,6 +306,20 @@ def help_page():
                            meta_description='Learn what Jev does in BenchmarkWatcher, connect your own provider, and ask workbook questions with clear examples.')
 
 
+@bp.route('/support')
+def support_page():
+    """Public contact and troubleshooting entry point."""
+    return render_template('support.html', meta_title='Support | BenchmarkWatcher',
+                           meta_description='Get help with BenchmarkWatcher data, account access and privacy requests.')
+
+
+@bp.route('/privacy')
+def privacy_page():
+    """Public description of site data handling."""
+    return render_template('privacy.html', meta_title='Privacy | BenchmarkWatcher',
+                           meta_description='How BenchmarkWatcher handles browser preferences, account data, saved research and optional AI requests.')
+
+
 @bp.route('/blog/using-jev-for-workbook-analysis')
 def jev_workbook_story():
     """Explain Jev's role and the supported workbook question workflow."""
@@ -360,7 +374,8 @@ def sitemap():
     from xml.etree.ElementTree import Element, SubElement, tostring
     root = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
     paths = ['/', '/changelog', url_for('main.blog'), url_for('main.research_workspace_story'),
-             url_for('main.help_page'), url_for('main.jev_workbook_story'),
+             url_for('main.help_page'), url_for('main.support_page'), url_for('main.privacy_page'),
+             url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
              url_for('main.new_icon_story')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])

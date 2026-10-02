@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Support | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-3">Support</h1>
+        <p class="leading-relaxed theme-text-muted">Help with historical benchmarks, company research, account access and privacy.</p>
+    </header>
+
+    <section class="release-entry" aria-labelledby="support-contact">
+        <h2 id="support-contact">Contact us</h2>
+        <p>Email <a class="text-brand-oxford dark:text-brand-teal underline underline-offset-2" href="mailto:benchmarkwatcher@aulenor.com">benchmarkwatcher@aulenor.com</a>. Include the page URL and a short description of what happened. For a data question, include the benchmark or company name and the observation or filing date.</p>
+        <p class="mt-3">Never send your password, recovery code or AI provider key. For an account-data request, tell us your username in the email; we may need to verify that the request comes from the account owner.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="support-guides">
+        <h2 id="support-guides">Find an answer</h2>
+        <p>The <a class="text-brand-oxford dark:text-brand-teal underline underline-offset-2" href="{{ url_for('main.help_page') }}">Help guide</a> explains company reports, calculations and optional AI connections. Source observations can arrive late or change; open a benchmark or report’s source link to check the original publication.</p>
+        <p class="mt-3">For a public bug report or feature idea, use <a class="text-brand-oxford dark:text-brand-teal underline underline-offset-2" href="https://github.com/alikatgh/benchmarkwatcher/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>. Issues are public, so use email for account or privacy matters.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="support-privacy">
+        <h2 id="support-privacy">Your data</h2>
+        <p>Read the <a class="text-brand-oxford dark:text-brand-teal underline underline-offset-2" href="{{ url_for('main.privacy_page') }}">Privacy page</a> for what stays in your browser, what is saved with an account and when a connected AI provider receives information. Email us to ask about access to or removal of your account data.</p>
+    </section>
+</article>
+{% endblock %}
