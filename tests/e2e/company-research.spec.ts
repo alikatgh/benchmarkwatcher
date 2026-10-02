@@ -110,6 +110,9 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   expect(dark.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
   await page.screenshot({ path: info.outputPath('company-report-dark.png'), fullPage: true });
   await page.evaluate(() => (window as any).setTheme('ft'));
+  const background=(node:Element)=>getComputedStyle(node).backgroundColor;
+  expect(await page.locator('.company-chart').evaluate(background)).not.toBe(await page.locator('body').evaluate(background));
+  expect(await page.locator('.company-statements .company-table-wrap').evaluate(background)).not.toBe(await page.locator('body').evaluate(background));
   const ft=await new AxeBuilder({page}).include('.company-workspace').withTags(['wcag2a','wcag2aa']).analyze();
   expect(ft.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
   await page.screenshot({ path: info.outputPath('company-report-ft.png'), fullPage: true });

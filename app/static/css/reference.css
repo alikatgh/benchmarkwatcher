@@ -20,6 +20,8 @@ html[data-theme] :is(.text-brand-black-80,.text-brand-paper) {color:var(--theme-
 html[data-theme] :is(.text-brand-oxford,.text-brand-teal) {color:var(--theme-accent)!important;}
 html.dark [class*="dark:text-white"] {color:var(--theme-text)!important;}
 html[data-theme] :is(.bg-card-warm,.bg-brand-pink,.theme-surface) {background-color:var(--theme-surface)!important;}
+/* The page canvas must stay separate from cards and data panels. */
+html[data-theme] body.bg-brand-pink {background-color:var(--theme-bg)!important;}
 html.dark :is(.dark\:bg-terminal-black,.dark\:bg-terminal-surface) {background-color:var(--theme-surface)!important;}
 html[data-theme] :is(.border-brand-black-60\/20,.border-brand-black-60\/15,.border-brand-black-60\/10) {border-color:var(--theme-border)!important;}
 html[data-theme] .text-2xs {font-size:11px;line-height:1.5;}
