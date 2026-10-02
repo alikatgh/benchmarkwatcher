@@ -37,3 +37,10 @@ test('keyboard inspection reports only actual series dates and finite values', (
   chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
   expect(callback.mock.lastCall[0].date).toBe('2025-01-03');
 });
+
+test('isolated observations stay visible even when ordinary dots are disabled', () => {
+  BW.Visuals.timeSeries(document.getElementById('chart'), [{gapDays:7, points:[{date:'2024-01-01',price:5},{date:'2024-02-01',price:6},{date:'2025-01-01',price:9}]}], {pointRadius:0, dots:false});
+  const dots = [...document.querySelectorAll('.bw-d3-point')];
+  expect(dots).toHaveLength(3);
+  expect(dots.every(dot => Number(dot.getAttribute('r')) > 0 && dot.getAttribute('fill') !== 'transparent')).toBe(true);
+});

@@ -88,6 +88,7 @@
             axes(grid, x, y, width, height, {...options, left, right});
             series.forEach(s => {
                 const groups = segments(s.points, s.gapDays || 62);
+                const isolated = new Set(groups.filter(group => group.length === 1).map(group => group[0]));
                 const curve = options.type === 'step' ? d.curveStepAfter : options.tension > 0 ? d.curveCardinal.tension(1 - options.tension) : d.curveLinear;
                 const line = d.line().x(p => x(p.time)).y(p => y(p.value)).curve(curve);
                 if (options.type === 'area') marks.selectAll(`.area-${s.index}`).data(groups).join('path').attr('class', `area-${s.index} benchmark-detail-area`)
@@ -104,8 +105,8 @@
                         .append('title').text(p => `${s.name || ''} · ${p.date}: ${format(p.value)} ${s.unit || ''}`);
                 } else {
                     marks.selectAll(`.point-${s.index}`).data(points).join('circle').attr('class', `point-${s.index} benchmark-detail-observation-dot bw-d3-point`)
-                        .attr('cx', p => x(p.time)).attr('cy', p => y(p.value)).attr('r', points.length === 1 ? 3 : options.type === 'scatter' ? 3 : (options.dots === false ? (points.length === 1 ? 3 : 5) : (options.pointRadius ?? 2)))
-                        .attr('fill', options.dots === false && points.length > 1 ? 'transparent' : s.color).append('title').text(p => `${s.name || ''}: ${p.date} · ${Number(p.value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${s.unit || ''}`);
+                        .attr('cx', p => x(p.time)).attr('cy', p => y(p.value)).attr('r', p => points.length === 1 || isolated.has(p) ? 3 : options.type === 'scatter' ? 3 : (options.dots === false ? (points.length === 1 ? 3 : 5) : (options.pointRadius ?? 2)))
+                        .attr('fill', p => options.dots === false && points.length > 1 && !isolated.has(p) ? 'transparent' : s.color).append('title').text(p => `${s.name || ''}: ${p.date} · ${Number(p.value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${s.unit || ''}`);
                 }
             });
             if (options.zero && y.domain()[0] <= 0 && y.domain()[1] >= 0) marks.append('line').attr('x1', left).attr('x2', right).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', 'currentColor').attr('opacity', .4);
