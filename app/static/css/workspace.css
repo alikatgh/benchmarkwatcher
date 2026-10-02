@@ -227,7 +227,7 @@
 .studio-analysis-canvas[hidden],#studio-page-content[hidden]{display:none}
 .studio-canvas-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 8px;padding:0;text-align:left;background:transparent}
 .studio-canvas-heading>div{min-width:0}
-.workspace .studio-canvas-heading h1{font-size:24px;margin:2px 0 0}
+.workspace .studio-canvas-heading h1{font-size:24px;margin:2px 0 0;overflow-wrap:anywhere}
 .workspace .studio-canvas-basis{padding-bottom:12px;border-bottom:1px solid var(--theme-border);margin-bottom:8px}
 .studio-analysis-step,.studio-analysis-pending{margin:0;border:0;border-bottom:1px solid var(--theme-border);border-radius:0;scroll-margin-top:calc(var(--bw-header-height,60px) + 16px);background:transparent}
 .studio-analysis-step>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;padding:10px 0;min-height:44px;line-height:1.5;font-size:12px;font-weight:500}
