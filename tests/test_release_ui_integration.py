@@ -66,3 +66,32 @@ def test_jev_guides_are_public_with_or_without_workbook_feature(app_client, work
             html = client.get(path).get_data(as_text=True)
             assert 'href="/blog/using-jev-for-workbook-analysis"' in html
             assert 'href="/help"' in html
+
+
+def test_october_guides_are_public_and_discoverable(app_client, workspace, tmp_path):
+    from xml.etree import ElementTree
+
+    data = tmp_path / 'guide-data'
+    data.mkdir()
+    workspace.config['JSON_DATA_DIR'] = str(data)
+    stories = {
+        '/blog/company-research-from-sec-filings': 'From a ticker to the filing behind a number',
+        '/blog/d3-charts-and-visual-explorer': 'More ways to read the same observations with D3',
+    }
+    for client in (app_client, workspace.test_client()):
+        for path, title in stories.items():
+            response = client.get(path)
+            assert response.status_code == 200
+            assert title in response.text
+            assert f'<link rel="canonical" href="https://benchmarkwatcher.online{path}">' in response.text
+            assert f'<meta property="og:title" content="{title} | BenchmarkWatcher">' in response.text
+            assert '<time datetime="2026-10-02">' in response.text
+            assert '/workspace/companies/reports/' not in response.text
+        for path in ('/blog', '/changelog'):
+            html = client.get(path).text
+            for story in stories:
+                assert f'href="{story}"' in html
+        sitemap = ElementTree.fromstring(client.get('/sitemap.xml').data)
+        locations = {n.text for n in sitemap.iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')}
+        assert all('https://benchmarkwatcher.online' + path in locations for path in stories)
+        assert '/blog/company-research-from-sec-filings' in client.get('/blog/using-jev-for-workbook-analysis').text

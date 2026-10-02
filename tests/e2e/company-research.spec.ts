@@ -144,3 +144,34 @@ test('unavailable issuers, sector-specific rows and optional provider consent',a
   await expect(page.locator('#company-consent input')).not.toBeChecked();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
 });
+
+test('Profile shows provider usage and saves controls that block paid calls', async ({ page }) => {
+  await account(page);
+  await page.getByRole('link', { name: /^Profile for / }).click();
+  await expect(page.getByText('No API requests recorded for this period.', { exact: false })).toBeVisible();
+  await page.getByRole('link', { name: 'AI settings', exact: true }).click();
+  const connection = page.locator('form:has(#key-typesafe)');
+  await connection.locator('input[type=password]').fill('fixture-typesafe-key');
+  await connection.locator('input[type=checkbox]').check();
+  await connection.getByRole('button', { name: 'Test and save key' }).click();
+  await page.getByRole('link', { name: /^Profile for / }).click();
+  await expect(page.getByRole('region', { name: 'Usage by provider', exact: true })).toContainText('120');
+  await expect(page.getByRole('region', { name: 'Usage by provider', exact: true })).toContainText('$0.000005');
+  await page.getByLabel('Maximum AI requests per 24 hours').fill('2');
+  await page.getByLabel('Pause paid AI requests').check();
+  await page.getByRole('button', { name: 'Save controls', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('API controls saved.');
+  await page.reload();
+  await expect(page.getByLabel('Pause paid AI requests')).toBeChecked();
+  await expect(page.getByLabel('Maximum AI requests per 24 hours')).toHaveValue('2');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  const accessibility = await new AxeBuilder({ page }).include('.profile').analyze();
+  expect(accessibility.violations).toEqual([]);
+  await page.getByRole('link', { name: 'AI settings', exact: true }).click();
+  await connection.locator('input[type=password]').fill('fixture-typesafe-key');
+  await connection.locator('input[type=checkbox]').check();
+  await connection.getByRole('button', { name: 'Test and save key' }).click();
+  await expect(page.getByRole('alert')).toContainText('Paid AI requests are paused');
+  await page.getByRole('link', { name: /^Profile for / }).click();
+  await expect(page.getByText('1 of 2 requests used in the last 24 hours.', { exact: true })).toBeVisible();
+});

@@ -8,7 +8,7 @@
 <div class="workspace{% if user and mode != 'recovery_code' and config.WORKBOOK_LIBRARY_ENABLED %} has-chat{% endif %}" data-workspace-mode="{{ mode }}">
   <nav class="workspace-nav" aria-label="Research workspace">
     <a href="{{ url_for('workspace.home') }}">{{ 'Workbook studio' if config.WORKBOOK_LIBRARY_ENABLED else 'Company research' }}</a>
-    <div>{% if user %}<span>{{ user.username }}</span><a href="{{ url_for('workspace.settings') }}">AI settings</a>{% endif %}
+    <div>{% if user %}<a href="{{ url_for('workspace.profile') }}" aria-label="Profile for {{ user.username }}">Profile</a><a href="{{ url_for('workspace.settings') }}">AI settings</a>{% endif %}
     <details class="workspace-notifications" {% if notifications %}open{% endif %}>
       <summary>Notifications{% if notifications %} <span class="notification-count">{{ notifications|length }}</span>{% endif %}</summary>
       <section class="workspace-notification-list" aria-label="Notifications">
@@ -34,7 +34,7 @@
   {% elif mode == 'recovery_code' %}
   <section class="workspace-auth"><h1>Save your recovery code</h1><p>Keep this in your password manager. It is shown once and lets you reset your password. There is no email recovery.</p><code class="recovery-code">{{ recovery_code }}</code><a class="primary" href="{{ url_for('workspace.home') }}">Continue to workspace</a></section>
   {% elif mode == 'settings' %}
-  <h1>Your AI connections</h1><p class="muted">Bring your own API key. Your provider bills your account directly. BenchmarkWatcher supplies no AI credits or shared keys.</p>
+  <h1>Your AI connections</h1><p class="muted">Bring your own API key. Your provider bills your account directly. BenchmarkWatcher supplies no AI credits or shared keys. <a href="{{ url_for('workspace.profile') }}">View usage, estimated costs and request controls in Profile.</a></p>
   <div class="provider-grid">
   {% for id, name in providers.items() %}{% set linked = connections | selectattr('provider', 'equalto', id) | list %}
   <section class="workspace-panel"><h2>{{ name }}</h2><p>{{ 'Questions and optional written explanations.' if id == 'deepseek' else 'Structured selection of financial metrics and reporting periods.' }}</p>

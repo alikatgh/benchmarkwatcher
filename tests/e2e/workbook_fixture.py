@@ -28,7 +28,7 @@ def provider_response(provider, key, payload=None):
     if key != f'fixture-{provider}-key':
         raise ProviderError(f'Use fixture-{provider}-key in this sample server.')
     if provider == 'typesafe' and payload.get('state') == 'Connection test.':
-        return {'answers': {'connected': {'type': 'noul', 'noul': 1}}}
+        return {'model': 'jev-1.13.0', 'usage': {'input_tokens': 120, 'output_tokens': 20}, 'answers': {'connected': {'type': 'noul', 'noul': 1}}}
     if provider == 'deepseek' and payload is None:
         return {'data': [{'id': 'fixture-chat'}]}
     if provider == 'deepseek' and payload.get('thinking', {}).get('type') != 'disabled':

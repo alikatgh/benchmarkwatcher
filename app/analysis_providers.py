@@ -26,6 +26,24 @@ def _request(provider, key, payload=None):
         raise ProviderError('Choose a supported provider.')
     if not key or len(key) > 4096 or not key.isascii() or any(c.isspace() for c in key):
         raise ProviderError('Enter a valid API key.')
+    if payload is not None and len(json.dumps(payload, ensure_ascii=False).encode()) > 96 * 1024:
+        raise ProviderError('This request is too large. Choose a smaller selection of evidence.')
+    from app.api_usage import start_call, finish_call
+    try:
+        call_id = start_call(provider, payload.get('model', '') if payload else '', payload is not None)
+    except ValueError as exc:
+        raise ProviderError(str(exc)) from None
+    try:
+        response = _send(provider, key, payload)
+    except Exception:
+        finish_call(call_id, failed=True)
+        raise
+    finish_call(call_id, response)
+    return response
+
+
+def _send(provider, key, payload=None):
+    """Single HTTP attempt. Accounting is committed by _request before entry."""
     url = ('https://api.typesafe.ai/v1/systemone' if provider == 'typesafe' else
            ('https://api.deepseek.com/chat/completions' if payload is not None else 'https://api.deepseek.com/models'))
     try:
