@@ -65,6 +65,14 @@ test.describe('Market Pulse', () => {
         const initialTotal = Number(await page.locator('#market-pulse-total').innerText());
         expect(initialTotal).toBeGreaterThan(0);
 
+        // Reading the summary scrolls past the table and can collapse its toolbar.
+        // Reopen it through the visible control before changing the range.
+        const controlsToggle = page.locator('#tw-controls-toggle');
+        await controlsToggle.scrollIntoViewIfNeeded();
+        if (await controlsToggle.getAttribute('aria-expanded') === 'false') {
+            await controlsToggle.click();
+        }
+        await expect(controlsToggle).toHaveAttribute('aria-expanded', 'true');
         await page.locator('#range-1M').click();
 
         await expect(page.locator('#market-pulse-range')).toHaveText('Recent observations');
