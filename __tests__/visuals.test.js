@@ -44,3 +44,16 @@ test('isolated observations stay visible even when ordinary dots are disabled', 
   expect(dots).toHaveLength(3);
   expect(dots.every(dot => Number(dot.getAttribute('r')) > 0 && dot.getAttribute('fill') !== 'transparent')).toBe(true);
 });
+
+test('breadth preserves missing shares and safely updates zero and invalid inputs', () => {
+  const host = document.getElementById('chart');
+  const render = values => BW.Visuals.distribution(host, values.map(value => ({value, color: 'currentColor', label: 'share'})), {label:'Category distribution'});
+  render([30, 10, 20]);
+  expect([...host.querySelectorAll('rect')].map(r => [Number(r.getAttribute('x')), Number(r.getAttribute('width'))])).toEqual([[0,30],[30,10],[40,20]]);
+  render([0, null, -10, Infinity]);
+  expect(host.querySelectorAll('svg')).toHaveLength(1);
+  expect([...host.querySelectorAll('rect')].every(r => r.getAttribute('width') === '0')).toBe(true);
+  render([70, 40]);
+  expect(host.querySelector('rect:last-child').getAttribute('width')).toBe('30');
+  expect(host.innerHTML).not.toMatch(/NaN|Infinity/);
+});

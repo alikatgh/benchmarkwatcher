@@ -15,6 +15,9 @@ async function openCompany(page: Page, ticker = 'AAPL') {
   await page.locator('#company-results').getByRole('button', { name: new RegExp(ticker) }).click();
   await expect(page.locator('#company-chart svg')).toBeVisible();
 }
+async function openChat(page: Page) {
+  if (!(await page.locator('#company-chat').isVisible())) await page.getByRole('button', {name:'Ask a question ↗'}).click();
+}
 test.beforeEach(async ({ context, baseURL }) => {
   await context.route('**/*', route => new URL(route.request().url()).origin === baseURL ? route.continue() : route.abort());
 });
@@ -33,6 +36,19 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   await expect(page.getByRole('heading', { name: 'Example Devices (synthetic)', exact: true })).toBeVisible();
   await expect(page.locator('#company-chart .bw-d3-line')).toHaveCount(1);
   await expect(page.locator('#company-chart-readout')).toContainText('1.4B USD');
+  if (info.project.name === 'desktop') {
+    await expect(page.locator('#company-chat')).toBeVisible();
+    const chatBox = (await page.locator('#company-chat').boundingBox())!;
+    const mainBox = (await page.locator('.company-report-main').boundingBox())!;
+    expect(mainBox.x + mainBox.width).toBeLessThanOrEqual(chatBox.x + 1);
+    expect(chatBox.y + chatBox.height).toBeLessThanOrEqual(page.viewportSize()!.height + 1);
+    const chartBox = (await page.locator('#company-chart').boundingBox())!;
+    expect(chartBox.y + chartBox.height).toBeLessThan(page.viewportSize()!.height);
+    await page.getByLabel('Question about this report').fill('Keep this draft');
+    await page.getByRole('button',{name:'Close conversation'}).click();
+    await openChat(page);
+    await expect(page.getByLabel('Question about this report')).toHaveValue('Keep this draft');
+  } else await expect(page.locator('#company-chat')).toBeHidden();
   await page.locator('#company-chart svg').focus();
   await page.keyboard.press('Home');
   await expect(page.locator('#company-chart-readout')).toContainText('2020');
@@ -53,6 +69,13 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   await expect(source).toBeFocused();
   await page.getByRole('button', { name: 'Trailing year', exact: true }).click();
   await expect(page.locator('#company-chart-readout')).toContainText('308M USD');
+  await page.getByRole('button', { name: 'Business breakdowns', exact: true }).click();
+  await expect(page.locator('#company-table-empty')).toContainText('No trailing-year values');
+  await expect(page.locator('#company-table')).toBeHidden();
+  await page.getByRole('button', { name: 'View annual values', exact: true }).click();
+  await expect(page.locator('#company-table')).toContainText('Devices');
+  await expect(page.locator('.company-table-group')).toContainText('Product Or Service');
+  await page.getByRole('button', { name: 'Income statement', exact: true }).click();
   await page.getByRole('button', { name: 'Annual', exact: true }).click();
   await page.locator('#company-chart-type').selectOption('line');
   const download = page.waitForEvent('download');
@@ -64,7 +87,7 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   await page.addStyleTag({ content: '*,:before,:after{transition:none!important;animation:none!important}' });
   const audit=await new AxeBuilder({page}).include('.company-workspace').withTags(['wcag2a','wcag2aa']).analyze();
   expect(audit.violations.filter(v=>['serious','critical'].includes(v.impact||''))).toEqual([]);
-  await page.getByRole('button',{name:'Ask a question ↗'}).click();
+  await openChat(page);
   const question=page.getByLabel('Question about this report');
   await question.fill('Compare revenue in 2024 and 2025');
   await page.getByRole('button',{name:'Send question ↑'}).click();
@@ -78,7 +101,7 @@ test('ticker search, financial statements, D3 inspection, evidence, export and s
   await page.getByRole('button',{name:'Close conversation'}).click();
   await page.reload();
   await page.addStyleTag({ content: '*,:before,:after{transition:none!important;animation:none!important}' });
-  await page.getByRole('button',{name:'Ask a question ↗'}).click();
+  await openChat(page);
   await expect(page.locator('.company-exchange')).toHaveCount(2);
   await page.getByRole('button',{name:'Close conversation'}).click();
   await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
@@ -109,7 +132,7 @@ test('unavailable issuers, sector-specific rows and optional provider consent',a
   await connection.locator('input[type=checkbox]').check();
   await connection.getByRole('button',{name:'Test and save key'}).click();
   await page.goto(reportURL);
-  await page.getByRole('button',{name:'Ask a question ↗'}).click();
+  await openChat(page);
   await page.locator('#company-provider').selectOption('deepseek:fixture-chat');
   await page.getByLabel('Question about this report').fill('Discuss this company');
   await page.getByRole('button',{name:'Send question ↑'}).click();

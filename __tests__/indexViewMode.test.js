@@ -6,6 +6,9 @@ const fs = require('fs');
 const path = require('path');
 
 function loadIndexScript() {
+  for (const file of ['vendor/d3.v7.9.0.min.js', 'core/visuals.js']) {
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js', file), 'utf8'));
+  }
   const scriptPath = path.join(__dirname, '..', 'app', 'static', 'js', 'components', 'index.js');
   const code = fs.readFileSync(scriptPath, 'utf8');
   window.eval(code);

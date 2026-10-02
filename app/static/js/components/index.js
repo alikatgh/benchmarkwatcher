@@ -274,6 +274,15 @@ BW.Index = {
         }
     },
 
+    renderCategoryGraphics: function () {
+        document.querySelectorAll('[data-breadth]').forEach(target => {
+            const shares = JSON.parse(target.dataset.breadth);
+            BW.Visuals?.distribution(target, ['up', 'flat', 'down'].map((label, i) => ({
+                label, value: shares[i], color: i === 1 ? 'var(--theme-text-muted)' : `var(--color-${label})`
+            })), { label: target.dataset.label });
+        });
+    },
+
     renderCategoryPulse: function (categories, activeRange) {
         const container = document.getElementById('market-pulse-categories');
         if (!container) return;
@@ -315,12 +324,8 @@ BW.Index = {
                         ${upCount} / ${flatCount} / ${downCount}
                     </span>
                 </div>
-                <div class="mt-2 flex h-1.5 rounded-full bg-brand-black-60/10 dark:bg-white/10 overflow-hidden"
-                    aria-label="${this.escapeHtml(categoryName)} distribution: ${upCount} up, ${flatCount} flat, ${downCount} down">
-                    <div class="h-full" style="width: ${upPercent}%; background-color: var(--color-up);"></div>
-                    <div class="h-full" style="width: ${flatPercent}%; background-color: var(--theme-border);"></div>
-                    <div class="h-full" style="width: ${downPercent}%; background-color: var(--color-down);"></div>
-                </div>
+                <div class="bw-category-distribution" data-breadth='${JSON.stringify([upPercent, flatPercent, downPercent])}'
+                    data-label="${this.escapeHtml(categoryName)} distribution: ${upCount} up, ${flatCount} flat, ${downCount} down"></div>
                 <div class="mt-1 flex items-center justify-between gap-2 text-2xs text-brand-black-60">
                     <span>${totalCount} benchmarks</span>
                     <span>up / flat / down</span>
@@ -328,6 +333,7 @@ BW.Index = {
             `;
             container.appendChild(item);
         });
+        this.renderCategoryGraphics();
     },
 
     updateMarketPulse: function (payload, { range } = {}) {
@@ -642,6 +648,7 @@ BW.Index = {
 
     // Initialize view mode
     init: function () {
+        this.renderCategoryGraphics();
         // R2: Auto-detect device class and view mode on first visit
         if (window.BW && BW.Responsive) {
             BW.Responsive.autoApply();

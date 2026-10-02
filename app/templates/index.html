@@ -4,16 +4,16 @@
     <aside class="bw-sidebar" aria-label="Workspace navigation">
         <div class="bw-sidebar-label">WORKSPACE</div>
         <nav class="bw-destinations" aria-label="Workspace">
-            <a href="{{ url_for('main.index', view=active_view, range=date_range) }}" data-workspace="benchmarks"><span class="bw-nav-icon" aria-hidden="true">▤</span>Benchmarks</a>
-            <a href="{{ url_for('main.index', workspace='watchlist', view='compact', range=date_range) }}" data-workspace="watchlist"><span class="bw-nav-icon" aria-hidden="true">☆</span>Watchlist <span id="bw-watch-count" class="bw-nav-count">0</span></a>
-            <a href="{{ url_for('main.index', workspace='research', view=active_view, range=date_range) }}" data-workspace="research"><span class="bw-nav-icon" aria-hidden="true">▧</span>Research <span id="bw-research-count" class="bw-nav-count">0</span></a>
+            <a href="{{ url_for('main.index', view=active_view, range=date_range) }}" data-workspace="benchmarks"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg>Benchmarks</a>
+            <a href="{{ url_for('main.index', workspace='watchlist', view='compact', range=date_range) }}" data-workspace="watchlist"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg>Watchlist <span id="bw-watch-count" class="bw-nav-count">0</span></a>
+            <a href="{{ url_for('main.index', workspace='research', view=active_view, range=date_range) }}" data-workspace="research"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8M8 16h6"/></svg>Research <span id="bw-research-count" class="bw-nav-count">0</span></a>
         </nav>
         <div class="bw-category-nav"><div class="bw-sidebar-label">EXPLORE</div><nav aria-label="Benchmark categories">
         {% for slug, label in [('energy','Energy'),('metal','Metals'),('precious','Precious metals'),('agricultural','Agriculture'),('index','Indices')] %}
             <a href="{{ url_for('main.index', category=slug, range=date_range, view=active_view) }}" data-workspace-category="{{ slug }}"{% if selected_category == slug %} aria-current="page"{% endif %}><span class="bw-category-dot bw-dot-{{ slug }}" aria-hidden="true"></span>{{ label }}</a>
         {% endfor %}
         </nav></div>
-        <div class="bw-sidebar-bottom"><a href="#market-pulse" id="bw-about-data">About the data <span aria-hidden="true">↗</span></a><a href="{{ url_for('main.changelog') }}">What’s new</a><p>Public observations.<br>Your own perspective.</p></div>
+        <div class="bw-sidebar-bottom"><a href="#market-pulse" id="bw-about-data">About the data <span aria-hidden="true">↗</span></a><a href="{{ url_for('main.changelog') }}">What’s new</a></div>
     </aside>
     <div class="bw-main-content">
         <section id="benchmark-workspace" aria-labelledby="bw-page-title">
@@ -183,12 +183,8 @@
                                     {{ category.up_count }} / {{ category.flat_count }} / {{ category.down_count }}
                                 </span>
                             </div>
-                            <div class="mt-2 flex h-1.5 rounded-full bg-brand-black-60/10 dark:bg-white/10 overflow-hidden"
-                                aria-label="{{ category.name }} distribution: {{ category.up_count }} up, {{ category.flat_count }} flat, {{ category.down_count }} down">
-                                <div class="h-full" style="width: {{ category.breadth_percent }}%; background-color: var(--color-up);"></div>
-                                <div class="h-full" style="width: {{ category.flat_percent }}%; background-color: var(--theme-border);"></div>
-                                <div class="h-full" style="width: {{ category.down_percent }}%; background-color: var(--color-down);"></div>
-                            </div>
+                            <div class="bw-category-distribution" data-breadth='{{ [category.breadth_percent, category.flat_percent, category.down_percent]|tojson }}'
+                                data-label="{{ category.name }} distribution: {{ category.up_count }} up, {{ category.flat_count }} flat, {{ category.down_count }} down"></div>
                             <div class="mt-1 flex items-center justify-between gap-2 text-2xs text-brand-black-60">
                                 <span>{{ category.total }} benchmarks</span>
                                 <span>up / flat / down</span>
