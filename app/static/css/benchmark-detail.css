@@ -27,11 +27,14 @@
 .benchmark-detail-chart-head {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;}
 .benchmark-detail-chart-head h3 {margin:0;}
 .benchmark-detail-ranges {display:flex;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:thin;margin:0 0 16px;border-bottom:1px solid var(--theme-border,#e2e6ea);}
-.benchmark-detail .benchmark-detail-ranges button {flex:0 0 auto;min-width:38px;min-height:40px;padding:7px 10px;border:0;border-radius:0;background:transparent;color:var(--theme-text-muted,#59636f);position:relative;}
+.benchmark-detail .benchmark-detail-ranges button {--button-bg:transparent;--button-border:transparent;--button-text:var(--theme-text-muted);--button-hover:var(--control-hover);--button-hover-border:transparent;--button-selected-bg:transparent;--button-selected-text:var(--theme-accent);--button-selected-border:transparent;--button-selected-hover:transparent;flex:0 0 auto;min-width:38px;min-height:40px;padding:7px 10px;border:0;border-radius:0;background:transparent;color:var(--theme-text-muted,#59636f);position:relative;}
 .benchmark-detail .benchmark-detail-ranges button:hover {background:var(--theme-bg,#f7f9fc);color:var(--theme-text,#202124);}
 .benchmark-detail .benchmark-detail-ranges button[aria-pressed="true"] {color:var(--theme-accent,#1967d2);font-weight:650;}
 .benchmark-detail-ranges button[aria-pressed="true"]::after {content:"";position:absolute;bottom:0;left:10px;right:10px;height:2px;background:currentColor;border-radius:2px;}
 .benchmark-detail-ranges button:focus-visible {outline-offset:-3px;}
+.benchmark-detail-chart-surface {margin:8px 0 12px;padding:12px 14px 10px;border:1px solid var(--theme-border,#e2e6ea);border-radius:8px;background:color-mix(in srgb,var(--theme-bg,#f7f9fc) 72%,var(--theme-surface,#fff));}
+.benchmark-detail-chart-surface .benchmark-detail-plot {margin-top:2px;}
+.benchmark-detail-chart-surface .benchmark-detail-readout {min-height:64px;}
 .benchmark-detail-plot {display:block;width:100%;height:auto;min-height:160px;margin:8px 0 0;overflow:visible;}
 .benchmark-detail-plot text {fill:var(--theme-text-muted,#59636f);font:11px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;}
 .benchmark-detail-chart-note {font-size:12px;color:var(--theme-text-muted,#59636f);margin:10px 0;}
@@ -78,6 +81,7 @@
   .benchmark-detail :is(button,.benchmark-detail-link),.benchmark-detail-notice button {min-height:44px;}
   .benchmark-detail-close {min-width:44px;}
   .benchmark-detail-ranges button {padding:4px 9px;}
+  .benchmark-detail-chart-surface {padding:10px 10px 8px;}
   .benchmark-detail-notice {gap:8px;bottom:12px;max-width:calc(100% - 20px);padding:10px;flex-wrap:wrap;}
 }
 @media(prefers-reduced-motion:reduce) {.benchmark-detail {scroll-behavior:auto;}}

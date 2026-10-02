@@ -201,12 +201,12 @@
 
         /* Bloomberg Theme (Trading Terminal) */
         html[data-theme="bloomberg"] {
-            --theme-bg: #1e1e1e;
-            --theme-surface: #2d2d2d;
-            --theme-text: #ff9933;
-            --theme-text-muted: #999999;
-            --theme-border: rgba(255, 153, 51, 0.2);
-            --theme-accent: #ff9933;
+            --theme-bg: #1b1e22;
+            --theme-surface: #282d33;
+            --theme-text: #edf0f3;
+            --theme-text-muted: #b1b9c1;
+            --theme-border: #414951;
+            --theme-accent: #ffad5c;
             --theme-positive: #00ff00;
             --theme-negative: #ff3333;
             --card-shadow: none;
@@ -362,7 +362,7 @@
             background-color: #cccccc;
         }
 
-        /* Bloomberg Theme - Override ALL colors */
+        /* Bloomberg theme uses orange for emphasis, with neutral reading text. */
         html[data-theme="bloomberg"] {
             --brand-teal: #00ff00;
             --brand-claret: #ff3333;
@@ -375,27 +375,27 @@
         html[data-theme="bloomberg"] h2,
         html[data-theme="bloomberg"] h3,
         html[data-theme="bloomberg"] h4 {
-            color: #ff9933 !important;
+            color: var(--theme-text) !important;
         }
 
         html[data-theme="bloomberg"] .dark\:text-white {
-            color: #ff9933 !important;
+            color: var(--theme-text) !important;
         }
 
         html[data-theme="bloomberg"] .dark\:bg-terminal-surface,
         html[data-theme="bloomberg"] .dark\:bg-terminal-black,
         html[data-theme="bloomberg"] .bg-brand-pink {
-            background-color: #1e1e1e !important;
+            background-color: var(--theme-surface) !important;
         }
 
         html[data-theme="bloomberg"] .dark\:border-white\/10,
         html[data-theme="bloomberg"] .border-brand-black-60\/20 {
-            border-color: rgba(255, 153, 51, 0.3) !important;
+            border-color: var(--theme-border) !important;
         }
 
         html[data-theme="bloomberg"] .text-brand-oxford,
         html[data-theme="bloomberg"] .dark\:text-brand-oxford {
-            color: #ff9933 !important;
+            color: var(--theme-accent) !important;
         }
 
         html[data-theme="bloomberg"] .text-brand-teal,
@@ -415,20 +415,20 @@
             background-color: rgba(255, 51, 51, 0.15) !important;
         }
 
-        html[data-theme="bloomberg"] header {
-            background-color: #1e1e1e !important;
-            border-color: rgba(255, 153, 51, 0.3) !important;
+        html[data-theme="bloomberg"] .bw-header {
+            background-color: var(--theme-surface) !important;
+            border-color: var(--theme-border) !important;
         }
 
         html[data-theme="bloomberg"] .theme-text-muted,
         html[data-theme="bloomberg"] .text-brand-black-60 {
-            color: #888888 !important;
+            color: var(--theme-text-muted) !important;
         }
 
 
         /* Bloomberg chart axis and labels */
         html[data-theme="bloomberg"] .chart-container text {
-            fill: #ff9933 !important;
+            fill: var(--theme-text-muted) !important;
         }
 
         /* FT Theme - Salmon background with claret accents */

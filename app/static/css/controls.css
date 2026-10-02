@@ -44,10 +44,12 @@ html[data-theme="mono-dark"] {
   --control-group:#161616; --control-panel:#191919; --control-disabled-bg:#222; --control-disabled-text:#aaa;
 }
 html[data-theme="bloomberg"] {
-  --control-primary:#ffad5c; --control-on-primary:#191919; --control-primary-hover:#ffc58c;
-  --control-selected-bg:#503922; --control-selected-text:#ffd9b2; --control-selected-border:#d69a60;
-  --control-selected-hover:#634629;
-  --control-focus:#ffad5c; --control-group:#262626; --control-panel:#262626;
+  --control-bg:#303841; --control-text:#edf0f3; --control-border:#75828f;
+  --control-hover:#404b56; --control-hover-border:#a7b2bd;
+  --control-primary:#ffad5c; --control-on-primary:#1b1e22; --control-primary-hover:#ffc58c;
+  --control-selected-bg:#493a2b; --control-selected-text:#ffe0be; --control-selected-border:#ffad5c;
+  --control-selected-hover:#5b4632;
+  --control-focus:#ffad5c; --control-group:#252b31; --control-panel:#252b31;
 }
 :where(a) {color:var(--theme-accent);}
 

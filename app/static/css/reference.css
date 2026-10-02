@@ -65,6 +65,10 @@ html[data-theme] #settings-modal .theme-btn[data-active="true"] {border-color:va
 #change-tooltip {background:var(--theme-surface)!important;color:var(--theme-text)!important;border:1px solid var(--theme-border);}
 #change-tooltip .text-white {color:var(--theme-text)!important;}
 #main-content:has(.release-notes) .release-notes {max-width:900px;padding-top:32px;}
+.release-notes>header {background:transparent!important;border:0!important;padding:0 0 20px;border-bottom:1px solid var(--theme-border)!important;}
+.release-notes>header h1 {max-width:24ch;line-height:1.15;}
+.release-notes>header p:not(:first-child) {max-width:68ch;}
+.release-notes>header time {color:var(--theme-text-muted);}
 .release-entry {padding:24px 0;border-top:1px solid var(--theme-border);}
 .release-entry time {font-size:12px;color:var(--theme-text-muted);}
 .release-entry h2 {font-size:22px;font-weight:650;margin:8px 0 12px;}
