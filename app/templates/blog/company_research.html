@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}From a ticker to the filing behind a number | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header class="mb-6 sm:mb-8">
+        <p class="text-sm mb-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">From a ticker to the filing behind a number</h1>
+        <p class="text-lg leading-relaxed mb-4">Company research now starts with a ticker or company name. Open a financial report, compare its fiscal periods, and follow a number back to the disclosure behind it.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-02">October 2, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+
+    <p class="mb-4 leading-relaxed">A useful financial report needs more than a chart. It needs the reporting period, the unit, and a way to check where each value came from. Our new company workspace brings those pieces together using public SEC filings, with a conversation beside the report for questions about the available figures.</p>
+
+    <section class="release-entry" aria-labelledby="company-start">
+        <h2 id="company-start">Start with the company</h2>
+        <p class="mb-4 leading-relaxed">Open Company research, sign in, and search for a ticker such as AAPL, a company name, or an SEC CIK. Check the name in the search results before opening a report, especially when the search offers a similar ticker.</p>
+        <p class="mb-4 leading-relaxed">The report is saved in your private workspace automatically. It can include income statements, balance sheets, cash flow, margins, growth and supported business breakdowns. Banking and insurance rows appear where the disclosures support them.</p>
+        <p class="leading-relaxed">Coverage follows the SEC filings and the structured disclosures we can map. A ticker is a starting point, not a promise that every company or every line item is available. If a report cannot be built, the workspace explains that instead of filling it with invented figures.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="company-periods">
+        <h2 id="company-periods">Choose the metric and the reporting period</h2>
+        <p class="mb-4 leading-relaxed">The summary shows the latest available annual figures. Select one to chart it, or choose another metric from the chart control. Annual, Quarterly and Trailing year change both the chart and the financial table; Recent periods and All available control how much history you see.</p>
+        <p class="mb-4 leading-relaxed">Periods follow the company’s fiscal calendar. Quarterly cash-flow values may be calculated by subtracting consecutive year-to-date disclosures. Trailing-year flows require four consecutive quarters, while balance-sheet values describe the position at a period end.</p>
+        <p class="leading-relaxed">A dash means unavailable. Business disclosures are grouped by their reporting axis, such as products or geography. Those groups can overlap, so do not add across them. When a selected frequency has no values, the table offers another frequency where data exists.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="company-sources">
+        <h2 id="company-sources">Open the evidence behind a value</h2>
+        <p class="mb-4 leading-relaxed">Select a number in the financial table to see its exact amount, unit, dates and calculation method. The source panel links to the filing and identifies the disclosed inputs. For a derived value, that makes it possible to check the calculation as well as the result.</p>
+        <p class="mb-4 leading-relaxed">Export CSV keeps the source information with the figures. The Sources, coverage and calculation methods section explains missing coverage and provides a way to open the latest available report.</p>
+        <p class="leading-relaxed">Saved reports are dated snapshots. Their checked date and filing dates matter: source responses can be cached, and later filings can revise earlier figures. The workspace preserves the basis of the report you are reading.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="company-chat-guide">
+        <h2 id="company-chat-guide">Ask beside the report</h2>
+        <p class="mb-4 leading-relaxed">On desktop, the conversation opens in the right sidebar while the chart and table remain available. Minimize and reopen it without losing your draft. On smaller screens, switch between the conversation and the report.</p>
+        <p class="mb-4 leading-relaxed">Built-in calculations need no AI key. Try a question that names a metric and uses periods available in your report:</p>
+        <ul class="mb-4">
+            <li>“Show revenue across available years.”</li>
+            <li>“Compare revenue in 2024 and 2025.”</li>
+            <li>“Show free cash flow across available years.”</li>
+        </ul>
+        <p class="mb-4 leading-relaxed">A follow-up can reuse the previous metric; New topic clears that context. Answers are saved with the report and can include a chart, calculation values and filing sources.</p>
+        <p class="leading-relaxed">Optional providers have different roles: Jev can select a supported metric and operation, while DeepSeek can discuss supplied filing evidence. Connect your own provider in AI settings, choose it in the composer, and confirm sharing for each request. Your provider may charge for the request. AI interpretation is labeled separately from calculated results.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="company-next">
+        <h2 id="company-next">Check your API usage in Profile</h2>
+        <p class="mb-4 leading-relaxed">SEC EDGAR access and built-in calculations carry no SEC or AI charge. Optional AI requests are billed by your connected provider. Profile shows recorded requests, reported tokens, provider breakdowns and estimated USD costs. Missing usage and older costs are labeled unavailable; estimates do not replace the provider’s invoice.</p>
+        <p class="leading-relaxed">Set a limit on AI requests per 24 hours or pause new paid calls in Profile. Connection tests and failed AI requests count toward the limit, and the app does not automatically retry paid calls. Hosting, domain renewals and activity outside this app are separate.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="company-try">
+        <h2 id="company-try">Try one comparison, then check its source</h2>
+        <p class="mb-4 leading-relaxed">Open a company, choose a metric, and compare two reported periods. Then select one of the underlying values in the table. That is the complete workflow: a question, a calculation, and evidence you can inspect.</p>
+        <p class="mb-4 leading-relaxed">These reports describe historical company financials. They do not include current share prices or analyst estimates.</p>
+        <p class="mb-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="/workspace/">Open Company research</a></p>
+        <p><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.d3_visuals_story') }}">Read about the D3 charts and visual explorer</a></p>
+    </section>
+</article>
+{% endblock %}

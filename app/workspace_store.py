@@ -77,6 +77,8 @@ def init_workspace(app):
     os.chmod(path, 0o600)
     with sqlite3.connect(path) as conn:
         conn.executescript(SCHEMA)
+        from app.api_usage import init_usage
+        init_usage(conn)
     app.teardown_appcontext(close_db)
     from app.workspace_routes import bp
     app.register_blueprint(bp)

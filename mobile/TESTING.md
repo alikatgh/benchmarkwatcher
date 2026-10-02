@@ -15,7 +15,8 @@ FLASK_DEBUG=1 TEMPLATES_AUTO_RELOAD=True flask run --host 0.0.0.0 --port 5002
 Open a new terminal window, navigate to the `mobile` directory, and start the Expo bundler:
 
 ```bash
-cd /Users/s_avelova/Documents/projects/benchmarkwatcher/mobile
+# From the repository root:
+cd mobile
 npm run start
 # OR
 npx expo start

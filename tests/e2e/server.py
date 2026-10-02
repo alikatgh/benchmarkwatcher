@@ -49,7 +49,7 @@ def main(workbooks=False, companies=False):
             TESTING = True
 
         if workbooks or companies:
-            analysis_providers._request = provider_response
+            analysis_providers._send = provider_response
         if companies:
             from app import sec_client, company_financials
             from tests.sec_fixture import fake_fetch
@@ -59,11 +59,11 @@ def main(workbooks=False, companies=False):
                 if provider == 'deepseek' and payload and 'messages' in payload:
                     context = json.loads(payload['messages'][-1]['content'])
                     if 'evidence' in context:
-                        return {'choices':[{'finish_reason':'stop','message':{'content':'This synthetic company reports revenue and operating cash flow in the linked filing. The figures are historical; the supplied evidence does not explain their causes. [S1]'}}]}
+                        return {'usage': {'prompt_tokens': 1400, 'completion_tokens': 70, 'prompt_cache_hit_tokens': 400}, 'choices':[{'finish_reason':'stop','message':{'content':'This synthetic company reports revenue and operating cash flow in the linked filing. The figures are historical; the supplied evidence does not explain their causes. [S1]'}}]}
                 if provider == 'typesafe' and payload and isinstance(payload.get('state'),dict):
-                    return {'model':'jev-latest','answers':{k:{'type':'choice','choice':v,'confidence':1} for k,v in {'metric':'revenue','operation':'series','start':'unspecified','end':'unspecified'}.items()}}
+                    return {'model':'jev-1.13.0','usage':{'input_tokens':1500,'output_tokens':40},'answers':{k:{'type':'choice','choice':v,'confidence':1} for k,v in {'metric':'revenue','operation':'series','start':'unspecified','end':'unspecified'}.items()}}
                 return provider_response(provider,key,payload)
-            analysis_providers._request = company_provider
+            analysis_providers._send = company_provider
         app = create_app(Config)
         logging.getLogger('werkzeug').setLevel(logging.WARNING)
         print('SYNTHETIC PREVIEW: temporary data; workbook mode uses simulated providers.', flush=True)

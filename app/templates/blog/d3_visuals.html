@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}More ways to read the same observations with D3 | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header class="mb-6 sm:mb-8">
+        <p class="text-sm mb-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">More ways to read the same observations with D3</h1>
+        <p class="text-lg leading-relaxed mb-4">Follow a series through time, inspect its distribution, or look at when observations are available. The visual explorer gives each question its own view.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-02">October 2, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+
+    <p class="mb-4 leading-relaxed">Every web data chart in BenchmarkWatcher now uses D3. That includes the small histories in the benchmark table, full-page charts, comparisons, category breadth bars, company reports and saved workbook results. The old Chart.js bundles have been removed.</p>
+    <p class="mb-4 leading-relaxed">The migration also gave us room to improve the reading experience: compact controls, consistent chart sizing, exact-value inspection and more ways to examine the same source observations.</p>
+
+    <section class="release-entry" aria-labelledby="d3-history">
+        <h2 id="d3-history">Begin with the history</h2>
+        <p class="mb-4 leading-relaxed">Open a benchmark from the table to inspect its reference history beside the workspace. Choose a date range and a chart style. Lines, areas, steps, bars and dots offer different ways to see the same observations; changing the style does not create more data.</p>
+        <p class="mb-4 leading-relaxed">Use a pointer, touch, or the left and right arrow keys to inspect an observation. Home and End move to the first and last available values. The readout follows the selected date, so the value you are reading belongs to a published observation.</p>
+        <p class="leading-relaxed">Date ranges end at the latest available observation rather than assuming a value exists today. Lines leave explicit missing values and extended publication gaps open. The observation table remains available when you need the exact figures.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="d3-explorer">
+        <h2 id="d3-explorer">Choose a view for your question</h2>
+        <p class="mb-4 leading-relaxed">Expand Visual explorer on the benchmark dashboard and choose a benchmark, observation range and visualization. On a full benchmark page, the explorer follows that page’s selected observation window.</p>
+        <ul class="mb-4">
+            <li><strong>How did consecutive observations differ?</strong> Change between observations shows percentage changes where both values are available and the earlier value is positive.</li>
+            <li><strong>Where do the values cluster?</strong> Value distribution groups observations into bins. Cumulative distribution shows the share at or below each value. Range &amp; quartiles summarizes the selected sample.</li>
+            <li><strong>How do the months compare?</strong> Monthly averages and the year-by-month heatmap organize the available observations by calendar month.</li>
+            <li><strong>Where is the history sparse?</strong> Observation coverage shows counts rather than prices, making months with fewer or no observations easier to find.</li>
+        </ul>
+        <p class="leading-relaxed">Each explorer view has an exact-value table and a Download PNG control. Read the chart note before comparing views: a monthly average weights available observations equally, and a coverage count describes the data present, not the reliability of the source.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="d3-catalogue">
+        <h2 id="d3-catalogue">Look across the catalogue</h2>
+        <p class="mb-4 leading-relaxed">Choose All benchmarks in the explorer for ranked historical changes, an equal-size change map, a category treemap or counts by latest observation date. The treemap’s area represents the number of benchmarks in a category, not their price or economic weight.</p>
+        <p class="leading-relaxed">Different sources publish on different schedules. The exact-value tables retain each series’ dates, and percentage changes use that series’ available endpoints. An older observation date alone does not establish that a source has failed.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="d3-company">
+        <h2 id="d3-company">The same chart tools, with company fiscal periods</h2>
+        <p class="mb-4 leading-relaxed">Company reports use D3 for annual, quarterly and trailing-year financial histories and for calculation charts inside the conversation. Compact metric controls and summaries leave space for the plot, with the chat alongside it on desktop.</p>
+        <p class="leading-relaxed">Company periods follow the issuer’s fiscal calendar. The financial table provides the filing evidence behind each value, and business breakdowns remain grouped by their disclosure axis. Read <a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.company_research_story') }}">the company research guide</a> for a complete walkthrough.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="d3-next">
+        <h2 id="d3-next">Try the same series in two views</h2>
+        <p class="mb-4 leading-relaxed">Start with a line history, then switch to Value distribution or Observation coverage. Open the exact-value table beneath each view. You will see different summaries of the same source material, with the dates and missing observations still part of the story.</p>
+        <p class="mb-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.index', view='compact') }}#bw-visual-explorer">Open the visual explorer</a></p>
+        <p><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.changelog') }}#d3-and-integrated-chat">Read the release notes</a></p>
+    </section>
+</article>
+{% endblock %}

@@ -47,6 +47,11 @@ def _download(url, limit):
         conn.execute('INSERT OR REPLACE INTO traffic VALUES (1, ?)', (slot + .25,))
     time.sleep(max(0, slot - time.time()))
     agent = current_app.config.get('SEC_USER_AGENT') or os.getenv('SEC_USER_AGENT') or 'BenchmarkWatcher https://benchmarkwatcher.online (research application)'
+    from app.api_usage import start_call, finish_call
+    try:
+        call_id = start_call('sec', billable=False)
+    except ValueError:
+        raise SECError('Filing usage could not be recorded. Please try again shortly.') from None
     try:
         with requests.get(url, headers={'User-Agent': agent, 'Accept-Encoding': 'gzip, deflate'},
                           timeout=(5, 12), allow_redirects=False, stream=True) as response:
@@ -60,9 +65,14 @@ def _download(url, limit):
                 body.extend(chunk)
                 if len(body) > limit or time.monotonic() - started > 18:
                     raise SECError('This filing exceeds the supported download size or time.')
+            finish_call(call_id)
             return bytes(body)
     except requests.RequestException:
+        finish_call(call_id, failed=True)
         raise SECError('The SEC connection was interrupted. Please try again later.') from None
+    except SECError:
+        finish_call(call_id, failed=True)
+        raise
 
 
 def fetch(url, ttl=3600, limit=24 * 1024 * 1024):

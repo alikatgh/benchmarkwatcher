@@ -44,7 +44,7 @@ def _internal_rate_limit() -> str:
 def health():
     """Liveness probe. A 200 here means create_app() succeeded and Flask is
     serving, so a monitor (or a quick curl) can tell an *app* failure apart from
-    the host's generic 500 page (see docs/DEPLOY_RECOVERY.md). Does no data
+    the host's generic 500 page. Does no data
     loading and is exempt from rate limiting so it can be polled freely."""
     return jsonify(status='ok'), 200
 
@@ -275,7 +275,8 @@ def api_commodity_detail(commodity_id):
 @bp.route('/changelog')
 def changelog():
     """Changelog page with updates and new features."""
-    return render_template('changelog.html')
+    return render_template('changelog.html',
+                           meta_description='BenchmarkWatcher release notes: SEC company research, D3 visualizations, source-linked financial tables and conversations beside your report.')
 
 
 @bp.route('/blog')
@@ -284,7 +285,7 @@ def blog():
     return render_template(
         'blog/index.html',
         meta_title='Blog | BenchmarkWatcher',
-        meta_description='Product updates and practical guides to exploring historical benchmark data with BenchmarkWatcher.',
+        meta_description='Practical guides to SEC company research, D3 charts and historical commodity benchmarks in BenchmarkWatcher.',
     )
 
 
@@ -313,6 +314,22 @@ def jev_workbook_story():
                            meta_description='Start with an Operating Income example, understand why BenchmarkWatcher uses Jev, and follow workbook calculations back to their source cells.')
 
 
+@bp.route('/blog/company-research-from-sec-filings')
+def company_research_story():
+    """A practical guide to reports built from public company filings."""
+    return render_template('blog/company_research.html',
+                           meta_title='From a ticker to the filing behind a number | BenchmarkWatcher',
+                           meta_description='Search a company, explore annual, quarterly and trailing-year financials, inspect filing sources and ask questions beside your report.')
+
+
+@bp.route('/blog/d3-charts-and-visual-explorer')
+def d3_visuals_story():
+    """Explain the chart migration and how to choose an observation view."""
+    return render_template('blog/d3_visuals.html',
+                           meta_title='More ways to read the same observations with D3 | BenchmarkWatcher',
+                           meta_description='Explore D3 histories, distributions, monthly heatmaps and coverage views, with exact values, publication gaps and source dates kept visible.')
+
+
 @bp.route('/favicon.ico')
 def favicon():
     """Serve favicon to avoid browser 404 noise in console."""
@@ -335,7 +352,8 @@ def sitemap():
     from xml.etree.ElementTree import Element, SubElement, tostring
     root = Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
     paths = ['/', '/changelog', url_for('main.blog'), url_for('main.research_workspace_story'),
-             url_for('main.help_page'), url_for('main.jev_workbook_story')]
+             url_for('main.help_page'), url_for('main.jev_workbook_story'),
+             url_for('main.company_research_story'), url_for('main.d3_visuals_story')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):

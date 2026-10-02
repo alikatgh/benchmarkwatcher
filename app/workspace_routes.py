@@ -169,6 +169,28 @@ def connections():
     return [{'provider': r['provider'], 'models': json.loads(r['models']), 'checked_at': r['checked_at']} for r in rows]
 
 
+@bp.route('/profile', methods=['GET', 'POST'])
+@limiter.limit('10 per minute', methods=['POST'])
+def profile():
+    from app.api_usage import preferences, usage_summary
+    user_id = g.workspace_user['id']
+    limits = preferences(user_id)
+    if request.method == 'POST':
+        value = request.form.get('daily_limit', '')
+        if len(value) > 2 or not value.isascii() or not value.isdigit() or not 1 <= int(value) <= limits['maximum']:
+            flash(f'Choose a request limit between 1 and {limits["maximum"]}.', 'error')
+        else:
+            with db():
+                db().execute('INSERT INTO usage_preferences VALUES (?,?,?) ON CONFLICT(user_id) DO UPDATE '
+                             'SET daily_limit=excluded.daily_limit, paused=excluded.paused',
+                             (user_id, int(value), int(request.form.get('paused') == 'yes')))
+            flash('API controls saved.', 'success')
+        return redirect(url_for('workspace.profile'))
+    period = 'all' if request.args.get('period') == 'all' else 'month'
+    return render_template('profile.html', user=g.workspace_user, csrf=session['csrf'],
+                           usage=usage_summary(user_id, period), limits=limits)
+
+
 @bp.route('/settings', methods=['GET', 'POST'])
 @limiter.limit('6 per minute', methods=['POST'])
 def settings():

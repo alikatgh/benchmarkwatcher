@@ -13,15 +13,43 @@
         </p>
     </header>
 
-    <article class="release-entry">
+    <article class="release-entry" id="profile-api-usage">
+        <time datetime="2026-10-02">October 2, 2026</time>
+        <h2>API usage and cost visibility in Profile</h2>
+        <ul>
+            <li>See requests, reported input/output tokens, provider breakdowns and estimated USD costs for this month or all recorded activity.</li>
+            <li>Provider tests and failed calls are counted. Missing usage and unknown prices are marked unavailable; earlier saved answers contribute the token counts that can be recovered.</li>
+            <li>Lower your paid AI request limit or pause new calls. Limits apply before contacting a provider and include extra explanations. There are no automatic paid retries.</li>
+            <li>SEC EDGAR access and built-in calculations have no SEC or AI charge. Estimates distinguish optional provider charges from separate hosting and domain costs.</li>
+        </ul>
+        <p class="mt-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="/workspace/profile">Open Profile</a></p>
+    </article>
+
+    <article class="release-entry" id="d3-and-integrated-chat">
+        <time datetime="2026-10-02">October 2, 2026</time>
+        <h2>D3 throughout, with conversation beside the report</h2>
+        <ul>
+            <li>All web data charts now use D3: benchmark histories, table sparklines, comparisons, category breadth, company reports and saved workbook results. Removed the unused Chart.js bundles.</li>
+            <li>The visual explorer adds distributions, cumulative views, range and quartiles, monthly averages, year-by-month heatmaps and observation coverage. Across the catalogue, explore ranked changes, a change map, category counts and publication dates.</li>
+            <li>Inspect reference histories with a pointer, touch or arrow keys. Ranges follow source observation dates, and missing values and extended gaps remain unfilled. Explorer charts include exact-value tables and PNG export.</li>
+            <li>Company chat opens beside the report on desktop. Minimize or reopen it without losing a draft; on smaller screens, switch between the report and conversation.</li>
+            <li>Compact report headings, metric summaries and chart controls bring the desktop chart into the first screen. Financial tables use shorter period headings and visibly group business disclosures by axis.</li>
+            <li>Empty statement views explain what is unavailable and offer another reporting frequency where values exist. Dashboard summaries and navigation now take less space, with consistent icons and quieter theme colors.</li>
+        </ul>
+        <p class="mt-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.d3_visuals_story') }}">Explore the D3 views</a></p>
+    </article>
+
+    <article class="release-entry" id="sec-company-research">
         <time datetime="2026-10-02">October 2, 2026</time>
         <h2>Company research from public filings</h2>
         <ul>
-            <li>Search a company ticker or name and open a private financial report from SEC disclosures. Example workbooks are now internal references; earlier saved analyses remain accessible.</li>
+            <li>Search a company ticker, name or SEC CIK and open a private financial report from public SEC disclosures. Earlier saved analyses remain accessible.</li>
             <li>Explore annual, quarterly and trailing-year financials with D3 charts, financial tables and CSV export. Select a value to inspect its exact amount, source filing and calculation method.</li>
             <li>Review supported product and geographic revenue breakdowns, banking and insurance rows, and clearly marked gaps in coverage.</li>
             <li>Ask built-in questions without an AI key, or explicitly share public filing evidence with a connected provider for optional commentary.</li>
+            <li>Reports are saved snapshots with filing dates, calculation methods and coverage notes. Quarterly cash flows can be derived from cumulative disclosures; trailing-year flows require four consecutive quarters.</li>
         </ul>
+        <p class="mt-4"><a class="text-brand-oxford dark:text-brand-teal hover:underline" href="{{ url_for('main.company_research_story') }}">Read the company research guide</a></p>
     </article>
 
     <article class="release-entry">
@@ -70,7 +98,7 @@
         <time datetime="2026-09-21">September 21, 2026 · v1.4.0</time>
         <h2>A clearer dashboard, broader public data</h2>
         <ul>
-            <li>Restored the public site on our Hetzner server with HTTPS and scheduled daily data retrieval.</li>
+            <li>Restored the public site with HTTPS and scheduled daily data retrieval.</li>
             <li>Added 14 monthly IMF series via FRED: groundnuts, oranges, Thai rice, US sugar, softwood logs, hardwood sawnwood, monthly Henry Hub gas, average spot crude, Dubai crude, monthly WTI, and four commodity indices.</li>
             <li>Expanded FRED retrieval to 20,000 observations and EIA retrieval to 5,000. Saved histories are no longer trimmed to 1,000 records. Coverage varies by source.</li>
             <li>Aligned IMF series currency and units with the source metadata, including US cents and index base years.</li>

@@ -8,7 +8,7 @@
   {% if report %}<div class="company-report-layout"><div class="company-report-main">{% endif %}
   <nav class="workspace-nav" aria-label="Company research">
     <a href="{{ url_for('workspace.home') }}">Company research</a>
-    <div><span>{{ user.username }}</span><a href="{{ url_for('workspace.settings') }}">AI settings</a><form method="post" action="{{ url_for('workspace.logout') }}">{{ token() }}<button type="submit">Sign out</button></form></div>
+    <div><a href="{{ url_for('workspace.profile') }}" aria-label="Profile for {{ user.username }}">Profile</a><a href="{{ url_for('workspace.settings') }}">AI settings</a><form method="post" action="{{ url_for('workspace.logout') }}">{{ token() }}<button type="submit">Sign out</button></form></div>
   </nav>
   {% for category, message in get_flashed_messages(with_categories=true) %}<p class="workspace-notice {{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>{% endfor %}
   {% if mode == 'company_home' %}

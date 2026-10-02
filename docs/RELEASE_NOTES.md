@@ -1,5 +1,34 @@
 # Release Notes
 
+## 2026-10-02 — SEC company research and D3 throughout
+
+### Company research
+- Search by company name, ticker or SEC CIK and save a report from supported public disclosures.
+- Explore annual, quarterly and trailing-year statements, supported business breakdowns and sector-specific rows.
+- Inspect exact values, calculation methods and filing evidence; retain source information in CSV exports.
+- Ask built-in metric questions without an AI key, or explicitly share evidence with an optional connected provider.
+- Keep conversation beside the report on desktop, with a separate conversation view on smaller screens. Drafts survive minimize/reopen and saved answers remain with the report.
+- Group business disclosures by axis and offer a useful alternative when a statement frequency has no values.
+
+### Visuals and interface
+- All web data charts use self-hosted D3, including benchmark histories, sparklines, comparison views, company/workbook results and category breadth bars. Removed the unused Chart.js bundles.
+- Added distributions, cumulative views, range/quartiles, monthly averages, heatmaps and observation coverage, plus catalogue-wide change and coverage views.
+- Preserve source dates, missing-value gaps, exact-value tables, keyboard inspection and supported chart exports.
+- Reduced oversized report headings, chart controls and dashboard summaries; refined sidebar icons and theme colors.
+
+### Guides
+- [Company research walkthrough](https://benchmarkwatcher.online/blog/company-research-from-sec-filings)
+- [D3 charts and visual explorer](https://benchmarkwatcher.online/blog/d3-charts-and-visual-explorer)
+
+### Profile and API usage
+- Added private request and token statistics, provider breakdowns and estimated USD costs to Profile.
+- Count provider connection tests and failed calls; mark missing usage and unknown prices as unavailable.
+- Recover available tokens from earlier saved answers without inventing historical costs.
+- Enforce a per-user rolling request limit at the network boundary, with controls to lower it or pause paid AI.
+- Explain free SEC access, provider billing, estimate limitations and separate hosting costs. See [API usage](API_USAGE.md).
+
+These are web application changes. They do not announce a new mobile store release.
+
 ## 2026-02-28 — Store readiness + API hardening
 
 Commit: `ba50899`
