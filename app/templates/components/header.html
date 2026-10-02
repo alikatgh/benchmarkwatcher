@@ -1,7 +1,7 @@
 <a href="#main-content" class="bw-skip-link">Skip to main content</a>
 <header class="bw-header{% if config.WORKSPACE_ENABLED %} bw-header-has-studio{% endif %}">
     <nav aria-label="Primary navigation">
-        <a href="{{ url_for('main.index') }}" class="bw-brand" aria-label="BenchmarkWatcher home"><span class="bw-brand-mark" aria-hidden="true">b<span>↗</span></span><span>Benchmark<span class="bw-brand-light">Watcher</span></span></a>
+        <a href="{{ url_for('main.index') }}" class="bw-brand" aria-label="BenchmarkWatcher home"><span class="bw-brand-mark" aria-hidden="true"><img src="{{ url_for('static', filename='images/brand-mark-white.png') }}" width="96" height="96" alt=""></span><span>Benchmark<span class="bw-brand-light">Watcher</span></span></a>
         <button type="button" class="bw-search-trigger" id="bw-search-trigger" aria-haspopup="dialog" aria-controls="bw-search-dialog"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><span>Search benchmarks &amp; research</span><kbd id="bw-search-shortcut">⌘ K</kbd></button>
         <div class="bw-header-actions">
             {% if config.WORKSPACE_ENABLED %}
