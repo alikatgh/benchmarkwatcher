@@ -1,0 +1,155 @@
+openapi: 3.0.3
+info:
+  title: BenchmarkWatcher public research API
+  version: 1.0.0
+  description: >-
+    Read-only historical SEC financials and filing provenance. No private
+    accounts, notes, workbooks, provider keys or paid AI requests. Reports use
+    shared server caches; stale reports remain explicitly marked.
+servers:
+  - url: https://benchmarkwatcher.online
+paths:
+  /api/v1/research/companies:
+    get:
+      operationId: searchCompanies
+      parameters:
+        - in: query
+          name: q
+          schema: {type: string, maxLength: 100}
+          description: Ticker, name or CIK. Fewer than two characters returns an empty list.
+      responses:
+        '200':
+          description: Company directory matches; a spelling suggestion is explicitly marked.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schema_version, companies, stale]
+                properties:
+                  schema_version: {type: integer, enum: [1]}
+                  companies:
+                    type: array
+                    items: {$ref: '#/components/schemas/Company'}
+                  stale: {type: boolean}
+        '304': {description: Cached representation unchanged}
+        '400': {$ref: '#/components/responses/Error'}
+        '429': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+  /api/v1/research/companies/{cik}:
+    get:
+      operationId: getCompanyReport
+      parameters:
+        - in: path
+          name: cik
+          required: true
+          schema: {type: string, pattern: '^[0-9]{10}$'}
+        - in: header
+          name: If-None-Match
+          schema: {type: string}
+      responses:
+        '200':
+          description: Historical report; periods do not imply forecasts or current quotes.
+          headers:
+            ETag: {schema: {type: string}}
+            Cache-Control: {schema: {type: string}}
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schema_version, report]
+                properties:
+                  schema_version: {type: integer, enum: [1]}
+                  report: {$ref: '#/components/schemas/Report'}
+        '304': {description: Cached representation unchanged}
+        '400': {$ref: '#/components/responses/Error'}
+        '429': {$ref: '#/components/responses/Error'}
+        '503': {$ref: '#/components/responses/Error'}
+components:
+  responses:
+    Error:
+      description: Invalid input, rate limit, temporary upstream failure or shared capacity limit.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error: {type: string}
+              message: {type: string}
+  schemas:
+    Company:
+      type: object
+      required: [cik, ticker, name, exchange]
+      properties:
+        cik: {type: string, pattern: '^[0-9]{10}$'}
+        ticker: {type: string}
+        name: {type: string}
+        exchange: {type: string}
+        suggested: {type: boolean}
+    Source:
+      type: object
+      required: [url, accession, form, filed]
+      properties:
+        url: {type: string, format: uri}
+        accession: {type: string}
+        form: {type: string}
+        filed: {type: string, format: date}
+        tag: {type: string}
+    Value:
+      type: object
+      required: [value, unit, end, method, sources]
+      properties:
+        value: {type: number}
+        unit: {type: string}
+        start: {type: string, format: date, nullable: true}
+        end: {type: string, format: date}
+        method: {type: string}
+        sources:
+          type: array
+          items: {$ref: '#/components/schemas/Source'}
+    Period:
+      type: object
+      required: [id, label, frequency, year, end]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        frequency: {type: string, enum: [annual, quarterly, ttm]}
+        year: {type: integer}
+        end: {type: string, format: date}
+    Metric:
+      type: object
+      required: [id, label, section, behavior, unit, values]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        section: {type: string}
+        behavior: {type: string}
+        unit: {type: string}
+        values:
+          type: object
+          description: Keyed by period ID. A missing key means unavailable, not zero.
+          additionalProperties: {$ref: '#/components/schemas/Value'}
+    Report:
+      type: object
+      required: [cik, company, ticker, exchange, industry, currency, checked, stale, version, periods, metrics, sources, gaps, basis]
+      properties:
+        cik: {type: string, pattern: '^[0-9]{10}$'}
+        company: {type: string}
+        ticker: {type: string}
+        exchange: {type: string}
+        industry: {type: string}
+        currency: {type: string}
+        checked: {type: string, format: date-time}
+        stale: {type: boolean}
+        version: {type: string}
+        periods:
+          type: array
+          items: {$ref: '#/components/schemas/Period'}
+        metrics:
+          type: array
+          items: {$ref: '#/components/schemas/Metric'}
+        sources:
+          type: array
+          items: {$ref: '#/components/schemas/Source'}
+        gaps: {type: array, items: {type: string}}
+        basis: {type: string}

@@ -11,10 +11,12 @@ from scripts.fetchers.fred import fetch_fred_series
 from scripts.fetchers.eia import fetch_eia_v2
 from scripts.fetchers.yahoo import fetch_yahoo_finance
 from scripts.fetchers.usda import fetch_usda_nass
+from scripts.fetchers.global_reference import fetch_global_reference
 
 FETCHER_REGISTRY: Dict[str, Callable[..., List[Dict[str, Any]]]] = {
     "FRED": fetch_fred_series,
     "EIA": fetch_eia_v2,
     "YAHOO": fetch_yahoo_finance,
     "USDA": fetch_usda_nass,
+    "GLOBAL_REFERENCE": fetch_global_reference,
 }

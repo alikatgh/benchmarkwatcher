@@ -352,6 +352,20 @@ def new_icon_story():
                            meta_description='Meet the new BenchmarkWatcher icon: a reference stem and three observation points, fitted for the website, browser tab and mobile app.')
 
 
+@bp.route('/blog/public-data-around-the-world')
+def global_sources_story():
+    return render_template('blog/global_sources.html',
+                           meta_title='Public data around the world | BenchmarkWatcher',
+                           meta_description='Explore official international reference series and a searchable public-source catalog, with units, periods and access conditions kept visible.')
+
+
+@bp.route('/blog/research-on-each-device')
+def native_research_story():
+    return render_template('blog/native_research.html',
+                           meta_title='Research that fits each device | BenchmarkWatcher',
+                           meta_description='A development update on the Swift Mac and iPhone apps and Kotlin Android app: historical filings, offline research and source-linked notes.')
+
+
 @bp.route('/favicon.ico')
 def favicon():
     """Serve the dedicated multi-size brand favicon."""
@@ -377,7 +391,9 @@ def sitemap():
              url_for('main.help_page'), url_for('main.support_page'), url_for('main.privacy_page'),
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
-             url_for('main.new_icon_story')]
+             url_for('main.new_icon_story'), url_for('main.global_sources_story'),
+             url_for('main.native_research_story'), url_for('global_reference.index'),
+             url_for('global_reference.sources')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):

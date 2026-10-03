@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <header class="mb-6">
+        <p class="text-sm mb-4"><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">Research that fits each device</h1>
+        <p class="leading-relaxed mb-4">The native apps are being built around company research: find a company, inspect a historical figure, follow the filing evidence, and keep a note for later.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-03">October 3, 2026</time> · Development update</p>
+    </header>
+    <section class="release-entry">
+        <h2>One research flow, three interfaces</h2>
+        <p>Mac uses a sidebar, financial tables, a source inspector and separate comparison windows. Keyboard actions keep search, refresh and notes close to the work. iPhone uses tab navigation, reporting-period lists and source sheets. Android uses Kotlin and Material controls, with a list-and-detail layout when the window has enough room.</p>
+        <p>The Apple targets use Swift and SwiftUI. The Android target uses Kotlin and Jetpack Compose. The same historical financial contract supplies periods, units, calculation methods and SEC filing links.</p>
+    </section>
+    <section class="release-entry">
+        <h2>Research saved on the device</h2>
+        <p>Reports and notes are stored locally for offline reading. A note keeps the selected metric, period, report version and filing sources. Refresh is explicit, and newly reported or revised values are compared with a saved review baseline. A missing value remains unavailable; a reported zero remains a value.</p>
+        <p>The public research API returns financial disclosures and provenance. It does not return private web accounts or workbooks, and it makes no paid AI calls. Local research does not automatically sync into a web account.</p>
+    </section>
+    <section class="release-entry">
+        <h2>Current availability</h2>
+        <p>These are development targets in the open-source repository. They are not available in the App Store or Google Play. The Mac preview has been exercised with synthetic data; iPhone code has passed source compilation checks. Full Android and phone-device validation remain pending.</p>
+        <p>Widgets, notification delivery, share extensions, cloud sync and provider chat are outside this first increment. The website remains available while native development continues.</p>
+        <p class="mt-4"><a href="https://github.com/alikatgh/benchmarkwatcher/tree/main/native" target="_blank" rel="noopener noreferrer">Read the native development guide →</a></p>
+    </section>
+</article>
+{% endblock %}

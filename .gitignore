@@ -60,6 +60,7 @@ DEPLOYMENT.internal.md
 
 # Data files (generated, not source)
 data/*.json
+data/global-reference/
 !data/.gitkeep
 
 # IDE

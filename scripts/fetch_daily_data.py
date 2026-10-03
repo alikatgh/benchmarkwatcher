@@ -14,6 +14,7 @@ import os
 import sys
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -27,6 +28,8 @@ if PROJECT_ROOT not in sys.path:
 load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
 
 from scripts.fetchers import FETCHER_REGISTRY
+from scripts.fetchers.global_reference import OfficialClient
+from scripts.global_sources import load_series
 from scripts.fetchers._shared import (
     merge_history,
     compute_metrics,
@@ -52,11 +55,21 @@ CONFIG_PATH = os.path.join(SCRIPT_DIR, 'commodities.json')
 
 
 def load_config() -> List[Dict[str, Any]]:
-    """Load commodity configuration from commodities.json."""
+    """Load commodities and enabled official commodity indices only."""
     with open(CONFIG_PATH, 'r') as f:
         config = json.load(f)
+    existing_ids = {commodity['id'] for commodity in config}
+    config.extend(series for series in load_series()
+                  if series.get('enabled') is True and series.get('reference_type') == 'commodity_index'
+                  and series['id'] not in existing_ids)
     logger.info(f"Loaded {len(config)} commodities from {os.path.basename(CONFIG_PATH)}")
     return config
+
+
+def load_reference_config() -> List[Dict[str, Any]]:
+    """FX/statistics/retail references are separate from commodity storage."""
+    return [series for series in load_series() if series.get('enabled') is True
+            and series.get('reference_type') != 'commodity_index']
 
 
 def _fetch_fred(fetcher: Callable[..., List[Dict[str, Any]]], conf: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
@@ -93,7 +106,8 @@ FETCH_ADAPTERS: Dict[
 }
 
 
-def fetch_new_data(commodity: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+def fetch_new_data(commodity: Dict[str, Any],
+                   client: Optional[OfficialClient] = None) -> Optional[List[Dict[str, Any]]]:
     """Dispatch to the appropriate fetcher based on source_type."""
     source_type = commodity.get('source_type', '')
     conf = commodity.get('api_config', {})
@@ -103,17 +117,38 @@ def fetch_new_data(commodity: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
         logger.warning(f"  No fetcher for source_type '{source_type}'")
         return None
 
+    if source_type == 'GLOBAL_REFERENCE':
+        return fetcher(client=client, **conf)
+
     adapter = FETCH_ADAPTERS.get(source_type, _fetch_default)
     return adapter(fetcher, conf)
 
 
-def update_commodity(commodity: Dict[str, Any]) -> bool:
+def _merge_reference_history(existing: Dict[str, Any], new_data: List[Dict[str, Any]],
+                             checked_at: str) -> tuple:
+    """Retain the archive and record superseded source values or flags."""
+    previous = {point['date']: point for point in existing.get('history', []) if point.get('date')}
+    revisions = list(existing.get('revisions', []))
+    for point in new_data:
+        old = previous.get(point.get('date'))
+        if old is not None and any(old.get(key) != point.get(key) for key in ('price', 'period', 'status')):
+            revisions.append({'date': point['date'], 'previous': dict(old), 'replacement': dict(point),
+                              'previous_fetched_at': existing.get('fetched_at'), 'checked_at': checked_at})
+    return merge_history(existing.get('history', []), new_data), revisions
+
+
+def update_commodity(commodity: Dict[str, Any],
+                     client: Optional[OfficialClient] = None) -> bool:
     """Orchestrates the update process for a single commodity. Returns True on success."""
     logger.info(f"Updating {commodity['name']}...")
 
     # 1. Load Existing
-    filepath = os.path.join(DATA_DIR, f"{commodity['id']}.json")
+    is_global = commodity.get('source_type') == 'GLOBAL_REFERENCE'
+    directory = (os.path.join(DATA_DIR, 'global-reference') if is_global and
+                 commodity.get('reference_type') != 'commodity_index' else DATA_DIR)
+    filepath = os.path.join(directory, f"{commodity['id']}.json")
     existing_history = []
+    data = {}
     if os.path.exists(filepath):
         try:
             with open(filepath, 'r') as f:
@@ -123,10 +158,12 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
                     existing_history = data.get('history', [])
         except (json.JSONDecodeError, IOError) as e:
             logger.warning(f"  Could not read existing data for {commodity['name']}: {e}")
+            if is_global:
+                return False  # Never replace an unreadable reference archive.
             # Continue with empty history — new fetch will start fresh
 
     # 2. Fetch New Data
-    new_data = fetch_new_data(commodity)
+    new_data = fetch_new_data(commodity, client=client) if client is not None else fetch_new_data(commodity)
 
     if not new_data:
         logger.warning(f"  FAILED: No data fetched for {commodity['name']}")
@@ -134,7 +171,12 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
 
     # 3. Merge & Process
     conf = commodity.get('api_config', {})
-    history = merge_history(existing_history, new_data)
+    checked_at = datetime.now(timezone.utc).isoformat()
+    revisions = None
+    if is_global:
+        history, revisions = _merge_reference_history(data, new_data, checked_at)
+    else:
+        history = merge_history(existing_history, new_data)
     metrics = compute_metrics(history)
 
     # 4. Construct Record — config-derived fields, then shared builder sets the
@@ -146,19 +188,31 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
         "currency": commodity.get("currency", "USD"),
         "unit": commodity['unit'],
         "source_name": commodity.get('source_name', commodity['source_type']),
-        "source_url": conf.get('source_info_url', ''),
+        "source_url": commodity.get('source_url', conf.get('source_info_url', '')),
         "source_type": commodity['source_type'],
-        "source_class": (
+        "source_class": commodity.get('source_class') or (
             "official_benchmark"
             if commodity['source_type'] in ("FRED", "EIA", "USDA")
             else "public_market_reference"
         ),
         "simulated": False,
     }
+    if is_global:
+        config_fields.update({key: commodity[key] for key in
+                              ('kind', 'reference_type', 'countries', 'frequency', 'date_semantics',
+                               'attribution', 'source_id')})
+        config_fields.update({'period': history[-1].get('period', history[-1]['date']),
+                              'fetched_at': checked_at, 'revisions': revisions,
+                              'calculations_note': 'Descriptive changes are calculated by BenchmarkWatcher; source observations are unchanged.'})
+        if 'status' in history[-1]:
+            config_fields['status'] = history[-1]['status']
+        else:
+            data.pop('status', None)
     record = build_commodity_record(
-        {}, history, metrics, overrides=config_fields
+        data, history, metrics, overrides=config_fields
     )
 
+    os.makedirs(directory, exist_ok=True)
     if save_atomic(filepath, record):
         logger.info(f"  Success: {len(history)} records saved.")
         return True
@@ -168,25 +222,34 @@ def update_commodity(commodity: Dict[str, Any]) -> bool:
 
 
 def main():
-    """Main entry point. Loads config and updates all commodities."""
+    """Update commodities and isolated global references with a shared budget."""
     os.makedirs(DATA_DIR, exist_ok=True)
 
     config = load_config()
+    references = load_reference_config()
 
     success = 0
     fail = 0
-    for commodity in config:
-        try:
-            if update_commodity(commodity):
-                success += 1
-            else:
+    client = OfficialClient(max_requests=20)
+    try:
+        for commodity in config + references:
+            try:
+                result = (update_commodity(commodity, client=client)
+                          if commodity.get('source_type') == 'GLOBAL_REFERENCE'
+                          else update_commodity(commodity))
+                if result:
+                    success += 1
+                else:
+                    fail += 1
+            except Exception as e:
+                logger.error(f"  Exception updating {commodity.get('name', '?')}: {e}")
                 fail += 1
-        except Exception as e:
-            logger.error(f"  Exception updating {commodity.get('name', '?')}: {e}")
-            fail += 1
+    finally:
+        client.close()
 
     logger.info(f"\n{'=' * 50}")
-    logger.info(f"Fetch complete: {success} success, {fail} failed, {len(config)} total")
+    logger.info(f"Fetch complete: {success} success, {fail} failed, {len(config)} commodities, {len(references)} global references")
+    logger.info(f"Global official requests: {client.request_count}/20; no automatic retries")
     logger.info(f"{'=' * 50}")
 
 

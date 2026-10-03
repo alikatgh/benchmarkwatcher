@@ -1,0 +1,1182 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-10-03",
+  "scope": "Official public reference, commodity, and country statistics; catalogued is not connected.",
+  "sources": [
+    {
+      "id": "ecb",
+      "name": "European Central Bank",
+      "region": "Europe",
+      "countries": [
+        "euro_area",
+        "reference_currencies"
+      ],
+      "categories": [
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "SDMX 2.1 / CSV",
+      "api_base_url": "https://data-api.ecb.europa.eu/service/",
+      "documentation_url": "https://data.ecb.europa.eu/help/api/data",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://data.ecb.europa.eu/help/api/data"
+      },
+      "reuse": {
+        "summary": "Public ESCB statistics: acknowledge source, preserve source values and metadata, label calculations separately. Third-party data excluded.",
+        "terms_url": "https://www.ecb.europa.eu/stats/ecb_statistics/governance_and_quality_framework/html/usage_policy.en.html",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "adapter_ready",
+      "adapter": "ecb",
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Only daily ECB EUR exchange references connected; indicative reference rates, not executable trading prices."
+      ]
+    },
+    {
+      "id": "bank_canada",
+      "name": "Bank of Canada",
+      "region": "North America",
+      "countries": [
+        "CA",
+        "reference_currencies"
+      ],
+      "categories": [
+        "commodity_indices",
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "REST JSON / CSV",
+      "api_base_url": "https://www.bankofcanada.ca/valet/",
+      "documentation_url": "https://www.bankofcanada.ca/valet-api-how-to/",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.bankofcanada.ca/valet-api-how-to/"
+      },
+      "reuse": {
+        "summary": "Attribute Bank of Canada, note changes, preserve accuracy; paid redistribution must disclose that originals are free. Third-party rights remain.",
+        "terms_url": "https://www.bankofcanada.ca/terms/",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "adapter_ready",
+      "adapter": "bank_canada",
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Canadian commodity price indices and indicative FX available; underlying third-party commodity prices are not independently republished."
+      ]
+    },
+    {
+      "id": "eurostat",
+      "name": "Eurostat",
+      "region": "Europe",
+      "countries": [
+        "EU",
+        "EFTA",
+        "candidate_countries"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "agriculture",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON-stat / SDMX",
+      "api_base_url": "https://ec.europa.eu/eurostat/api/dissemination/",
+      "documentation_url": "https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction"
+      },
+      "reuse": {
+        "summary": "Attribute dataset and access date; dataset exceptions apply. Non-EU/EFTA/candidate country data and some trade data have commercial reuse restrictions.",
+        "terms_url": "https://ec.europa.eu/eurostat/help/copyright-notice",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "adapter_ready",
+      "adapter": "eurostat",
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Connected HICP uses ECOICOP 2 prc_hicp_minr/coicop18 TOTAL, not archived 1997–2025 prc_hicp_manr. Initial configured countries are Germany and France."
+      ]
+    },
+    {
+      "id": "worldbank",
+      "name": "World Bank Indicators",
+      "region": "Global",
+      "countries": [
+        "worldwide_economies"
+      ],
+      "categories": [
+        "agriculture",
+        "energy",
+        "trade",
+        "inflation",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.worldbank.org/v2/",
+      "documentation_url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392"
+      },
+      "reuse": {
+        "summary": "CC BY 4.0 unless indicator metadata states otherwise; preserve original provider and examine third-party conditions before enabling each series.",
+        "terms_url": "https://data.worldbank.org/summary-terms-of-use",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "adapter_ready",
+      "adapter": "worldbank",
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Discovery imports country and indicator metadata. Each available country/indicator combination is not an independently verified data series."
+      ]
+    },
+    {
+      "id": "malaysia",
+      "name": "Malaysia Ministry of Finance / data.gov.my",
+      "region": "Asia",
+      "countries": [
+        "MY"
+      ],
+      "categories": [
+        "energy",
+        "retail_fuel",
+        "macro"
+      ],
+      "protocol": "REST JSON / CSV",
+      "api_base_url": "https://api.data.gov.my/",
+      "documentation_url": "https://data.gov.my/data-catalogue/fuelprice",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://data.gov.my/data-catalogue/fuelprice"
+      },
+      "reuse": {
+        "summary": "Fuel-price dataset CC BY 4.0; credit Ministry of Finance and data.gov.my, retain product and region.",
+        "terms_url": "https://data.gov.my/data-catalogue/fuelprice",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": "Data Catalogue API: 4 requests per minute. Static published CSV used for fuel series.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "adapter_ready",
+      "adapter": "malaysia",
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Administered retail fuel prices in MYR per litre; not interchangeable with crude benchmarks or wholesale spot prices."
+      ]
+    },
+    {
+      "id": "imf_datamapper",
+      "name": "IMF DataMapper",
+      "region": "Global",
+      "countries": [
+        "worldwide_economies"
+      ],
+      "categories": [
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://www.imf.org/external/datamapper/api/v2/",
+      "documentation_url": "https://www.imf.org/external/datamapper/api/help",
+      "access": {
+        "cost_status": "public_access_verified",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.imf.org/external/datamapper/api/help"
+      },
+      "reuse": {
+        "summary": "Terms and individual datasets require review; catalog discovery only, no observations enabled.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "DataMapper documentation identifies v2. Economic series may contain estimates and forecasts; they are excluded from historical benchmarks."
+      ]
+    },
+    {
+      "id": "oecd",
+      "name": "OECD Data Explorer",
+      "region": "Global",
+      "countries": [
+        "OECD",
+        "partner_economies"
+      ],
+      "categories": [
+        "agriculture",
+        "energy",
+        "trade",
+        "macro"
+      ],
+      "protocol": "SDMX REST",
+      "api_base_url": "https://sdmx.oecd.org/public/rest/v1/",
+      "documentation_url": "https://www.oecd.org/en/data/insights/data-explainers/2024/09/api.html",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.oecd.org/en/data/insights/data-explainers/2024/09/api.html"
+      },
+      "reuse": {
+        "summary": "Dataset and OECD terms must be reviewed before redistribution.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": "60 data downloads/hour; VPN/anonymised traffic not allowed.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Query restrictions apply to very large datasets; no adapter or scraping enabled."
+      ]
+    },
+    {
+      "id": "faostat",
+      "name": "FAO FAOSTAT",
+      "region": "Global",
+      "countries": [
+        "245_plus_countries_and_territories"
+      ],
+      "categories": [
+        "agriculture",
+        "food",
+        "forestry",
+        "production",
+        "trade"
+      ],
+      "protocol": "REST JSON / CSV",
+      "api_base_url": "https://fenixservices.fao.org/faostat/api/v1/",
+      "documentation_url": "https://www.fao.org/statistics/highlights-archive/highlights-detail/faostat-launches-a-new-api-developer-portal-to-make-data-access-easier/en",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "not_verified",
+        "billing_enabled": false,
+        "evidence_url": "https://www.fao.org/statistics/highlights-archive/highlights-detail/faostat-launches-a-new-api-developer-portal-to-make-data-access-easier/en"
+      },
+      "reuse": {
+        "summary": "Generally CC BY 4.0 with FAO attribution, no endorsement or promotion; dataset-specific third-party conditions apply.",
+        "terms_url": "https://www.fao.org/contact-us/terms/db-terms-of-use/en",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "2026 developer portal should be used to confirm current API paths before implementing; old domain routes not assumed stable."
+      ]
+    },
+    {
+      "id": "un_comtrade",
+      "name": "UN Comtrade",
+      "region": "Global",
+      "countries": [
+        "worldwide_reporters"
+      ],
+      "categories": [
+        "trade",
+        "commodity_trade"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://comtradeapi.un.org/",
+      "documentation_url": "https://comtradeplus.un.org/Subscriptions",
+      "access": {
+        "cost_status": "free_tier_with_paid_options",
+        "authentication": "registered_api_key",
+        "billing_enabled": false,
+        "evidence_url": "https://comtradeplus.un.org/Subscriptions"
+      },
+      "reuse": {
+        "summary": "Redistribution conditions require separate data-disclaimer review; public API access does not establish a redistribution licence.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": "Free registered plan: 500 calls/day, 1 call/second, up to 100,000 records/call.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "needs_registration",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Paid bulk/async and premium subscriptions explicitly excluded. No account or payment setup performed."
+      ]
+    },
+    {
+      "id": "ons",
+      "name": "Office for National Statistics",
+      "region": "Europe",
+      "countries": [
+        "GB"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.beta.ons.gov.uk/v1",
+      "documentation_url": "https://developer.ons.gov.uk/",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://developer.ons.gov.uk/"
+      },
+      "reuse": {
+        "summary": "Use Open Government Licence with source attribution; inspect individual datasets and third-party exclusions.",
+        "terms_url": "https://www.ons.gov.uk/help/termsandconditions",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "API remains beta; breaking changes and dataset coverage must be checked."
+      ]
+    },
+    {
+      "id": "abs",
+      "name": "Australian Bureau of Statistics",
+      "region": "Oceania",
+      "countries": [
+        "AU"
+      ],
+      "categories": [
+        "inflation",
+        "agriculture",
+        "energy",
+        "trade",
+        "macro"
+      ],
+      "protocol": "SDMX 2.1 / CSV / JSON",
+      "api_base_url": "https://data.api.abs.gov.au/rest/",
+      "documentation_url": "https://www.abs.gov.au/statistics/application-programming-interfaces-apis/data-api-user-guide",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.abs.gov.au/statistics/application-programming-interfaces-apis/data-api-user-guide"
+      },
+      "reuse": {
+        "summary": "ABS licence and dataset metadata must be reviewed before redistribution.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "API keys removed in November 2024. API beta can lag the latest ABS website data; no adapter enabled."
+      ]
+    },
+    {
+      "id": "estat_japan",
+      "name": "Japan e-Stat",
+      "region": "Asia",
+      "countries": [
+        "JP"
+      ],
+      "categories": [
+        "inflation",
+        "agriculture",
+        "energy",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON / XML",
+      "api_base_url": "https://api.e-stat.go.jp/rest/3.0/",
+      "documentation_url": "https://www.e-stat.go.jp/api/en/api-info/api-guide",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "registered_application_id",
+        "billing_enabled": false,
+        "evidence_url": "https://www.e-stat.go.jp/api/en/api-info/api-guide"
+      },
+      "reuse": {
+        "summary": "API credit required; application ID must not be transferred; individual statistics reuse conditions apply.",
+        "terms_url": "https://www.e-stat.go.jp/api/en/terms-of-use",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "needs_registration",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "No registration attempted. Documented API access requires an account and application ID."
+      ]
+    },
+    {
+      "id": "kosis",
+      "name": "Korea KOSIS",
+      "region": "Asia",
+      "countries": [
+        "KR"
+      ],
+      "categories": [
+        "inflation",
+        "agriculture",
+        "energy",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON / SDMX",
+      "api_base_url": "https://kosis.kr/openapi/",
+      "documentation_url": "https://kosis.kr/openapi/devGuide/devGuide_0101List.do",
+      "access": {
+        "cost_status": "cost_not_verified",
+        "authentication": "registered_api_key",
+        "billing_enabled": false,
+        "evidence_url": "https://kosis.kr/openapi/devGuide/devGuide_0101List.do"
+      },
+      "reuse": {
+        "summary": "Dataset licence and API terms require review.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": "Current notices include per-minute rate limits; numeric quota not verified.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "access_review",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Official July 2026 response says overseas users still face Korean identity requirements; not enabled.",
+        "https://kosis.kr/eng/bulletinBoard/qnaView.do?boardIdx=340093"
+      ]
+    },
+    {
+      "id": "bok_ecos",
+      "name": "Bank of Korea ECOS",
+      "region": "Asia",
+      "countries": [
+        "KR"
+      ],
+      "categories": [
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "REST JSON / XML",
+      "api_base_url": "https://ecos.bok.or.kr/api/",
+      "documentation_url": "https://www.bok.or.kr/static/view/popup/200235_popup9.html",
+      "access": {
+        "cost_status": "cost_not_verified",
+        "authentication": "registered_api_key",
+        "billing_enabled": false,
+        "evidence_url": "https://www.bok.or.kr/static/view/popup/200235_popup9.html"
+      },
+      "reuse": {
+        "summary": "Official registration/privacy evidence found; API usage and redistribution terms require further verification.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "access_review",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": []
+    },
+    {
+      "id": "india_ogd",
+      "name": "India Open Government Data",
+      "region": "Asia",
+      "countries": [
+        "IN"
+      ],
+      "categories": [
+        "agriculture",
+        "food_prices",
+        "energy",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.data.gov.in/",
+      "documentation_url": "https://www.data.gov.in/",
+      "access": {
+        "cost_status": "cost_not_verified",
+        "authentication": "registered_api_key",
+        "billing_enabled": false,
+        "evidence_url": "https://www.data.gov.in/"
+      },
+      "reuse": {
+        "summary": "Government Open Data Licence India: royalty-free reuse with provider/source/licence attribution, subject to exclusions.",
+        "terms_url": "https://www.data.gov.in/sites/default/files/Gazette_Notification_OGDL.pdf",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "needs_registration",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Only API-enabled public resources qualify; not all portal datasets have API endpoints. No key acquired."
+      ]
+    },
+    {
+      "id": "bcb_sgs",
+      "name": "Banco Central do Brasil SGS",
+      "region": "South America",
+      "countries": [
+        "BR"
+      ],
+      "categories": [
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.bcb.gov.br/dados/serie/",
+      "documentation_url": "https://dadosabertos.bcb.gov.br/dataset/432-taxa-de-juros---meta-selic-definida-pelo-copom",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://dadosabertos.bcb.gov.br/dataset/432-taxa-de-juros---meta-selic-definida-pelo-copom"
+      },
+      "reuse": {
+        "summary": "Open Data Commons ODbL is shown on SGS dataset resources; inspect selected dataset attribution/share-alike terms.",
+        "terms_url": "https://dadosabertos.bcb.gov.br/dataset/432-taxa-de-juros---meta-selic-definida-pelo-copom",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Live request failed in this environment; not labelled connected. Daily queries may require bounded date ranges; verify current limits before enabling."
+      ]
+    },
+    {
+      "id": "banxico",
+      "name": "Banco de México",
+      "region": "North America",
+      "countries": [
+        "MX"
+      ],
+      "categories": [
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://www.banxico.org.mx/SieAPIRest/service/v1/",
+      "documentation_url": "https://www.banxico.org.mx/SieAPIRest/service/v1/",
+      "access": {
+        "cost_status": "cost_not_verified",
+        "authentication": "registered_token",
+        "billing_enabled": false,
+        "evidence_url": "https://www.banxico.org.mx/SieAPIRest/service/v1/"
+      },
+      "reuse": {
+        "summary": "SIE terms and redistribution licence require verification.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "needs_registration",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "SIE token and series catalog must be confirmed on official documentation before enabling. No token requested."
+      ]
+    },
+    {
+      "id": "stats_canada",
+      "name": "Statistics Canada WDS",
+      "region": "North America",
+      "countries": [
+        "CA"
+      ],
+      "categories": [
+        "agriculture",
+        "energy",
+        "inflation",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://www150.statcan.gc.ca/t1/wds/rest/",
+      "documentation_url": "https://www.statcan.gc.ca/en/developers/wds/user-guide",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.statcan.gc.ca/en/developers/wds/user-guide"
+      },
+      "reuse": {
+        "summary": "Statistics Canada Open Licence and individual table restrictions require review.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": "Server 50 requests/second, IP 25 requests/second; bounded methods preferred over large updates.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Tables can return 409 during overnight publication preparation."
+      ]
+    },
+    {
+      "id": "insee",
+      "name": "France INSEE BDM",
+      "region": "Europe",
+      "countries": [
+        "FR"
+      ],
+      "categories": [
+        "inflation",
+        "production",
+        "trade",
+        "macro"
+      ],
+      "protocol": "SDMX 2.1",
+      "api_base_url": "https://bdm.insee.fr/series/sdmx/",
+      "documentation_url": "https://www.insee.fr/en/information/2868055",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "portal_subscription_may_apply",
+        "billing_enabled": false,
+        "evidence_url": "https://www.insee.fr/en/information/2868055"
+      },
+      "reuse": {
+        "summary": "Dataset/open-licence and current API portal requirements must be checked.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": "Up to 400 idbank series/query is documented.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "October 2026 docs show evolving API catalogue. Verify current entry point/auth rather than assuming older no-key service."
+      ]
+    },
+    {
+      "id": "scb",
+      "name": "Statistics Sweden",
+      "region": "Europe",
+      "countries": [
+        "SE"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "agriculture",
+        "trade",
+        "macro"
+      ],
+      "protocol": "PxWeb JSON-stat",
+      "api_base_url": "https://api.scb.se/",
+      "documentation_url": "https://www.scb.se/en/services/open-data-api/",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.scb.se/en/services/open-data-api/"
+      },
+      "reuse": {
+        "summary": "SCB data CC0; other agencies in database need source attribution; no partnership/endorsement claim.",
+        "terms_url": "https://www.scb.se/en/services/open-data-api/",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": "Maximum 10 requests per 10 seconds per IP.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": []
+    },
+    {
+      "id": "statistics_finland",
+      "name": "Statistics Finland",
+      "region": "Europe",
+      "countries": [
+        "FI"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "agriculture",
+        "trade",
+        "macro"
+      ],
+      "protocol": "PxWeb JSON-stat",
+      "api_base_url": "https://pxdata.stat.fi/PXWeb/api/v1/en/",
+      "documentation_url": "https://stat.fi/media/uploads/org_en/avoindata/px-web_api-help.pdf",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://stat.fi/media/uploads/org_en/avoindata/px-web_api-help.pdf"
+      },
+      "reuse": {
+        "summary": "StatFin terms and third-party/international tables require separate review.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": "Limits discoverable at the PxWeb root; numeric quota not verified.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": []
+    },
+    {
+      "id": "statistics_denmark",
+      "name": "Statistics Denmark",
+      "region": "Europe",
+      "countries": [
+        "DK"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "agriculture",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON / CSV",
+      "api_base_url": "https://api.statbank.dk/v1/",
+      "documentation_url": "https://www.dst.dk/en/Statistik/hjaelp-til-statistikbanken/api",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none_for_statistics",
+        "billing_enabled": false,
+        "evidence_url": "https://www.dst.dk/en/Statistik/hjaelp-til-statistikbanken/api"
+      },
+      "reuse": {
+        "summary": "CC BY 4.0 equivalent: source reference required. Paid StatHost product is separate.",
+        "terms_url": "https://www.dst.dk/en/presse/kildeangivelse",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": "Non-bulk query cap 1,000,000 cells.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "DCAT catalogue feature has an API key; ordinary statistics API does not imply all functions are keyless."
+      ]
+    },
+    {
+      "id": "statistics_norway",
+      "name": "Statistics Norway",
+      "region": "Europe",
+      "countries": [
+        "NO"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "agriculture",
+        "trade",
+        "macro"
+      ],
+      "protocol": "PxWebAPI v2 JSON-stat",
+      "api_base_url": "https://data.ssb.no/api/pxwebapi/v2/",
+      "documentation_url": "https://www.ssb.no/en/omssb/ssb-nyheter/api-for-the-statbank-norway",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.ssb.no/en/omssb/ssb-nyheter/api-for-the-statbank-norway"
+      },
+      "reuse": {
+        "summary": "Statistics and API licence must be verified separately from Klass metadata licence.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "v2 launched in 2025; root and quota should be confirmed before implementing."
+      ]
+    },
+    {
+      "id": "bcra",
+      "name": "Banco Central de la República Argentina",
+      "region": "South America",
+      "countries": [
+        "AR"
+      ],
+      "categories": [
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.bcra.gob.ar/",
+      "documentation_url": "https://www.bcra.gob.ar/noticias/nuevo-impulso-a-la-transparencia-financiera-el-bcra-lanza-la-api-de-estadisticas-cambiarias/",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "not_verified",
+        "billing_enabled": false,
+        "evidence_url": "https://www.bcra.gob.ar/noticias/nuevo-impulso-a-la-transparencia-financiera-el-bcra-lanza-la-api-de-estadisticas-cambiarias/"
+      },
+      "reuse": {
+        "summary": "Redistribution terms and selected series methodology require review.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": []
+    },
+    {
+      "id": "bcentral_chile",
+      "name": "Central Bank of Chile BDE",
+      "region": "South America",
+      "countries": [
+        "CL"
+      ],
+      "categories": [
+        "fx",
+        "rates",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://si3.bcentral.cl/",
+      "documentation_url": "https://si3.bcentral.cl/estadisticas/Principal1/Web_Services/ayuda_soporte_en.html",
+      "access": {
+        "cost_status": "free_registered",
+        "authentication": "account_and_api_token",
+        "billing_enabled": false,
+        "evidence_url": "https://si3.bcentral.cl/estadisticas/Principal1/Web_Services/ayuda_soporte_en.html"
+      },
+      "reuse": {
+        "summary": "Credit central bank or original source; transformations identified as user calculations.",
+        "terms_url": "https://si3.bcentral.cl/estadisticas/Principal1/Web_Services/Webservices/Terms%20of%20use%20API_EN.pdf",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": "Documented terms: maximum 5 series queries/second per account; verify current token rules.",
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "needs_registration",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": []
+    },
+    {
+      "id": "bps_indonesia",
+      "name": "Statistics Indonesia BPS",
+      "region": "Asia",
+      "countries": [
+        "ID"
+      ],
+      "categories": [
+        "agriculture",
+        "energy",
+        "inflation",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://webapi.bps.go.id/",
+      "documentation_url": "https://ppid.bps.go.id/app/konten/0000/Layanan-BPS.html",
+      "access": {
+        "cost_status": "free_registered",
+        "authentication": "registered_api_key",
+        "billing_enabled": false,
+        "evidence_url": "https://ppid.bps.go.id/app/konten/0000/Layanan-BPS.html"
+      },
+      "reuse": {
+        "summary": "Public aggregate statistics may be quoted with source attribution; terms apply. Microdata/other products may be paid.",
+        "terms_url": "https://ppid.bps.go.id/app/konten/0000/Layanan-BPS.html",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "needs_registration",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": []
+    },
+    {
+      "id": "singstat",
+      "name": "Singapore Department of Statistics",
+      "region": "Asia",
+      "countries": [
+        "SG"
+      ],
+      "categories": [
+        "food",
+        "production",
+        "inflation",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST JSON / CSV",
+      "api_base_url": "https://tablebuilder.singstat.gov.sg/api/",
+      "documentation_url": "https://tablebuilder.singstat.gov.sg/view-api/find-apis",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "not_verified",
+        "billing_enabled": false,
+        "evidence_url": "https://tablebuilder.singstat.gov.sg/view-api/find-apis"
+      },
+      "reuse": {
+        "summary": "API terms and selected table licence require review.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Official page listed 480 API tables when checked; not 480 connected integrations."
+      ]
+    },
+    {
+      "id": "israel_cbs",
+      "name": "Israel Central Bureau of Statistics",
+      "region": "Middle East",
+      "countries": [
+        "IL"
+      ],
+      "categories": [
+        "inflation",
+        "energy",
+        "agriculture",
+        "trade",
+        "macro"
+      ],
+      "protocol": "REST / SDMX",
+      "api_base_url": "https://api.cbs.gov.il/",
+      "documentation_url": "https://www.cbs.gov.il/en/cbsNewBrand/Pages/API-interface.aspx",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "none_documented",
+        "billing_enabled": false,
+        "evidence_url": "https://www.cbs.gov.il/en/cbsNewBrand/Pages/API-interface.aspx"
+      },
+      "reuse": {
+        "summary": "API documentation is public; price-series reuse conditions require review.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "User-Agent mandatory on requests."
+      ]
+    },
+    {
+      "id": "uae_stat",
+      "name": "UAE Federal Competitiveness and Statistics Centre",
+      "region": "Middle East",
+      "countries": [
+        "AE"
+      ],
+      "categories": [
+        "energy",
+        "water",
+        "inflation",
+        "trade",
+        "macro"
+      ],
+      "protocol": "SDMX REST",
+      "api_base_url": "https://releaseeuaestat.fcsc.gov.ae/rest/",
+      "documentation_url": "https://uaestat.fcsc.gov.ae/vis?df%5Bag%5D=FCSA&df%5Bds%5D=FCSC-RDS&df%5Bid%5D=DF_PW_QUANTITY_DESL_WATER&df%5Bvs%5D=5.7.0&pg=0&snb=37&tm=water",
+      "access": {
+        "cost_status": "public_access_documented_cost_not_verified",
+        "authentication": "not_verified",
+        "billing_enabled": false,
+        "evidence_url": "https://uaestat.fcsc.gov.ae/vis?df%5Bag%5D=FCSA&df%5Bds%5D=FCSC-RDS&df%5Bid%5D=DF_PW_QUANTITY_DESL_WATER&df%5Bvs%5D=5.7.0&pg=0&snb=37&tm=water"
+      },
+      "reuse": {
+        "summary": "Dataset reuse licence not verified; catalogue only.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "access_review",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Use current public developer-query links. Internal/test SDMX hosts surfaced by search are deliberately excluded."
+      ]
+    },
+    {
+      "id": "afdb",
+      "name": "African Development Bank data platform",
+      "region": "Africa",
+      "countries": [
+        "African_economies"
+      ],
+      "categories": [
+        "macro",
+        "agriculture",
+        "energy",
+        "trade"
+      ],
+      "protocol": "SDMX REST",
+      "api_base_url": "https://datamanager.afdb.org/ws/nsi_ws/rest/",
+      "documentation_url": "https://datamanager.afdb.org/ws/nsi_ws",
+      "access": {
+        "cost_status": "access_not_verified",
+        "authentication": "not_verified",
+        "billing_enabled": false,
+        "evidence_url": "https://datamanager.afdb.org/ws/nsi_ws"
+      },
+      "reuse": {
+        "summary": "Free platform policy exists, but selected endpoint external access and redistribution require verification.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "access_review",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Endpoint diagnostics warn external usability may be false; not connected. Worldwide World Bank coverage remains a separate available source."
+      ]
+    },
+    {
+      "id": "statssa",
+      "name": "Statistics South Africa",
+      "region": "Africa",
+      "countries": [
+        "ZA"
+      ],
+      "categories": [
+        "macro",
+        "energy",
+        "agriculture",
+        "inflation"
+      ],
+      "protocol": "SuperWEB2 / SDMX",
+      "api_base_url": "https://superweb.statssa.gov.za/webapi/",
+      "documentation_url": "https://superweb.statssa.gov.za/webapi/online-help/Download-Tables---SuperWEB2.html",
+      "access": {
+        "cost_status": "access_not_verified",
+        "authentication": "not_verified",
+        "billing_enabled": false,
+        "evidence_url": "https://superweb.statssa.gov.za/webapi/online-help/Download-Tables---SuperWEB2.html"
+      },
+      "reuse": {
+        "summary": "Table and portal terms not verified; no automatic query enabled.",
+        "terms_url": null,
+        "review_required": true
+      },
+      "rate_limit": {
+        "documented": null,
+        "policy": "Cache responses; no retries or automatic fanout; local request budget applies."
+      },
+      "status": "access_review",
+      "adapter": null,
+      "checked_on": "2026-10-03",
+      "notes": [
+        "Open Data API query export exists, but availability depends on portal configuration and access."
+      ]
+    }
+  ]
+}

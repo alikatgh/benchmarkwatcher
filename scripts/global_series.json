@@ -1,0 +1,563 @@
+{
+  "schema_version": 1,
+  "series": [
+    {
+      "id": "ca_bcpi_bcpi",
+      "name": "Canada commodity index \u00b7 Total",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.BCPI",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_bcpi_bcne",
+      "name": "Canada commodity index \u00b7 Excluding energy",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.BCNE",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_bcpi_ener",
+      "name": "Canada commodity index \u00b7 Energy",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.ENER",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_bcpi_agri",
+      "name": "Canada commodity index \u00b7 Agriculture",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.AGRI",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_bcpi_mtls",
+      "name": "Canada commodity index \u00b7 Metals and minerals",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.MTLS",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_bcpi_fopr",
+      "name": "Canada commodity index \u00b7 Forestry",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.FOPR",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_bcpi_fish",
+      "name": "Canada commodity index \u00b7 Fish",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "commodity_index",
+      "countries": [
+        "CA"
+      ],
+      "unit": "1972 = 100",
+      "currency": "INDEX",
+      "frequency": "monthly",
+      "source_class": "official_index",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "M.FISH",
+        "limit": 120
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/price-indexes/bcpi/",
+      "attribution": "Source: Bank of Canada. Source values unchanged; descriptive calculations belong to BenchmarkWatcher.",
+      "enabled": true,
+      "reference_type": "commodity_index",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ca_usd_cad",
+      "name": "US dollar in Canadian dollars",
+      "source_id": "bank_canada",
+      "category": "index",
+      "kind": "exchange_reference",
+      "countries": [
+        "CA",
+        "US"
+      ],
+      "unit": "CAD per USD",
+      "currency": "CAD",
+      "frequency": "daily",
+      "source_class": "official_reference",
+      "date_semantics": "observation_date",
+      "api_config": {
+        "provider": "bank_canada",
+        "series_id": "FXUSDCAD",
+        "limit": 1250
+      },
+      "source_url": "https://www.bankofcanada.ca/rates/exchange/daily-exchange-rates/",
+      "attribution": "Source: Bank of Canada. Indicative daily average, not a transaction quote.",
+      "enabled": true,
+      "reference_type": "exchange_reference",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Bank of Canada"
+    },
+    {
+      "id": "ecb_eur_usd",
+      "name": "Euro in US dollars",
+      "source_id": "ecb",
+      "category": "index",
+      "kind": "exchange_reference",
+      "countries": [
+        "euro_area",
+        "US"
+      ],
+      "unit": "USD per EUR",
+      "currency": "USD",
+      "frequency": "daily",
+      "source_class": "official_reference",
+      "date_semantics": "observation_date",
+      "api_config": {
+        "provider": "ecb",
+        "currency": "USD",
+        "limit": 1250
+      },
+      "source_url": "https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.USD.EUR.SP00.A",
+      "attribution": "Source: ECB statistics. Original values preserved; indicative reference only.",
+      "enabled": true,
+      "reference_type": "exchange_reference",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "European Central Bank"
+    },
+    {
+      "id": "ecb_eur_gbp",
+      "name": "Euro in British pounds",
+      "source_id": "ecb",
+      "category": "index",
+      "kind": "exchange_reference",
+      "countries": [
+        "euro_area",
+        "GB"
+      ],
+      "unit": "GBP per EUR",
+      "currency": "GBP",
+      "frequency": "daily",
+      "source_class": "official_reference",
+      "date_semantics": "observation_date",
+      "api_config": {
+        "provider": "ecb",
+        "currency": "GBP",
+        "limit": 1250
+      },
+      "source_url": "https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.GBP.EUR.SP00.A",
+      "attribution": "Source: ECB statistics. Original values preserved; indicative reference only.",
+      "enabled": true,
+      "reference_type": "exchange_reference",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "European Central Bank"
+    },
+    {
+      "id": "ecb_eur_jpy",
+      "name": "Euro in Japanese yen",
+      "source_id": "ecb",
+      "category": "index",
+      "kind": "exchange_reference",
+      "countries": [
+        "euro_area",
+        "JP"
+      ],
+      "unit": "JPY per EUR",
+      "currency": "JPY",
+      "frequency": "daily",
+      "source_class": "official_reference",
+      "date_semantics": "observation_date",
+      "api_config": {
+        "provider": "ecb",
+        "currency": "JPY",
+        "limit": 1250
+      },
+      "source_url": "https://data.ecb.europa.eu/data/datasets/EXR/EXR.D.JPY.EUR.SP00.A",
+      "attribution": "Source: ECB statistics. Original values preserved; indicative reference only.",
+      "enabled": true,
+      "reference_type": "exchange_reference",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "European Central Bank"
+    },
+    {
+      "id": "de_hicp_annual_change",
+      "name": "Germany consumer inflation \u00b7 HICP",
+      "source_id": "eurostat",
+      "category": "index",
+      "kind": "consumer_inflation",
+      "countries": [
+        "DE"
+      ],
+      "unit": "annual change %",
+      "currency": "PERCENT",
+      "frequency": "monthly",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "eurostat",
+        "country": "DE",
+        "limit": 120
+      },
+      "source_url": "https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_minr/default/table?lang=en",
+      "attribution": "Source: Eurostat prc_hicp_minr. ECOICOP 2 total, annual rate of change; source flags preserved.",
+      "enabled": true,
+      "reference_type": "consumer_inflation",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Eurostat"
+    },
+    {
+      "id": "fr_hicp_annual_change",
+      "name": "France consumer inflation \u00b7 HICP",
+      "source_id": "eurostat",
+      "category": "index",
+      "kind": "consumer_inflation",
+      "countries": [
+        "FR"
+      ],
+      "unit": "annual change %",
+      "currency": "PERCENT",
+      "frequency": "monthly",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "eurostat",
+        "country": "FR",
+        "limit": 120
+      },
+      "source_url": "https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_minr/default/table?lang=en",
+      "attribution": "Source: Eurostat prc_hicp_minr. ECOICOP 2 total, annual rate of change; source flags preserved.",
+      "enabled": true,
+      "reference_type": "consumer_inflation",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Eurostat"
+    },
+    {
+      "id": "br_wb_agriculture_share",
+      "name": "Brazil agriculture, forestry and fishing share",
+      "source_id": "worldbank",
+      "category": "index",
+      "kind": "economic_indicator",
+      "countries": [
+        "BR"
+      ],
+      "unit": "% of GDP",
+      "currency": "PERCENT",
+      "frequency": "annual",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "worldbank",
+        "country": "BR",
+        "indicator": "NV.AGR.TOTL.ZS",
+        "start_year": 2000
+      },
+      "source_url": "https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS?locations=BR",
+      "attribution": "Source: World Bank World Development Indicators, national accounts data. CC BY 4.0 subject to indicator metadata.",
+      "enabled": true,
+      "reference_type": "economic_indicator",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "World Bank Indicators"
+    },
+    {
+      "id": "in_wb_agriculture_share",
+      "name": "India agriculture, forestry and fishing share",
+      "source_id": "worldbank",
+      "category": "index",
+      "kind": "economic_indicator",
+      "countries": [
+        "IN"
+      ],
+      "unit": "% of GDP",
+      "currency": "PERCENT",
+      "frequency": "annual",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "worldbank",
+        "country": "IN",
+        "indicator": "NV.AGR.TOTL.ZS",
+        "start_year": 2000
+      },
+      "source_url": "https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS?locations=IN",
+      "attribution": "Source: World Bank World Development Indicators, national accounts data. CC BY 4.0 subject to indicator metadata.",
+      "enabled": true,
+      "reference_type": "economic_indicator",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "World Bank Indicators"
+    },
+    {
+      "id": "za_wb_agriculture_share",
+      "name": "South Africa agriculture, forestry and fishing share",
+      "source_id": "worldbank",
+      "category": "index",
+      "kind": "economic_indicator",
+      "countries": [
+        "ZA"
+      ],
+      "unit": "% of GDP",
+      "currency": "PERCENT",
+      "frequency": "annual",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "worldbank",
+        "country": "ZA",
+        "indicator": "NV.AGR.TOTL.ZS",
+        "start_year": 2000
+      },
+      "source_url": "https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS?locations=ZA",
+      "attribution": "Source: World Bank World Development Indicators, national accounts data. CC BY 4.0 subject to indicator metadata.",
+      "enabled": true,
+      "reference_type": "economic_indicator",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "World Bank Indicators"
+    },
+    {
+      "id": "mx_wb_agriculture_share",
+      "name": "Mexico agriculture, forestry and fishing share",
+      "source_id": "worldbank",
+      "category": "index",
+      "kind": "economic_indicator",
+      "countries": [
+        "MX"
+      ],
+      "unit": "% of GDP",
+      "currency": "PERCENT",
+      "frequency": "annual",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "worldbank",
+        "country": "MX",
+        "indicator": "NV.AGR.TOTL.ZS",
+        "start_year": 2000
+      },
+      "source_url": "https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS?locations=MX",
+      "attribution": "Source: World Bank World Development Indicators, national accounts data. CC BY 4.0 subject to indicator metadata.",
+      "enabled": true,
+      "reference_type": "economic_indicator",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "World Bank Indicators"
+    },
+    {
+      "id": "jp_wb_agriculture_share",
+      "name": "Japan agriculture, forestry and fishing share",
+      "source_id": "worldbank",
+      "category": "index",
+      "kind": "economic_indicator",
+      "countries": [
+        "JP"
+      ],
+      "unit": "% of GDP",
+      "currency": "PERCENT",
+      "frequency": "annual",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "worldbank",
+        "country": "JP",
+        "indicator": "NV.AGR.TOTL.ZS",
+        "start_year": 2000
+      },
+      "source_url": "https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS?locations=JP",
+      "attribution": "Source: World Bank World Development Indicators, national accounts data. CC BY 4.0 subject to indicator metadata.",
+      "enabled": true,
+      "reference_type": "economic_indicator",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "World Bank Indicators"
+    },
+    {
+      "id": "ae_wb_agriculture_share",
+      "name": "United Arab Emirates agriculture, forestry and fishing share",
+      "source_id": "worldbank",
+      "category": "index",
+      "kind": "economic_indicator",
+      "countries": [
+        "AE"
+      ],
+      "unit": "% of GDP",
+      "currency": "PERCENT",
+      "frequency": "annual",
+      "source_class": "official_statistics",
+      "date_semantics": "period_start",
+      "api_config": {
+        "provider": "worldbank",
+        "country": "AE",
+        "indicator": "NV.AGR.TOTL.ZS",
+        "start_year": 2000
+      },
+      "source_url": "https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS?locations=AE",
+      "attribution": "Source: World Bank World Development Indicators, national accounts data. CC BY 4.0 subject to indicator metadata.",
+      "enabled": true,
+      "reference_type": "economic_indicator",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "World Bank Indicators"
+    },
+    {
+      "id": "my_ron97",
+      "name": "Malaysia RON97 retail petrol",
+      "source_id": "malaysia",
+      "category": "index",
+      "kind": "retail_fuel_price",
+      "countries": [
+        "MY"
+      ],
+      "unit": "litre",
+      "currency": "MYR",
+      "frequency": "weekly",
+      "source_class": "official_administered_price",
+      "date_semantics": "observation_date",
+      "api_config": {
+        "provider": "malaysia",
+        "column": "ron97",
+        "limit": 1250,
+        "series_type": "level"
+      },
+      "source_url": "https://data.gov.my/data-catalogue/fuelprice",
+      "attribution": "Source: Malaysia Ministry of Finance / data.gov.my, fuelprice, CC BY 4.0. Administered retail price.",
+      "enabled": true,
+      "reference_type": "retail_fuel_price",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Malaysia Ministry of Finance / data.gov.my"
+    },
+    {
+      "id": "my_diesel_east",
+      "name": "Malaysia diesel \u00b7 Sabah, Sarawak and Labuan",
+      "source_id": "malaysia",
+      "category": "index",
+      "kind": "retail_fuel_price",
+      "countries": [
+        "MY"
+      ],
+      "unit": "litre",
+      "currency": "MYR",
+      "frequency": "weekly",
+      "source_class": "official_administered_price",
+      "date_semantics": "observation_date",
+      "api_config": {
+        "provider": "malaysia",
+        "column": "diesel_eastmsia",
+        "limit": 1250,
+        "series_type": "level"
+      },
+      "source_url": "https://data.gov.my/data-catalogue/fuelprice",
+      "attribution": "Source: Malaysia Ministry of Finance / data.gov.my, fuelprice, CC BY 4.0. Regional administered retail price.",
+      "enabled": true,
+      "reference_type": "retail_fuel_price",
+      "source_type": "GLOBAL_REFERENCE",
+      "source_name": "Malaysia Ministry of Finance / data.gov.my"
+    }
+  ]
+}

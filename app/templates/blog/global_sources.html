@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <header class="mb-6">
+        <p class="text-sm mb-4"><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">Public data around the world</h1>
+        <p class="leading-relaxed mb-4">A country's commodity indices, exchange references and official statistics can add useful context to research. They need their own units and reporting periods to stay useful.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-03">October 3, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+    <section class="release-entry">
+        <h2>Five additional official readers</h2>
+        <p>The first international ingestion set contains 21 series. Seven Bank of Canada commodity indices appear with the commodity benchmarks. Fourteen other series have their own Global reference section: ECB and Canadian exchange references, German and French consumer inflation, agriculture's share of GDP in six economies, and Malaysian administered retail fuel prices.</p>
+        <p>Each history names its publisher, measure, unit and country or coverage. Monthly and annual data retain their source period labels. A plotting date marks the period; it does not imply a daily quote or publication date. Different measures stay separate, and no currency conversion or index rebasing happens silently.</p>
+        <p class="mt-4"><a href="{{ url_for('global_reference.index') }}">Explore Global reference →</a></p>
+    </section>
+    <section class="release-entry">
+        <h2>A catalog you can inspect</h2>
+        <p>The source catalog records 31 official providers, including access requirements, reuse conditions and reader readiness. Discovery also collected 1,498 World Bank WDI indicator definitions and 217 economies. These counts describe metadata: they do not mean that every possible country and indicator history has been downloaded or has the same coverage.</p>
+        <p>Search the catalog to find measures and follow their official documentation. Connected histories and catalog entries carry different labels. Sources requiring registration or further access review remain visible with that status.</p>
+        <p class="mt-4"><a href="{{ url_for('global_reference.sources') }}">Browse sources and indicators →</a></p>
+    </section>
+    <section class="release-entry">
+        <h2>Refresh without losing the archive</h2>
+        <p>The scheduled refresh uses one shared request budget for the international series. It makes no automatic retries, retains older history and records superseded observations when a source revises a value. Missing periods stay gaps in the D3 chart. Exact values remain available in the observation table.</p>
+        <p>These five readers use public endpoints without an account, payment setup or access charge. Optional AI is separate. Source quotas and reuse conditions still apply, and hosting costs remain separate from data access.</p>
+        <p class="mt-4">The official documentation is available from the <a href="https://www.bankofcanada.ca/valet/" target="_blank" rel="noopener noreferrer">Bank of Canada</a>, <a href="https://data.ecb.europa.eu/help/api/overview" target="_blank" rel="noopener noreferrer">ECB</a>, <a href="https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-introduction" target="_blank" rel="noopener noreferrer">Eurostat</a>, <a href="https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation" target="_blank" rel="noopener noreferrer">World Bank</a> and <a href="https://data.gov.my/data-catalogue/fuelprice" target="_blank" rel="noopener noreferrer">Malaysia's data portal</a>.</p>
+    </section>
+</article>
+{% endblock %}

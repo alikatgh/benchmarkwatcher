@@ -96,3 +96,18 @@ def test_october_guides_are_public_and_discoverable(app_client, workspace, tmp_p
         locations = {n.text for n in sitemap.iter('{http://www.sitemaps.org/schemas/sitemap/0.9}loc')}
         assert all('https://benchmarkwatcher.online' + path in locations for path in stories)
         assert '/blog/company-research-from-sec-filings' in client.get('/blog/using-jev-for-workbook-analysis').text
+
+
+def test_global_and_native_updates_are_public_and_honest(app_client):
+    for path, heading in (
+        ('/blog/public-data-around-the-world', 'Public data around the world'),
+        ('/blog/research-on-each-device', 'Research that fits each device'),
+    ):
+        page = app_client.get(path)
+        assert page.status_code == 200 and heading in page.text
+        assert path in app_client.get('/blog').text
+        assert path in app_client.get('/sitemap.xml').text
+    native = app_client.get('/blog/research-on-each-device').text
+    assert 'not available in the App Store or Google Play' in native
+    assert 'Full Android and phone-device validation remain pending' in native
+    assert 'href="/references"' in app_client.get('/').text

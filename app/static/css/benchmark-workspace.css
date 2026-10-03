@@ -48,7 +48,7 @@ html[data-theme] .bw-sidebar nav a:hover,html[data-theme] .bw-sidebar-bottom a:h
 .bw-dot-energy {background:#c89850;}.bw-dot-metal {background:#818ea4;}.bw-dot-precious {background:#b8a060;}.bw-dot-agricultural {background:#749575;}.bw-dot-index {background:#9584ac;}
 .bw-sidebar-bottom {margin-top:auto;padding-top:28px;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--theme-text-muted);}
 .bw-sidebar-bottom a {padding:8px 12px;border-radius:5px;display:flex;justify-content:space-between;}.bw-sidebar-bottom p {padding:16px 12px 0;line-height:1.7;font-size:10px;}
-.bw-main-content {grid-column:2;min-width:0;padding:24px 28px;max-width:1800px;width:100%;margin:0 auto;transition:padding-right .15s;}
+.bw-main-content {container-type:inline-size;container-name:benchmark-content;grid-column:2;min-width:0;padding:24px 28px;max-width:1800px;width:100%;margin:0 auto;transition:padding-right .15s;}
 .bw-page-heading {display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px;}
 .bw-eyebrow {font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--theme-text-muted);margin-bottom:7px;}
 html[data-theme] .bw-page-heading h1 {font-size:25px;font-weight:600;letter-spacing:-.7px;line-height:1.25;}
@@ -112,14 +112,35 @@ body:has(.bw-workspace) .bw-footer-inner {max-width:1800px;padding-inline:28px;}
 @media(prefers-reduced-motion:reduce) {.bw-main-content {transition:none;}}
 @media(max-width:360px) {.bw-sidebar nav a {min-width:0;padding:7px 5px;gap:5px;font-size:10px;}.bw-nav-icon {font-size:16px;width:15px;}.bw-nav-count {padding:1px 3px;margin-left:0;}.bw-header>nav {gap:7px;}.bw-brand {font-size:12px;gap:5px;}.bw-brand-mark {width:23px;height:25px;}.bw-header-actions .bw-icon-button {min-width:30px;}}
 @media(max-width:540px) {
+  .bw-sidebar .bw-destinations {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;}
+  .bw-sidebar .bw-destinations a {min-width:0;min-height:44px;justify-content:flex-start;padding:8px 10px;gap:8px;font-size:12px;}
+  .bw-destinations .bw-nav-text {white-space:normal;overflow-wrap:anywhere;}
+  .bw-destinations .bw-nav-count {margin-left:auto;}
+}
+@container benchmark-content (max-width:540px) {
   html[data-theme] .bw-page-heading h1 {font-size:23px!important;}
-  .bw-section-heading h2 {font-size:13px!important;white-space:nowrap;}
+  .bw-section-heading {align-items:flex-start;flex-direction:column;gap:4px;margin-bottom:12px;}
+  .bw-section-heading h2 {font-size:16px!important;}
+  .bw-section-heading>span {max-width:none;text-align:left;font-size:11px;}
   .bw-page-heading {align-items:center;margin-bottom:17px;}
   #bw-page-description {display:none;}
-  .bw-overview {display:flex;overflow-x:auto;scroll-snap-type:x proximity;margin-bottom:20px;}
-  .bw-observation {flex:0 0 155px;scroll-snap-align:start;}
-  .bw-observation-heading {font-size:11px;}
-  .bw-observation-date {white-space:nowrap;}
+  #bw-overview {display:grid;grid-template-columns:1fr;overflow:visible;margin-bottom:20px;}
+  .bw-main-content .bw-observation {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 12px;padding:12px;align-items:start;}
+  .bw-main-content .bw-observation+.bw-observation {border-left:0;border-top:1px solid var(--theme-border);}
+  .bw-main-content .bw-observation-heading {font-size:13px;line-height:1.5;align-self:center;}
+  .bw-main-content .bw-observation-heading span:first-child {overflow:visible;text-overflow:clip;white-space:normal;overflow-wrap:anywhere;}
+  .bw-main-content .bw-observation-value {grid-column:2;grid-row:1/3;display:flex;flex-direction:column;align-items:flex-end;gap:2px;margin:0;text-align:right;min-width:0;}
+  .bw-main-content .bw-observation-value strong {font-size:22px;line-height:1.25;letter-spacing:-.6px;max-width:100%;overflow-wrap:anywhere;}
+  .bw-main-content .bw-observation-value span {font-size:11px;line-height:1.5;overflow-wrap:anywhere;}
+  .bw-main-content .bw-observation-date {font-size:10px;line-height:1.5;white-space:normal;}
+  .bw-visual-disclosure>summary {font-size:13px;}
+  .bw-visual-disclosure>summary span {display:block;margin:4px 0 0;font-size:11px;line-height:1.5;}
+}
+
+@container benchmark-content (max-width:280px) {
+  .bw-main-content .bw-observation {grid-template-columns:1fr;}
+  .bw-main-content .bw-observation-value {grid-column:1;grid-row:2;flex-direction:row;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;text-align:left;gap:4px 8px;}
+  .bw-main-content .bw-observation-date {grid-row:3;}
 }
 
 /* Keep the optional account workbook studio reachable in the shared shell. */
