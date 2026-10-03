@@ -9,18 +9,25 @@
     </header>
     <section class="release-entry">
         <h2>Search, filter, read</h2>
-        <p>Search, Filter and the observation range stay close to the list. A compact selector changes the saved view. More holds occasional actions such as creating a view, changing its properties, sorting and exporting.</p>
-        <p>Advanced controls open in a sheet with a clear title and close action. Dismissing it keeps the selected filters and returns you to the list. On phones, observations use readable rows with their reported value, unit and date rather than a squeezed desktop table.</p>
+        <p>Search, Filter and the observation range stay close to the list. A compact selector changes the saved view. More holds occasional actions such as creating a view, changing its properties, sorting and exporting. Featured observations expand on request on phones, so the first benchmark value is visible sooner.</p>
+        <p>Advanced controls open in a sheet with a clear title and close action. Dismissing it keeps the selected filters and brings the list back into focus. On phones, observations use readable rows with their reported value, unit and date rather than a squeezed desktop table.</p>
     </section>
     <section class="release-entry">
         <h2>Room for the source history</h2>
-        <p>A compact window shows the list or its detail view. On a wider desktop, both can remain visible, and resizing the detail pane keeps enough room to browse the list. Your preferred pane width returns when the window has room again.</p>
+        <p>A compact window shows the list or its detail view. On a wider desktop, both can remain visible, and resizing the detail pane keeps enough room to browse the list. The wider layout restores your preferred pane width.</p>
         <p>The detail summary groups the value, observation date and cadence. Timeline charts show a small date-and-value tooltip beside the selected point. Hover or tap a line to inspect it; the arrow keys move between observations, and up or down chooses a line in a comparison. Original reporting periods remain visible.</p>
         <p>Keyboard focus, Escape and browser Back work with the sheets and details. Saved views, watchlists and presentation preferences remain in this browser; changing the layout does not change the source observations.</p>
     </section>
     <section class="release-entry">
+        <h2>The chart belongs near the observation</h2>
+        <p>On a full benchmark page, the observation summary sits to the left of the chart on desktop. A phone shows the chart first and places the summary below it, so the history is visible before a long source description.</p>
+        <p>Plot style and value display use radio switches with a clear selected state. Their short transitions respect reduced motion. The visual explorer groups history, distribution and calendar views in a focused chooser. Chart settings separate the tab navigation from the scrollable controls, keeping the first setting visible.</p>
+        <p>The table keeps search, filtering and the observation range close to the results. Columns and Export say what they do, applied filters stay visible, and sorting describes the selected order.</p>
+    </section>
+    <section class="release-entry">
         <h2>The patterns behind the change</h2>
         <p>The layout follows established guidance on <a href="https://developer.apple.com/design/human-interface-guidelines/toolbars">toolbar overflow</a>, <a href="https://developer.android.com/design/ui/mobile/guides/layout-and-content/common-layouts">adaptive list-and-detail layouts</a>, and <a href="https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/">accessible modal dialogs</a>. The controls stay available while the observations get more space.</p>
+        <p>Advanced controls follow <a href="https://www.nngroup.com/articles/progressive-disclosure/">progressive disclosure</a>. Settings tabs follow the <a href="https://www.w3.org/WAI/ARIA/apg/patterns/tabs/">W3C keyboard pattern</a>, while chart modes use native radio semantics for mutually exclusive choices. These patterns guide the implementation; checks on the rendered phone and desktop journeys decide whether the result works.</p>
         <p class="mt-4"><a href="{{ url_for('main.index', view='compact') }}">Explore benchmarks →</a></p>
     </section>
 </article>

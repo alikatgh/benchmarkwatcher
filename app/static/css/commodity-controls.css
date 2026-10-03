@@ -1,15 +1,13 @@
 /* Commodity chart: compact controls, with secondary options disclosed on demand. */
 #commodity-page .chart-toolbar {display:block;padding:12px 16px!important;}
 #commodity-page .chart-heading {display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
-#commodity-page .chart-heading h3 {font-size:14px;}
+#commodity-page .chart-heading h2 {font-size:14px!important;line-height:1.4;font-weight:600;}
 #commodity-page .chart-controls {display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;}
 #commodity-page .chart-control-group {border:0;padding:0;gap:2px;}
 #commodity-page .chart-range-presets {width:auto;flex-wrap:wrap;justify-content:flex-start;}
 html[data-theme] #commodity-page .chart-controls .range-btn {min-height:32px;padding:4px 9px;font-size:12px;line-height:22px;border:0;border-radius:5px;font-weight:550;}
 html[data-theme] #commodity-page .chart-controls .range-btn[aria-pressed="true"] {background:var(--theme-bg)!important;color:var(--theme-accent)!important;box-shadow:inset 0 0 0 1px var(--theme-border);}
 #commodity-page .chart-display-controls {margin-left:auto;gap:12px;}
-#commodity-page .chart-select-label {display:flex;align-items:center;gap:6px;font-size:11px;color:var(--theme-text-muted);}
-#commodity-page .chart-select-label select {min-height:32px;max-width:130px;font-size:12px;padding:4px 22px 4px 8px;color:var(--theme-text);background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:5px;}
 #commodity-page .chart-date-picker {position:relative;}
 #commodity-page .chart-date-picker summary {list-style:none;cursor:pointer;min-height:32px;display:flex;align-items:center;gap:6px;padding:4px 9px;font-size:12px;border:1px solid var(--theme-border);border-radius:5px;}
 #commodity-page .chart-date-picker summary::-webkit-details-marker {display:none;}
@@ -42,10 +40,128 @@ html[data-theme] #commodity-page .chart-controls .range-btn[aria-pressed="true"]
   #commodity-page .chart-range-presets {width:100%;flex-wrap:nowrap;justify-content:space-between;gap:0;}
   html[data-theme] #commodity-page .chart-controls .range-btn {min-height:40px;padding:4px 7px;}
   #commodity-page .chart-display-controls {margin-left:0;gap:8px;}
-  #commodity-page .chart-select-label {gap:3px;}
-  #commodity-page .chart-select-label select {min-height:40px;max-width:110px;}
   #commodity-page .chart-date-picker summary {min-height:40px;}
   #commodity-page .chart-date-form {left:0;}
   #commodity-page #crosshair-info>div {gap:5px 14px;}
   #commodity-page .chart-action-strip button {min-height:40px;}
 }
+
+/* One chart workspace: source context beside the plot, below it on phones. */
+#commodity-page .commodity-overview{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start;min-width:0}
+#commodity-page .commodity-summary{min-width:0;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px}
+#commodity-page .commodity-summary-inner{padding:18px}
+#commodity-page .commodity-summary-content{display:flex;flex-direction:column;gap:18px}
+#commodity-page .commodity-quote{min-width:0}
+#commodity-page .commodity-frequency{background:var(--control-panel);color:var(--theme-text-muted)}
+#commodity-page .commodity-quote>div:nth-child(2){display:flex;flex-direction:column;align-items:start;gap:8px}
+#commodity-page .commodity-quote>div:nth-child(2)>span{font-size:34px;line-height:1.15;letter-spacing:-1px;overflow-wrap:anywhere}
+#commodity-page .commodity-quote>div:nth-child(2)>div>span{font-size:13px;letter-spacing:0;overflow-wrap:anywhere}
+#commodity-page .source-provenance{display:grid;grid-template-columns:1fr;gap:14px;min-width:0;border:0;border-top:1px solid var(--theme-border);padding:16px 0 0;text-align:left;margin:0}
+#commodity-page .source-provenance a{justify-content:start;min-height:32px}
+#commodity-page .commodity-summary #change-period-label{font-size:12px;line-height:1.6}
+#commodity-page .commodity-summary #change-badge-section>div:first-child{display:flex;flex-direction:column;align-items:start;gap:6px}
+#commodity-page .commodity-summary .period-btn{min-height:36px;font-size:12px;white-space:nowrap;padding:5px 8px}
+#commodity-page .chart-panel{min-width:0;margin-top:0;overflow:visible;display:flex;flex-direction:column;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px!important}
+#commodity-page .chart-plot-body{min-width:0;display:flex;flex-direction:column;padding:12px 16px}
+#commodity-page .chart-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px}
+#commodity-page .chart-range-presets{flex-wrap:nowrap;justify-content:start;min-width:0;width:auto}
+#commodity-page .chart-display-controls{grid-column:1/-1;display:flex;gap:14px;flex-wrap:wrap;margin:0;padding:0}
+#commodity-page .chart-segmented{display:flex;align-items:center;gap:8px;border:0;padding:0;margin:0;min-width:0}
+#commodity-page .chart-segmented legend{float:left;display:block;width:auto;padding:0;margin:0;font-size:12px;color:var(--theme-text-muted)}
+#commodity-page .chart-segmented-track{display:flex;position:relative;background:var(--control-group);border-radius:7px;padding:3px;min-width:0;isolation:isolate}
+#commodity-page .chart-segmented-indicator{position:absolute;z-index:-1;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--segment-count));background:var(--control-selected-bg);border-radius:5px;transform:translateX(calc(var(--segment-index)*100%));transition:transform 170ms cubic-bezier(.2,.65,.3,1);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--control-selected-border) 45%,transparent)}
+#commodity-page .chart-segmented label{position:relative;flex:1;min-width:48px;display:grid;place-items:center;font-size:12px;line-height:18px;font-weight:550;margin:0;cursor:pointer;border-radius:5px}
+#commodity-page .chart-segmented input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+#commodity-page .chart-segmented label span{position:relative;pointer-events:none;padding:7px 10px;white-space:nowrap;color:var(--control-text);transition:color 170ms ease}
+#commodity-page .chart-segmented input:checked+span{color:var(--control-selected-text);font-weight:650}
+#commodity-page .chart-segmented label:has(input:disabled){opacity:.5;cursor:not-allowed}
+#commodity-page .chart-segmented input:focus-visible+span{outline:2px solid var(--control-focus);outline-offset:1px;border-radius:4px}
+#commodity-page .chart-date-picker summary{background:var(--control-bg);color:var(--control-text);border-color:var(--theme-border);min-height:36px}
+#commodity-page .chart-date-form{left:auto;right:0}
+#commodity-page .chart-date-form button{color:var(--control-on-primary);background:var(--control-primary);min-height:44px}
+#commodity-page .chart-action-strip button{background:var(--control-panel);color:var(--control-text)}
+#commodity-page #crosshair-info{order:1;min-width:0}
+#commodity-page #crosshair-info~.chart-action-strip{order:3}
+#commodity-page #crosshair-info span{white-space:normal;overflow-wrap:anywhere}
+#commodity-page #stats-bar{order:2;border-top:1px solid var(--theme-border);border-bottom:0}
+@media(min-width:1024px){
+ #commodity-page .commodity-overview{grid-template-columns:280px minmax(0,1fr);gap:20px}
+ #commodity-page .commodity-summary{grid-column:1;grid-row:1}
+ #commodity-page .chart-panel{grid-column:2;grid-row:1}
+}
+@media(max-width:640px){
+ #commodity-page .chart-toolbar{padding:8px 10px!important}
+ #commodity-page .chart-heading{margin-bottom:4px}
+ #commodity-page .chart-heading p{font-size:11px;line-height:1.5}
+ #commodity-page .chart-controls{gap:6px 8px;grid-template-columns:minmax(0,1fr) auto}
+ #commodity-page .chart-range-presets{grid-column:1/-1;width:100%;justify-content:space-between}
+ html[data-theme] #commodity-page .chart-controls .range-btn{padding:4px 6px;min-height:44px}
+ #commodity-page .chart-date-picker{grid-column:2;grid-row:3;align-self:end}
+ #commodity-page .chart-display-controls{display:contents}
+ #commodity-page #chart-type-controls{grid-column:1/-1;grid-row:2}
+ #commodity-page #chart-view-controls{grid-column:1;grid-row:3;width:100%}
+ #commodity-page .chart-segmented{display:block}
+ #commodity-page .chart-segmented legend{float:none;margin-bottom:4px;font-size:11px}
+ #commodity-page #chart-type-controls .chart-segmented-track{width:100%}
+ #commodity-page #chart-view-controls{max-width:none;padding-right:0}
+ #commodity-page .chart-segmented label{min-width:0;min-height:44px}
+ #commodity-page .chart-segmented label span{padding:8px 6px}
+ #commodity-page .chart-date-picker summary{min-height:44px}
+ #commodity-page .chart-plot-body{padding:8px 10px}
+ #commodity-page .chart-action-strip button{min-height:44px}
+ #commodity-page .commodity-summary-content{gap:14px}
+ #commodity-page .commodity-summary-inner{padding:16px}
+ #commodity-page .source-provenance{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+ #commodity-page .source-provenance>div:first-child{grid-column:1/-1}
+ #commodity-page .commodity-summary .period-btn{min-height:44px}
+}
+
+/* A bounded settings panel with independent header, tabs and scrolling content. */
+#chart-settings-modal.chart-settings-dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;background:transparent;color:var(--theme-text);font:13px/1.5 Inter,system-ui,sans-serif;overflow:hidden}
+#chart-settings-modal::backdrop{background:#0b162b60}
+#chart-settings-modal .chart-settings-backdrop{position:absolute;inset:0}
+#chart-settings-modal .chart-settings-panel{position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);display:flex;flex-direction:column;min-height:0;background:var(--theme-surface);border-left:1px solid var(--theme-border);animation:chart-settings-enter 180ms cubic-bezier(.2,.65,.3,1)}
+#chart-settings-modal .chart-settings-header{display:flex;align-items:start;gap:14px;justify-content:space-between;padding:18px 20px 14px;flex-shrink:0;background:var(--theme-surface);border-bottom:1px solid var(--theme-border)}
+#chart-settings-modal h2{font-size:16px;font-weight:650;margin:0}
+#chart-settings-modal .chart-settings-header p{font-size:12px;color:var(--theme-text-muted);margin:4px 0 0}
+#chart-settings-modal .chart-settings-close{min-width:44px;min-height:44px;display:grid;place-items:center;background:var(--control-panel);border:1px solid var(--theme-border);border-radius:6px;font-size:24px;color:var(--control-text)}
+#chart-settings-modal .chart-settings-tabs{display:flex;gap:2px;padding:8px 14px;flex-shrink:0;background:var(--control-panel);border-bottom:1px solid var(--theme-border)}
+html[data-theme] #chart-settings-modal .chart-settings-tab{flex:1;min-width:0;min-height:44px;padding:6px 4px;font-size:12px;font-weight:550;line-height:18px;white-space:normal;background:transparent;color:var(--control-text);border:0;border-radius:5px}
+html[data-theme] #chart-settings-modal .chart-settings-tab[aria-selected=true]{background:var(--control-selected-bg);color:var(--control-selected-text);font-weight:650}
+#chart-settings-modal .chart-settings-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 20px;scroll-padding:16px}
+#chart-settings-modal .chart-setting-section{border:0;border-bottom:1px solid var(--theme-border);padding:0 0 18px;margin:0 0 18px;min-width:0}
+#chart-settings-modal .chart-setting-section:last-child{margin-bottom:0;border-bottom:0}
+#chart-settings-modal .chart-setting-section legend{font-size:13px;font-weight:650;margin-bottom:12px;padding:0}
+#chart-settings-modal .chart-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}
+#chart-settings-modal .chart-setting-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--theme-text-muted);margin:0;min-width:0}
+#chart-settings-modal .chart-setting-field>span{display:flex;justify-content:space-between;gap:4px;align-items:baseline}
+#chart-settings-modal .chart-setting-value{font-variant-numeric:tabular-nums;color:var(--theme-text);white-space:nowrap}
+#chart-settings-modal input[type=range]{width:100%;min-width:0;height:44px;margin:0;accent-color:var(--control-primary)}
+#chart-settings-modal input[type=color]{width:100%;height:44px;padding:5px;border:1px solid var(--theme-border);border-radius:6px;background:var(--control-panel);cursor:pointer}
+#chart-settings-modal select{min-height:44px;max-width:100%;font:inherit;background:var(--control-bg);color:var(--control-text);border:1px solid var(--control-border);border-radius:6px;padding:8px}
+#chart-settings-modal .chart-setting-toggle{display:flex;justify-content:space-between;gap:16px;align-items:center;min-height:44px;cursor:pointer;font-size:13px}
+#chart-settings-modal .chart-setting-toggle input{width:20px;height:20px;flex-shrink:0;accent-color:var(--control-primary)}
+#chart-settings-modal .chart-setting-note{font-size:12px;line-height:1.6;color:var(--theme-text-muted);margin:8px 0 0}
+#chart-settings-modal .chart-theme-presets{display:flex;flex-wrap:wrap;gap:6px}
+html[data-theme] #chart-settings-modal .theme-preset{display:flex;align-items:center;gap:6px;min-height:44px;padding:6px 8px;border:1px solid var(--theme-border);border-radius:6px;background:var(--control-panel);font-size:12px;color:var(--control-text)}
+#chart-settings-modal .theme-preset>span{display:block;width:12px;height:3px;border-radius:1px}
+html[data-theme] #chart-settings-modal .theme-preset[aria-pressed=true]{background:var(--control-selected-bg);color:var(--control-selected-text);border-color:var(--control-selected-border)}
+#chart-settings-modal .chart-settings-footer{display:flex;justify-content:space-between;gap:10px;flex-shrink:0;padding:12px 20px max(12px,env(safe-area-inset-bottom));background:var(--control-panel);border-top:1px solid var(--theme-border)}
+#chart-settings-modal .chart-settings-footer button{min-height:44px;padding:8px 12px;border:1px solid var(--theme-border);border-radius:6px;background:var(--control-bg);color:var(--control-text);font-size:12px;font-weight:600}
+#chart-settings-modal .chart-settings-footer button:last-child{background:var(--control-primary);color:var(--control-on-primary);border-color:transparent}
+#chart-settings-modal :is(button,input,select):focus-visible{outline:2px solid var(--control-focus);outline-offset:2px}
+@media(max-width:440px){#chart-settings-modal .chart-settings-header{padding:16px 14px 12px}#chart-settings-modal .chart-settings-tabs{padding:6px 8px}#chart-settings-modal .chart-settings-scroll{padding:16px 14px}#chart-settings-modal .chart-settings-footer{padding-left:14px;padding-right:14px}}
+@media(prefers-reduced-motion:reduce){#commodity-page .chart-segmented-indicator,#commodity-page .chart-segmented label span{transition:none!important}#chart-settings-modal .chart-settings-panel{animation:none}}
+@media(max-width:640px){
+ #commodity-page .commodity-page-header{flex-direction:row;align-items:start;justify-content:space-between;gap:10px;margin-bottom:8px}
+ #commodity-page .commodity-page-header>div:first-child{min-width:0}
+ #commodity-page .commodity-page-header>div:last-child{max-width:100px}
+ #commodity-page .chart-segmented{display:flex;align-items:center;gap:8px}
+ #commodity-page .chart-segmented legend{float:left;width:28px;flex-shrink:0;margin:0;font-size:11px}
+ #commodity-page .chart-segmented-track{flex:1}
+ #commodity-page #chart-type-controls .chart-segmented-track{width:calc(100% - 36px)}
+}
+@keyframes chart-settings-enter{from{transform:translateX(24px)}to{transform:translateX(0)}}
+#commodity-page .chart-date-form button{--button-bg:var(--control-primary);--button-text:var(--control-on-primary);--button-border:var(--control-primary);--button-hover:var(--control-primary-hover)}
+#commodity-page .chart-action-strip button,#chart-settings-modal .chart-settings-close,#chart-settings-modal .theme-preset{--button-bg:var(--control-panel);--button-hover:var(--control-hover)}
+#chart-settings-modal .chart-settings-footer button:last-child{--button-bg:var(--control-primary);--button-text:var(--control-on-primary);--button-border:var(--control-primary);--button-hover:var(--control-primary-hover);--button-hover-border:var(--control-primary-hover)}

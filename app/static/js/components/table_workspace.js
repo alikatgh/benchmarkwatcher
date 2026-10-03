@@ -367,6 +367,8 @@
                 th.querySelector('.tw-header-sort')?.setAttribute('title', rule ? `Sort priority ${index + 1}, ${rule.direction === 'asc' ? 'ascending' : 'descending'}. Click to reverse; Shift-click to retain other sorts.` : 'Sort ascending. Shift-click to add a sort.');
             });
             if (byId('tw-sort-count')) byId('tw-sort-count').textContent = this.current.sorts.length ? `(${this.current.sorts.length})` : '';
+            const summary = this.current.sorts.map(rule => `${property(rule.key)?.label} ${rule.direction === 'desc' ? 'descending' : 'ascending'}`).join(', ') || 'No sort applied';
+            byId('tw-sort-button')?.setAttribute('title', `Change sorting: ${summary}`);
             if (byId('tw-more-sort-summary')) byId('tw-more-sort-summary').textContent = this.current.sorts.map(rule => `${property(rule.key)?.label} · ${rule.direction === 'desc' ? 'descending' : 'ascending'}`).join(', ') || 'No sort applied';
         },
         updateSelection() {
@@ -411,6 +413,7 @@
             if (count || this.current.query) { const clear = button(this.compactLayout ? 'Clear' : 'Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'); if (this.compactLayout) clear.setAttribute('aria-label', 'Clear all view filters'); container.append(clear); }
             container.hidden = items.childElementCount === 0;
             if (byId('tw-filter-count')) byId('tw-filter-count').textContent = count ? `(${count})` : '';
+            byId('tw-filter-button')?.classList.toggle('tw-filter-active', count > 0);
         },
         renderViews() {
             const container = byId('tw-views'); if (!container) return;
@@ -584,7 +587,7 @@
                 this.sheetAnchor = document.createComment('table control position'); panel.before(this.sheetAnchor); this.sheetPanel = panel;
                 byId('tw-sheet-content').append(panel);
                 dialog = byId('tw-tool-sheet'); dialog.hidden = false;
-                const title = {'tw-filters':'Filters','tw-sort-panel':'Sort','tw-properties':'Properties','tw-actions':'Export'}[panelId] || 'View controls';
+                const title = {'tw-filters':'Filters','tw-sort-panel':'Sort','tw-properties':'Columns','tw-actions':'Export'}[panelId] || 'View controls';
                 byId('tw-sheet-heading').textContent = title;
                 byId('tw-sheet-clear').hidden = panelId !== 'tw-filters';
                 const resultCount = this.getVisibleRows().length;

@@ -142,7 +142,7 @@
             if (!active || options.interactive === false || options.tooltip === false || x(point.time) < left || x(point.time) > right) {
                 tooltip.attr('visibility', 'hidden'); svg.attr('aria-describedby', null); return;
             }
-            const limit = Math.max(80, Math.min(320, width - 16)), padding = 10;
+            const limit = Math.max(80, Math.min(320, width - 16)), padding = Math.max(6, Math.min(20, Number(options.tooltipPadding) || 10));
             const rows = [], date = options.tooltipDate?.(point) || d.utcFormat('%b %-d, %Y')(new Date(point.time));
             const value = item => {
                 const n = Number(item.point.value);
@@ -251,7 +251,8 @@
         if (options.zoom || options.pan) {
             zoom = d.zoom().extent([[left, top], [right, bottom]]).translateExtent([[left, top], [right, bottom]]).scaleExtent([1, 64])
                 .filter(event => {
-                    if (event.type === 'wheel') return options.zoom && (!options.modifier || options.modifier === 'none' || event[options.modifier + 'Key']);
+                    if (event.type === 'wheel') return options.zoom && (!options.modifier || options.modifier === 'none' ||
+                        (options.modifier === 'ctrl' ? event.ctrlKey || event.metaKey : event[options.modifier + 'Key']));
                     if (event.touches?.length > 1) return options.zoom;
                     return !event.button && options.pan;
                 }).on('zoom', event => { x = event.transform.rescaleX(originalX); draw(); inspect(ordered[selected]); });

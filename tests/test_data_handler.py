@@ -3,6 +3,15 @@ import os
 from datetime import datetime
 import pytest
 
+
+def test_missing_observation_changes_remain_unavailable_while_reported_zero_is_retained():
+    from app.data_handler import _hydrate_change_fields
+    missing = _hydrate_change_fields({'id': 'missing', 'history': [{'date': '2026-01-01', 'price': 10}]})
+    assert missing['change'] is None and missing['change_percent'] is None
+    assert missing['daily_change'] is None and missing['daily_change_percent'] is None
+    reported = _hydrate_change_fields({'metrics': {'change_1d': 0.0, 'pct_1d': 0.0}})
+    assert reported['change'] == 0.0 and reported['change_percent'] == 0.0
+
 # Import functions under test
 from app.data_handler import (
     build_market_summary,

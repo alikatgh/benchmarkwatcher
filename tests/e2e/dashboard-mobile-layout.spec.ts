@@ -62,6 +62,8 @@ for (const width of [320, 390]) {
   test(`phone dashboard keeps full reference values and every control usable at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 844 });
     await openDashboard(page);
+    const firstValue = await page.locator('#tw-mobile-list .tw-mobile-price').first().boundingBox();
+    expect(firstValue!.y + firstValue!.height).toBeLessThanOrEqual(844);
     const navigationIssues = await page.locator('.bw-destinations a').evaluateAll(links => links.filter(link => {
       const rect = link.getBoundingClientRect();
       return rect.left < 0 || rect.right > innerWidth + 1 || link.scrollWidth > link.clientWidth + 1 || rect.height < 44;
@@ -69,6 +71,9 @@ for (const width of [320, 390]) {
     expect(navigationIssues).toEqual([]);
     await page.locator('.bw-destinations').screenshot({ path: testInfo.outputPath(`dashboard-navigation-${width}.png`) });
     const overview = page.locator('#bw-overview');
+    await expect(overview).toBeHidden();
+    await page.locator('#bw-featured summary').click();
+    await expect(overview).toBeVisible();
     await expect(overview.locator('.bw-observation')).toHaveCount(3);
     const overviewIssues = await overview.evaluate(el => [...el.querySelectorAll('.bw-observation, .bw-observation-heading span:first-child, .bw-observation-value strong')].filter(node => node.scrollWidth > node.clientWidth + 1).map(node => node.className || node.textContent));
     expect(overviewIssues).toEqual([]);
@@ -79,6 +84,7 @@ for (const width of [320, 390]) {
     await expect(page.locator('#tw-mobile-list .tw-mobile-price small').first()).toContainText('USD /');
     await expectContainedControls(page);
     await overview.screenshot({ path: testInfo.outputPath(`dashboard-overview-${width}.png`) });
+    await page.locator('#bw-featured summary').click();
     await page.locator('.tw-control-shell').screenshot({ path: testInfo.outputPath(`dashboard-controls-${width}.png`) });
 
     await page.locator('#tw-filter-button').click();

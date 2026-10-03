@@ -53,6 +53,7 @@ html[data-theme] body #tw-query:focus-visible{outline:none!important}
 .tw-views .tw-view:focus-visible{outline-offset:-3px}
 .tw-view[aria-pressed=true]::after{content:"";position:absolute;bottom:0;left:10px;right:10px;height:3px;background:var(--control-primary);border-radius:3px 3px 0 0}
 .tw-tools .tw-button{--button-bg:var(--control-panel);--button-text:var(--control-text);--button-border:var(--control-border);--button-hover:var(--control-hover);--button-hover-border:var(--control-hover-border);--button-expanded-bg:var(--control-selected-bg);--button-expanded-text:var(--control-selected-text);--button-expanded-border:var(--control-selected-border)}
+.tw-tools .tw-filter-active{--button-bg:var(--control-selected-bg);--button-text:var(--control-selected-text);--button-border:var(--control-selected-border)}
 .tw-context .range-btn{--button-bg:var(--control-panel);--button-border:transparent;--button-hover-border:transparent;--button-selected-border:transparent}
 .tw-chips:empty{display:none}
 .tw-controls-collapsed .tw-control-heading{border-bottom:0}

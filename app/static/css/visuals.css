@@ -30,3 +30,24 @@
 .bw-visual-disclosure .bw-visual-lab>h2{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 .studio-series-chart[data-workbook-chart]{max-height:none;min-height:0}.studio-series-chart[data-workbook-chart]>.bw-d3-chart{height:auto;max-height:none}.studio-series-chart[data-workbook-chart] text{font-size:11px}
+
+/* Related exploratory views are grouped in a compact, keyboard-accessible chooser. */
+.bw-visual-chooser{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px;max-width:360px}
+.bw-visual-choice-label{font-size:12px;font-weight:600;color:var(--theme-text-muted)}
+.bw-visual-controls .bw-visual-choice{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;background:var(--control-panel);color:var(--control-text);border-color:var(--theme-border);text-align:left}
+.bw-visual-options{position:fixed;inset:auto;margin:0;max-height:min(420px,calc(100dvh - 24px));padding:12px;border:1px solid var(--theme-border);border-radius:8px;background:var(--theme-surface);color:var(--theme-text);box-shadow:0 8px 28px #10213b24;overflow-y:auto;overscroll-behavior:contain;font:12px/1.5 Inter,system-ui,sans-serif;animation:bw-visual-chooser-enter 140ms ease-out}
+.bw-visual-options:popover-open,.bw-visual-options.is-open{display:block}
+.bw-visual-options:not(:popover-open):not(.is-open){display:none}
+.bw-visual-options fieldset{margin:0;padding:0;border:0;min-width:0}
+.bw-visual-options legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.bw-visual-choice-group{padding:4px 0 8px;border-bottom:1px solid var(--theme-border)}
+.bw-visual-choice-group:last-child{border-bottom:0;padding-bottom:0}
+.bw-visual-options h3{font-size:11px;line-height:18px;font-weight:650;color:var(--theme-text-muted);margin:0 8px 4px}
+.bw-visual-options label{display:flex;flex-direction:row;align-items:center;gap:10px;min-width:0;min-height:44px;padding:8px;border-radius:5px;cursor:pointer;font-weight:500;font-size:12px}
+.bw-visual-options label:has(input:checked){background:var(--control-selected-bg);color:var(--control-selected-text)}
+.bw-visual-options input{width:16px;height:16px;margin:0;accent-color:var(--control-primary);flex-shrink:0}
+.bw-visual-options label:focus-within{outline:2px solid var(--control-focus);outline-offset:-2px}
+@keyframes bw-visual-chooser-enter{from{transform:translateY(-4px);opacity:.5}to{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:reduce){.bw-visual-options{animation:none}}
+
+.bw-visual-controls .bw-visual-choice{--button-bg:var(--control-panel);--button-hover:var(--control-hover)}

@@ -1,0 +1,7 @@
+<nav class="home-datasets" aria-label="Homepage datasets">
+  <a href="{{ url_for('main.index', view='compact') }}"{% if active_dataset != 'countries' %} aria-current="page"{% endif %}>Commodities <span>{{ "{:,}".format(commodity_count) }}</span></a>
+  <a href="{{ url_for('main.index', dataset='countries') }}"{% if active_dataset == 'countries' %} aria-current="page"{% endif %}>Country data{% if country_summary %} <span>{{ "{:,}".format(country_summary.histories) }}</span>{% endif %}</a>
+</nav>
+{% if active_dataset != 'countries' and country_summary and country_summary.histories %}
+<a class="home-country-discovery" href="{{ url_for('main.index', dataset='countries') }}">{{ country_summary.economies }} economies · GDP, inflation, population &amp; sector shares <span aria-hidden="true">→</span></a>
+{% endif %}

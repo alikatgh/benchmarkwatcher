@@ -227,37 +227,60 @@ def _pagination(rows, endpoint, **parameters):
             'next': url_for(endpoint, page=page + 1, **parameters) if page < pages else None}
 
 
-@bp.get('/references')
-def index():
+def country_summary():
+    """Homepage counts from the saved index, without loading every history."""
+    series, _, snapshot = _catalogs()
+    records = [_record(row, _economies(snapshot), full_history=False)
+               for row in series if row['source_id'] == 'worldbank']
+    loaded = [row for row in records if row['available']]
+    return {'histories': len(loaded),
+            'economies': len({code for row in loaded for code in row['countries']})}
+
+
+def listing_context(endpoint='global_reference.index', countries_only=False):
+    """One cache-only listing for both the homepage and reference directory."""
     series, registry, snapshot = _catalogs()
     q, kind, country, indicator, publisher = _query('q'), _query('kind'), _query('country'), _query('indicator'), _query('source')
     if kind and kind not in TYPES:
         abort(400, description='Choose a reference type from the list.')
     if publisher and publisher not in {row['source_id'] for row in series}:
         abort(400, description='Choose a publisher with saved references.')
+    records = [_record(row, _economies(snapshot), full_history=False) for row in series]
+    if countries_only:
+        records = [row for row in records if row['source_id'] == 'worldbank' and row['available']]
+        series = records
+        publisher = 'worldbank'
     countries = sorted({(code, _economies(snapshot).get(code, 'Euro area' if code == 'euro_area' else code))
                         for row in series for code in row['countries']}, key=lambda item: item[1])
     indicators = sorted({(row['indicator'], row['indicator_name']) for row in series if row.get('indicator')}, key=lambda item: item[1])
     if country and country not in {code for code, _ in countries} or indicator and indicator not in {code for code, _ in indicators}:
         abort(400, description='Choose a country or measure from the saved references.')
-    records = [_record(row, _economies(snapshot), full_history=False) for row in series]
     filtered = [row for row in records if (not kind or row['reference_type'] == kind) and
                 (not publisher or row['source_id'] == publisher) and
                 (not country or country in row['countries']) and (not indicator or row.get('indicator') == indicator) and
                 (not q or q.casefold() in (' '.join([row['name'], row['countries_label'], row['source_name'], row['type_label']])).casefold())]
     filtered.sort(key=lambda row: (row['countries_label'], row.get('indicator_name', row['name'])))
-    pagination = _pagination(filtered, 'global_reference.index', q=q, kind=kind, country=country, indicator=indicator, source=publisher)
+    parameters = dict(q=q, kind=kind, country=country, indicator=indicator, source=publisher)
+    if countries_only:
+        parameters['dataset'] = 'countries'
+    pagination = _pagination(filtered, endpoint, **parameters)
     loaded = [row for row in records if row['available']]
-    return render_template('global_reference/index.html', records=pagination['items'], q=q, kind=kind,
+    return dict(records=pagination['items'], q=q, kind=kind,
                            country=country, indicator=indicator, countries=countries, indicators=indicators,
                            publisher=publisher, publisher_label=next((row['source_name'] for row in series if row['source_id'] == publisher), ''),
                            pagination=pagination, country_count=len({code for row in loaded if row.get('source_id') == 'worldbank' for code in row['countries']}),
                            worldbank_count=sum(row['source_id'] == 'worldbank' for row in loaded),
                            types=TYPES, total=len(records), available=sum(row['available'] for row in records),
                            publishers=len({row['source_id'] for row in records}), exact_value=exact_value,
-                           preview_value=preview_value,
+                           preview_value=preview_value, countries_only=countries_only,
+                           reset_url=url_for(endpoint, dataset='countries') if countries_only else url_for(endpoint, source=publisher),
                            meta_title='Global references | BenchmarkWatcher',
                            meta_description='Explore saved official currency references, inflation, country statistics and administered fuel prices with source evidence.')
+
+
+@bp.get('/references')
+def index():
+    return render_template('global_reference/index.html', **listing_context())
 
 
 @bp.get('/reference/<identifier>')

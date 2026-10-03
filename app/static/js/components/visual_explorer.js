@@ -12,6 +12,86 @@
         options.forEach(([value, text]) => { const option = el('option', text); option.value = value; select.append(option); });
         wrap.append(select); parent.append(wrap); return select;
     }
+    function visualizationChooser(parent, options) {
+        const wrap = el('div', '', 'bw-visual-chooser'), button = el('button', '', 'bw-visual-choice');
+        const panel = el('div', '', 'bw-visual-options'), caption = el('span'), arrow = el('span', '⌄');
+        const id = 'bw-visual-choice-' + (++seq), radioName = id + '-option';
+        button.type = 'button'; button.value = options[0][0]; button.append(caption, arrow);
+        arrow.setAttribute('aria-hidden', 'true'); panel.id = id;
+        panel.setAttribute('popover', 'auto'); panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Choose visualization');
+        button.setAttribute('aria-controls', id); button.setAttribute('aria-haspopup', 'dialog');
+        button.setAttribute('aria-expanded', 'false');
+        wrap.append(el('span', 'Visualization', 'bw-visual-choice-label'), button, panel); parent.append(wrap);
+        let choices = options, fallbackOpen = false;
+        const open = () => typeof panel.showPopover === 'function' ? panel.matches(':popover-open') : fallbackOpen;
+        function position() {
+            const bounds = button.getBoundingClientRect(), width = Math.min(410, window.innerWidth - 24);
+            panel.style.width = width + 'px';
+            panel.style.left = Math.max(12, Math.min(bounds.left, window.innerWidth - width - 12)) + 'px';
+            panel.style.top = Math.max(12, Math.min(bounds.bottom + 6, window.innerHeight - Math.min(panel.scrollHeight, 420) - 12)) + 'px';
+        }
+        function close(restore) {
+            if (typeof panel.hidePopover === 'function' && open()) panel.hidePopover();
+            fallbackOpen = false; panel.classList.remove('is-open'); button.setAttribute('aria-expanded', 'false');
+            if (restore) button.focus();
+        }
+        button.sync = () => {
+            const selected = choices.find(choice => choice[0] === button.value);
+            caption.textContent = selected?.[1] || choices[0][1];
+            button.setAttribute('aria-label', 'Visualization: ' + caption.textContent);
+            panel.querySelectorAll('input').forEach(input => { input.checked = input.value === button.value; });
+        };
+        button.setOptions = options => {
+            choices = options;
+            if (!choices.some(choice => choice[0] === button.value)) button.value = choices[0][0];
+            panel.replaceChildren();
+            const groups = [
+                ['History', ['line','area','step','bar','scatter','change']],
+                ['Distribution', ['histogram','cumulative','box']],
+                ['Timing', ['monthly','heatmap','coverage']],
+                ['Overview', ['ranking','map','categories','dates']]
+            ];
+            const fieldset = el('fieldset'), legend = el('legend', 'Choose a view'); fieldset.append(legend);
+            for (const [title, keys] of groups) {
+                const rows = choices.filter(choice => keys.includes(choice[0])); if (!rows.length) continue;
+                const section = el('div', '', 'bw-visual-choice-group'); section.append(el('h3', title));
+                for (const [value, label] of rows) {
+                    const item = el('label'), input = el('input'); input.type = 'radio'; input.name = radioName; input.value = value;
+                    item.append(input, el('span', label)); section.append(item);
+                    // Arrow navigation selects without closing the chooser; an
+                    // explicit click or Enter commits and returns to the chart.
+                    input.addEventListener('change', () => { button.value = value; button.sync(); button.dispatchEvent(new Event('change')); });
+                    input.addEventListener('click', () => close(true));
+                }
+                fieldset.append(section);
+            }
+            panel.append(fieldset); button.sync();
+        };
+        button.addEventListener('click', () => {
+            if (open()) { close(false); return; }
+            if (typeof panel.showPopover === 'function') panel.showPopover();
+            else { fallbackOpen = true; panel.classList.add('is-open'); }
+            position(); button.setAttribute('aria-expanded', 'true');
+            panel.querySelector('input:checked')?.focus();
+        });
+        panel.addEventListener('toggle', event => { button.setAttribute('aria-expanded', String(event.newState === 'open')); });
+        panel.addEventListener('keydown', event => {
+            // Browsers synthesize radio clicks for arrow navigation. Handle the
+            // group here so browsing choices does not commit and close it.
+            if (['ArrowLeft','ArrowUp','ArrowRight','ArrowDown','Home','End'].includes(event.key) && event.target.matches('input[type="radio"]')) {
+                event.preventDefault(); event.stopPropagation();
+                const inputs = [...panel.querySelectorAll('input[type="radio"]')], index = inputs.indexOf(event.target);
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? inputs.length - 1 : (index + (['ArrowLeft','ArrowUp'].includes(event.key) ? -1 : 1) + inputs.length) % inputs.length;
+                const input = inputs[next]; input.checked = true; input.focus();
+                input.dispatchEvent(new Event('change', { bubbles: true })); return;
+            }
+            if (event.key === 'Escape' || event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); close(true); }
+        });
+        document.addEventListener('pointerdown', event => { if (fallbackOpen && !wrap.contains(event.target)) close(false); });
+        window.addEventListener('resize', () => { if (open()) position(); });
+        button.setOptions(options); return button;
+    }
     function valuesTable(parent, headers, rows) {
         parent.replaceChildren();
         const details = el('details', '', 'bw-visual-data'), table = el('table'), head = el('thead'), tr = el('tr');
@@ -154,12 +234,12 @@
         const section = el('section', '', 'bw-visual-lab'), id = 'bw-lab-' + (++seq);
         const heading = el('h2', title); heading.id = id; section.setAttribute('aria-labelledby', id);
         section.append(heading, el('p', 'Explore historical observations from different angles. Every view includes its exact values.'));
-        const controls = el('div', '', 'bw-visual-controls'), select = selector(controls, 'Visualization', types);
+        const controls = el('div', '', 'bw-visual-controls'), select = visualizationChooser(controls, types);
         const exportButton = el('button', 'Download PNG'); exportButton.type = 'button'; controls.append(exportButton);
         const stage = el('div', '', 'bw-visual-stage'), note = el('p', '', 'bw-visual-note'), table = el('div'); note.setAttribute('aria-live', 'polite');
         section.append(controls, stage, note, table); parent.append(section);
         const state = { rows: [], unit: '', section, controls, select, stage, note, table };
-        state.draw = () => render(stage, state.rows, select.value, state.unit, note, table);
+        state.draw = () => { select.sync(); render(stage, state.rows, select.value, state.unit, note, table); };
         select.addEventListener('change', () => state.draw());
         exportButton.addEventListener('click', async () => {
             const svg = stage.querySelector('svg'); if (!svg) return;
@@ -179,7 +259,7 @@
     function detail(rows, name, unit) {
         const chart = document.getElementById('priceChart'); if (!chart) return;
         if (!detailLab) {
-            const host = el('div'); chart.closest('.chart-panel').after(host); detailLab = createLab(host, 'Visual explorer');
+            const host = el('div'); (chart.closest('.commodity-overview') || chart.closest('.chart-panel')).after(host); detailLab = createLab(host, 'Visual explorer');
             detailLab.select.value = 'histogram';
         }
         detailLab.rows = rows; detailLab.unit = unit; detailLab.draw();
@@ -226,10 +306,10 @@
         function configure(catalog) {
             const options = catalog ? catalogTypes : types;
             const selected = lab.select.value;
-            lab.select.replaceChildren();
-            options.forEach(([value,label]) => {const option=el('option',label);option.value=value;lab.select.append(option);});
+            lab.select.setOptions(options);
             lab.select.value = options.some(option=>option[0]===selected) ? selected : options[0][0];
-            lab.draw = catalog ? () => catalogView(lab, records, range.value) : seriesDraw;
+            lab.select.sync();
+            lab.draw = catalog ? () => { lab.select.sync(); catalogView(lab, records, range.value); } : seriesDraw;
         }
         lab.select.addEventListener('change', () => { if (!current) { lab.stage.replaceChildren(); lab.table.replaceChildren(); lab.note.textContent = 'Select a benchmark to load observations.'; } });
         async function load() {

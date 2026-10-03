@@ -57,6 +57,49 @@ def test_reference_list_is_typed_cached_and_country_searchable(reference_client)
     assert '/reference/ca_usd_cad' not in filtered
 
 
+def test_homepage_exposes_saved_country_data_with_accurate_counts(reference_client):
+    client, _ = reference_client
+    home = client.get('/').get_data(as_text=True)
+    assert 'Homepage datasets' in home and 'dataset=countries' in home
+    assert 'Country data <span>1</span>' in home
+    country_home = client.get('/?dataset=countries').get_data(as_text=True)
+    assert '<h1>Country data</h1>' in country_home
+    assert '1 saved histories · 1 economies' in country_home
+    assert '1 of 1 saved country histories' in country_home
+    assert '/reference/jp_wb_agriculture_share' in country_home
+    assert '/reference/ecb_eur_usd' not in country_home
+    assert 'private-sentinel-never-display' not in country_home
+    assert 'id="index-page-state"' not in country_home
+
+
+def test_homepage_country_data_has_empty_state_and_separate_commodity_fallback(reference_client):
+    client, directory = reference_client
+    path = directory / 'jp_wb_agriculture_share.json'
+    payload = json.loads(path.read_text())
+    payload['history'] = []
+    path.write_text(json.dumps(payload))
+    body = client.get('/?dataset=countries').get_data(as_text=True)
+    assert '0 of 0 saved country histories' in body
+    assert 'No matching references' in body
+    assert client.get('/').status_code == 200
+
+
+def test_homepage_country_pagination_retains_dataset_and_filters(reference_client):
+    client, directory = reference_client
+    entries = seed_bulk_fixture(directory, count=72)
+    body = client.get('/?dataset=countries').get_data(as_text=True)
+    assert body.count('class="gr-reference-row"') == 30
+    assert 'dataset=countries' in body and 'page=2' in body
+    next_page = client.get('/?dataset=countries&page=2').get_data(as_text=True)
+    assert '31–60 of' in next_page
+    assert next_page.count('class="gr-reference-row"') == 30
+    indicator = entries[0]['indicator']
+    filtered = client.get('/?dataset=countries&indicator=' + indicator).get_data(as_text=True)
+    assert 'name="dataset" value="countries"' in filtered
+    assert 'name="indicator"' in filtered
+    assert client.get('/?dataset=countries&country=NOT_A_COUNTRY').status_code == 400
+
+
 def test_reference_detail_retains_zero_precision_period_and_flags(reference_client):
     client, _ = reference_client
     body = client.get('/reference/ecb_eur_usd').get_data(as_text=True)

@@ -13,7 +13,8 @@
         <p>The six country measures are population, GDP, GDP per person, consumer inflation, agriculture's share of GDP and industry's share of GDP. GDP and GDP per person use constant 2015 US dollars. Coverage varies by measure: missing years remain missing, and regional aggregates are excluded from the country list.</p>
         <p>Choose a country and a measure, or search for a name. The list shows 30 histories per page so a phone can browse the collection without loading every chart. Annual observations keep their original year labels, including in the chart popup.</p>
         <p>The initial country batch contains 31,088 observations from 2000–2025 and required six public API requests. A country history, an indicator and a publisher are different counts: this expansion adds histories from the World Bank, rather than claiming 1,248 separate APIs.</p>
-        <p class="mt-4"><a href="{{ url_for('global_reference.index', source='worldbank') }}">Browse downloaded country histories →</a></p>
+        <p>The homepage now has separate Commodities and Country data views. Their counts describe the saved collection in each view. Choose Country data to browse these histories from home; currencies and the other international references remain available from the same workspace.</p>
+        <p class="mt-4"><a href="{{ url_for('main.index', dataset='countries') }}">Browse downloaded country histories →</a></p>
     </section>
     <section class="release-entry">
         <h2>Five additional official readers</h2>

@@ -1,5 +1,9 @@
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+async function chooseVisualization(lab, value) {
+  await lab.getByRole('button',{name:/^Visualization:/}).click();
+  await lab.locator('.bw-visual-options input[value="' + value + '"]').click();
+}
 test('all D3 explorer views, keyboard inspection, range, export and responsive layout', async({page}, testInfo) => {
   const errors:string[]=[]; page.on('pageerror',e=>errors.push(e.message));
   const scripts:string[]=[];page.on('request',r=>{if(r.resourceType()==='script') scripts.push(r.url());});
@@ -12,7 +16,7 @@ test('all D3 explorer views, keyboard inspection, range, export and responsive l
   await expect(page.locator('#stat-points')).not.toHaveText('120');
   const lab=page.getByRole('region',{name:'Visual explorer'});
   for(const type of ['line','area','step','bar','scatter','change','histogram','cumulative','box','monthly','heatmap','coverage']) {
-    await lab.getByLabel('Visualization',{exact:true}).selectOption(type);
+    await chooseVisualization(lab,type);
     await expect(lab.locator('svg')).toBeVisible();
     expect(await lab.locator('svg').innerHTML()).not.toMatch(/NaN|Infinity/);
     await expect(lab.locator('table')).toHaveCount(1);
@@ -37,12 +41,12 @@ test('dashboard D3 sparklines, explorer fetch, comparison and themes',async({pag
   await expect(lab.locator('.bw-visual-note')).toContainText('120 usable');
   await lab.getByLabel('Benchmark',{exact:true}).selectOption('oil');
   await expect(lab.locator('.bw-visual-note')).toContainText('USD / test unit');
-  await lab.getByLabel('Visualization',{exact:true}).selectOption('monthly');
+  await chooseVisualization(lab,'monthly');
   await expect(lab.locator('.bw-d3-bar')).toHaveCount(5);
   await lab.getByLabel('Benchmark',{exact:true}).selectOption('__catalog__');
   await expect(lab.locator('.bw-visual-note')).toContainText('3 benchmarks');
   for (const type of ['ranking','map','categories','dates']) {
-    await lab.getByLabel('Visualization',{exact:true}).selectOption(type);
+    await chooseVisualization(lab,type);
     await expect(lab.locator('svg')).toBeVisible();
     expect(await lab.locator('svg').innerHTML()).not.toMatch(/NaN|Infinity/);
   }

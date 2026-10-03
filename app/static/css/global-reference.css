@@ -1,6 +1,12 @@
 /* Saved global statistics use the app's surface and action roles. */
 .gr-workspace{max-width:1240px;margin:0 auto;padding:24px 28px 40px;font-size:14px;line-height:1.55;color:var(--theme-text);min-width:0}
 .gr-workspace [hidden]{display:none!important}
+.gr-home{max-width:none;margin:0;padding:0 0 16px}
+.gr-home .gr-filter{display:grid;grid-template-columns:minmax(150px,1fr) minmax(130px,.6fr) minmax(150px,.7fr) auto;gap:10px}
+.gr-home .gr-filter .gr-search{min-width:0}
+.gr-home .gr-filter select{max-width:none}
+.gr-home .gr-filter .gr-reset{grid-column:1/-1;padding:0;justify-self:start}
+@media(max-width:760px){.gr-home .gr-filter{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.gr-home .gr-filter .gr-search{grid-column:1/-1}.gr-home .gr-filter button{grid-column:1/-1}.gr-home .gr-heading h1{font-size:24px}}
 .gr-nav{display:flex;flex-wrap:wrap;gap:6px 18px;padding-bottom:18px;font-size:13px}
 .gr-nav a{padding:7px 0;color:var(--theme-text-muted);text-decoration:none}
 .gr-nav a[aria-current]{color:var(--control-selected-text);font-weight:600;border-bottom:2px solid var(--control-primary)}

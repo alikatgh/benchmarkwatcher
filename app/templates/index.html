@@ -1,25 +1,12 @@
 {% extends 'base.html' %}
 {% block content %}
 <div id="index-page-state" data-active-view="{{ active_view }}" class="bw-workspace">
-    <aside class="bw-sidebar" id="bw-sidebar" aria-label="Workspace navigation">
-        <div class="bw-sidebar-top"><div class="bw-sidebar-label">WORKSPACE</div><button type="button" id="bw-sidebar-toggle" class="bw-sidebar-toggle" aria-controls="bw-sidebar" aria-expanded="true" aria-label="Collapse navigation" title="Collapse navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button></div>
-        <nav class="bw-destinations" aria-label="Workspace">
-            <a href="{{ url_for('main.index', view=active_view, range=date_range) }}" data-workspace="benchmarks" aria-label="Benchmarks" title="Benchmarks"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg><span class="bw-nav-text">Benchmarks</span></a>
-            <a href="{{ url_for('main.index', workspace='watchlist', view='compact', range=date_range) }}" data-workspace="watchlist" aria-label="Watchlist" title="Watchlist"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z"/></svg><span class="bw-nav-text">Watchlist</span> <span id="bw-watch-count" class="bw-nav-count">0</span></a>
-            <a href="{{ url_for('main.index', workspace='research', view=active_view, range=date_range) }}" data-workspace="research" aria-label="Research" title="Research"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8M8 16h6"/></svg><span class="bw-nav-text">Research</span> <span id="bw-research-count" class="bw-nav-count">0</span></a>
-            <a href="{{ url_for('global_reference.index') }}" aria-label="Global reference" title="Global reference"><svg class="bw-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"/></svg><span class="bw-nav-text">Global reference</span></a>
-        </nav>
-        <div class="bw-category-nav"><div class="bw-sidebar-label">EXPLORE</div><nav aria-label="Benchmark categories">
-        {% for slug, label in [('energy','Energy'),('metal','Metals'),('precious','Precious metals'),('agricultural','Agriculture'),('index','Indices')] %}
-            <a href="{{ url_for('main.index', category=slug, range=date_range, view=active_view) }}" data-workspace-category="{{ slug }}"{% if selected_category == slug %} aria-current="page"{% endif %}><span class="bw-category-dot bw-dot-{{ slug }}" aria-hidden="true"></span>{{ label }}</a>
-        {% endfor %}
-        </nav></div>
-        <div class="bw-sidebar-bottom"><a href="{{ url_for('global_reference.sources') }}">Source catalog <span aria-hidden="true">↗</span></a><a href="#market-pulse" id="bw-about-data">About the data <span aria-hidden="true">↗</span></a><a href="{{ url_for('main.changelog') }}">What’s new</a></div>
-    </aside>
+    {% include 'components/workspace_sidebar.html' %}
     <div class="bw-main-content">
         <section id="benchmark-workspace" aria-labelledby="bw-page-title">
+            {% include 'components/home_datasets.html' %}
             <div class="bw-page-heading"><div><h1 id="bw-page-title">Commodity benchmarks</h1><p id="bw-page-description">A clearer view of energy, metals and agriculture.</p></div><div class="bw-layout-switch" aria-label="Benchmark layout"><a href="{{ url_for('main.index', view='compact', range=date_range, category=selected_category) }}" {% if active_view == 'compact' %}aria-current="page"{% endif %}>Table</a><a href="{{ url_for('main.index', view='grid', range=date_range, category=selected_category) }}" {% if active_view == 'grid' %}aria-current="page"{% endif %}>Cards</a></div></div>
-            <section id="bw-overview" class="bw-overview" aria-label="Selected reference observations"></section>
+            <details id="bw-featured" class="bw-featured"><summary>Featured observations</summary><section id="bw-overview" class="bw-overview" aria-label="Selected reference observations"></section></details>
             <details id="bw-visual-explorer" class="bw-visual-disclosure"><summary>Visual explorer <span>History, distributions, monthly patterns &amp; coverage</span></summary></details>
             <div class="bw-section-heading"><h2 id="bw-table-heading">Explore benchmarks</h2><span>Historical observations · source schedules vary</span></div>
     <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">

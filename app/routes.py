@@ -228,7 +228,22 @@ def internal_api_commodities():
 @bp.route('/')
 @cache.cached(timeout=600, query_string=True)
 def index():
-    """Main index page with commodity grid."""
+    """Browse commodity observations or saved country histories at home."""
+    from app.global_reference import country_summary, listing_context
+    from werkzeug.exceptions import HTTPException
+
+    if request.args.get('dataset') == 'countries':
+        context = listing_context(endpoint='main.index', countries_only=True)
+        return render_template('global_reference/home.html', **context,
+                               country_summary={'histories': context['available'], 'economies': context['country_count']},
+                               commodity_count=len(get_all_commodities(include_history=False)),
+                               active_dataset='countries', active_view='compact', date_range='1Y')
+
+    try:
+        countries = country_summary()
+    except HTTPException:
+        # A damaged reference index must not block the independent commodity view.
+        countries = None
     date_range = validate_range(request.args.get('range', '1Y'))
     category = request.args.get('category', None)
     active_view = (
@@ -248,7 +263,9 @@ def index():
         market_summary=build_market_summary(commodities),
         date_range=date_range,
         selected_category=category,
-        active_view=active_view
+        active_view=active_view,
+        active_dataset='commodities', country_summary=countries,
+        commodity_count=len(get_all_commodities(include_history=False))
     )
 
 

@@ -79,6 +79,7 @@ BW.Commodity = {
         enableAnimation: true,
         animationDuration: 300,
         chartHeight: 400,
+        responsiveHeight: true,
 
         // Visibility
         showStatsBar: true,
@@ -306,10 +307,12 @@ BW.Commodity = {
         if (!target || !V) return;
         const filtered = this.filterDataByRange(this.fullHistoryData, this.currentRange) || [];
         const settings = this.chartSettings;
+        target.parentElement.style.height = this.getChartHeight() + 'px';
         const primaryUnit = target.dataset.unit || '';
         const mixedUnits = Object.values(this.comparisonData).some(record => record.currency !== this.currency || record.unit !== primaryUnit);
         if (mixedUnits) this.currentViewMode = 'percent';
         const percent = this.currentViewMode === 'percent';
+        this.updateSegmentedControls('chart-view-controls', this.currentViewMode, mixedUnits ? ['price'] : []);
         const viewSelect = document.getElementById('chart-view-select');
         if (viewSelect) { viewSelect.value = this.currentViewMode; viewSelect.querySelector('option[value=price]').disabled = mixedUnits; }
         let comparisonNote = document.getElementById('d3-comparison-note');
@@ -382,6 +385,7 @@ BW.Commodity = {
 
     // Update view mode button states
     updateViewButtons: function () {
+        this.updateSegmentedControls('chart-view-controls', this.currentViewMode);
         const select = document.getElementById('chart-view-select');
         if (select) select.value = this.currentViewMode;
         const activeClasses = 'theme-surface theme-text';
@@ -586,10 +590,11 @@ BW.Commodity = {
 
     // Update type button states
     updateTypeButtons: function () {
+        this.updateSegmentedControls('chart-type-controls', this.currentChartType);
         const select = document.getElementById('chart-type-select');
         if (select) select.value = this.currentChartType;
         const self = this;
-        ['line', 'area'].forEach(type => {
+        ['line', 'area', 'step', 'bar', 'scatter'].forEach(type => {
             const btn = document.getElementById(`type-${type}`);
             if (btn) {
                 if (type === self.currentChartType) {
@@ -601,6 +606,19 @@ BW.Commodity = {
         });
     },
 
+    // Native radios own keyboard behavior; the indicator follows the selected value.
+    updateSegmentedControls: function (id, value, disabledValues) {
+        const group = document.getElementById(id);
+        if (!group) return;
+        const inputs = Array.from(group.querySelectorAll('input[type="radio"]'));
+        inputs.forEach(input => {
+            input.checked = input.value === value;
+            if (disabledValues) input.disabled = disabledValues.includes(input.value);
+        });
+        const track = group.querySelector('.chart-segmented-track');
+        if (track) track.style.setProperty('--segment-index', Math.max(0, inputs.findIndex(input => input.value === value)));
+    },
+
     // ============================================================
     // CHART SETTINGS FUNCTIONS
     // ============================================================
@@ -609,6 +627,7 @@ BW.Commodity = {
     openChartSettings: function () {
         const modal = document.getElementById('chart-settings-modal');
         if (modal) {
+            if (modal.open) return;
             this.chartSettingsFocusSeq += 1;
             const activeFocusSeq = this.chartSettingsFocusSeq;
             if (this.chartSettingsFocusTimer) {
@@ -618,6 +637,13 @@ BW.Commodity = {
             this.previouslyFocusedChartControl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
             modal.classList.remove('hidden');
             modal.removeAttribute('aria-hidden');
+            if (typeof modal.showModal === 'function') {
+                if (!modal.open) modal.showModal();
+                if (!modal.dataset.cancelBound) {
+                    modal.addEventListener('cancel', event => { event.preventDefault(); this.closeChartSettings(); });
+                    modal.dataset.cancelBound = 'true';
+                }
+            }
             document.body.style.overflow = 'hidden'; // Prevent background scroll
             const tabName = this.activeSettingsTab || 'appearance';
             this.showChartSettingsTab(tabName);
@@ -636,7 +662,7 @@ BW.Commodity = {
     // Close settings modal
     closeChartSettings: function () {
         const modal = document.getElementById('chart-settings-modal');
-        if (modal) {
+        if (modal && !modal.classList.contains('hidden')) {
             this.chartSettingsFocusSeq += 1;
             if (this.chartSettingsFocusTimer) {
                 clearTimeout(this.chartSettingsFocusTimer);
@@ -644,6 +670,7 @@ BW.Commodity = {
             }
             modal.classList.add('hidden');
             modal.setAttribute('aria-hidden', 'true');
+            if (modal.open && typeof modal.close === 'function') modal.close();
             document.body.style.overflow = ''; // Restore scroll
             if (this.previouslyFocusedChartControl && typeof this.previouslyFocusedChartControl.focus === 'function') {
                 this.previouslyFocusedChartControl.focus();
@@ -660,7 +687,8 @@ BW.Commodity = {
         scopeRoot.querySelectorAll('.chart-settings-content').forEach(c => c.classList.add('hidden'));
         // Deactivate all tabs
         scopeRoot.querySelectorAll('.chart-settings-tab').forEach(t => {
-            t.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white';
+            t.setAttribute('aria-selected', 'false');
+            t.tabIndex = -1;
         });
         // Show selected content
         const content = document.getElementById('content-' + tabName);
@@ -668,8 +696,11 @@ BW.Commodity = {
         // Activate selected tab
         const tab = document.getElementById('tab-' + tabName);
         if (tab) {
-            tab.className = 'chart-settings-tab flex-1 min-h-[44px] px-3 sm:px-4 py-2 text-xs font-semibold rounded-lg whitespace-nowrap transition theme-surface theme-text';
+            tab.setAttribute('aria-selected', 'true');
+            tab.tabIndex = 0;
         }
+        const scroll = modal?.querySelector('.chart-settings-scroll');
+        if (scroll) scroll.scrollTop = 0;
     },
 
     syncThemePresetUI: function () {
@@ -696,6 +727,7 @@ BW.Commodity = {
                 const parsed = BW.Settings.getChartSettings();
                 if (parsed && typeof parsed === 'object') {
                     this.chartSettings = { ...this.chartSettings, ...parsed };
+                    if (parsed.responsiveHeight === undefined && parsed.chartHeight !== undefined && parsed.chartHeight !== 400) this.chartSettings.responsiveHeight = false;
                 }
             } catch (e) {
                 console.warn('Could not load chart settings from BW.Settings:', e);
@@ -711,6 +743,7 @@ BW.Commodity = {
                 const parsed = JSON.parse(saved);
                 // Merge with defaults (in case new settings were added)
                 this.chartSettings = { ...this.chartSettings, ...parsed };
+                if (parsed.responsiveHeight === undefined && parsed.chartHeight !== undefined && parsed.chartHeight !== 400) this.chartSettings.responsiveHeight = false;
             }
         } catch (e) {
             console.warn('Could not load chart settings:', e);
@@ -796,6 +829,7 @@ BW.Commodity = {
         }
 
         this.chartSettings[key] = value;
+        if (key === 'chartHeight') this.chartSettings.responsiveHeight = false;
         this.saveChartSettings();
         this.applySettingsToDOM();
         this.updateChart(); // Real-time visual feedback!
@@ -832,7 +866,7 @@ BW.Commodity = {
             tooltipRadius: 8, tooltipPadding: 12,
             showCrosshairDate: true, showCrosshairPrice: true, showCrosshairChange: true,
             enableZoom: true, enablePan: true, zoomModifier: 'ctrl',
-            enableAnimation: true, animationDuration: 300, chartHeight: 400,
+            enableAnimation: true, animationDuration: 300, chartHeight: 400, responsiveHeight: true,
             showStatsBar: true, showStatHigh: true, showStatLow: true, showStatAvg: true,
             showStatRange: true, showStatPoints: true, showResetBtn: true, showDownloadBtn: true
         };
@@ -841,6 +875,11 @@ BW.Commodity = {
         this.populateSettingsUI();
         this.applySettingsToDOM();
         this.updateChart();
+    },
+
+    getChartHeight: function () {
+        const settings = this.chartSettings;
+        return settings.responsiveHeight !== false && window.innerWidth <= 640 ? Math.min(settings.chartHeight, 300) : settings.chartHeight;
     },
 
     // Apply visibility and DOM-based settings
@@ -875,7 +914,7 @@ BW.Commodity = {
 
         // Chart height - prefer canvas parent over brittle class selector
         const chartContainer = document.getElementById('priceChart') ? document.getElementById('priceChart').parentElement : null;
-        if (chartContainer) chartContainer.style.height = s.chartHeight + 'px';
+        if (chartContainer) chartContainer.style.height = this.getChartHeight() + 'px';
 
         // High/Low are extremes of one series, not gains/losses — up/down colors
         // would misuse direction semantics, so they stay neutral ink (UI rules:
@@ -1169,6 +1208,17 @@ function resetChartSettings() { BW.Commodity.resetChartSettings(); }
 if (!window.__bwCommodityGlobalKeydownBound) {
     window.__bwCommodityGlobalKeydownBound = true;
     document.addEventListener('keydown', function (e) {
+        const tab = e.target.closest?.('#chart-settings-modal [role="tab"]');
+        if (tab && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+            const tabs = Array.from(tab.parentElement.querySelectorAll('[role="tab"]'));
+            const index = tabs.indexOf(tab);
+            const next = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 :
+                (index + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+            e.preventDefault();
+            BW.Commodity.showChartSettingsTab(tabs[next].id.replace('tab-', ''));
+            tabs[next].focus();
+            return;
+        }
         // S key opens settings (when not in input)
         if (e.key === 's' && !e.ctrlKey && !e.metaKey &&
             !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {

@@ -11,6 +11,12 @@
         init() {
             this.initSidebar();
             this.initScrollChrome();
+            const featured = $('bw-featured');
+            if (featured) {
+                const phone = window.matchMedia('(max-width:540px)');
+                const adapt = () => { featured.open = !phone.matches; };
+                adapt(); phone.addEventListener('change', adapt);
+            }
             try { this.catalog = JSON.parse($('workspace-benchmarks')?.textContent || '[]'); } catch (_) { this.catalog = []; }
             this.renderOverview();
             document.addEventListener('click', event => {
@@ -162,6 +168,7 @@
             const preferred = ['crude_oil_brent', 'gold', 'copper'];
             const selected = [...records].sort((a,b) => { const ai = preferred.indexOf(a.id), bi = preferred.indexOf(b.id); return (ai < 0 ? 99 : ai) - (bi < 0 ? 99 : bi); }).slice(0,3);
             root.replaceChildren(); root.hidden = !selected.length;
+            if ($('bw-featured')) $('bw-featured').hidden = !selected.length;
             selected.forEach(c => {
                 const card = el('a', undefined, 'bw-observation'); card.href = '/commodity/' + encodeURIComponent(c.id); card.dataset.benchmarkId = c.id;
                 const heading = el('div', undefined, 'bw-observation-heading'); heading.append(el('span', c.name), el('span','↗')); card.append(heading);

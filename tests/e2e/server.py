@@ -36,6 +36,7 @@ def main(workbooks=False, companies=False):
         class Config:
             SECRET_KEY = 'ci-only-fixture-server'
             JSON_DATA_DIR = directory
+            GLOBAL_REFERENCE_DATA_DIR = os.getenv('PLAYWRIGHT_REFERENCE_DATA_DIR')
             CACHE_TYPE = 'SimpleCache'
             RATELIMIT_ENABLED = False
             WORKSPACE_ENABLED = workbooks or companies

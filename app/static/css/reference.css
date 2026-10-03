@@ -49,10 +49,10 @@ header a[aria-label="BenchmarkWatcher home"] > div span {color:var(--theme-bg)!i
 #compact-view>.rounded-xl {border-radius:8px;}
 #commodity-page {padding-top:20px;}
 #commodity-page>div:first-child {margin-bottom:16px;}
-#commodity-page>div:nth-child(2) {border:0;border-bottom:1px solid var(--theme-border);border-radius:0;background:transparent!important;}
-#commodity-page>div:nth-child(2)>div {padding:0 0 18px;}
-#commodity-page>div:nth-child(3) {margin-top:20px;border-radius:8px;}
-#commodity-page>div:nth-child(3)>div:first-child {padding:14px 16px;}
+#commodity-page .commodity-summary {border:1px solid var(--theme-border);border-radius:8px;background:var(--theme-surface);}
+#commodity-page .commodity-summary-inner {padding:18px;}
+#commodity-page .chart-panel {border-radius:8px;}
+#commodity-page .chart-toolbar {padding:14px 16px;}
 #commodity-page .source-provenance {min-width:190px;}
 #commodity-page #change-badge-section {margin-top:12px;}
 #commodity-page #change-badge-bg {padding:3px 8px;}
@@ -84,9 +84,9 @@ html[data-theme] #settings-modal .theme-btn[data-active="true"] {border-color:va
   #commodity-page .source-provenance .text-sm {font-size:12px;}
 }
 /* Put the plot before secondary statistics and its cursor readout. */
-#commodity-page>div:nth-child(3) {display:flex;flex-direction:column;}
+#commodity-page .chart-panel {display:flex;flex-direction:column;}
 #commodity-page #stats-bar {order:2;border-top:1px solid var(--theme-border);border-bottom:0;}
-#commodity-page>div:nth-child(3)>div:nth-child(3) {display:flex;flex-direction:column;padding:12px 16px;}
+#commodity-page .chart-plot-body {display:flex;flex-direction:column;padding:12px 16px;}
 #commodity-page #crosshair-info {order:1;margin:10px 0 0;}
 #commodity-page #compare-bar {order:2;}
 #commodity-page #crosshair-info~div:last-child {order:3;}
