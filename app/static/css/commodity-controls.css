@@ -9,8 +9,28 @@ html[data-theme] #commodity-page .commodity-page-header h1{font-size:26px;line-h
 #commodity-page .commodity-page-navigation ol{flex-wrap:wrap}
 #commodity-page .commodity-page-navigation>a{flex-shrink:0}
 #commodity-page .chart-toolbar {display:block;padding:12px 16px!important;}
-#commodity-page .chart-heading {display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+#commodity-page .chart-heading {display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
 #commodity-page .chart-heading h2 {font-size:14px!important;line-height:1.4;font-weight:600;}
+#commodity-page .chart-heading-copy {flex:1;min-width:0;}
+#commodity-page .chart-heading-copy p {font-size:12px;color:var(--theme-text-muted);margin-top:2px;overflow-wrap:anywhere;}
+#commodity-page #compare-menu-btn {min-height:40px;font-size:12px;background:var(--control-panel);color:var(--control-text);border:1px solid var(--control-border);border-radius:5px;padding:6px 10px;}
+#commodity-page #compare-menu {max-width:calc(100vw - 40px);}
+#commodity-page .compare-picker-heading {display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;font-size:12px;}
+#commodity-page .compare-picker-heading button {min-height:40px;padding:4px 8px;color:var(--theme-accent);}
+#commodity-page #compare-status {font-size:12px;color:var(--theme-text-muted);padding:0 12px;}
+#commodity-page #compare-status:not(:empty) {padding:8px 12px;}
+#commodity-page #compare-list button {min-height:44px;}
+#commodity-page #compare-bar {margin:0 0 6px;font-size:12px;}
+#commodity-page #compare-tags {display:flex;flex-wrap:wrap;gap:6px 16px;}
+#commodity-page #comparison-line-keys {order:-1;display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin-bottom:6px;}
+#commodity-page #comparison-line-keys[hidden] {display:none;}
+#commodity-page #comparison-line-keys>span {display:flex;align-items:center;gap:6px;min-width:0;overflow-wrap:anywhere;}
+#commodity-page #comparison-line-keys svg {width:24px;height:14px;flex-shrink:0;}
+#commodity-page .commodity-compare-key {display:flex;align-items:center;gap:6px;min-width:0;}
+#commodity-page .commodity-compare-key svg {width:24px;height:14px;flex-shrink:0;}
+#commodity-page .commodity-compare-key span {overflow-wrap:anywhere;}
+#commodity-page .commodity-compare-key small {display:block;color:var(--theme-text-muted);font-size:10px;}
+#commodity-page .commodity-compare-key button {min-height:36px;min-width:36px;font-size:18px;border-radius:5px;color:var(--theme-text-muted);background:var(--control-panel);}
 #commodity-page .chart-controls {display:flex;gap:6px 12px;align-items:center;flex-wrap:wrap;}
 #commodity-page .chart-control-group {border:0;padding:0;gap:2px;}
 #commodity-page .chart-range-presets {width:auto;flex-wrap:wrap;justify-content:flex-start;}
@@ -95,7 +115,7 @@ html[data-theme] #commodity-page .chart-controls .range-btn[aria-pressed="true"]
 #commodity-page #stats-bar{order:2;border-top:1px solid var(--theme-border);border-bottom:0}
 @container commodity-chart (min-width:820px){
  #commodity-page .chart-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;padding:10px 16px!important}
- #commodity-page .chart-heading{grid-column:1;grid-row:1;display:block;margin:0}
+ #commodity-page .chart-heading{grid-column:1;grid-row:1;display:flex;align-items:center;margin:0}
  #commodity-page .chart-heading p{margin:2px 0 0}
  #commodity-page .chart-controls{display:contents}
  #commodity-page .chart-display-controls{grid-column:2;grid-row:1;gap:12px;flex-wrap:nowrap}

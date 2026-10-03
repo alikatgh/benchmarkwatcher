@@ -9,7 +9,7 @@
     const COLORS = ['#4285f4', '#b05aca', '#d77813', '#279888'];
     const state = {
         ids: [], watchlist: null, watchSaved: true, records: [], range: '1Y',
-        mode: 'indexed', seq: 0, controller: null, trigger: null, triggerScope: null,
+        mode: 'percent', seq: 0, controller: null, trigger: null, triggerScope: null,
         inertNodes: [], open: false, initialized: false, noticeTimer: null, noticeHome: null,
         widths: { ...DEFAULT_WIDTHS }, width: 560, drag: null,
         custom: { start: '', end: '' }, chartStyle: 'line', showDots: false, settingsOpen: false, inspectedDate: null,
@@ -269,7 +269,7 @@
         state.inspectedDate = null;
         state.ids = ids;
         state.records = [];
-        state.mode = 'indexed';
+        state.mode = 'percent';
         state.trigger = trigger || document.activeElement;
         state.triggerScope = state.trigger?.closest('#tw-mobile-list, #table-body, #bw-overview')?.id || null;
         state.open = true;
@@ -502,10 +502,11 @@
         return node;
     }
     function plot(series, indexed, onInspect) {
+        const percent = indexed === 'percent';
         if (!series.some(item => item.points.some(p => p.value !== null))) return element('p', 'benchmark-detail-empty', 'No usable observations in this range. Try a wider range or view the source.');
         const svg = svgNode('svg', {class: 'benchmark-detail-plot'});
         const data = series.map(item => ({name: item.record.name || item.record.id, color: item.color,
-            unit: indexed ? 'index' : unit(item.record), gapDays: item.record.is_daily ? 7 : 62, points: item.points}));
+            unit: percent ? '%' : indexed ? 'index' : unit(item.record), gapDays: item.record.is_daily ? 7 : 62, points: item.points}));
         let width = 0;
         const draw = () => {
             const next = Math.round(svg.clientWidth || Math.max(280, (pane().clientWidth || state.width) - (window.innerWidth < 768 ? 40 : 48)));
@@ -516,7 +517,9 @@
                 type: state.chartStyle, dots: state.showDots, lineWidth: 2, pointRadius: 2,
                 finance: !!onInspect, externalReadout: !!onInspect, yAxisPosition: onInspect ? 'right' : 'left',
                 yTicks: 4, axisFontSize: 11, initialDate: state.inspectedDate, onInspect,
-                label: indexed ? 'Indexed reference histories. Actual dates and values are available in observation tables below.' : 'Reference history. Use left and right arrow keys to inspect observations. Exact values are in the observation table below.'});
+                zero: percent, yFormat: percent ? value => BW.Visuals.format(value) + '%' : undefined,
+                tooltipFormat: indexed ? value => value !== 0 && Math.abs(value) < .001 ? value.toPrecision(3) : value.toLocaleString(undefined, {maximumFractionDigits:3}) : undefined,
+                label: percent ? 'Percentage change from each series baseline. Left and right inspect dates; up and down switch series. Exact values and baseline dates are below.' : indexed ? 'Indexed reference histories. Actual dates and values are available in observation tables below.' : 'Reference history. Use left and right arrow keys to inspect observations. Exact values are in the observation table below.'});
             svg.classList.add('benchmark-detail-plot');
             if (onInspect) svg.classList.add('benchmark-detail-finance');
         };
@@ -532,7 +535,7 @@
         table.append(element('caption', '', (record.name || record.id) + ' · ' + unit(record) + ' · Newest first'));
         const head = element('thead');
         const tr = element('tr');
-        ['Date', 'Reference value'].concat(indexed ? ['Index'] : []).forEach(label => {
+        ['Date', 'Reference value'].concat(indexed ? [indexed === 'percent' ? '% change' : 'Index'] : []).forEach(label => {
             const th = element('th', '', label); th.scope = 'col'; tr.append(th);
         });
         head.append(tr);
@@ -618,7 +621,7 @@
     function compatible(records) {
         return records.length > 1 && records.every(record => !record.error && record.currency && record.unit && record.currency === records[0].currency && record.unit === records[0].unit);
     }
-    function renderComparison() {
+    function renderComparison(previousMode) {
         disposeChart();
         byId('benchmark-detail-title').textContent = 'Compare benchmarks';
         byId('benchmark-detail-category').textContent = state.ids.length + ' selected · Historical observations';
@@ -628,33 +631,49 @@
         byId('benchmark-detail-actions').replaceChildren(button('Watch all', () => addToWatchlist(state.ids)), researchButton);
         const section = element('section');
         const heading = element('div', 'benchmark-detail-chart-head');
-        heading.append(element('h3', '', state.mode === 'indexed' ? 'Indexed histories' : 'Reference values'));
+        heading.append(element('h3', '', state.mode === 'percent' ? 'Change from baseline' : state.mode === 'indexed' ? 'Indexed histories' : 'Reference values'));
         section.append(heading, ranges(), chartSettings());
         const modes = element('div', 'benchmark-detail-mode');
-        [['indexed', 'Index · first value = 100'], ['absolute', 'Absolute values']].forEach(([mode, label]) => {
+        modes.setAttribute('role', 'group'); modes.setAttribute('aria-label', 'Comparison scale');
+        modes.style.setProperty('--mode-index', ['percent', 'indexed', 'absolute'].indexOf(state.mode));
+        const indicator = element('span', 'benchmark-detail-mode-indicator');
+        indicator.setAttribute('aria-hidden', 'true'); modes.append(indicator);
+        [['percent', '% change'], ['indexed', 'Index 100'], ['absolute', 'Value']].forEach(([mode, label]) => {
             const control = button(label, () => {
-                state.mode = mode; renderComparison();
+                const previous = state.mode;
+                state.mode = mode; renderComparison(previous);
                 const target = pane().querySelector('[data-detail-mode="' + mode + '"]');
                 if (target) target.focus();
             });
             control.dataset.detailMode = mode;
             control.setAttribute('aria-pressed', String(state.mode === mode));
             control.disabled = mode === 'absolute' && !compatible(state.records);
+            if (control.disabled) control.title = 'Values require matching currency and unit for all selected benchmarks.';
             modes.append(control);
         });
         section.append(modes);
-        const indexed = state.mode === 'indexed';
+        const indexed = state.mode !== 'absolute';
         const series = chartData(state.records).map(item => {
             const baseline = item.points.find(point => point.price !== null);
             const canIndex = baseline && baseline.price > 0;
             return {
                 ...item, baseline, canIndex, color: COLORS[state.ids.indexOf(item.record.id)],
-                points: item.points.map(point => ({ ...point, value: indexed ? (canIndex && point.price !== null ? point.price / baseline.price * 100 : null) : point.price }))
+                points: item.points.map(point => ({ ...point, value: indexed ? (canIndex && point.price !== null ? (point.price / baseline.price - (state.mode === 'percent' ? 1 : 0)) * 100 : null) : point.price }))
             };
         });
-        section.append(plot(series, indexed));
+        const keys = element('div', 'benchmark-comparison-keys');
+        keys.setAttribute('aria-label', 'Compared series');
+        series.forEach((item, index) => {
+            const key = element('span');
+            const swatch = svgNode('svg', {viewBox:'0 0 24 14', 'aria-hidden':'true'});
+            swatch.append(svgNode('line', {x1:0,x2:24,y1:7,y2:7,stroke:item.color,'stroke-width':2,'stroke-dasharray':['none','6 3','2 3','8 3 2 3'][index]}));
+            key.append(swatch, element('span', '', item.record.name || item.record.id)); keys.append(key);
+        });
+        const surface = element('div', 'benchmark-detail-chart-surface');
+        surface.append(keys, plot(series, indexed ? state.mode : false));
+        section.append(surface);
         section.append(element('p', 'benchmark-detail-chart-note', indexed
-            ? 'Each series starts at 100 on its own first available date in this range. Baseline dates may differ; equal index values do not imply equal prices. Missing dates are not filled.'
+            ? 'Each series starts at ' + (state.mode === 'percent' ? '0%' : '100') + ' on its own first available date in this range. Baseline dates may differ; ' + (state.mode === 'percent' ? 'changes are relative to each baseline.' : 'equal index values do not imply equal prices.') + ' Missing dates are not filled.'
             : 'Values share the same currency and unit. Dots retain actual observation dates; missing dates are not filled.'));
         const lastDates = series.filter(item => item.points.length).map(item => item.points[item.points.length - 1].date).sort();
         if (lastDates.length) section.append(element('p', 'benchmark-detail-chart-note', 'Range ends at the newest observation in this selection: ' + lastDates[lastDates.length - 1] + '.'));
@@ -663,7 +682,8 @@
         state.records.forEach(record => {
             const row = element('div', 'benchmark-detail-legend-item');
             const dot = svgNode('svg', { viewBox: '0 0 24 14', class: 'benchmark-detail-legend-dot', 'aria-hidden': 'true' });
-            dot.append(svgNode('line', { x1: 0, x2: 24, y1: 7, y2: 7, stroke: COLORS[state.ids.indexOf(record.id)], 'stroke-width': 2, 'stroke-dasharray': ['none', '6 3', '2 3', '8 3 2 3'][state.ids.indexOf(record.id)] }));
+            const plottedIndex = series.findIndex(item => item.record.id === record.id);
+            dot.append(svgNode('line', { x1: 0, x2: 24, y1: 7, y2: 7, stroke: COLORS[state.ids.indexOf(record.id)], 'stroke-width': 2, 'stroke-dasharray': ['none', '6 3', '2 3', '8 3 2 3'][Math.max(0,plottedIndex)] }));
             const info = element('div');
             info.append(element('strong', '', record.name || titleFromRow(record.id)));
             if (record.error) {
@@ -673,15 +693,22 @@
                 info.append(element('small', '', unit(record) + ' · ' + cadence(record)));
                 info.append(element('small', '', 'Source: ' + (record.source_name || 'Not supplied')));
                 info.append(element('small', '', item.baseline ? 'Baseline: ' + item.baseline.date + ' · ' + format(item.baseline.price) + ' ' + unit(record) : 'No observations in this range.'));
-                if (indexed && !item.canIndex) info.append(element('small', '', 'Index unavailable: a positive baseline is required. Raw values remain in the table.'));
+                if (indexed && !item.canIndex) info.append(element('small', '', 'Relative change unavailable: a positive baseline is required. Raw values remain in the table.'));
             }
             const link = pageLink(record); link.textContent = 'Details';
             row.append(dot, info, link); legend.append(row);
         });
         section.append(legend);
         if (state.records.some(record => record.error)) section.append(button('Retry unavailable series', load));
-        series.forEach(item => section.append(observationTable(item.record, item.points, indexed)));
+        series.forEach(item => section.append(observationTable(item.record, item.points, indexed ? state.mode : false)));
         byId('benchmark-detail-body').replaceChildren(section);
+        if (previousMode && previousMode !== state.mode && window.requestAnimationFrame) {
+            modes.style.setProperty('--mode-index', ['percent','indexed','absolute'].indexOf(previousMode));
+            modes.getBoundingClientRect();
+            window.requestAnimationFrame(() => {
+                if (modes.isConnected) modes.style.setProperty('--mode-index', ['percent','indexed','absolute'].indexOf(state.mode));
+            });
+        }
     }
     function onStorage(event) {
         if ((event.key !== STORAGE_KEY && event.key !== null) || !state.watchSaved) return;

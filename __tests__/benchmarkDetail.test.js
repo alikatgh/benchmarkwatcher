@@ -194,28 +194,52 @@ test('comparison discloses different baselines, preserves actual dates, and disa
     expect(detail.querySelector('[data-detail-mode="absolute"]').disabled).toBe(true);
     const tables = detail.querySelectorAll('table');
     expect(tables).toHaveLength(2);
-    expect(tables[1].textContent).toContain('150.00');
+    expect(tables[1].textContent).toContain('50.00');
     expect(tables[1].textContent).not.toContain('2025-04-01');
     expect(detail.querySelectorAll('svg .bw-d3-point')).toHaveLength(4);
+    expect(detail.querySelector('[data-detail-mode="percent"]').getAttribute('aria-pressed')).toBe('true');
+    expect(detail.querySelectorAll('.benchmark-comparison-keys>span')).toHaveLength(2);
+    click('Index 100');
+    expect(detail.querySelectorAll('table')[1].textContent).toContain('150.00');
 });
 
-test('compatible comparison can display absolute values and a zero baseline never becomes infinity', async () => {
-    fetch.mockImplementation(async url => response(sample(url.split('/').pop(), { history: [{ date: '2025-04-01', price: 0 }, { date: '2025-05-01', price: 1 }] })));
+test.each([0, -10])('compatible comparison retains raw values when a nonpositive baseline cannot be normalized (%s)', async baseline => {
+    fetch.mockImplementation(async url => response(sample(url.split('/').pop(), { history: [{ date: '2025-04-01', price: baseline }, { date: '2025-05-01', price: 1 }] })));
     await BW.BenchmarkDetail.compare(['gold', 'copper']);
     const detail = document.getElementById('benchmark-detail');
     expect(detail.textContent).toContain('a positive baseline is required');
     expect(detail.querySelector('svg.benchmark-detail-plot')).toBeNull();
     expect(detail.querySelector('[data-detail-mode="absolute"]').disabled).toBe(false);
-    click('Absolute values');
+    click('Value');
     expect(detail.querySelector('svg.benchmark-detail-plot')).toBeTruthy();
     expect(detail.innerHTML).not.toContain('Infinity');
 });
 
+test('three percentage lines start at zero, preserve gaps and correctly display gains and losses', async () => {
+    const observations = {
+        gold: [{date:'2025-04-01',price:100},{date:'2025-04-15',price:null},{date:'2025-05-01',price:90}],
+        copper: [{date:'2025-04-15',price:10},{date:'2025-05-01',price:20}],
+        oil: [{date:'2025-04-01',price:40},{date:'2025-05-01',price:30}]
+    };
+    fetch.mockImplementation(async url => { const id = url.split('/').pop(); return response(sample(id, {history:observations[id]})); });
+    await BW.BenchmarkDetail.compare(['gold','copper','oil']);
+    const values = index => Array.from(document.querySelectorAll('.point-' + index)).map(node => node.__data__.value);
+    expect(values(0)[0]).toBe(0); expect(values(0)[1]).toBeCloseTo(-10);
+    expect(values(1)).toEqual([0,100]); expect(values(2)).toEqual([0,-25]);
+    expect(document.querySelector('.benchmark-detail-table').textContent).toContain('Unavailable');
+    const strokes = Array.from(document.querySelectorAll('.bw-d3-line')).map(node => node.getAttribute('stroke'));
+    expect(new Set(strokes).size).toBe(3);
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(7);
+});
+
 test('comparison retains successful series when one request fails and enforces the four-series limit', async () => {
-    fetch.mockImplementation(async url => url.endsWith('copper') ? { ok: false } : response(sample('gold')));
+    fetch.mockImplementation(async url => url.endsWith('gold') ? { ok: false } : response(sample('copper')));
     await BW.BenchmarkDetail.compare(['gold', 'copper']);
     expect(document.querySelector('svg')).toBeTruthy();
     expect(document.getElementById('benchmark-detail-body').textContent).toContain('Retry unavailable series');
+    const plotDash = document.querySelector('.bw-d3-line').getAttribute('stroke-dasharray') || 'none';
+    expect(document.querySelector('.benchmark-comparison-keys line').getAttribute('stroke-dasharray')).toBe(plotDash);
+    expect(document.querySelectorAll('.benchmark-detail-legend-dot line')[1].getAttribute('stroke-dasharray')).toBe(plotDash);
     expect(await BW.BenchmarkDetail.compare(['a', 'b', 'c', 'd', 'e'])).toBe(false);
     expect(document.getElementById('benchmark-detail-notice-text').textContent).toContain('2 to 4');
 });

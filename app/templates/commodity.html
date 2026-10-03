@@ -45,8 +45,31 @@
 
         <div class="chart-toolbar border-b border-brand-black-60/10">
             <div class="chart-heading">
-                <h2>Price history</h2>
-                <p>{{ 'Daily observations' if commodity.is_daily else 'Monthly observations' }} · {{ commodity.currency }} / {{ commodity.unit }}</p>
+                <div class="chart-heading-copy">
+                    <h2>Price history</h2>
+                    <p>{{ 'Daily' if commodity.is_daily else 'Monthly' }} · {{ commodity.currency }} / {{ commodity.unit }}</p>
+                </div>
+                    <div class="relative shrink-0" id="compare-menu-container">
+                        <button onclick="toggleCompareMenu()" id="compare-menu-btn" aria-label="Compare commodities" aria-expanded="false" aria-haspopup="dialog" aria-controls="compare-menu"
+                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Compare
+                        </button>
+                        <div id="compare-menu" role="dialog" aria-labelledby="compare-picker-title" aria-hidden="true" class="hidden absolute right-0 top-full mt-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bw-popup-menu z-50">
+                            <div class="compare-picker-heading"><strong id="compare-picker-title">Compare up to 4 benchmarks</strong><button type="button" onclick="BW.Commodity.closeCompareMenu(); document.getElementById('compare-menu-btn').focus()">Done</button></div>
+                            <div class="p-2 border-b border-brand-black-60/10 dark:border-white/5">
+                                <input type="text" id="compare-search" aria-label="Search comparisons" placeholder="Search commodities..."
+                                    oninput="filterCompareList(this.value)"
+                                    class="w-full px-3 py-2 text-xs bg-brand-black-60/5 dark:bg-white/5 border-0 rounded-lg text-brand-black-80 dark:text-white placeholder-brand-black-60 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
+                            </div>
+                            <p id="compare-status" role="status" aria-live="polite"></p>
+                            <div id="compare-list" class="max-h-48 overflow-y-auto py-1"></div>
+                        </div>
+                    </div>
+
             </div>
             <div class="chart-controls" aria-label="Chart controls">
                 <div class="chart-control-group chart-range-presets" role="group" aria-label="Observation window">
@@ -152,6 +175,10 @@
                 </div>
             </div>
 
+            <div id="comparison-line-keys" hidden aria-label="Compared lines"></div>
+            <div id="compare-bar" class="hidden" aria-label="Comparison baselines">
+                <div id="compare-tags"></div>
+            </div>
             <!-- Responsive chart height -->
             <div class="h-[280px] sm:h-[350px] md:h-[400px] w-full relative">
                 <!-- Skeleton loader shows while chart loads -->
@@ -161,14 +188,6 @@
                 </div>
                 <div id="priceChart" data-unit="{{ commodity.unit }}" data-daily="{{ commodity.is_daily|tojson }}"
                     aria-label="Price chart showing {{ commodity.name }} benchmark prices over time. Use the range buttons above to change time period."></div>
-            </div>
-
-            <!-- Compare Commodities Bar -->
-            <div id="compare-bar" class="hidden mt-3 sm:mt-4 p-2.5 sm:p-3 bg-brand-black-60/5 dark:bg-white/5 rounded-xl font-ui overflow-x-auto scrollbar-hide">
-                <div class="flex items-center gap-2 min-w-max">
-                    <span class="text-2xs font-semibold text-brand-black-60 tracking-wider shrink-0">COMPARING:</span>
-                    <div id="compare-tags" class="flex items-center gap-1.5"></div>
-                </div>
             </div>
 
             <!-- Chart Actions — horizontal scroll on mobile -->
@@ -218,24 +237,6 @@
                                 <svg class="w-4 h-4 text-brand-black-60 dark:text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                 <span>PowerPoint <span class="text-brand-black-60 dark:text-white/50 font-normal">(graph)</span></span>
                             </button>
-                        </div>
-                    </div>
-                    <div class="relative shrink-0" id="compare-menu-container">
-                        <button onclick="toggleCompareMenu()" id="compare-menu-btn" aria-label="Compare commodities" aria-expanded="false" aria-haspopup="menu" aria-controls="compare-menu"
-                            class="px-2.5 sm:px-3 py-2 sm:py-1.5 text-xs font-semibold text-brand-black-60 hover:text-brand-black-80 dark:hover:text-white bg-brand-black-60/5 dark:bg-white/5 hover:bg-brand-black-60/10 dark:hover:bg-white/10 rounded-lg transition flex items-center justify-center gap-1.5 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Compare
-                        </button>
-                        <div id="compare-menu" role="menu" aria-labelledby="compare-menu-btn" aria-hidden="true" class="hidden absolute right-0 bottom-full mb-1.5 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bw-popup-menu z-50">
-                            <div class="p-2 border-b border-brand-black-60/10 dark:border-white/5">
-                                <input type="text" id="compare-search" placeholder="Search commodities..."
-                                    oninput="filterCompareList(this.value)"
-                                    class="w-full px-3 py-2 text-xs bg-brand-black-60/5 dark:bg-white/5 border-0 rounded-lg text-brand-black-80 dark:text-white placeholder-brand-black-60 focus:outline-none focus:ring-2 focus:ring-brand-oxford dark:focus:ring-brand-teal">
-                            </div>
-                            <div id="compare-list" class="max-h-48 overflow-y-auto py-1"></div>
                         </div>
                     </div>
                     <button onclick="openChartSettings()" id="chart-settings-btn"

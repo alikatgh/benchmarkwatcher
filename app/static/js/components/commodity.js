@@ -28,13 +28,14 @@ BW.Commodity = {
 
     // Comparison state
     comparisonData: {},      // { id: { name, history, color } }
+    comparisonAssignedColors: {},
     comparisonPendingSeq: {}, // { id: requestSeq } for in-flight compare additions
     comparisonRequestSeq: 0,
     compareListRequest: null,
     compareListRequestSeq: 0,
     compareListLoading: false,
     allCommoditiesList: [],  // cached list from API
-    compareColors: ['#e11d48', '#8b5cf6', '#f59e0b', '#06b6d4', '#84cc16', '#ec4899', '#14b8a6', '#f97316'],
+    compareColors: ['#a63db4', '#b36110', '#147f78'],
     compareColorIndex: 0,
 
     // Chart customization settings with defaults (overridden by theme on init)
@@ -317,12 +318,14 @@ BW.Commodity = {
         if (viewSelect) { viewSelect.value = this.currentViewMode; viewSelect.querySelector('option[value=price]').disabled = mixedUnits; }
         let comparisonNote = document.getElementById('d3-comparison-note');
         if (!comparisonNote) { comparisonNote = document.createElement('p'); comparisonNote.id = 'd3-comparison-note'; comparisonNote.className = 'bw-visual-note'; target.parentElement.after(comparisonNote); }
-        comparisonNote.textContent = mixedUnits ? 'Different units: comparing percentage changes from each series’ first available positive value. Baseline dates may differ; missing observations are not filled.' : '';
+        const comparing = Object.keys(this.comparisonData).length > 0;
+        comparisonNote.textContent = comparing && percent ? 'Each line starts at 0% on its first available date in this window. Baseline dates may differ. A positive baseline is required; missing observations are not filled.' : comparing ? 'Values share the same currency and unit. Missing observations are not filled.' : '';
         const valueLabel = document.getElementById('crosshair-value-label');
         if (valueLabel) valueLabel.textContent = percent ? 'Change from baseline' : 'Value';
         this.calculateStats(filtered.filter(p => p.price !== null));
-        const records = [{name: this.commodityName, history: filtered, color: settings.lineColor, currency: this.currency, unit: primaryUnit, is_daily: target.dataset.daily === 'true'},
-            ...Object.values(this.comparisonData).map(record => ({ ...record, history: this.filterDataByRange(record.history, this.currentRange) }))];
+        const records = [{id:this.commodityId, name: this.commodityName, history: filtered, color: settings.lineColor, currency: this.currency, unit: primaryUnit, is_daily: target.dataset.daily === 'true'},
+            ...Object.entries(this.comparisonData).map(([id,record]) => ({ ...record, id, history: this.filterDataByRange(record.history, this.currentRange) }))];
+        this.updateCompareBar(records);
         const series = records.map(record => {
             const observations = V.history(record.history);
             const baseline = observations.find(p => p.value !== null)?.value;
@@ -333,18 +336,19 @@ BW.Commodity = {
         this.priceChart = V.timeSeries(target, series, {
             type: this.currentChartType === 'area' && !settings.enableFill ? 'line' : this.currentChartType,
             height: Math.min(settings.chartHeight, target.parentElement.clientHeight || settings.chartHeight),
-            label: this.commodityName + ' historical observations. Use left and right arrow keys to inspect observations.',
+            label: comparing ? 'Compared historical observations. Left and right inspect dates; up and down switch series.' : this.commodityName + ' historical observations. Use left and right arrow keys to inspect observations.',
             color: settings.lineColor, fillColor: settings.fillColor, fillOpacity: settings.fillOpacity / 100,
             lineWidth: settings.lineWidth, pointRadius: settings.pointRadius,
             grid: settings.showHGrid, verticalGrid: settings.showVGrid, gridColor: this.hexWithAlpha(settings.gridColor, settings.gridOpacity),
             xTicks: settings.xMaxTicks, yTicks: settings.yMaxTicks, yAxisPosition: settings.yAxisPosition, axisFontSize: settings.axisFontSize,
             tension: settings.tension / 100, animation: settings.enableAnimation ? settings.animationDuration : 0,
             tooltipBg: settings.tooltipBg, tooltipText: settings.tooltipText, tooltipRadius: settings.tooltipRadius, tooltipPadding: settings.tooltipPadding,
-            zero: percent, zoom: settings.enableZoom, pan: settings.enablePan, modifier: settings.zoomModifier,
+            tooltipFormat: percent ? value => value !== 0 && Math.abs(value) < .001 ? value.toPrecision(3) : value.toLocaleString(undefined, {maximumFractionDigits:3}) : undefined,
+            zero: percent, yFormat: percent ? value => V.format(value) + '%' : undefined, zoom: settings.enableZoom, pan: settings.enablePan, modifier: settings.zoomModifier,
             onInspect: (point, series) => {
                 if (!point) return;
                 const date = document.getElementById('crosshair-date'), value = document.getElementById('crosshair-price'), change = document.getElementById('crosshair-change');
-                if (date) date.textContent = point.date;
+                if (date) date.textContent = (comparing ? series.name + ' · ' : '') + point.date;
                 if (value) value.textContent = V.format(point.value) + ' ' + series.unit;
                 const index = series.points.indexOf(point), prev = series.points[index - 1];
                 if (change) change.textContent = prev && prev.value !== null ? V.format(point.value - prev.value) + (percent ? ' pp' : ' ' + series.unit) : '—';
@@ -955,9 +959,7 @@ BW.Commodity = {
         if (!menu) return;
         var isOpen = !menu.classList.contains('hidden');
         if (isOpen) {
-            menu.classList.add('hidden');
-            menu.setAttribute('aria-hidden', 'true');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
+            this.closeCompareMenu();
         } else {
             this.closeDownloadMenu();
             menu.classList.remove('hidden');
@@ -997,6 +999,7 @@ BW.Commodity = {
         }
 
         this.compareListLoading = true;
+        this.comparisonStatus('Loading available benchmarks…');
         this.compareListRequestSeq += 1;
         var activeRequestSeq = this.compareListRequestSeq;
         if (this.compareListRequest) {
@@ -1010,7 +1013,7 @@ BW.Commodity = {
         });
 
         fetch(apiUrl, { signal: this.compareListRequest.signal })
-            .then(function (r) { return r.json(); })
+            .then(function (r) { if (r.ok === false) throw new Error('Unavailable'); return r.json(); })
             .then(function (json) {
                 if (activeRequestSeq !== self.compareListRequestSeq) return;
                 var data = BW.Utils.getCommoditiesFromApiResponse(json);
@@ -1018,12 +1021,14 @@ BW.Commodity = {
                     .filter(function (c) { return c.id !== self.commodityId; })
                     .map(function (c) { return { id: c.id, name: c.name, category: c.category }; });
                 var liveQuery = document.getElementById('compare-search')?.value || '';
+                self.comparisonStatus('');
                 self.renderCompareList(liveQuery);
             })
             .catch(function (err) {
                 if (activeRequestSeq !== self.compareListRequestSeq) return;
                 if (err && err.name === 'AbortError') return;
                 self.allCommoditiesList = [];
+                self.comparisonStatus('Could not load benchmarks. Close and reopen Compare to retry.');
             })
             .finally(function () {
                 if (activeRequestSeq !== self.compareListRequestSeq) return;
@@ -1040,6 +1045,7 @@ BW.Commodity = {
         var items = this.allCommoditiesList.filter(function (c) {
             return !q || c.name.toLowerCase().indexOf(q) !== -1 || c.category.toLowerCase().indexOf(q) !== -1;
         });
+        const focusId = listEl.contains(document.activeElement) ? document.activeElement.dataset.compareId : null;
         listEl.innerHTML = '';
         if (items.length === 0) {
             var empty = document.createElement('div');
@@ -1051,8 +1057,11 @@ BW.Commodity = {
         for (var i = 0; i < items.length; i++) {
             var c = items[i];
             var isAdded = !!this.comparisonData[c.id];
+            var pending = !!this.comparisonPendingSeq[c.id];
             var button = document.createElement('button');
             button.type = 'button';
+            button.dataset.compareId = c.id;
+            button.setAttribute('aria-pressed', String(isAdded || pending));
             button.className = 'w-full text-left px-4 py-2 text-xs font-medium transition-colors flex items-center justify-between gap-2 ' +
                 (isAdded
                     ? 'text-brand-oxford dark:text-brand-teal bg-brand-oxford/5 dark:bg-brand-teal/5'
@@ -1066,7 +1075,7 @@ BW.Commodity = {
 
             var nameSpan = document.createElement('span');
             nameSpan.className = 'truncate';
-            nameSpan.textContent = c.name;
+            nameSpan.textContent = (isAdded ? '✓ ' : pending ? 'Loading · ' : '+ ') + c.name;
 
             var categorySpan = document.createElement('span');
             categorySpan.className = 'text-2xs uppercase tracking-wider text-brand-black-60 shrink-0';
@@ -1075,6 +1084,7 @@ BW.Commodity = {
             button.appendChild(nameSpan);
             button.appendChild(categorySpan);
             listEl.appendChild(button);
+            if (c.id === focusId) button.focus({preventScroll:true});
         }
     },
 
@@ -1087,26 +1097,37 @@ BW.Commodity = {
     },
 
     addComparison: function (id, name) {
-        if (this.comparisonData[id]) return;
+        if (this.comparisonData[id] || this.comparisonPendingSeq[id]) return;
+        if (new Set([...Object.keys(this.comparisonData), ...Object.keys(this.comparisonPendingSeq)]).size >= 3) {
+            this.comparisonStatus('Compare up to 4 benchmarks. Remove a line to add another.'); return;
+        }
         var self = this;
-        var color = this.compareColors[this.compareColorIndex % this.compareColors.length];
+        const usedColors = new Set([...Object.values(this.comparisonData).map(record=>record.color), ...Object.values(this.comparisonAssignedColors)]);
+        var color = this.compareColors.find(candidate=>!usedColors.has(candidate)) || this.compareColors[this.compareColorIndex % this.compareColors.length];
+        this.comparisonAssignedColors[id] = color;
         this.compareColorIndex++;
         this.comparisonRequestSeq += 1;
         var requestSeq = this.comparisonRequestSeq;
         this.comparisonPendingSeq[id] = requestSeq;
+        this.comparisonStatus('Loading ' + name + '…');
+        this.renderCompareList(document.getElementById('compare-search')?.value || '');
 
         fetch('/api/commodity/' + encodeURIComponent(id))
-            .then(function (r) { return r.json(); })
+            .then(function (r) { if (r.ok === false) throw new Error('Unavailable'); return r.json(); })
             .then(function (json) {
                 if (self.comparisonPendingSeq[id] !== requestSeq) return;
-                delete self.comparisonPendingSeq[id];
                 var data = json.data || json;
+                if (!Array.isArray(data.history) || !BW.Visuals.history(data.history).some(point => point.value !== null)) throw new Error('No usable observations');
+                delete self.comparisonPendingSeq[id];
+                const wasEmpty = Object.keys(self.comparisonData).length === 0;
                 self.comparisonData[id] = {
                     name: name,
                     history: data.history || [],
                     currency: data.currency, unit: data.unit, is_daily: data.is_daily,
                     color: color
                 };
+                if (wasEmpty) self.currentViewMode = 'percent';
+                self.comparisonStatus('');
                 self.updateChart();
                 self.updateCompareBar();
                 self.renderCompareList(document.getElementById('compare-search')?.value || '');
@@ -1114,43 +1135,76 @@ BW.Commodity = {
             .catch(function (err) {
                 if (self.comparisonPendingSeq[id] !== requestSeq) return;
                 delete self.comparisonPendingSeq[id];
-                console.error('Failed to fetch comparison data for ' + id, err);
+                self.comparisonStatus('Could not load ' + name + '. Select it again to retry.');
+                delete self.comparisonAssignedColors[id];
+                self.renderCompareList(document.getElementById('compare-search')?.value || '');
             });
     },
 
     removeComparison: function (id) {
+        const restoreFocus = document.activeElement?.dataset.removeComparison === id;
         delete this.comparisonPendingSeq[id];
         delete this.comparisonData[id];
+        delete this.comparisonAssignedColors[id];
+        this.comparisonStatus('');
         this.updateChart();
         this.updateCompareBar();
         this.renderCompareList(document.getElementById('compare-search')?.value || '');
+        if (restoreFocus) (document.querySelector('#compare-tags button') || document.getElementById('compare-menu-btn'))?.focus({preventScroll:true});
     },
 
-    updateCompareBar: function () {
+    comparisonStatus: function (message) {
+        const status = document.getElementById('compare-status');
+        if (status) status.textContent = message;
+    },
+
+    updateCompareBar: function (records) {
         var bar = document.getElementById('compare-bar');
         var tags = document.getElementById('compare-tags');
         if (!bar || !tags) return;
 
         var ids = Object.keys(this.comparisonData);
+        const keys = document.getElementById('comparison-line-keys');
+        if (keys) keys.hidden = ids.length === 0;
+        const compareButton = document.getElementById('compare-menu-btn');
+        if (compareButton) compareButton.setAttribute('aria-label', 'Compare commodities' + (ids.length ? ', ' + (ids.length + 1) + ' selected' : ''));
         if (ids.length === 0) {
             bar.classList.add('hidden');
             return;
         }
         bar.classList.remove('hidden');
-        tags.innerHTML = '';
-        for (var i = 0; i < ids.length; i++) {
-            var id = ids[i];
-            var comp = this.comparisonData[id];
+        // updateChart supplies records for the current inclusive date window.
+        // Avoid replacing those baselines when an add/remove callback follows it.
+        if (!records) return;
+        keys?.replaceChildren();
+        tags.replaceChildren();
+        for (var i = 0; i < records.length; i++) {
+            var comp = records[i];
+            var id = comp.id;
             var pill = document.createElement('span');
-            pill.className = 'inline-flex items-center gap-1 px-2 py-1 rounded-lg text-2xs font-semibold text-white shrink-0 whitespace-nowrap';
-            pill.style.backgroundColor = comp.color;
+            pill.className = 'commodity-compare-key';
+            const swatch = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            swatch.setAttribute('viewBox','0 0 24 14'); swatch.setAttribute('aria-hidden','true');
+            const line = document.createElementNS(swatch.namespaceURI, 'line');
+            Object.entries({x1:0,x2:24,y1:7,y2:7,stroke:comp.color,'stroke-width':2,'stroke-dasharray':['none','6 3','2 3','8 3 2 3'][i]}).forEach(([key,value]) => line.setAttribute(key,value));
+            swatch.append(line);
+            if (keys) {
+                const key = document.createElement('span');
+                const label = document.createElement('span'); label.textContent = comp.name;
+                key.append(swatch.cloneNode(true), label); keys.append(key);
+            }
 
             var name = document.createElement('span');
             name.textContent = comp.name;
+            const baseline = BW.Visuals.history(comp.history).find(point => point.value !== null);
+            const origin = document.createElement('small');
+            origin.textContent = baseline ? 'Baseline ' + baseline.date + ' · ' + [comp.currency,comp.unit].filter(Boolean).join(' / ') + (this.currentViewMode === 'percent' && baseline.value <= 0 ? ' · relative change unavailable' : '') : 'No observations in this window';
+            name.append(origin);
 
             var removeBtn = document.createElement('button');
             removeBtn.type = 'button';
-            removeBtn.className = 'ml-0.5 p-1 min-w-[24px] min-h-[24px] flex items-center justify-center hover:opacity-70 rounded';
+            removeBtn.setAttribute('aria-label', 'Remove ' + comp.name + ' from comparison');
+            removeBtn.dataset.removeComparison = id;
             removeBtn.textContent = '\u00D7';
             (function (compareId) {
                 removeBtn.addEventListener('click', function () {
@@ -1158,8 +1212,8 @@ BW.Commodity = {
                 });
             })(id);
 
-            pill.appendChild(name);
-            pill.appendChild(removeBtn);
+            pill.append(swatch, name);
+            if (i > 0) pill.appendChild(removeBtn);
             tags.appendChild(pill);
         }
     }
@@ -1190,7 +1244,7 @@ if (!window.__bwCommodityGlobalHandlersBound) {
             BW.Commodity.closeDownloadMenu();
         }
         var compareContainer = document.getElementById('compare-menu-container');
-        if (compareContainer && !compareContainer.contains(e.target)) {
+        if (compareContainer && !compareContainer.contains(e.target) && !e.composedPath().includes(compareContainer)) {
             BW.Commodity.closeCompareMenu();
         }
     });
@@ -1227,9 +1281,11 @@ if (!window.__bwCommodityGlobalKeydownBound) {
         }
         // Escape closes settings
         if (e.key === 'Escape') {
+            const compareOpen = document.getElementById('compare-menu')?.getAttribute('aria-hidden') === 'false';
             BW.Commodity.closeDownloadMenu();
             BW.Commodity.closeCompareMenu();
             BW.Commodity.closeChartSettings();
+            if (compareOpen) document.getElementById('compare-menu-btn')?.focus();
         }
     });
 }
