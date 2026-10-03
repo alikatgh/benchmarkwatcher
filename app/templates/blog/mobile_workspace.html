@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <header class="mb-6">
+        <p class="text-sm mb-4"><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">Benchmarks on a small screen</h1>
+        <p class="leading-relaxed mb-4">The benchmark list should be the main thing you see. On a phone, a toolbar full of saved-view tools took too much space before the observations began. The workspace now puts browsing first.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-03">October 3, 2026</time> · Product update</p>
+    </header>
+    <section class="release-entry">
+        <h2>Search, filter, read</h2>
+        <p>Search, Filter and the observation range stay close to the list. A compact selector changes the saved view. More holds occasional actions such as creating a view, changing its properties, sorting and exporting.</p>
+        <p>Advanced controls open in a sheet with a clear title and close action. Dismissing it keeps the selected filters and returns you to the list. On phones, observations use readable rows with their reported value, unit and date rather than a squeezed desktop table.</p>
+    </section>
+    <section class="release-entry">
+        <h2>Room for the source history</h2>
+        <p>A compact window shows the list or its detail view. On a wider desktop, both can remain visible, and resizing the detail pane keeps enough room to browse the list. Your preferred pane width returns when the window has room again.</p>
+        <p>The detail summary groups the value, observation date and cadence. Timeline charts show a small date-and-value tooltip beside the selected point. Hover or tap a line to inspect it; the arrow keys move between observations, and up or down chooses a line in a comparison. Original reporting periods remain visible.</p>
+        <p>Keyboard focus, Escape and browser Back work with the sheets and details. Saved views, watchlists and presentation preferences remain in this browser; changing the layout does not change the source observations.</p>
+    </section>
+    <section class="release-entry">
+        <h2>The patterns behind the change</h2>
+        <p>The layout follows established guidance on <a href="https://developer.apple.com/design/human-interface-guidelines/toolbars">toolbar overflow</a>, <a href="https://developer.android.com/design/ui/mobile/guides/layout-and-content/common-layouts">adaptive list-and-detail layouts</a>, and <a href="https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/">accessible modal dialogs</a>. The controls stay available while the observations get more space.</p>
+        <p class="mt-4"><a href="{{ url_for('main.index', view='compact') }}">Explore benchmarks →</a></p>
+    </section>
+</article>
+{% endblock %}

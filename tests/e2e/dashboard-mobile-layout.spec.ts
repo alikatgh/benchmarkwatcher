@@ -41,6 +41,23 @@ async function expectContainedControls(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 
+async function moreCommand(page: Page, command: string) {
+  await page.locator('#tw-more-button').click();
+  await page.locator(`#tw-more-menu [data-tw-command="${command}"]`).click();
+}
+
+async function expectCompactHierarchy(page: Page) {
+  await expect(page.locator('#tw-view-select')).toBeVisible();
+  await expect(page.locator('#tw-new-view')).toBeHidden();
+  await expect(page.locator('#tw-sort-button')).toBeHidden();
+  const distance = await page.evaluate(() => {
+    const root = document.getElementById('table-workspace')!.getBoundingClientRect();
+    const rows = document.querySelector('#tw-mobile-list .tw-mobile-row') || document.querySelector('.tw-table-region');
+    return rows!.getBoundingClientRect().top - root.top;
+  });
+  expect(distance).toBeLessThanOrEqual(240);
+}
+
 for (const width of [320, 390]) {
   test(`phone dashboard keeps full reference values and every control usable at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 844 });
@@ -56,39 +73,59 @@ for (const width of [320, 390]) {
     const overviewIssues = await overview.evaluate(el => [...el.querySelectorAll('.bw-observation, .bw-observation-heading span:first-child, .bw-observation-value strong')].filter(node => node.scrollWidth > node.clientWidth + 1).map(node => node.className || node.textContent));
     expect(overviewIssues).toEqual([]);
     await expect(overview.locator('.bw-observation').nth(2)).toContainText('13,542.82');
-    const tabIssues = await page.locator('#tw-views').evaluate(el => {
-      const strip = el.getBoundingClientRect();
-      return [...el.querySelectorAll('button')].filter(button => button.getBoundingClientRect().right > strip.right + 1).map(button => button.textContent);
-    });
-    expect(tabIssues).toEqual([]);
+    await expectCompactHierarchy(page);
+    await expect(page.locator('#tw-mobile-list .tw-mobile-row')).toHaveCount(3);
+    await expect(page.locator('#tw-mobile-list .tw-mobile-meta').first()).toContainText('Observed');
+    await expect(page.locator('#tw-mobile-list .tw-mobile-price small').first()).toContainText('USD /');
     await expectContainedControls(page);
     await overview.screenshot({ path: testInfo.outputPath(`dashboard-overview-${width}.png`) });
     await page.locator('.tw-control-shell').screenshot({ path: testInfo.outputPath(`dashboard-controls-${width}.png`) });
 
     await page.locator('#tw-filter-button').click();
+    await expect(page.locator('#tw-tool-sheet')).toHaveAttribute('open', '');
+    await expect(page.locator('#tw-sheet-heading')).toBeFocused();
     await page.locator('#tw-category').selectOption('precious');
     await expect(page.locator('#tw-filter-count')).toHaveText('(1)');
-    await page.locator('#tw-filter-button').click();
+    await expect(page.locator('#tw-sheet-done')).toHaveText('Show 1 result');
+    await page.locator('#tw-tool-sheet').screenshot({path:testInfo.outputPath(`dashboard-filter-sheet-${width}.png`)});
+    await page.goBack();
+    await expect(page.locator('#tw-tool-sheet')).toBeHidden();
+    await expect(page.locator('#tw-filter-button')).toBeFocused();
+    await expect(page.locator('#tw-mobile-list .tw-mobile-row')).toHaveCount(1);
+    await expect(page).toHaveURL(/category=precious/);
+    await expectCompactHierarchy(page);
+    await page.locator('#table-workspace').screenshot({ path: testInfo.outputPath(`dashboard-filtered-${width}.png`) });
     await page.locator('#range-ALL').click();
     await expect(page.locator('#range-ALL')).toHaveAttribute('aria-pressed', 'true');
     await expectContainedControls(page);
-    await page.locator('#tw-filter-chips').getByRole('button', { name: 'Reset view filters' }).click();
+    await expect(page.locator('#data-table')).toHaveAttribute('aria-busy', 'false');
+    expect(await page.locator('#tw-mobile-list .tw-mobile-change').evaluateAll(elements => elements.every(element => /^[+-]?\d+(?:\.\d+)?%$|^—$/.test(element.textContent!.trim())))).toBe(true);
+    await page.locator('#tw-filter-chips').getByRole('button', { name: 'Clear all view filters' }).click();
 
-    await page.locator('#tw-new-view').click();
+    await moreCommand(page, 'sort');
+    await page.locator('#tw-sort-rules select').first().selectOption('price');
+    await page.locator('#tw-sort-rules select').nth(1).selectOption('desc');
+    await page.locator('#tw-sheet-done').click();
+    await expect(page.locator('#tw-tool-sheet')).toBeHidden();
+    await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.historyClosing)).toBe(false);
+    const prices = await page.locator('#tw-mobile-list .tw-mobile-row').evaluateAll(rows => rows.map(row => Number(document.querySelector(`#table-body tr[data-id="${(row as HTMLElement).dataset.mobileId}"]`)!.getAttribute('data-price'))));
+    expect(prices).toEqual([...prices].sort((a,b) => b-a));
+
+    await moreCommand(page, 'new-view');
     const longName = 'Precious metals and monthly observations source review';
     await page.locator('#tw-view-name').fill(longName);
     await page.locator('#tw-view-submit').click();
-    const savedView = page.locator('#tw-views').getByRole('button', { name: longName, exact: true });
-    await savedView.scrollIntoViewIfNeeded();
-    await expect(savedView).toHaveAttribute('aria-pressed', 'true');
-    expect(await page.locator('#tw-views').evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
-    await page.locator('#tw-view-menu-button').click();
+    await expect(page.locator('#tw-view-menu')).toBeHidden();
+    await expect(page.locator('#tw-view-select option:checked')).toHaveText(longName);
+    await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.historyClosing)).toBe(false);
+    await moreCommand(page, 'view-settings');
     await expect(page.locator('#tw-view-name')).toHaveValue(longName);
-    await page.locator('#tw-view-close').click();
-    await page.locator('#tw-controls-toggle').click();
-    await expect(page.locator('#tw-controls')).toBeHidden();
-    await expect(page.locator('#tw-summary-view')).toHaveText(longName);
-    await page.locator('#tw-controls-toggle').click();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#tw-view-menu')).toBeHidden();
+    await expect(page.locator('#tw-more-button')).toBeFocused();
+    await page.reload();
+    await expect(page.locator('#tw-view-select option:checked')).toHaveText(longName);
+    await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.current.sorts[0])).toEqual({key:'price',direction:'desc'});
     await expect(page.locator('#tw-controls')).toBeVisible();
     await expectContainedControls(page);
     await page.locator('#table-workspace').screenshot({ path: testInfo.outputPath(`dashboard-toolbar-${width}.png`) });
@@ -114,22 +151,87 @@ test('a widened desktop details pane adapts the remaining dashboard by container
   const resize = page.locator('#benchmark-detail-resize');
   await resize.focus();
   await page.keyboard.press('End');
-  await expect.poll(() => page.locator('#benchmark-detail').evaluate(el => el.getBoundingClientRect().width)).toBeGreaterThan(900);
+  await expect.poll(() => page.locator('#benchmark-detail').evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(590);
   // Wait for the shared shell's padding transition before inspecting the final
   // content width; the pane itself reaches its width before that transition ends.
-  await expect.poll(() => page.locator('#table-workspace').evaluate(el => el.getBoundingClientRect().width)).toBeLessThan(280);
+  await expect.poll(() => page.locator('#table-workspace').evaluate(el => el.getBoundingClientRect().width)).toBeGreaterThanOrEqual(598);
+  await expect.poll(() => page.locator('#table-workspace').evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(605);
   await page.evaluate(() => (window as any).BW.TableWorkspace.setControlsCollapsed(false, true));
   await expectContainedControls(page);
   const remainingWidth = await page.locator('#table-workspace').evaluate(el => el.getBoundingClientRect().width);
-  expect(remainingWidth).toBeLessThan(320);
+  expect(remainingWidth).toBeLessThanOrEqual(605);
+  await expectCompactHierarchy(page);
+  await page.locator('#tw-query').fill('Gold');
+  await page.locator('#tw-filter-button').click();
+  const modal = await page.locator('#tw-tool-sheet').boundingBox();
+  expect(modal?.x).toBeGreaterThan(400);
+  expect(modal!.y + modal!.height).toBeLessThan(980);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#tw-tool-sheet')).toBeHidden();
   const cardTops = await page.locator('.bw-observation').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().top));
-  expect(new Set(cardTops).size).toBe(3);
+  expect(new Set(cardTops).size).toBe(1);
   const overviewIssues = await page.locator('#bw-overview').evaluate(el => [...el.querySelectorAll('.bw-observation, .bw-observation-heading span:first-child, .bw-observation-value strong')].filter(node => node.scrollWidth > node.clientWidth + 1).map(node => node.className || node.textContent));
   expect(overviewIssues).toEqual([]);
   await page.screenshot({ path: testInfo.outputPath('dashboard-desktop-wide-detail.png'), fullPage: true });
   await page.locator('#benchmark-detail [data-detail-action="close"]').click();
   await expect(page.locator('#benchmark-detail')).toBeHidden();
   await expect.poll(() => page.locator('#table-workspace').evaluate(el => el.getBoundingClientRect().width)).toBeGreaterThan(1000);
+  await expect(page.locator('#tw-query')).toHaveValue('Gold');
   const restoredTops = await page.locator('.bw-observation').evaluateAll(elements => elements.map(el => el.getBoundingClientRect().top));
   expect(new Set(restoredTops).size).toBe(1);
+});
+
+test('320px controls and long source labels remain usable with enlarged text', async ({page}, testInfo) => {
+  await page.setViewportSize({width:320,height:844});
+  await openDashboard(page);
+  await page.evaluate(() => {
+    const row = document.querySelector('#table-body tr[data-id]') as HTMLElement;
+    row.dataset.name = 'Natural Gas (Henry Hub, Monthly public benchmark observations)';
+    row.dataset.unit = 'million metric British thermal units';
+    (window as any).BW.TableWorkspace.refresh();
+  });
+  await page.addStyleTag({content:'html {font-size:32px!important}'});
+  await expectContainedControls(page);
+  const rowIssues = await page.locator('#tw-mobile-list .tw-mobile-row').evaluateAll(rows => rows.flatMap(row => [...row.querySelectorAll('.tw-mobile-name,.tw-mobile-price,.tw-mobile-meta')].filter(el => el.scrollWidth > el.clientWidth+1).map(el => el.className)));
+  expect(rowIssues).toEqual([]);
+  await page.locator('#tw-filter-button').click();
+  await expect(page.locator('#tw-sheet-heading')).toBeFocused();
+  for (let index=0;index<10;index++) {
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.getElementById('tw-tool-sheet')!.contains(document.activeElement))).toBe(true);
+  }
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#tw-filter-button')).toBeFocused();
+  await page.locator('#table-workspace').screenshot({path:testInfo.outputPath('dashboard-enlarged-text-320.png')});
+});
+
+test('phone sheets close on resize without losing filters and a rapid detail opening survives sheet Back', async ({page},testInfo) => {
+  await page.setViewportSize({width:390,height:844});
+  await openDashboard(page);
+  await page.locator('#tw-filter-button').click();
+  await page.locator('#tw-category').selectOption('precious');
+  await page.setViewportSize({width:1440,height:1000});
+  await expect(page.locator('#tw-tool-sheet')).toBeHidden();
+  await expect(page.locator('#tw-filters')).toBeHidden();
+  await expect(page.locator('#tw-filter-count')).toHaveText('(1)');
+  await expect(page.locator('#tw-filter-button')).toBeFocused();
+  await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.historyClosing)).toBe(false);
+  await page.setViewportSize({width:390,height:844});
+  await moreCommand(page,'sort');
+  await page.setViewportSize({width:1440,height:1000});
+  await expect(page.locator('#tw-tool-sheet')).toBeHidden();
+  await expect(page.locator('#tw-sort-button')).toBeFocused();
+  await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.historyClosing)).toBe(false);
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('#tw-filter-button').click();
+  await page.evaluate(() => {
+    document.getElementById('tw-sheet-done')!.click();
+    (document.querySelector('#tw-mobile-list a[data-benchmark-id]') as HTMLAnchorElement)!.click();
+  });
+  await expect(page.locator('#benchmark-detail')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.historyClosing)).toBe(false);
+  await expect(page.locator('#benchmark-detail')).toBeVisible();
+  await page.locator('#benchmark-detail [data-detail-action="close"]').click();
+  await expect(page.locator('#tw-mobile-list .tw-mobile-row')).toHaveCount(1);
+  await page.locator('#table-workspace').screenshot({path:testInfo.outputPath('dashboard-resize-return-390.png')});
 });

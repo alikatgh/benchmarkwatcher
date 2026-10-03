@@ -3,11 +3,13 @@
     <div class="tw-control-heading">
         <div id="tw-viewbar" class="tw-viewbar">
             <div id="tw-views" class="tw-views" role="group" aria-label="Saved table views"></div>
+            <label class="tw-view-picker"><span class="sr-only">Saved table view</span><select id="tw-view-select" aria-label="Saved table view"></select></label>
             <button type="button" id="tw-new-view" class="tw-button tw-subtle" aria-haspopup="dialog" aria-expanded="false" aria-controls="tw-view-menu">+ New view</button>
             <button type="button" id="tw-view-menu-button" class="tw-button tw-subtle" aria-haspopup="dialog" aria-expanded="false" aria-controls="tw-view-menu">View settings</button>
         </div>
         <div id="tw-compact-summary" class="tw-compact-summary" hidden><strong id="tw-summary-view">All benchmarks</strong><span id="tw-summary-context"></span></div>
         <button type="button" id="tw-controls-toggle" class="tw-button tw-subtle tw-controls-toggle" aria-expanded="true" aria-controls="tw-controls tw-viewbar">Hide controls <span aria-hidden="true">⌃</span></button>
+        <button type="button" id="tw-more-button" class="tw-button tw-more-button" aria-haspopup="dialog" aria-expanded="false" aria-controls="tw-more-menu"><svg class="tw-tool-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>More</button>
     </div>
     <div id="tw-controls">
     <div class="tw-toolbar">
@@ -27,7 +29,7 @@
         <label>Membership<select id="tw-watch"><option value="">All benchmarks</option><option value="watched">On watchlist</option><option value="unwatched">Not on watchlist</option></select></label>
     </div>
     <div id="tw-sort-panel" class="tw-panel" hidden><p class="tw-help">Apply in priority order. Missing values stay last. Shift-click a header to add it to the sort.</p><div id="tw-sort-rules"></div><button type="button" id="tw-add-sort" class="tw-button">+ Add sort</button></div>
-    <div id="tw-properties" class="tw-panel" hidden><div class="tw-properties-heading"><p>Show, reorder and resize properties</p><label>Row density <select id="tw-density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label></div><p class="tw-help">Drag a property to reorder, or use Move left / right. Benchmark stays pinned. Drag a header edge or use its arrow keys to resize.</p><div id="tw-property-list"></div></div>
+    <div id="tw-properties" class="tw-panel" hidden><div class="tw-properties-heading"><p>Result properties</p><label>Row density <select id="tw-density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></label></div><p id="tw-property-help" class="tw-help">Drag a property to reorder, or use Move left / right. Benchmark stays pinned. Drag a header edge or use its arrow keys to resize.</p><div id="tw-property-list"></div></div>
     <div id="tw-actions" class="tw-panel tw-actions" hidden><button type="button" id="tw-export-filtered" class="tw-button">Export filtered results</button><button type="button" id="tw-export-all" class="tw-button">Export all loaded benchmarks</button><p class="tw-help">CSV contains raw values, unit, currency, source, observation dates and the selected range.</p></div>
     <div class="tw-context">
         <div class="range-tabs" role="group" aria-label="Observation range">
@@ -52,6 +54,23 @@
         <div id="tw-view-actions" class="tw-panel-actions" hidden><button type="button" id="tw-copy-view" class="tw-button">Save a copy</button><button type="button" id="tw-delete-view" class="tw-button tw-danger">Remove view</button></div>
         <p id="tw-view-save-status" class="tw-help" role="status"></p>
     </dialog>
+    <dialog id="tw-more-menu" class="tw-tool-sheet tw-more-menu" aria-labelledby="tw-more-heading" hidden>
+        <div class="tw-sheet-heading"><h2 id="tw-more-heading" tabindex="-1">View options</h2><button type="button" class="tw-sheet-close" data-tw-dismiss aria-label="Close view options">×</button></div>
+        <div class="tw-more-options">
+            <button type="button" data-tw-command="new-view">New view<span>Save your current filters and layout</span></button>
+            <button type="button" data-tw-command="view-settings">View settings<span>Edit or remove a saved view</span></button>
+            <button type="button" data-tw-command="sort">Sort<span id="tw-more-sort-summary">Benchmark · ascending</span></button>
+            <button type="button" data-tw-command="properties">Properties<span>Choose information shown in results</span></button>
+            <button type="button" data-tw-command="actions">Export<span>Download filtered or all loaded observations</span></button>
+        </div>
+    </dialog>
+    <dialog id="tw-tool-sheet" class="tw-tool-sheet" aria-labelledby="tw-sheet-heading" hidden>
+        <div class="tw-sheet-heading"><h2 id="tw-sheet-heading" tabindex="-1">Filters</h2><button type="button" class="tw-sheet-close" data-tw-dismiss aria-label="Close view controls">×</button></div>
+        <div id="tw-sheet-content" class="tw-sheet-content"></div>
+        <div class="tw-sheet-footer"><button type="button" id="tw-sheet-clear" class="tw-button tw-subtle">Clear filters</button><button type="button" id="tw-sheet-done" class="tw-button tw-primary">Show results</button></div>
+    </dialog>
+    <div id="tw-mobile-status" class="tw-mobile-status" role="status" hidden></div>
+    <div id="tw-mobile-list" class="tw-mobile-list" role="list" aria-label="Benchmark observations"></div>
     <div class="tw-table-region" tabindex="0" role="region" aria-label="Benchmark table. Scroll horizontally for more properties.">
         <div id="table-loading" class="loading-overlay hidden" role="status"><span class="loading-spinner"></span><span class="sr-only">Loading observations</span></div>
         <table id="data-table" class="tw-table">

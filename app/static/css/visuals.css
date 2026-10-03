@@ -6,6 +6,9 @@
 .bw-d3-grid line{stroke:var(--theme-border,#dce1e6);stroke-opacity:.7}
 .bw-d3-crosshair{stroke:currentColor;stroke-opacity:.35;stroke-dasharray:3 3}
 .bw-d3-readout{font-size:11px;font-variant-numeric:tabular-nums}
+.bw-d3-tooltip{color:var(--theme-text,#202124);filter:drop-shadow(0 2px 3px #10182618)}
+.bw-d3-tooltip-surface{fill:var(--theme-surface,#fff);stroke:var(--theme-border,#cfd6df);stroke-width:1}
+.bw-d3-chart .bw-d3-tooltip-text{fill:currentColor;font:12px/1.4 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
 #priceChart{width:100%;height:100%}#priceChart>.bw-d3-chart{height:100%}
 .tw-sparkline svg{width:100%;height:100%;overflow:hidden}
 .bw-visual-lab{margin:24px 0;border-top:1px solid var(--theme-border,#ddd);padding-top:20px;font-family:Inter,system-ui,sans-serif;min-width:0}

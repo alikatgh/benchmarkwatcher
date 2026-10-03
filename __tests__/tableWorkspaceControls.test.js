@@ -109,3 +109,65 @@ test('failed view saving stays explicit and retrying the modal does not create d
     expect(id('tw-view-menu').open).toBe(false);
     expect(JSON.parse(localStorage.getItem('bw-table-workspace-v1')).views).toHaveLength(1);
 });
+
+test('compact controls move existing filters into a modal and consume one Back layer without resetting data', () => {
+    id('table-workspace').getBoundingClientRect = () => ({width:390,top:300});
+    workspace.updateLayout();
+    const push = jest.spyOn(history, 'pushState');
+    id('tw-filter-button').click();
+    expect(id('tw-tool-sheet').open).toBe(true);
+    expect(id('tw-filters').parentElement).toBe(id('tw-sheet-content'));
+    expect(document.activeElement).toBe(id('tw-sheet-heading'));
+    id('tw-category').value = 'precious'; id('tw-category').dispatchEvent(new Event('change'));
+    expect(workspace.current.filters.category).toBe('precious');
+    const pop = new PopStateEvent('popstate', {state:{}});
+    expect(workspace.consumeSheetPop(pop)).toBe(true);
+    expect(id('tw-tool-sheet').open).toBe(false);
+    expect(id('tw-filters').parentElement).toBe(id('tw-controls'));
+    expect(workspace.current.filters.category).toBe('precious');
+    expect(push).toHaveBeenCalledTimes(1);
+});
+
+test('More to Sort stays on one modal Back layer and resize restores desktop controls', () => {
+    id('table-workspace').getBoundingClientRect = () => ({width:600,top:300});
+    workspace.updateLayout();
+    const push = jest.spyOn(history, 'pushState'), back = jest.spyOn(history, 'back').mockImplementation(() => {});
+    id('tw-more-button').click();
+    id('tw-more-menu').querySelector('[data-tw-command="sort"]').click();
+    expect(push).toHaveBeenCalledTimes(1);
+    expect(id('tw-more-menu').open).toBe(false);
+    expect(id('tw-tool-sheet').open).toBe(true);
+    id('table-workspace').getBoundingClientRect = () => ({width:1000,top:300});
+    workspace.updateLayout();
+    expect(id('tw-tool-sheet').open).toBe(false);
+    expect(id('tw-sort-panel').parentElement).toBe(id('tw-controls'));
+    expect(workspace.compactLayout).toBe(false);
+    expect(back).toHaveBeenCalledTimes(1);
+});
+
+test('phone rows preserve source values, visible properties, selection and watch identity', () => {
+    const row = workspace.getRows()[0]; row.dataset.date = '2026-10-03'; row.dataset.unit = 'troy oz'; row.dataset.currency = 'USD';
+    row.querySelector('[data-col=commodity]').after(document.createElement('td'));
+    const cell = row.querySelector('td:nth-child(3)'); cell.dataset.col = 'price'; cell.innerHTML = '<strong class="price-value">2,000.00</strong><small class="price-currency">USD / troy oz</small>';
+    id('table-workspace').getBoundingClientRect = () => ({width:320,top:300}); workspace.updateLayout();
+    expect(id('tw-mobile-list').textContent).toContain('2,000.00');
+    expect(id('tw-mobile-list').textContent).toContain('USD / troy oz');
+    expect(id('tw-mobile-list').textContent).toContain('Observed 2026-10-03');
+    const checkbox = id('tw-mobile-list').querySelector('input'); checkbox.checked = true; checkbox.dispatchEvent(new Event('change'));
+    expect(workspace.selected.has('gold')).toBe(true);
+    workspace.change({visible:['commodity','price']});
+    expect(id('tw-mobile-list').querySelector('.tw-mobile-meta')).toBeNull();
+    expect(id('tw-mobile-list').querySelector('[data-benchmark-id]').dataset.benchmarkId).toBe('gold');
+});
+
+test('phone values exclude the desktop tooltip copy after an AJAX range refresh', () => {
+    const row = workspace.getRows()[0], pct = document.createElement('td'), change = document.createElement('td');
+    pct.dataset.col = 'pct'; pct.innerHTML = '<div class="pct-cell"><div data-value="3.4">+3.4%</div><div class="absolute">Start value, end value, dates and other desktop tooltip text</div></div>';
+    change.dataset.col = 'chg'; change.innerHTML = '<div class="chg-cell"><span class="chg-value">+12</span><div class="absolute">Source tooltip details</div></div>';
+    row.append(pct,change);
+    id('table-workspace').getBoundingClientRect = () => ({width:390,top:300}); workspace.updateLayout();
+    workspace.change({visible:['commodity','pct','chg']});
+    expect(id('tw-mobile-list').querySelector('.tw-mobile-change').textContent).toBe('+3.4%');
+    expect(id('tw-mobile-list').querySelector('.tw-mobile-extra').textContent).toBe('Change+12');
+    expect(id('tw-mobile-list').textContent).not.toContain('tooltip');
+});

@@ -55,7 +55,7 @@ test('reduced motion leaves controls and panels immediately usable', async ({ pa
 test('mobile detail keeps its full viewport width during entry', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?view=compact');
-  await page.locator('#table-body a[data-benchmark-id]').first().click();
+  await page.locator('#tw-mobile-list a[data-benchmark-id]').first().click();
   const detail = page.locator('#benchmark-detail');
   await expect(detail).toBeVisible();
   await expect(detail).toHaveCSS('animation-name', 'bw-fade-in');

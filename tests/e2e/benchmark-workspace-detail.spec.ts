@@ -1,13 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+const benchmarkLinks = (page: Page) => page.locator('#table-body a[data-benchmark-id]:visible, #tw-mobile-list a[data-benchmark-id]:visible');
+
 async function browse(page: Page) {
     await page.goto('/?range=ALL');
-    await expect(page.locator('#table-body a[data-benchmark-id]').first()).toBeVisible();
+    await expect(benchmarkLinks(page).first()).toBeVisible();
 }
 
 async function openFirst(page: Page) {
-    const link = page.locator('#table-body a[data-benchmark-id]').first();
+    const link = benchmarkLinks(page).first();
     const name = (await link.textContent())!.trim();
     const id = await link.getAttribute('data-benchmark-id');
     await link.click();
@@ -133,8 +135,18 @@ test('320px dark details retain readable controls and a contained chart', async 
     await page.screenshot({ path: testInfo.outputPath('benchmark-detail-narrow-dark.png'), fullPage: false });
 });
 
+test('watching inside a phone detail returns focus to the refreshed observation row', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await browse(page);
+    const { id } = await openFirst(page);
+    await page.locator('#benchmark-detail [data-watch-id]').click();
+    await expect(page.locator(`#tw-mobile-list [data-benchmark-id="${id}"]`)).toBeAttached();
+    await page.keyboard.press('Escape');
+    await expect(page.locator(`#tw-mobile-list [data-benchmark-id="${id}"]`)).toBeFocused();
+});
+
 test('detail pane resizes by dragging and keyboard, keeps its chart state, and restores width after reload', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.setViewportSize({ width: 1920, height: 1000 });
     await browse(page); await openFirst(page);
     const detail = page.locator('#benchmark-detail');
     const handle = page.getByRole('separator', { name: 'Resize benchmark details' });
@@ -155,6 +167,33 @@ test('detail pane resizes by dragging and keyboard, keeps its chart state, and r
     await expect(handle).toBeHidden();
     expect((await detail.boundingBox())!.width).toBe(390);
     expect(await detail.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+});
+
+test('split detail reserves a readable list and adapts to sidebar and viewport changes', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await browse(page); await openFirst(page);
+    const handle = page.getByRole('separator', { name: 'Resize benchmark details' });
+    const table = page.locator('#table-workspace');
+    await handle.focus(); await handle.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', '588');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.locator('#bw-sidebar-toggle').click();
+    await expect(handle).toHaveAttribute('aria-valuemax', '720');
+    await handle.focus(); await handle.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', '720');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.locator('#bw-sidebar-toggle').click();
+    await expect(handle).toHaveAttribute('aria-valuenow', '588');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(handle).toHaveAttribute('aria-valuenow', '428');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.setViewportSize({ width: 1279, height: 900 });
+    await expect(page.locator('#benchmark-detail')).toHaveAttribute('aria-modal', 'true');
+    expect(await page.locator('#benchmark-workspace').evaluate(node => Boolean(node.closest('[inert]')))).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#benchmark-detail')).toBeHidden();
+    expect(await page.locator('#benchmark-workspace').evaluate(node => Boolean(node.closest('[inert]')))).toBe(false);
 });
 
 test('detail chart custom dates and presentation settings remain usable at 320px', async ({ page }) => {

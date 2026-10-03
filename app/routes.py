@@ -366,6 +366,13 @@ def native_research_story():
                            meta_description='A development update on the Swift Mac and iPhone apps and Kotlin Android app: historical filings, offline research and source-linked notes.')
 
 
+@bp.route('/blog/benchmarks-on-a-small-screen')
+def mobile_workspace_story():
+    return render_template('blog/mobile_workspace.html',
+                           meta_title='Benchmarks on a small screen | BenchmarkWatcher',
+                           meta_description='Search and filter historical benchmarks on a phone, with compact controls, readable observations and focused detail views.')
+
+
 @bp.route('/favicon.ico')
 def favicon():
     """Serve the dedicated multi-size brand favicon."""
@@ -392,7 +399,7 @@ def sitemap():
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
              url_for('main.new_icon_story'), url_for('main.global_sources_story'),
-             url_for('main.native_research_story'), url_for('global_reference.index'),
+             url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),
              url_for('global_reference.sources')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))

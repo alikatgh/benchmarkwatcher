@@ -29,7 +29,10 @@
         chart = BW.Visuals.timeSeries(target, [{name: data.name, unit: data.unit, gapDays: gaps[data.frequency] || 40, points}], {
             width: Math.max(280, target.clientWidth), height: target.clientHeight,
             finance: true, yAxisPosition: 'right', type: type.value, dots: false,
-            externalReadout: true, yFormat: value => Number(value).toLocaleString(undefined, {maximumSignificantDigits: 5}),
+            externalReadout: true, yFormat: value => Number(value).toLocaleString('en', {
+                notation: Math.abs(value) >= 1e6 ? 'compact' : 'standard', maximumSignificantDigits: 5,
+            }),
+            tooltipDate: point => point.period || point.date,
             onInspect: inspect, label: `${data.name}. Original source periods and exact values in the observation table.`,
             animation: 160,
         });

@@ -9,7 +9,7 @@
     const COLORS = ['#4285f4', '#b05aca', '#d77813', '#279888'];
     const state = {
         ids: [], watchlist: null, watchSaved: true, records: [], range: '1Y',
-        mode: 'indexed', seq: 0, controller: null, trigger: null,
+        mode: 'indexed', seq: 0, controller: null, trigger: null, triggerScope: null,
         inertNodes: [], open: false, initialized: false, noticeTimer: null, noticeHome: null,
         widths: { ...DEFAULT_WIDTHS }, width: 560, drag: null,
         custom: { start: '', end: '' }, chartStyle: 'line', showDots: false, settingsOpen: false, inspectedDate: null,
@@ -133,7 +133,12 @@
     function widthBounds() {
         const viewport = Math.max(0, window.innerWidth);
         if (viewport < 768) return { min: viewport, max: viewport, mobile: true };
-        return { min: 360, max: Math.min(1120, viewport - (viewport >= 1280 ? 480 : 32)), mobile: false };
+        // A split view is useful only while its benchmark list stays readable.
+        // Reserve the navigation rail, list width and the workspace gutters.
+        const rail = parseFloat(getComputedStyle(document.body).getPropertyValue('--bw-rail')) ||
+            (document.body.classList.contains('bw-sidebar-collapsed') ? 60 : 192);
+        const maximum = viewport >= 1280 ? viewport - rail - 600 - 60 : viewport - 32;
+        return { min: 360, max: Math.max(360, Math.min(1120, maximum)), mobile: false };
     }
     function applyWidth(value) {
         const bounds = widthBounds();
@@ -242,8 +247,17 @@
         if (pane()) { pane().hidden = true; pane().removeAttribute('aria-busy'); }
         if (byId('benchmark-detail-backdrop')) byId('benchmark-detail-backdrop').hidden = true;
         document.body.classList.remove('bw-detail-open', 'bw-compare-open');
-        const returnTarget = state.trigger && state.trigger.isConnected ? state.trigger
-            : Array.from(document.querySelectorAll('a[data-benchmark-id]')).find(node => node.dataset.benchmarkId === state.ids[0]);
+        // Watching or changing the viewport may rebuild the phone row or hide
+        // the desktop table. Return to the current visible copy of the item.
+        const available = node => node?.isConnected && !node.closest('[hidden]') &&
+            (typeof node.checkVisibility !== 'function' || node.checkVisibility());
+        const candidates = [
+            ...Array.from(byId(state.triggerScope)?.querySelectorAll('a[data-benchmark-id]') || []),
+            ...document.querySelectorAll('#tw-mobile-list a[data-benchmark-id], #table-body a[data-benchmark-id]'),
+            ...document.querySelectorAll('a[data-benchmark-id]')
+        ];
+        const returnTarget = available(state.trigger) ? state.trigger
+            : candidates.find(node => node.dataset.benchmarkId === state.ids[0] && available(node)) || byId('tw-query');
         if (returnTarget) returnTarget.focus({ preventScroll: true });
         document.dispatchEvent(new CustomEvent('bw:detail-close'));
     }
@@ -257,6 +271,7 @@
         state.records = [];
         state.mode = 'indexed';
         state.trigger = trigger || document.activeElement;
+        state.triggerScope = state.trigger?.closest('#tw-mobile-list, #table-body, #bw-overview')?.id || null;
         state.open = true;
         pane().hidden = false;
         document.body.classList.add('bw-detail-open');
@@ -343,7 +358,7 @@
         byId('benchmark-detail-title').textContent = record.name || titleFromRow(record.id);
         byId('benchmark-detail-category').textContent = record.category || 'Public benchmark';
         byId('benchmark-detail-actions').replaceChildren(watchButton(record), pageLink(record));
-        const value = element('section');
+        const value = element('section', 'benchmark-detail-summary');
         const quote = element('div', 'benchmark-detail-quote');
         quote.append(element('p', 'benchmark-detail-value', format(record.price)), element('p', 'benchmark-detail-unit', unit(record)));
         value.append(element('p', 'benchmark-detail-muted', 'Latest reference value'), quote);
@@ -710,6 +725,7 @@
         byId('benchmark-detail-notice').querySelector('[data-detail-action="dismiss-notice"]').addEventListener('click', () => { byId('benchmark-detail-notice').hidden = true; });
         document.addEventListener('keydown', onKey);
         window.addEventListener('resize', onViewportResize);
+        document.addEventListener('bw:sidebar-change', onViewportResize);
         window.addEventListener('storage', onStorage);
         getWatchlist();
     }
@@ -720,6 +736,7 @@
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('DOMContentLoaded', init);
         window.removeEventListener('resize', onViewportResize);
+        document.removeEventListener('bw:sidebar-change', onViewportResize);
         const handle = byId('benchmark-detail-resize');
         handle?.removeEventListener('pointerdown', startResize);
         handle?.removeEventListener('keydown', resizeKey);

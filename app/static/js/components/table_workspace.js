@@ -78,6 +78,11 @@
         storageOkay: true,
         controlsCollapsed: false,
         controlsManual: null,
+        compactLayout: false,
+        mobileLayout: false,
+        sheetPanel: null,
+        sheetHistoryActive: false,
+        historyClosing: false,
         getRows() { return Array.from(byId('table-body')?.querySelectorAll('tr[data-id]') || []); },
         getVisibleRows() { return this.getRows().filter(row => !row.hidden && row.style.display !== 'none'); },
         getSelectedIds() { return this.getRows().filter(row => this.selected.has(row.dataset.id)).map(row => row.dataset.id); },
@@ -203,6 +208,9 @@
             if (byId('tw-export-all')) byId('tw-export-all').disabled = rows.length === 0;
             this.renderSortIndicators();
             document.dispatchEvent(new CustomEvent('bw:table-view-change', { detail: { activeId: this.activeId, state: copy(this.current), count } }));
+            this.renderMobileRows();
+            if (this.sheetHistoryActive) this.sheetReturnUrl = location.href;
+            if (byId('tw-sheet-done') && this.panelId === 'tw-filters') byId('tw-sheet-done').textContent = `Show ${count} ${count === 1 ? 'result' : 'results'}`;
         },
         applyColumns() {
             const table = byId('data-table'); if (!table) return;
@@ -222,6 +230,71 @@
             });
             const total = 42 + this.current.visible.reduce((sum, key) => sum + (this.current.widths[key] || property(key).width), 0);
             table.style.width = `${total}px`; table.style.minWidth = `max(100%, ${total}px)`;
+        },
+        renderMobileRows() {
+            const list = byId('tw-mobile-list'); if (!list || !this.mobileLayout) return;
+            list.dataset.density = this.current.density;
+            const focused = document.activeElement?.closest('[data-mobile-id]');
+            const focusedId = focused?.dataset.mobileId, focusedAction = document.activeElement?.dataset.mobileAction;
+            list.replaceChildren();
+            const visible = new Set(this.current.visible);
+            this.getVisibleRows().forEach(row => {
+                const data = row.dataset, item = node('article', 'tw-mobile-row');
+                item.dataset.mobileId = data.id; item.setAttribute('role', 'listitem');
+                item.classList.toggle('is-selected', this.selected.has(data.id));
+                const heading = node('div', 'tw-mobile-row-heading'), selectLabel = node('label', 'tw-mobile-select');
+                const select = node('input'); select.type = 'checkbox'; select.checked = this.selected.has(data.id); select.dataset.mobileAction = 'select';
+                select.setAttribute('aria-label', `Select ${data.name}`);
+                select.addEventListener('change', () => { select.checked ? this.selected.add(data.id) : this.selected.delete(data.id); this.updateSelection(); this.announce(`${this.selected.size} benchmarks selected`); });
+                selectLabel.append(select);
+                const name = node('a', 'tw-mobile-name', data.name); name.href = row.querySelector('.commodity-name')?.href || `/commodity/${encodeURIComponent(data.id)}`;
+                name.dataset.benchmarkId = data.id; name.dataset.mobileAction = 'detail';
+                const watched = this.watched.has(data.id), watch = button(watched ? '★' : '☆', () => document.dispatchEvent(new CustomEvent('bw:watch-toggle', { detail: { id: data.id } })), 'tw-watch');
+                watch.dataset.mobileAction = 'watch'; watch.setAttribute('aria-pressed', String(watched)); watch.setAttribute('aria-label', `${watched ? 'Unwatch' : 'Watch'} ${data.name}`);
+                heading.append(selectLabel, name, watch); item.append(heading);
+                const values = node('div', 'tw-mobile-row-values');
+                if (visible.has('price')) { const price = node('div', 'tw-mobile-price'); price.append(node('strong', '', row.querySelector('.price-value')?.textContent || '—'), node('small', '', row.querySelector('.price-currency')?.textContent || [data.currency, data.unit].filter(Boolean).join(' / '))); values.append(price); }
+                if (visible.has('pct')) { const change = node('span', 'tw-mobile-change', (row.querySelector('.pct-cell [data-value]') || row.querySelector('.pct-cell'))?.textContent?.trim() || '—'); change.style.color = `var(--color-${['up', 'down', 'flat'].includes(data.direction) ? data.direction : 'flat'})`; change.setAttribute('aria-label', `Historical change ${change.textContent}`); values.append(change); }
+                if (values.childElementCount) item.append(values);
+                if (visible.has('trend')) {
+                    const history = BW.CompactTable?.sparklineData?.find(commodity => String(commodity.id) === data.id);
+                    if (history && BW.Visuals?.sparkline) {
+                        const chart = node('div', 'tw-mobile-history'), svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        svg.id = `tw-mobile-sparkline-${BW.CompactTable.safeDomId?.(data.id) || data.id}`;
+                        svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', `Historical observations for ${data.name}`); chart.append(svg); item.append(chart); list.append(item);
+                        const preferences = BW.CompactTable.getSettings?.()?.trend || {}, count = preferences.points === 'all' ? Infinity : (parseInt(preferences.points, 10) || 30);
+                        BW.Visuals.sparkline(svg, count === Infinity ? (history.history || []) : (history.history || []).slice(-count), {type: preferences.type || 'area', gapDays: history.is_daily ? 7 : 62, showMA: preferences.showMA, showHighLow: preferences.showHighLow});
+                    }
+                }
+                const meta = node('div', 'tw-mobile-meta');
+                if (visible.has('updated')) meta.append(node('span', '', `Observed ${data.date || '—'}`));
+                if (visible.has('category')) meta.append(node('span', '', data.category));
+                if (visible.has('frequency')) meta.append(node('span', '', data.frequency === 'daily' ? 'Daily observations' : 'Monthly observations'));
+                if (meta.childElementCount) item.append(meta);
+                if (visible.has('chg')) { const absolute = node('div', 'tw-mobile-extra'); absolute.append(node('span', '', 'Change'), node('span', '', row.querySelector('.chg-value')?.textContent?.trim() || '—')); item.append(absolute); }
+                list.append(item);
+            });
+            this.updateMobileBusy();
+            if (focusedId && focusedAction) [...list.querySelectorAll('[data-mobile-id]')].find(item => item.dataset.mobileId === focusedId)?.querySelector(`[data-mobile-action="${focusedAction}"]`)?.focus({preventScroll:true});
+        },
+        updateMobileBusy() {
+            const busy = byId('data-table')?.getAttribute('aria-busy') === 'true', list = byId('tw-mobile-list'), status = byId('tw-mobile-status');
+            if (list) { list.setAttribute('aria-busy', String(busy)); list.inert = busy; }
+            if (status) { status.hidden = !this.mobileLayout || !busy; status.textContent = busy ? 'Updating observations…' : ''; }
+        },
+        updateLayout() {
+            const root = byId('table-workspace'); if (!root) return;
+            const width = root.clientWidth || root.getBoundingClientRect().width;
+            // jsdom and hidden workspaces have no layout; wait for an actual width.
+            if (!width) return;
+            const compact = width <= 767, mobile = width <= 540;
+            if (compact === this.compactLayout && mobile === this.mobileLayout) return;
+            if (this.hasOpenPanel()) this.closePanels(true);
+            this.compactLayout = compact; this.mobileLayout = mobile;
+            if (compact) this.setControlsCollapsed(false);
+            if (compact) byId('tw-filter-button')?.setAttribute('aria-haspopup','dialog'); else byId('tw-filter-button')?.removeAttribute('aria-haspopup');
+            if (byId('tw-property-help')) byId('tw-property-help').textContent = mobile ? 'Choose information shown in each result. Reordering and column widths apply to the table on larger screens.' : 'Drag a property to reorder, or use Move left / right. Benchmark stays pinned. Drag a header edge or use its arrow keys to resize.';
+            this.renderChips(); this.renderMobileRows(); this.updateMobileBusy();
         },
         resize(key, width, persist = true) {
             const p = property(key); if (!p) return;
@@ -294,6 +367,7 @@
                 th.querySelector('.tw-header-sort')?.setAttribute('title', rule ? `Sort priority ${index + 1}, ${rule.direction === 'asc' ? 'ascending' : 'descending'}. Click to reverse; Shift-click to retain other sorts.` : 'Sort ascending. Shift-click to add a sort.');
             });
             if (byId('tw-sort-count')) byId('tw-sort-count').textContent = this.current.sorts.length ? `(${this.current.sorts.length})` : '';
+            if (byId('tw-more-sort-summary')) byId('tw-more-sort-summary').textContent = this.current.sorts.map(rule => `${property(rule.key)?.label} · ${rule.direction === 'desc' ? 'descending' : 'ascending'}`).join(', ') || 'No sort applied';
         },
         updateSelection() {
             const rows = this.getRows(), visible = this.getVisibleRows(), selectedVisible = visible.filter(row => this.selected.has(row.dataset.id)).length;
@@ -306,6 +380,11 @@
             if (byId('tw-selection-count')) byId('tw-selection-count').textContent = `${selectedRows.length} selected${hiddenCount ? ` (${hiddenCount} outside filters)` : ''}`;
             if (byId('tw-export-selected')) byId('tw-export-selected').textContent = `Export ${selectedRows.length} selected`;
             if (byId('tw-compare-selected')) { byId('tw-compare-selected').disabled = selectedRows.length < 2 || selectedRows.length > 4; byId('tw-compare-selected').title = 'Select 2–4 benchmarks to compare'; }
+            byId('tw-mobile-list')?.querySelectorAll('[data-mobile-id]').forEach(item => {
+                const id = item.dataset.mobileId;
+                item.classList.toggle('is-selected', this.selected.has(id));
+                const checkbox = item.querySelector('input[type=checkbox]'); if (checkbox) checkbox.checked = this.selected.has(id);
+            });
             document.dispatchEvent(new CustomEvent('bw:table-selection', { detail: { ids: selectedRows.map(row => row.dataset.id), rows: selectedRows } }));
         },
         clearFilters() { this.change({ query: '', filters: defaults().filters }, true); },
@@ -318,18 +397,19 @@
         renderChips() {
             const container = byId('tw-filter-chips'); if (!container) return;
             container.replaceChildren();
+            const items = node('div', 'tw-chip-items'); container.append(items);
             const labels = { category: 'Category', frequency: 'Frequency', availability: 'Availability', direction: 'Direction', watch: 'Membership' };
             let count = 0;
             Object.entries(this.current.filters).forEach(([key, value]) => {
                 if (!value) return; count += 1;
                 const select = byId(`tw-${key}`), option = Array.from(select?.options || []).find(item => item.value === value);
-                const chip = button(`${labels[key]}: ${option?.textContent || value} ×`, () => this.change({ filters: { ...this.current.filters, [key]: '' } }, true), 'tw-chip'); chip.setAttribute('aria-label', `Remove ${labels[key]} filter`); container.append(chip);
+                const chip = button(`${this.compactLayout ? '' : labels[key] + ': '}${option?.textContent || value} ×`, () => this.change({ filters: { ...this.current.filters, [key]: '' } }, true), 'tw-chip'); chip.setAttribute('aria-label', `Remove ${labels[key]} filter: ${option?.textContent || value}`); items.append(chip);
             });
-            if (this.current.query) container.append(button(`Search: ${this.current.query} ×`, () => this.change({ query: '' }, true), 'tw-chip'));
-            if (this.navigationWatchOnly) container.append(node('span', 'tw-help', 'Watchlist navigation is also applied'));
-            if (this.externalQuery || this.externalFilter !== 'all') container.append(node('span', 'tw-help', 'Global search is also applied'));
-            if (count || this.current.query) container.append(button('Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'));
-            container.hidden = container.childElementCount === 0;
+            if (this.current.query) items.append(button(`Search: ${this.current.query} ×`, () => this.change({ query: '' }, true), 'tw-chip'));
+            if (this.navigationWatchOnly) items.append(node('span', 'tw-help', 'Watchlist navigation is also applied'));
+            if (this.externalQuery || this.externalFilter !== 'all') items.append(node('span', 'tw-help', 'Global search is also applied'));
+            if (count || this.current.query) { const clear = button(this.compactLayout ? 'Clear' : 'Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'); if (this.compactLayout) clear.setAttribute('aria-label', 'Clear all view filters'); container.append(clear); }
+            container.hidden = items.childElementCount === 0;
             if (byId('tw-filter-count')) byId('tw-filter-count').textContent = count ? `(${count})` : '';
         },
         renderViews() {
@@ -338,6 +418,8 @@
             [{ id: 'all', name: this.navigationWatchOnly ? 'All in watchlist' : 'All benchmarks' }, { id: 'watchlist', name: 'Watchlist' }, ...this.views].forEach(view => {
                 const tab = button(view.name, () => this.activateView(view.id), 'tw-view'); tab.dataset.viewId = view.id; tab.setAttribute('aria-pressed', String(view.id === this.activeId)); container.append(tab);
             });
+            const picker = byId('tw-view-select');
+            if (picker) { picker.replaceChildren(...[{ id: 'all', name: this.navigationWatchOnly ? 'All in watchlist' : 'All benchmarks' }, { id: 'watchlist', name: 'Watchlist' }, ...this.views].map(view => new Option(view.name, view.id))); picker.value = this.activeId; }
             const current = this.views.find(view => view.id === this.activeId);
             if (byId('tw-view-name') && byId('tw-view-menu')?.hidden) byId('tw-view-name').value = current?.name || '';
             this.renderCompactSummary();
@@ -373,11 +455,11 @@
             this.renderCompactSummary();
         },
         hasOpenPanel() {
-            return ['view-menu', 'filters', 'sort-panel', 'properties', 'actions'].some(name => { const panel = byId(`tw-${name}`); return panel && !panel.hidden; });
+            return ['view-menu', 'more-menu', 'tool-sheet', 'filters', 'sort-panel', 'properties', 'actions'].some(name => { const panel = byId(`tw-${name}`); return panel && !panel.hidden; });
         },
         updateScrollControls() {
             const root = byId('table-workspace'), region = root?.querySelector('.tw-table-region');
-            if (!root || !region || !byId('tw-controls') || this.controlsManual || !root.getClientRects().length) return;
+            if (!root || !region || !byId('tw-controls') || this.compactLayout || this.controlsManual || !root.getClientRects().length) return;
             // The root's document position does not depend on its children's height.
             // Separate thresholds prevent collapse/expand oscillation near the edge.
             const top = root.getBoundingClientRect().top + window.scrollY;
@@ -459,26 +541,76 @@
             });
             if (byId('tw-add-sort')) byId('tw-add-sort').disabled = this.current.sorts.length >= PROPERTIES.filter(p => p.type).length;
         },
-        closePanels(restoreFocus = false) {
-            let focusTarget = null;
-            ['view-menu', 'filters', 'sort-panel', 'properties', 'actions'].forEach(name => {
+        closePanels(restoreFocus = false, keepHistory = false) {
+            let focusTarget = this.panelTrigger;
+            const dismissedPanel = this.panelId;
+            ['view-menu', 'more-menu', 'tool-sheet', 'filters', 'sort-panel', 'properties', 'actions'].forEach(name => {
                 const panel = byId(`tw-${name}`); if (!panel || panel.hidden) return;
                 if (panel.open) { if (typeof panel.close === 'function') panel.close(); else panel.removeAttribute('open'); }
-                panel.hidden = true; const trigger = document.querySelector(`[aria-controls="tw-${name}"]`); trigger?.setAttribute('aria-expanded', 'false'); focusTarget = this.panelTrigger || trigger;
+                panel.hidden = true; const trigger = document.querySelector(`[aria-controls="tw-${name}"]`); trigger?.setAttribute('aria-expanded', 'false'); focusTarget ||= trigger;
                 document.querySelectorAll(`[aria-controls="tw-${name}"]`).forEach(control => control.setAttribute('aria-expanded', 'false'));
             });
-            this.panelTrigger = null;
-            if (restoreFocus) focusTarget?.focus();
-        },
-        togglePanel(panelId, trigger) {
-            const panel = byId(panelId); if (!panel) return;
-            const open = panel.hidden; this.closePanels(); panel.hidden = !open; trigger?.setAttribute('aria-expanded', String(open));
-            if (open) {
-                this.panelTrigger = trigger;
-                if (panel.tagName === 'DIALOG') { this.prepareViewDialog(trigger?.id === 'tw-new-view' ? 'new' : 'manage'); if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', ''); }
-                panel.querySelector('input,select,button')?.focus();
-                if (panel.tagName === 'DIALOG') byId('tw-view-name')?.focus();
+            if (this.sheetPanel && this.sheetAnchor) { this.sheetAnchor.replaceWith(this.sheetPanel); this.sheetPanel = null; this.sheetAnchor = null; }
+            if (!keepHistory && this.sheetHistoryActive) {
+                this.sheetHistoryActive = false;
+                if (history.state?.bwTableSheet === this.sheetToken) { this.historyClosing = true; this.sheetReturnUrl = location.href; history.back(); }
             }
+            this.panelId = null;
+            this.panelTrigger = null;
+            if (restoreFocus && focusTarget) {
+                if (!focusTarget.getClientRects().length && (this.compactLayout || this.mobileLayout)) {
+                    const desktopTrigger = {'tw-filters':'tw-filter-button','tw-sort-panel':'tw-sort-button','tw-properties':'tw-properties-button','tw-actions':'tw-actions-button','tw-view-menu':'tw-view-menu-button'}[dismissedPanel];
+                    focusTarget = [byId(desktopTrigger),byId('tw-more-button'),byId('tw-view-select'),byId('tw-query')].find(element => element?.getClientRects().length) || focusTarget;
+                }
+                focusTarget?.focus({preventScroll:true});
+            }
+        },
+        togglePanel(panelId, trigger, mode) {
+            const panel = byId(panelId); if (!panel) return;
+            if (this.historyClosing) { this.pendingPanel = [panelId, trigger, mode]; return; }
+            if (!panel.hidden && this.panelId === panelId) { this.closePanels(true); return; }
+            const returnFocus = this.compactLayout ? (panelId === 'tw-filters' ? byId('tw-filter-button') : byId('tw-more-button')) : trigger;
+            this.closePanels(false, this.compactLayout);
+            panel.hidden = false; trigger?.setAttribute('aria-expanded', 'true'); this.panelId = panelId;
+            this.panelTrigger = returnFocus || trigger;
+            if (this.compactLayout && !this.sheetHistoryActive) {
+                this.sheetToken = `table-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+                this.sheetBaseUrl = location.href; this.sheetReturnUrl = location.href;
+                history.pushState({...history.state, bwTableSheet:this.sheetToken}, '', location.href);
+                this.sheetHistoryActive = true;
+            }
+            let dialog = panel;
+            if (this.compactLayout && panel.tagName !== 'DIALOG' && byId('tw-tool-sheet')) {
+                this.sheetAnchor = document.createComment('table control position'); panel.before(this.sheetAnchor); this.sheetPanel = panel;
+                byId('tw-sheet-content').append(panel);
+                dialog = byId('tw-tool-sheet'); dialog.hidden = false;
+                const title = {'tw-filters':'Filters','tw-sort-panel':'Sort','tw-properties':'Properties','tw-actions':'Export'}[panelId] || 'View controls';
+                byId('tw-sheet-heading').textContent = title;
+                byId('tw-sheet-clear').hidden = panelId !== 'tw-filters';
+                const resultCount = this.getVisibleRows().length;
+                byId('tw-sheet-done').textContent = panelId === 'tw-filters' ? `Show ${resultCount} ${resultCount === 1 ? 'result' : 'results'}` : 'Done';
+            }
+            if (panelId === 'tw-view-menu') this.prepareViewDialog(mode || (trigger?.id === 'tw-new-view' ? 'new' : 'manage'));
+            if (dialog.tagName === 'DIALOG') { if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', ''); }
+            if (panelId === 'tw-view-menu') (byId('tw-view-name') || panel.querySelector('input'))?.focus();
+            else if (dialog.tagName === 'DIALOG') dialog.querySelector('h2[tabindex]')?.focus();
+            else panel.querySelector('input,select,button')?.focus();
+        },
+        consumeSheetPop(event) {
+            if ((!this.sheetHistoryActive && !this.historyClosing) || event.state?.bwTableSheet === this.sheetToken) return false;
+            const current = new URL(location.href), base = new URL(this.sheetBaseUrl || location.href);
+            const sameWorkspace = current.pathname === base.pathname && (current.searchParams.get('view') || '') === (base.searchParams.get('view') || '') && (current.searchParams.get('workspace') || '') === (base.searchParams.get('workspace') || '');
+            this.sheetHistoryActive = false;
+            this.closePanels(true, true);
+            const pending = this.pendingPanel; this.pendingPanel = null; this.historyClosing = false;
+            if (sameWorkspace) {
+                // A sheet is one Back layer. Keep the filter URL synchronized with
+                // the persisted controls instead of undoing the user's edits.
+                history.replaceState(event.state, '', this.sheetReturnUrl || location.href);
+                event.stopImmediatePropagation();
+                if (pending) this.togglePanel(...pending);
+            }
+            return sameWorkspace;
         },
         csvField(value, numeric = false) {
             let content = text(value);
@@ -504,6 +636,30 @@
             this.announce(`Exported ${rows.length} ${scope === 'selected' ? 'selected' : scope === 'all' ? 'loaded' : 'filtered'} benchmarks`);
         },
         bind() {
+            ['tw-view-menu','tw-more-menu','tw-tool-sheet'].forEach(id => byId(id)?.addEventListener('keydown', event => {
+                if (event.key !== 'Tab') return;
+                const dialog = event.currentTarget;
+                const targets = [...dialog.querySelectorAll('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),[tabindex]:not([tabindex="-1"])')].filter(element => element.getClientRects().length);
+                if (!targets.length) { event.preventDefault(); return; }
+                const first = targets[0], last = targets[targets.length - 1];
+                if (event.shiftKey && (document.activeElement === first || document.activeElement?.matches('h2[tabindex="-1"]'))) { event.preventDefault(); last.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+            }));
+            byId('tw-view-select')?.addEventListener('change', event => this.activateView(event.target.value));
+            byId('tw-more-button')?.addEventListener('click', () => this.togglePanel('tw-more-menu', byId('tw-more-button')));
+            byId('tw-more-menu')?.querySelectorAll('[data-tw-command]').forEach(command => command.addEventListener('click', () => {
+                const target = {'new-view':'tw-view-menu','view-settings':'tw-view-menu','sort':'tw-sort-panel','properties':'tw-properties','actions':'tw-actions'}[command.dataset.twCommand];
+                if (target) this.togglePanel(target, byId('tw-more-button'), command.dataset.twCommand === 'new-view' ? 'new' : 'manage');
+            }));
+            ['tw-more-menu','tw-tool-sheet'].forEach(id => {
+                const dialog = byId(id);
+                dialog?.addEventListener('cancel', event => { event.preventDefault(); this.closePanels(true); });
+                dialog?.querySelector('[data-tw-dismiss]')?.addEventListener('click', () => this.closePanels(true));
+                dialog?.addEventListener('click', event => { if (event.target !== dialog) return; const box = dialog.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) this.closePanels(true); });
+            });
+            byId('tw-sheet-done')?.addEventListener('click', () => this.closePanels(true));
+            byId('tw-sheet-clear')?.addEventListener('click', () => this.clearFilters());
+            window.addEventListener('popstate', event => this.consumeSheetPop(event), true);
             [['tw-filter-button', 'tw-filters'], ['tw-sort-button', 'tw-sort-panel'], ['tw-properties-button', 'tw-properties'], ['tw-actions-button', 'tw-actions'], ['tw-view-menu-button', 'tw-view-menu']].forEach(([trigger, panel]) => byId(trigger)?.addEventListener('click', () => this.togglePanel(panel, byId(trigger))));
             byId('tw-new-view')?.addEventListener('click', () => this.togglePanel('tw-view-menu', byId('tw-new-view')));
             byId('tw-controls-toggle')?.addEventListener('click', () => { this.closePanels(); byId('tw-controls-toggle').focus(); this.setControlsCollapsed(!this.controlsCollapsed, true); });
@@ -533,8 +689,23 @@
             ['selected', 'filtered', 'all'].forEach(scope => byId(`tw-export-${scope}`)?.addEventListener('click', () => this.exportRows(scope)));
             byId('tw-retry-save')?.addEventListener('click', () => { this.persist(); this.announce(this.storageOkay ? 'View preferences saved in this browser' : 'Still unable to save. Your current view is retained on this page.'); });
             byId('tw-backup-views')?.addEventListener('click', () => this.download(JSON.stringify({ version: 1, activeId: this.activeId, current: this.current, views: this.views }, null, 2), 'benchmark-views-backup.json', 'application/json'));
-            byId('table-workspace')?.addEventListener('keydown', event => { if (event.key === 'Escape') this.closePanels(true); });
+            byId('table-workspace')?.addEventListener('keydown', event => {
+                if (event.key !== 'Escape' || !this.hasOpenPanel()) return;
+                event.preventDefault(); event.stopPropagation(); this.closePanels(true);
+            });
             document.addEventListener('bw:watchlist-change', event => this.setWatchlist(event.detail?.ids));
+            document.addEventListener('bw:table-data', () => this.renderMobileRows());
+            if (byId('tw-mobile-list')) {
+                const table = byId('data-table');
+                this.mobileObserver = new MutationObserver(() => {
+                    this.updateMobileBusy();
+                    if (!this.mobileLayout || this.mobileFrame) return;
+                    this.mobileFrame = requestAnimationFrame(() => { this.mobileFrame = null; this.renderMobileRows(); });
+                });
+                this.mobileObserver.observe(table, {subtree:true,childList:true,attributes:true,attributeFilter:['aria-busy']});
+            }
+            if (typeof ResizeObserver === 'function') { this.layoutObserver = new ResizeObserver(() => this.updateLayout()); this.layoutObserver.observe(byId('table-workspace')); }
+            window.addEventListener('resize', () => this.updateLayout());
             if (byId('tw-controls')) {
                 const onScroll = () => { if (this.scrollFrame) return; this.scrollFrame = requestAnimationFrame(() => { this.scrollFrame = null; this.updateScrollControls(); }); };
                 window.addEventListener('scroll', onScroll, { passive: true });
@@ -549,7 +720,7 @@
             if (RANGES.includes(urlRange)) this.current.range = urlRange;
             if (urlCategory) this.current.filters.category = urlCategory;
             const watches = BW.BenchmarkDetail?.getWatchlist?.(); if (Array.isArray(watches)) this.watched = new Set(watches.map(String));
-            this.renderHeaders(); this.bind(); this.hydrateRows(); this.renderControls(); this.apply(); this.persist();
+            this.updateLayout(); this.renderHeaders(); this.bind(); this.hydrateRows(); this.renderControls(); this.apply(); this.persist();
             if (this.current.range !== renderedRange || urlCategory) BW.CompactTable?.setDataRange(this.current.range, { history: 'replace' });
             document.dispatchEvent(new CustomEvent('bw:table-ready'));
         }

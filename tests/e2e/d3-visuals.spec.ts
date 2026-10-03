@@ -49,7 +49,7 @@ test('dashboard D3 sparklines, explorer fetch, comparison and themes',async({pag
   await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
   await expect(lab.locator('svg')).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('d3-dashboard-dark.png'),fullPage:true});
-  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   await expect(page.locator('.benchmark-detail-plot')).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -60,7 +60,7 @@ test('reference history keeps consistent sizing and synchronized inspection on d
   const history=values.map((price,i)=>({date:new Date(Date.UTC(2025,7+i,1)).toISOString().slice(0,10),price}));
   await page.route('**/api/commodity/gold',route=>route.fulfill({json:{data:{id:'gold',name:'Monthly sample',category:'Agriculture',currency:'USD',unit:'bushel',frequency:'monthly',is_daily:false,price:5.86,date:'2026-08-01',history,source_name:'Synthetic review data'}}}));
   await page.goto('/?view=compact');
-  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   const panel=page.locator('#benchmark-detail'), chart=panel.locator('.benchmark-detail-plot');
   const readout=panel.locator('.benchmark-detail-readout'), slider=panel.getByLabel('Explore an observation');
   await expect(readout).toContainText('Latest');
@@ -94,7 +94,7 @@ test('reference history keeps consistent sizing and synchronized inspection on d
   const axe=await new AxeBuilder({page}).include('#benchmark-detail-history').analyze();expect(axe.violations).toEqual([]);
   await panel.getByRole('button',{name:'Close benchmark details'}).click();
   await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
-  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   await panel.locator('#benchmark-detail-history').screenshot({path:testInfo.outputPath('reference-history-dark.png')});
   expect(errors).toEqual([]);
 });

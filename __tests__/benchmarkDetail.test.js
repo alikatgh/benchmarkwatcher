@@ -196,7 +196,7 @@ test('comparison discloses different baselines, preserves actual dates, and disa
     expect(tables).toHaveLength(2);
     expect(tables[1].textContent).toContain('150.00');
     expect(tables[1].textContent).not.toContain('2025-04-01');
-    expect(detail.querySelectorAll('svg circle')).toHaveLength(4);
+    expect(detail.querySelectorAll('svg .bw-d3-point')).toHaveLength(4);
 });
 
 test('compatible comparison can display absolute values and a zero baseline never becomes infinity', async () => {
@@ -259,6 +259,7 @@ function customDates(start, end) {
 }
 
 test('left-edge drag widens the panel without rebuilding chart or losing the selected observation', async () => {
+    window.innerWidth = 1920;
     await BW.BenchmarkDetail.open('gold');
     expect(activeWidth()).toBe('560px');
     const chart = document.querySelector('.benchmark-detail-plot');
@@ -277,16 +278,17 @@ test('left-edge drag widens the panel without rebuilding chart or losing the sel
 });
 
 test('keyboard separator controls clamp, expose their value, and keep comparison width separate', async () => {
+    window.innerWidth = 1920;
     await BW.BenchmarkDetail.open('gold');
     const handle = resizeHandle();
     expect(handle.getAttribute('role')).toBe('separator');
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
     resizeKey('ArrowLeft'); expect(activeWidth()).toBe('584px');
     resizeKey('ArrowRight', true); expect(activeWidth()).toBe('520px');
-    resizeKey('End'); expect(activeWidth()).toBe('960px');
-    expect(handle.getAttribute('aria-valuenow')).toBe('960');
-    expect(handle.getAttribute('aria-valuemax')).toBe('960');
-    resizeKey('ArrowLeft'); expect(activeWidth()).toBe('960px');
+    resizeKey('End'); expect(activeWidth()).toBe('1068px');
+    expect(handle.getAttribute('aria-valuenow')).toBe('1068');
+    expect(handle.getAttribute('aria-valuemax')).toBe('1068');
+    resizeKey('ArrowLeft'); expect(activeWidth()).toBe('1068px');
     resizeKey('Home'); expect(activeWidth()).toBe('360px');
     await BW.BenchmarkDetail.compare(['gold', 'copper']); expect(activeWidth()).toBe('720px');
     resizeKey('ArrowLeft'); expect(activeWidth()).toBe('744px');
@@ -295,13 +297,28 @@ test('keyboard separator controls clamp, expose their value, and keep comparison
 
 test('viewport changes clamp the remembered desktop width and keep mobile fullscreen without a resize tab stop', async () => {
     window.innerWidth = 1920;
-    await BW.BenchmarkDetail.open('gold'); resizeKey('End'); expect(activeWidth()).toBe('1120px');
-    window.innerWidth = 1280; window.dispatchEvent(new Event('resize')); expect(activeWidth()).toBe('800px');
+    await BW.BenchmarkDetail.open('gold'); resizeKey('End'); expect(activeWidth()).toBe('1068px');
+    window.innerWidth = 1280; window.dispatchEvent(new Event('resize')); expect(activeWidth()).toBe('428px');
     window.innerWidth = 390; window.dispatchEvent(new Event('resize'));
     expect(activeWidth()).toBe('390px'); expect(resizeHandle().hidden).toBe(true); expect(resizeHandle().tabIndex).toBe(-1);
     resizeKey('End'); expect(activeWidth()).toBe('390px');
     window.innerWidth = 1920; window.dispatchEvent(new Event('resize'));
-    expect(activeWidth()).toBe('1120px'); expect(resizeHandle().hidden).toBe(false);
+    expect(activeWidth()).toBe('1068px'); expect(resizeHandle().hidden).toBe(false);
+});
+
+test('expanding navigation preserves list space without overwriting a preferred larger pane', async () => {
+    window.innerWidth = 1920;
+    await BW.BenchmarkDetail.open('gold'); resizeKey('End');
+    window.innerWidth = 1440; window.dispatchEvent(new Event('resize'));
+    expect(activeWidth()).toBe('588px');
+    document.body.classList.add('bw-sidebar-collapsed');
+    document.dispatchEvent(new CustomEvent('bw:sidebar-change'));
+    expect(activeWidth()).toBe('720px');
+    document.body.classList.remove('bw-sidebar-collapsed');
+    document.dispatchEvent(new CustomEvent('bw:sidebar-change'));
+    expect(activeWidth()).toBe('588px');
+    window.innerWidth = 1920; window.dispatchEvent(new Event('resize'));
+    expect(activeWidth()).toBe('1068px');
 });
 
 test('canceling a drag restores the width and closing mid-drag releases resizing state', async () => {

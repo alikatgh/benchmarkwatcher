@@ -38,6 +38,51 @@ test('keyboard inspection reports only actual series dates and finite values', (
   expect(callback.mock.lastCall[0].date).toBe('2025-01-03');
 });
 
+test('anchored tooltips show actual dated values, preserve zero and dismiss locally', () => {
+  const callback = jest.fn();
+  const chart = BW.Visuals.timeSeries(document.getElementById('chart'), [{name:'Rate', unit:'%', points:[{date:'2025-01-01',value:0},{date:'2025-01-02',value:null},{date:'2025-01-03',value:4.74}]}], {finance:true,externalReadout:true,onInspect:callback});
+  const tooltip = chart.svg.querySelector('.bw-d3-tooltip');
+  expect(tooltip.getAttribute('visibility')).toBe('hidden');
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true}));
+  expect(tooltip.getAttribute('visibility')).toBe('visible');
+  expect(tooltip.textContent).toContain('Jan 3, 2025');
+  expect(tooltip.textContent).toContain('4.740%');
+  expect(chart.svg.getAttribute('aria-describedby')).toBe(tooltip.id);
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}));
+  expect(tooltip.textContent).toContain('0.000%');
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true}));
+  expect(callback.mock.lastCall[0].date).toBe('2025-01-03');
+  chart.svg.dispatchEvent(new FocusEvent('blur'));
+  expect(tooltip.getAttribute('visibility')).toBe('hidden');
+  expect(callback.mock.lastCall[0].date).toBe('2025-01-03');
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true}));
+  const bubbled = jest.fn();document.body.addEventListener('keydown',bubbled,{once:true});
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+  expect(tooltip.getAttribute('visibility')).toBe('hidden');
+  expect(chart.svg.hasAttribute('aria-describedby')).toBe(false);
+  expect(bubbled).not.toHaveBeenCalled();
+  document.body.removeEventListener('keydown',bubbled);
+});
+
+test('comparison inspection switches lines at each unique date and can retain original source periods', () => {
+  const chart=BW.Visuals.timeSeries(document.getElementById('chart'), [
+    {name:'Oil',unit:'USD / barrel',points:[{date:'2025-01-01',period:'2025',value:74.123456}]},
+    {name:'Index',unit:'2016 = 100',points:[{date:'2025-01-01',period:'2025',value:130.5}]}
+  ], {tooltipDate:point=>point.period});
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}));
+  const tooltip=chart.svg.querySelector('.bw-d3-tooltip');
+  expect(tooltip.textContent).toContain('2025');
+  expect(tooltip.textContent).toContain('Oil');
+  expect(tooltip.textContent).toContain('74.123456');
+  expect(tooltip.textContent).toContain('USD / barrel');
+  chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}));
+  expect(tooltip.textContent).toContain('Index');
+  expect(tooltip.textContent).toContain('130.5');
+  expect(tooltip.textContent).toContain('2016 = 100');
+  expect(tooltip.textContent).not.toContain('Jan 1');
+  expect(tooltip.getAttribute('transform')).not.toMatch(/NaN|Infinity/);
+});
+
 test('isolated observations stay visible even when ordinary dots are disabled', () => {
   BW.Visuals.timeSeries(document.getElementById('chart'), [{gapDays:7, points:[{date:'2024-01-01',price:5},{date:'2024-02-01',price:6},{date:'2025-01-01',price:9}]}], {pointRadius:0, dots:false});
   const dots = [...document.querySelectorAll('.bw-d3-point')];

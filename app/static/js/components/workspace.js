@@ -54,9 +54,10 @@
                 if (this.navigating || this.current === 'research') return;
                 const category = event.detail?.state?.filters?.category || '';
                 const url = new URL(location.href); if (category) url.searchParams.set('category', category); else url.searchParams.delete('category');
-                history.replaceState(null, '', url); this.updateNavigation(category);
+                history.replaceState(history.state, '', url); this.updateNavigation(category);
             });
-            window.addEventListener('popstate', () => {
+            window.addEventListener('popstate', event => {
+                if (BW.TableWorkspace?.consumeSheetPop?.(event)) return;
                 BW.BenchmarkDetail?.close(); this.navigate(true);
                 const range = new URLSearchParams(location.search).get('range') || '1Y';
                 if (['1W','1M','3M','6M','1Y','ALL'].includes(range)) {
@@ -79,6 +80,7 @@
                 toggle.setAttribute('aria-expanded', String(!collapsed));
                 toggle.setAttribute('aria-label', collapsed ? 'Expand navigation' : 'Collapse navigation');
                 toggle.title = collapsed ? 'Expand navigation' : 'Collapse navigation';
+                document.dispatchEvent(new CustomEvent('bw:sidebar-change'));
             };
             try { setCollapsed(localStorage.getItem(key) === 'true'); }
             catch (_) { setCollapsed(false); }
@@ -144,7 +146,7 @@
             const benchmarks = this.catalog.filter(c => requestedIds.has(c.id));
             if (!id && (!benchmarks.length || (!this.catalogLoaded && benchmarks.length !== requestedIds.size))) return;
             // Consume before opening: rendering Research dispatches count events again.
-            url.searchParams.delete('entry'); url.searchParams.delete('add_benchmark'); history.replaceState(null, '', url);
+            url.searchParams.delete('entry'); url.searchParams.delete('add_benchmark'); history.replaceState(history.state, '', url);
             if (id) BW.ResearchWorkspace.focusEntry(id); else BW.ResearchWorkspace.addBenchmarks(benchmarks);
         },
         loadCatalog() {

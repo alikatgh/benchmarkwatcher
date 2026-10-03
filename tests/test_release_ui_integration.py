@@ -102,6 +102,7 @@ def test_global_and_native_updates_are_public_and_honest(app_client):
     for path, heading in (
         ('/blog/public-data-around-the-world', 'Public data around the world'),
         ('/blog/research-on-each-device', 'Research that fits each device'),
+        ('/blog/benchmarks-on-a-small-screen', 'Benchmarks on a small screen'),
     ):
         page = app_client.get(path)
         assert page.status_code == 200 and heading in page.text

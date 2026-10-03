@@ -5,8 +5,8 @@ async function openTable(page: Page) {
     const response = await page.goto('/?view=compact');
     expect(response?.ok()).toBeTruthy();
     await expect(page.locator('#table-workspace')).toBeVisible();
-    await expect(page.locator('#table-body tr[data-id]').first()).toBeVisible();
     await expect.poll(() => page.evaluate(() => Boolean((window as any).BW?.TableWorkspace?.ready))).toBe(true);
+    await expect(page.locator('#table-body tr[data-id]')).not.toHaveCount(0);
 }
 const visibleRows = (page: Page) => page.locator('#table-body tr[data-id]:visible');
 
@@ -102,17 +102,25 @@ test.describe('Benchmark table workspace', () => {
     });
 
     for (const width of [390, 320]) {
-        test(`contains ${width}px horizontal table scroll and keeps touch controls labeled`, async ({ page }, testInfo) => {
+        test(`shows source-backed phone rows and usable property controls at ${width}px`, async ({ page }, testInfo) => {
             test.setTimeout(90_000);
             await page.setViewportSize({ width, height: 844 });
             await openTable(page);
-            const before = await page.locator('.tw-table-region').evaluate(el => ({ width: el.clientWidth, scrollWidth: el.scrollWidth }));
-            expect(before.scrollWidth).toBeGreaterThan(before.width);
+            await expect(page.locator('.tw-table-region')).toBeHidden();
+            await expect(page.locator('#tw-mobile-list .tw-mobile-row')).toHaveCount(3);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-            await page.locator('.tw-table-region').evaluate(el => { el.scrollLeft = 450; });
-            expect(await page.locator('.tw-table-region').evaluate(el => el.scrollLeft)).toBeGreaterThan(0);
-            await page.locator('#tw-properties-button').click();
+            await page.locator('#tw-more-button').click();
+            await page.locator('[data-tw-command="properties"]').click();
             await expect(page.locator('#tw-properties')).toBeVisible();
+            await page.locator('#tw-property-list').getByLabel('History', {exact:true}).uncheck();
+            await page.locator('#tw-sheet-done').click();
+            await expect(page.locator('#tw-tool-sheet')).toBeHidden();
+            await expect(page.locator('#tw-mobile-list .tw-mobile-history')).toHaveCount(0);
+            await page.locator('#tw-mobile-list input[type=checkbox]').first().check();
+            await expect(page.locator('#tw-selection-count')).toHaveText('1 selected');
+            await page.locator('#tw-clear-selection').click();
+            await page.reload();
+            await expect(page.locator('#tw-mobile-list .tw-mobile-history')).toHaveCount(0);
             expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
             const a11y = await new AxeBuilder({ page }).include('#table-workspace').withTags(['wcag2a', 'wcag2aa']).analyze();
             expect(a11y.violations.filter(v => ['serious', 'critical'].includes(v.impact || ''))).toEqual([]);

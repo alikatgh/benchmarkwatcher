@@ -117,6 +117,11 @@ body:has(.bw-workspace) .bw-footer-inner {max-width:1800px;padding-inline:28px;}
   .bw-destinations .bw-nav-text {white-space:normal;overflow-wrap:anywhere;}
   .bw-destinations .bw-nav-count {margin-left:auto;}
 }
+@container benchmark-content (min-width:541px) and (max-width:767px) {
+  .bw-observation-heading {align-items:flex-start;min-height:36px;line-height:1.5;}
+  .bw-observation-heading span:first-child {min-width:0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;}
+  .bw-observation-heading span:last-child {flex-shrink:0;}
+}
 @container benchmark-content (max-width:540px) {
   html[data-theme] .bw-page-heading h1 {font-size:23px!important;}
   .bw-section-heading {align-items:flex-start;flex-direction:column;gap:4px;margin-bottom:12px;}
