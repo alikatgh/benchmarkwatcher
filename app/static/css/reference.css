@@ -48,7 +48,7 @@ header a[aria-label="BenchmarkWatcher home"] > div span {color:var(--theme-bg)!i
 #quick-find input {background:var(--theme-surface)!important;}
 #compact-view>.rounded-xl {border-radius:8px;}
 #commodity-page {padding-top:20px;}
-#commodity-page>div:first-child {margin-bottom:16px;}
+#commodity-page .commodity-page-header {margin-bottom:16px;}
 #commodity-page .commodity-summary {border:1px solid var(--theme-border);border-radius:8px;background:var(--theme-surface);}
 #commodity-page .commodity-summary-inner {padding:18px;}
 #commodity-page .chart-panel {border-radius:8px;}

@@ -260,6 +260,15 @@
         const chart = document.getElementById('priceChart'); if (!chart) return;
         if (!detailLab) {
             const host = el('div'); (chart.closest('.commodity-overview') || chart.closest('.chart-panel')).after(host); detailLab = createLab(host, 'Visual explorer');
+            const context = el('div', '', 'bw-visual-context'), heading = detailLab.section.querySelector('h2');
+            const introduction = heading.nextElementSibling;
+            context.append(heading, introduction);
+            context.append(detailLab.controls, detailLab.note);
+            detailLab.section.prepend(context); detailLab.section.classList.add('bw-visual-detail');
+            detailLab.table.classList.add('bw-visual-values');
+            const wide = window.matchMedia('(min-width:1024px)');
+            const adaptContext = () => { if (wide.matches) context.append(detailLab.note); else detailLab.stage.after(detailLab.note); };
+            adaptContext(); wide.addEventListener('change', adaptContext);
             detailLab.select.value = 'histogram';
         }
         detailLab.rows = rows; detailLab.unit = unit; detailLab.draw();

@@ -5,21 +5,15 @@
 {% set _has_price = commodity.price is number %}
 {% set _has_change = commodity.change is number and commodity.change_percent is number %}
 <div id="commodity-page" class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-5 md:py-6 min-h-screen">
-    <!-- Header Row: stacked on mobile, side-by-side on desktop -->
-    <div class="commodity-page-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-4 sm:mb-5">
-        <!-- Left: Title -->
-        <div>
-            <div class="flex flex-col font-ui mb-2">
-                <span
-                    class="text-2xs font-semibold text-brand-black-60 dark:text-brand-black-60 tracking-[0.2em] capitalize">{{
-                    commodity.category }}</span>
-            </div>
+    <div class="commodity-page-header">
+        <div class="commodity-page-identity">
             <h1 class="text-2xl sm:text-4xl font-bold text-brand-black-80 dark:text-white font-serif">{{ commodity.name
                 }}</h1>
+            <a class="commodity-category-link" href="{{ url_for('main.index', category=commodity.category) }}">{{ commodity.category }}</a>
         </div>
 
         <!-- Right: Breadcrumb + Back -->
-        <div class="flex flex-col sm:items-end gap-2 shrink-0">
+        <div class="commodity-page-navigation">
             <nav aria-label="Breadcrumb" class="font-ui hidden sm:block">
                 <ol class="flex items-center gap-2 text-xs text-brand-black-60 dark:text-brand-black-60">
                     <li><a href="{{ url_for('main.index') }}"

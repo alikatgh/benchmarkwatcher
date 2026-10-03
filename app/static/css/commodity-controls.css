@@ -1,4 +1,13 @@
 /* Commodity chart: compact controls, with secondary options disclosed on demand. */
+#commodity-page{padding-top:12px}
+#commodity-page .commodity-page-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 20px;margin-bottom:12px}
+#commodity-page .commodity-page-identity{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 12px;min-width:0}
+html[data-theme] #commodity-page .commodity-page-header h1{font-size:26px;line-height:1.25;overflow-wrap:anywhere}
+#commodity-page .commodity-category-link{font-size:12px;color:var(--theme-text-muted);text-transform:capitalize;text-decoration:none}
+#commodity-page .commodity-category-link:hover{color:var(--theme-accent);text-decoration:underline}
+#commodity-page .commodity-page-navigation{display:flex;align-items:center;gap:16px;min-width:0}
+#commodity-page .commodity-page-navigation ol{flex-wrap:wrap}
+#commodity-page .commodity-page-navigation>a{flex-shrink:0}
 #commodity-page .chart-toolbar {display:block;padding:12px 16px!important;}
 #commodity-page .chart-heading {display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
 #commodity-page .chart-heading h2 {font-size:14px!important;line-height:1.4;font-weight:600;}
@@ -61,7 +70,7 @@ html[data-theme] #commodity-page .chart-controls .range-btn[aria-pressed="true"]
 #commodity-page .commodity-summary #change-period-label{font-size:12px;line-height:1.6}
 #commodity-page .commodity-summary #change-badge-section>div:first-child{display:flex;flex-direction:column;align-items:start;gap:6px}
 #commodity-page .commodity-summary .period-btn{min-height:36px;font-size:12px;white-space:nowrap;padding:5px 8px}
-#commodity-page .chart-panel{min-width:0;margin-top:0;overflow:visible;display:flex;flex-direction:column;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px!important}
+#commodity-page .chart-panel{container-type:inline-size;container-name:commodity-chart;min-width:0;margin-top:0;overflow:visible;display:flex;flex-direction:column;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px!important}
 #commodity-page .chart-plot-body{min-width:0;display:flex;flex-direction:column;padding:12px 16px}
 #commodity-page .chart-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 12px}
 #commodity-page .chart-range-presets{flex-wrap:nowrap;justify-content:start;min-width:0;width:auto}
@@ -84,6 +93,16 @@ html[data-theme] #commodity-page .chart-controls .range-btn[aria-pressed="true"]
 #commodity-page #crosshair-info~.chart-action-strip{order:3}
 #commodity-page #crosshair-info span{white-space:normal;overflow-wrap:anywhere}
 #commodity-page #stats-bar{order:2;border-top:1px solid var(--theme-border);border-bottom:0}
+@container commodity-chart (min-width:820px){
+ #commodity-page .chart-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;padding:10px 16px!important}
+ #commodity-page .chart-heading{grid-column:1;grid-row:1;display:block;margin:0}
+ #commodity-page .chart-heading p{margin:2px 0 0}
+ #commodity-page .chart-controls{display:contents}
+ #commodity-page .chart-display-controls{grid-column:2;grid-row:1;gap:12px;flex-wrap:nowrap}
+ #commodity-page .chart-range-presets{grid-column:1;grid-row:2}
+ #commodity-page .chart-date-picker{grid-column:2;grid-row:2;justify-self:end}
+ #commodity-page #chart-view-controls .chart-segmented-track{width:176px}
+}
 @media(min-width:1024px){
  #commodity-page .commodity-overview{grid-template-columns:280px minmax(0,1fr);gap:20px}
  #commodity-page .commodity-summary{grid-column:1;grid-row:1}

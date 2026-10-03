@@ -51,3 +51,35 @@
 @media(prefers-reduced-motion:reduce){.bw-visual-options{animation:none}}
 
 .bw-visual-controls .bw-visual-choice{--button-bg:var(--control-panel);--button-hover:var(--control-hover)}
+
+/* Match the full benchmark chart: context beside a distinct plotting surface. */
+#commodity-page .bw-visual-detail{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:20px 0;border:0;padding:0}
+#commodity-page .bw-visual-context{min-width:0;background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px;padding:16px}
+#commodity-page .bw-visual-context h2{font-size:18px}
+#commodity-page .bw-visual-context .bw-visual-controls{margin:14px 0;gap:8px}
+#commodity-page .bw-visual-context .bw-visual-chooser{min-width:0;max-width:none;width:100%;flex-basis:100%}
+#commodity-page .bw-visual-context .bw-visual-controls>button{min-height:44px;background:var(--control-panel);--button-bg:var(--control-panel)}
+#commodity-page .bw-visual-context .bw-visual-note{margin:14px 0 0;padding-top:12px;border-top:1px solid var(--theme-border);overflow-wrap:anywhere}
+#commodity-page .bw-visual-detail .bw-visual-stage{background:var(--theme-surface);border:1px solid var(--theme-border);border-radius:8px;padding:12px;align-self:start}
+#commodity-page .bw-visual-values{min-width:0}
+#commodity-page .bw-visual-values .bw-visual-data{margin:0;border:1px solid var(--theme-border);border-radius:8px;background:var(--theme-surface);overflow:hidden}
+#commodity-page .bw-visual-values summary{min-height:44px;padding:12px 14px;font-weight:600;background:var(--control-panel);color:var(--control-text)}
+#commodity-page .bw-visual-values summary:focus-visible{outline:2px solid var(--control-focus);outline-offset:-3px}
+#commodity-page .bw-visual-values details[open]>summary{border-bottom:1px solid var(--theme-border)}
+#commodity-page .bw-visual-values th{position:sticky;top:0;background:var(--control-panel);font-weight:650;z-index:1}
+#commodity-page .bw-visual-values :is(th,td){padding:9px 14px;font-variant-numeric:tabular-nums;border-right:1px solid var(--theme-border)}
+#commodity-page .bw-visual-values :is(th,td):last-child{border-right:0}
+#commodity-page .bw-visual-values tbody tr:nth-child(even){background:var(--control-panel)}
+#commodity-page .bw-visual-values tbody tr:hover{background:var(--control-hover)}
+@media(max-width:1023px){
+ #commodity-page .bw-visual-context>p:not(.bw-visual-note){display:none}
+ #commodity-page .bw-visual-context .bw-visual-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;margin:8px 0 0}
+ #commodity-page .bw-visual-context .bw-visual-choice{gap:8px}
+ #commodity-page .bw-visual-detail>.bw-visual-note{margin:0;padding:0 2px}
+}
+@media(min-width:1024px){
+ #commodity-page .bw-visual-detail{grid-template-columns:280px minmax(0,1fr);gap:12px 20px;align-items:start}
+ #commodity-page .bw-visual-context{grid-column:1;grid-row:1/span 2}
+ #commodity-page .bw-visual-detail .bw-visual-stage{grid-column:2;grid-row:1}
+ #commodity-page .bw-visual-values{grid-column:2;grid-row:2}
+}
