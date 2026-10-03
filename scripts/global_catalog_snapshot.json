@@ -18091,7 +18091,478 @@
       }
     ],
     "terms_url": "https://data.worldbank.org/summary-terms-of-use",
-    "documentation_url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392"
+    "documentation_url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392",
+    "aggregates": [
+      {
+        "id": "AFE",
+        "iso2": "ZH",
+        "name": "Africa Eastern and Southern",
+        "region": "Aggregates"
+      },
+      {
+        "id": "AFR",
+        "iso2": "A9",
+        "name": "Africa",
+        "region": "Aggregates"
+      },
+      {
+        "id": "AFW",
+        "iso2": "ZI",
+        "name": "Africa Western and Central",
+        "region": "Aggregates"
+      },
+      {
+        "id": "ARB",
+        "iso2": "1A",
+        "name": "Arab World",
+        "region": "Aggregates"
+      },
+      {
+        "id": "BEA",
+        "iso2": "B4",
+        "name": "East Asia & Pacific (IBRD-only countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "BEC",
+        "iso2": "B7",
+        "name": "Europe & Central Asia (IBRD-only countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "BHI",
+        "iso2": "B1",
+        "name": "IBRD countries classified as high income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "BLA",
+        "iso2": "B2",
+        "name": "Latin America & the Caribbean (IBRD-only countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "BMN",
+        "iso2": "B3",
+        "name": "Middle East, North Africa, Afghanistan & Pakistan (IBRD only)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "BSS",
+        "iso2": "B6",
+        "name": "Sub-Saharan Africa (IBRD-only countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CAA",
+        "iso2": "C9",
+        "name": "Sub-Saharan Africa (IFC classification)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CEA",
+        "iso2": "C4",
+        "name": "East Asia and the Pacific (IFC classification)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CEB",
+        "iso2": "B8",
+        "name": "Central Europe and the Baltics",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CEU",
+        "iso2": "C5",
+        "name": "Europe and Central Asia (IFC classification)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CLA",
+        "iso2": "C6",
+        "name": "Latin America and the Caribbean (IFC classification)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CME",
+        "iso2": "C7",
+        "name": "Middle East and North Africa (IFC classification)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CSA",
+        "iso2": "C8",
+        "name": "South Asia (IFC classification)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "CSS",
+        "iso2": "S3",
+        "name": "Caribbean small states",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DEA",
+        "iso2": "D4",
+        "name": "East Asia & Pacific (IDA-eligible countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DEC",
+        "iso2": "D7",
+        "name": "Europe & Central Asia (IDA-eligible countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DLA",
+        "iso2": "D2",
+        "name": "Latin America & the Caribbean (IDA-eligible countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DMN",
+        "iso2": "D3",
+        "name": "Middle East, North Africa, Afghanistan & Pakistan (IDA total)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DNS",
+        "iso2": "N6",
+        "name": "IDA countries in Sub-Saharan Africa not classified as fragile situations ",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DSA",
+        "iso2": "D5",
+        "name": "South Asia (IDA-eligible countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DSF",
+        "iso2": "F6",
+        "name": "IDA countries in Sub-Saharan Africa classified as fragile situations ",
+        "region": "Aggregates"
+      },
+      {
+        "id": "DSS",
+        "iso2": "D6",
+        "name": "Sub-Saharan Africa (IDA-eligible countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "EAP",
+        "iso2": "4E",
+        "name": "East Asia & Pacific (excluding high income)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "EAR",
+        "iso2": "V2",
+        "name": "Early-demographic dividend",
+        "region": "Aggregates"
+      },
+      {
+        "id": "EAS",
+        "iso2": "Z4",
+        "name": "East Asia & Pacific",
+        "region": "Aggregates"
+      },
+      {
+        "id": "ECA",
+        "iso2": "7E",
+        "name": "Europe & Central Asia (excluding high income)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "ECS",
+        "iso2": "Z7",
+        "name": "Europe & Central Asia",
+        "region": "Aggregates"
+      },
+      {
+        "id": "EMU",
+        "iso2": "XC",
+        "name": "Euro area",
+        "region": "Aggregates"
+      },
+      {
+        "id": "EUU",
+        "iso2": "EU",
+        "name": "European Union",
+        "region": "Aggregates"
+      },
+      {
+        "id": "FXS",
+        "iso2": "6F",
+        "name": "IDA countries classified as fragile situations, excluding Sub-Saharan Africa",
+        "region": "Aggregates"
+      },
+      {
+        "id": "HIC",
+        "iso2": "XD",
+        "name": "High income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "HPC",
+        "iso2": "XE",
+        "name": "Heavily indebted poor countries (HIPC)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "IBB",
+        "iso2": "ZB",
+        "name": "IBRD, including blend",
+        "region": "Aggregates"
+      },
+      {
+        "id": "IBD",
+        "iso2": "XF",
+        "name": "IBRD only",
+        "region": "Aggregates"
+      },
+      {
+        "id": "IBT",
+        "iso2": "ZT",
+        "name": "IDA & IBRD total",
+        "region": "Aggregates"
+      },
+      {
+        "id": "IDA",
+        "iso2": "XG",
+        "name": "IDA total",
+        "region": "Aggregates"
+      },
+      {
+        "id": "IDB",
+        "iso2": "XH",
+        "name": "IDA blend",
+        "region": "Aggregates"
+      },
+      {
+        "id": "IDX",
+        "iso2": "XI",
+        "name": "IDA only",
+        "region": "Aggregates"
+      },
+      {
+        "id": "INX",
+        "iso2": "XY",
+        "name": "Not classified",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LAC",
+        "iso2": "XJ",
+        "name": "Latin America & Caribbean (excluding high income)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LCN",
+        "iso2": "ZJ",
+        "name": "Latin America & Caribbean ",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LDC",
+        "iso2": "XL",
+        "name": "Least developed countries: UN classification",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LIC",
+        "iso2": "XM",
+        "name": "Low income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LMC",
+        "iso2": "XN",
+        "name": "Lower middle income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LMY",
+        "iso2": "XO",
+        "name": "Low & middle income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "LTE",
+        "iso2": "V3",
+        "name": "Late-demographic dividend",
+        "region": "Aggregates"
+      },
+      {
+        "id": "MDE",
+        "iso2": "M1",
+        "name": "Middle East (developing only)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "MEA",
+        "iso2": "ZQ",
+        "name": "Middle East, North Africa, Afghanistan & Pakistan",
+        "region": "Aggregates"
+      },
+      {
+        "id": "MIC",
+        "iso2": "XP",
+        "name": "Middle income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "MNA",
+        "iso2": "XQ",
+        "name": "Middle East, North Africa, Afghanistan & Pakistan (excluding high income)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "NAC",
+        "iso2": "XU",
+        "name": "North America",
+        "region": "Aggregates"
+      },
+      {
+        "id": "NAF",
+        "iso2": "M2",
+        "name": "North Africa",
+        "region": "Aggregates"
+      },
+      {
+        "id": "NRS",
+        "iso2": "6X",
+        "name": "Non-resource rich Sub-Saharan Africa countries",
+        "region": "Aggregates"
+      },
+      {
+        "id": "NXS",
+        "iso2": "6N",
+        "name": "IDA countries not classified as fragile situations, excluding Sub-Saharan Africa",
+        "region": "Aggregates"
+      },
+      {
+        "id": "OED",
+        "iso2": "OE",
+        "name": "OECD members",
+        "region": "Aggregates"
+      },
+      {
+        "id": "OSS",
+        "iso2": "S4",
+        "name": "Other small states",
+        "region": "Aggregates"
+      },
+      {
+        "id": "PRE",
+        "iso2": "V1",
+        "name": "Pre-demographic dividend",
+        "region": "Aggregates"
+      },
+      {
+        "id": "PSS",
+        "iso2": "S2",
+        "name": "Pacific island small states",
+        "region": "Aggregates"
+      },
+      {
+        "id": "PST",
+        "iso2": "V4",
+        "name": "Post-demographic dividend",
+        "region": "Aggregates"
+      },
+      {
+        "id": "RRS",
+        "iso2": "R6",
+        "name": "Resource rich Sub-Saharan Africa countries",
+        "region": "Aggregates"
+      },
+      {
+        "id": "SAS",
+        "iso2": "8S",
+        "name": "South Asia",
+        "region": "Aggregates"
+      },
+      {
+        "id": "SSA",
+        "iso2": "ZF",
+        "name": "Sub-Saharan Africa (excluding high income)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "SSF",
+        "iso2": "ZG",
+        "name": "Sub-Saharan Africa ",
+        "region": "Aggregates"
+      },
+      {
+        "id": "SST",
+        "iso2": "S1",
+        "name": "Small states",
+        "region": "Aggregates"
+      },
+      {
+        "id": "SXZ",
+        "iso2": "A4",
+        "name": "Sub-Saharan Africa excluding South Africa",
+        "region": "Aggregates"
+      },
+      {
+        "id": "TEA",
+        "iso2": "T4",
+        "name": "East Asia & Pacific (IDA & IBRD countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "TEC",
+        "iso2": "T7",
+        "name": "Europe & Central Asia (IDA & IBRD countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "TLA",
+        "iso2": "T2",
+        "name": "Latin America & the Caribbean (IDA & IBRD countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "TMN",
+        "iso2": "T3",
+        "name": "Middle East, North Africa, Afghanistan & Pakistan (IDA & IBRD)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "TSA",
+        "iso2": "T5",
+        "name": "South Asia (IDA & IBRD)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "TSS",
+        "iso2": "T6",
+        "name": "Sub-Saharan Africa (IDA & IBRD countries)",
+        "region": "Aggregates"
+      },
+      {
+        "id": "UMC",
+        "iso2": "XT",
+        "name": "Upper middle income",
+        "region": "Aggregates"
+      },
+      {
+        "id": "WLD",
+        "iso2": "1W",
+        "name": "World",
+        "region": "Aggregates"
+      },
+      {
+        "id": "XZN",
+        "iso2": "A5",
+        "name": "Sub-Saharan Africa excluding South Africa and Nigeria",
+        "region": "Aggregates"
+      }
+    ],
+    "aggregates_count": 78
   },
   "bank_canada": {
     "provider_reported_series": 15948,

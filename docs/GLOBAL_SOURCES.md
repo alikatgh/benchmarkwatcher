@@ -1,9 +1,10 @@
 # Global public-source coverage
 
-BenchmarkWatcher now has a source registry, five bounded readers, and 21
-explicitly configured international series. This is the first ingestion set,
-not a claim that every registered source or country/indicator combination is
-already connected. A provider, an API endpoint, an indicator, and a country
+BenchmarkWatcher has five bounded official readers, 31 catalogued publishers,
+and **1,248 downloaded World Bank country histories across 217 economies**,
+plus eight other global references and seven Canadian commodity indices.
+The source directory and saved references show these separately from the
+1,498 discovered WDI indicator definitions. A provider, an API endpoint, an indicator, and a country
 series are different things and must not be counted interchangeably.
 
 ## What is implemented
@@ -13,7 +14,7 @@ series are different things and must not be counted interchangeably.
 | Bank of Canada | Seven monthly commodity indices and daily USD/CAD reference | No account, key, or access charge | Official commodity indices; indicative FX |
 | European Central Bank | Daily EUR references for USD, GBP, JPY | Public no-key access | Indicative exchange references |
 | Eurostat | German and French total HICP annual change, monthly frequency | Free no-key statistics API | Consumer inflation, percent |
-| World Bank | Agriculture, forestry and fishing share of GDP for Brazil, India, South Africa, Mexico, Japan, UAE | Public no-key Indicators API | Annual national-accounts statistics |
+| World Bank | Six reviewed indicators across 217 economies; 1,248 nonempty histories, 31,088 observations | Public no-key bulk Indicators API | Annual population, constant-price GDP, GDP per capita, consumer inflation, agriculture and industry shares |
 | Malaysia Ministry of Finance | RON97 petrol and diesel for Sabah, Sarawak and Labuan | Published no-key CSV | Administered retail fuel prices in MYR/litre |
 
 The Malaysian CSV includes both `level` and `change_weekly` rows for each date.
@@ -21,18 +22,54 @@ Only explicit `series_type=level` rows are used for these retail-price series;
 weekly changes never overwrite levels, regardless of CSV row order.
 
 The first seven Bank of Canada series are stored with commodity **indices** in
-`data/`. The other fourteen series are stored separately in
-`data/global-reference/`: FX, national-accounts/inflation statistics, and Malaysian
+`data/`. The original fourteen reference series and the country expansion are stored
+separately in `data/global-reference/`: FX, population, national-accounts/inflation
+statistics, and Malaysian
 administered fuel prices. Retail fuel must retain its country, product, and
 administered-price label; it must not replace crude oil or wholesale fuel
 references. Definitions use the existing `index` category for compatibility;
 `reference_type` is the authoritative distinction and the storage partition.
+The six previously published agriculture IDs remain available and share the
+bulk update; they are not counted twice.
 
 The definitions are in [`scripts/global_series.json`](../scripts/global_series.json).
 Each preserves source URL, country/coverage, currency, units, frequency,
 reference type, and attribution. `price` is a compatibility field in the
 existing record schema. A statistic expressed in percent is still a statistic,
 and an FX reference is still an exchange reference.
+
+## Downloaded country coverage
+
+The reviewed bulk configuration is [`worldbank_bulk_series.json`](../scripts/worldbank_bulk_series.json).
+Each selected indicator's official page explicitly identifies CC BY-4.0 reuse.
+One complete request per indicator retrieves 2000–2025 observations for all
+returned economies. Known region/income aggregates are excluded using official
+country catalog identities, including income aggregates with an empty ISO3
+code. All-empty country histories are not saved or counted.
+
+| Indicator | Economies with observations | Saved observations | Unit |
+| --- | ---: | ---: | --- |
+| [Population](https://data.worldbank.org/indicator/SP.POP.TOTL) | 217 | 5,642 | People |
+| [GDP](https://data.worldbank.org/indicator/NY.GDP.MKTP.KD) | 213 | 5,345 | Constant 2015 US$ |
+| [GDP per capita](https://data.worldbank.org/indicator/NY.GDP.PCAP.KD) | 213 | 5,345 | Constant 2015 US$ per person |
+| [Consumer inflation](https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG) | 193 | 4,684 | Annual % |
+| [Agriculture, forestry and fishing share](https://data.worldbank.org/indicator/NV.AGR.TOTL.ZS) | 205 | 5,023 | % of GDP |
+| [Industry including construction share](https://data.worldbank.org/indicator/NV.IND.TOTL.ZS) | 207 | 5,049 | % of GDP |
+
+The 3 October 2026 batch made exactly six unauthenticated requests and saved
+1,248 nonempty country/indicator histories. Missing years, source flags,
+footnotes and provider decimal metadata remain distinct; values are not rounded
+or filled. Historical estimates remain estimates. Constant-price GDP must not
+be described as current-dollar GDP.
+
+`worldbank_manifest.json` indexes only successfully saved histories. Web pages
+read this bounded cached index, paginate 30 rows, and support country, measure,
+type and text filtering. `/reference/<id>` reads one cached file for its D3
+chart and exact observations. `/sources` links available economies/indicators
+to their loaded histories and labels other catalog entries as unconnected.
+Public requests never contact upstream services or open every history file.
+Five readers still means five readers; 1,248 country histories is not a claim
+of 1,248 distinct publishers or APIs.
 
 ## Source discovery is separate from observations
 
@@ -102,10 +139,58 @@ Fetch explicitly selected records into a separate staging folder:
   --output-dir /tmp/benchmarkwatcher-reference-staging
 ```
 
+Fetch all six reviewed indicators into an explicit staging folder:
+
+```sh
+.venv/bin/python scripts/fetch_global_sources.py \
+  --worldbank-bulk --max-requests 6 \
+  --output-dir /tmp/benchmarkwatcher-country-reference-staging
+```
+
 Fetch operations do not modify `scripts/commodities.json` or production `data/`
 by default. Failed/no-data responses leave an existing output record intact.
 The operator can inspect staged records before enabling them in the normal
 daily job.
+
+## Deterministic staged import
+
+A downloaded country batch can be imported without making any network requests:
+
+```sh
+.venv/bin/python scripts/seed_global_reference.py \
+  --staging-dir /tmp/benchmarkwatcher-country-reference-staging \
+  --destination-dir data/global-reference --dry-run
+
+.venv/bin/python scripts/seed_global_reference.py \
+  --staging-dir /tmp/benchmarkwatcher-country-reference-staging \
+  --destination-dir data/global-reference
+```
+
+The importer validates every staged identity, reviewed definition, unit, source
+year, fetch timestamp, latest observation and manifest count before mutation.
+It preserves all existing observations outside the incoming window, destination
+custom metadata, and original revision entries, including existing duplicate
+annotations. Operator notes on individual observations survive refreshes while
+source flags, footnotes and decimal metadata are replaced authoritatively.
+The six previously published agriculture paths are merged after checking their
+published semantic identity and units. Other
+existing destinations require matching reviewed definitions and nonconflicting
+observations; identical partial imports are resumable. Newer destination source
+values, flags, footnotes and precision metadata cannot be replaced by older
+evidence. Newer destination fetch and update timestamps are retained.
+
+Each record is saved atomically. The reconstructed index is saved last and uses
+the actual merged histories, so retained older observations contribute to its
+counts. Previously indexed histories absent from staging remain indexed. A
+write failure leaves the previous index in place and the importer can be resumed.
+Run imports while the normal daily fetch job is not writing the same directory.
+Staged input is retained. Neither validation nor import calls a provider or
+creates a paid connection.
+
+A complete 1,248-history test import preserved six agriculture archives and
+custom annotations plus an additional 1990 observation. Dry run made no file
+changes; the imported index correctly counted 31,089 observations, and a repeated
+import safely resumed all 1,242 new country paths without duplicating revisions.
 
 ## Daily integration
 
@@ -114,7 +199,9 @@ The compatibility reader
 is registered as `GLOBAL_REFERENCE` in `scripts/fetchers/__init__.py`.
 `scripts/fetch_daily_data.py` appends only enabled `commodity_index` definitions
 to its commodity configuration. It updates the other enabled definitions in a
-separate reference batch and directory. All global series share one
+separate reference batch and directory. Six bulk World Bank requests replace
+the six previous individual-country requests, expanding coverage within the
+same budget. All global series share one
 `OfficialClient(max_requests=20)` per run, including host pacing, request limits
 and repeated-URL caching. The single-series compatibility fallback creates and
 closes its own one-request client.
@@ -124,7 +211,8 @@ The daily record builder retains `currency`, `frequency`, `kind`,
 and the source URL. It retains observations older than the latest downloaded
 window, including source period labels and statistical flags. When a source
 revises an observation's value or flag, the replacement is current and the
-superseded observation is appended to `revisions`; repeated unchanged responses
+superseded observation is appended to `revisions` (including flag, footnote
+and decimal-metadata changes); repeated unchanged responses
 do not create duplicate revisions. Failed/no-data or unreadable-archive updates
 leave the saved reference file intact. Currency conversion or index rebasing
 must remain separately identified calculations.
@@ -141,7 +229,10 @@ relative percent change is a different calculation and must be labelled.
 - GET-only fixed allowlist of official HTTPS hosts and paths; redirects rejected.
 - Connect/read timeouts of 5/25 seconds; 4 MiB streamed body cap.
 - At most 30 requests per command, normally 12 for audits and 20 for ingestion.
-- Explicit series selection, at most 25 configured series; no wildcard world fanout.
+- Explicit individual selection (at most 25 configured series), or the six reviewed
+  bulk indicators. A bulk response must be complete, source 2, at most 10,000 rows
+  and 4 MiB; incomplete pages fail closed. Historical windows cover at most 30
+  years and older saved observations remain in the archive.
 - At least one second between requests to the same host; repeated identical
   responses cached for the command. Provider quotas take precedence.
 - No automatic retries, keys, accounts, checkout, subscriptions, or payment setup.
@@ -192,7 +283,8 @@ of treating every public website as an unrestricted free API.
 `tests/test_global_sources.py` checks readiness/billing separation, hostile URL
 rejection, streamed body bounds, request budgets and caching, units/series
 identity, missing periods, precision, statistical flags, source-catalog
-pagination, aggregate separation, the current Eurostat schema, and preservation
+pagination, aggregate separation, the current Eurostat schema, complete bulk-page checks, country/aggregate identities,
+nonempty coverage counts, source notes, previous-ID preservation, and preservation
 of saved data after failures. Fuel fixtures distinguish level/change rows in
 both orders. Tests use fixtures/mocks and make no API calls.
 
@@ -208,3 +300,10 @@ annual statistic has its latest usable observation in 2024, rather than a fabric
 2025 value. These records were staged separately, then seeded exclusively into
 21 new local paths: seven commodity indices and fourteen global references.
 Existing files were not replaced. Release/deployment is a separate step.
+
+
+The country expansion was fetched in a separate six-request batch: all six
+indicators succeeded. Every manifest entry was checked against its saved file,
+identifier, original years, units, latest value, observation count and attribution.
+Rendered checks cover a paginated thousand-history index and country-to-D3
+journeys at phone and desktop widths. Deployment is a separate state.

@@ -293,6 +293,82 @@ def parse_worldbank_json(payload: Any, country: str, indicator: str) -> List[Obs
     return _sorted(points)
 
 
+def parse_worldbank_bulk(payload: Any, indicator: str, economies: List[Dict[str, str]],
+                         aggregates: List[Dict[str, str]], start_year: int,
+                         end_year: int) -> Dict[str, List[Observation]]:
+    """Partition one complete WDI page into actual economies, not aggregates.
+
+    Empty values remain missing. Unknown economies and incomplete pages fail
+    closed so a changing provider catalog cannot silently reduce coverage.
+    """
+    if (not isinstance(payload, list) or len(payload) != 2 or not isinstance(payload[0], dict)
+            or not isinstance(payload[1], list)):
+        raise SourceError("World Bank bulk response is not an observation page")
+    meta, rows = payload
+    try:
+        complete = (int(meta.get("page", 0)) == 1 and int(meta.get("pages", 0)) == 1
+                    and int(meta.get("total", -1)) == len(rows) <= 10000
+                    and str(meta.get("sourceid")) == "2")
+    except (ValueError, TypeError):
+        complete = False
+    if not complete:
+        raise SourceError("World Bank bulk response is incomplete or has a different source")
+    countries = {row["id"]: row for row in economies}
+    excluded = {row["iso2"]: row["id"] for row in aggregates}
+    histories: Dict[str, Dict[str, Observation]] = {}
+    for row in rows:
+        if (not isinstance(row, dict) or not isinstance(row.get("country"), dict)
+                or not isinstance(row.get("indicator"), dict)
+                or row["indicator"].get("id") != indicator):
+            raise SourceError("World Bank bulk series identity changed")
+        iso3 = row.get("countryiso3code")
+        aggregate = excluded.get(row["country"].get("id"))
+        # Income aggregates sometimes omit countryiso3code in observation
+        # responses. Their ISO2 identity still comes from the official catalog.
+        if aggregate and iso3 in (aggregate, ""):
+            continue
+        economy = countries.get(iso3)
+        if economy is None or row["country"].get("id") != economy["iso2"]:
+            raise SourceError("World Bank economy catalog changed; refresh discovery before fetching")
+        period = row.get("date")
+        if not isinstance(period, str) or not re.fullmatch(r"\d{4}", period) or not start_year <= int(period) <= end_year:
+            raise SourceError("World Bank returned an unrequested reporting year")
+        if row.get("unit") not in (None, ""):
+            raise SourceError("World Bank observation units changed; review the indicator metadata")
+        point = _point(period, row.get("value"), row.get("obs_status"))
+        if point is None:
+            continue
+        footnote = row.get("footnote")
+        if isinstance(footnote, str) and footnote:
+            if len(footnote) > 4000:
+                raise SourceError("World Bank observation note exceeds its limit")
+            point["footnote"] = footnote
+        decimal = row.get("decimal")
+        if isinstance(decimal, int) and not isinstance(decimal, bool) and 0 <= decimal <= 20:
+            point["source_decimal"] = decimal
+        history = histories.setdefault(iso3, {})
+        previous = history.get(point["date"])
+        if previous is not None and previous != point:
+            raise SourceError("World Bank returned conflicting observations for one economy and year")
+        history[point["date"]] = point
+    return {iso3: _sorted(list(points.values())) for iso3, points in histories.items()}
+
+
+def fetch_worldbank_bulk(client: OfficialClient, indicator: str,
+                         economies: List[Dict[str, str]], aggregates: List[Dict[str, str]],
+                         start_year: int = 2000, end_year: Optional[int] = None) -> Dict[str, List[Observation]]:
+    indicator = _code(indicator, r"[A-Z][A-Z0-9_.]{1,80}")
+    end_year = date.today().year - 1 if end_year is None else end_year
+    if (isinstance(start_year, bool) or isinstance(end_year, bool) or
+            not isinstance(start_year, int) or not isinstance(end_year, int) or
+            not 1960 <= start_year <= end_year < date.today().year or end_year - start_year >= 30):
+        raise SourceError("World Bank bulk years must be historical and cover at most 30 years")
+    payload = client.get_json("https://api.worldbank.org/v2/country/all/indicator/" + indicator,
+                              {"source": 2, "format": "json", "date": f"{start_year}:{end_year}",
+                               "per_page": 10000, "footnote": "y"})
+    return parse_worldbank_bulk(payload, indicator, economies, aggregates, start_year, end_year)
+
+
 def fetch_worldbank_indicator(client: OfficialClient, country: str, indicator: str,
                              start_year: int = 2000, end_year: Optional[int] = None) -> List[Observation]:
     country = _code(country, r"[A-Z]{2}")

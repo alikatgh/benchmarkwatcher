@@ -60,6 +60,9 @@
 .gr-workspace thead small{display:block;font-size:11px;font-weight:400}
 .gr-workspace td:nth-child(2),.gr-workspace thead th:nth-child(2){text-align:right}
 .gr-workspace tbody th{font-weight:500}
+.gr-workspace .gr-source-note{white-space:normal;min-width:130px;max-width:320px;font-size:11px;overflow-wrap:anywhere}
+.gr-chart-readout strong{overflow-wrap:anywhere}
+.gr-filter select{max-width:250px}
 .gr-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;color:var(--theme-text-muted);font-size:12px}
 .gr-pagination>div{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .gr-pagination .gr-action{font-size:12px;min-height:34px;padding:6px 10px}
@@ -70,6 +73,9 @@
 .gr-evidence dt,.gr-provider-content dt{color:var(--theme-text-muted)}
 .gr-evidence dd,.gr-provider-content dd{margin:0;overflow-wrap:anywhere}
 .gr-evidence p,.gr-provider-content p{margin:14px 0 0;color:var(--theme-text-muted)}
+.gr-attribution{margin-top:12px}
+.gr-attribution summary{padding:9px 10px;background:var(--control-panel);border:1px solid var(--control-border);border-radius:6px;color:var(--control-text);cursor:pointer;min-height:38px}
+.gr-attribution summary:hover{background:var(--control-hover)}
 .gr-evidence-links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;font-size:12px}
 .gr-provider-list{padding:0 16px 12px}
 .gr-provider{border-bottom:1px solid var(--theme-border)}

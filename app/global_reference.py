@@ -5,11 +5,13 @@ import math
 import os
 import re
 import stat
+from decimal import Decimal
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
 from flask import Blueprint, abort, current_app, render_template, request, url_for
+from scripts.global_sources import worldbank_definition
 
 bp = Blueprint('global_reference', __name__)
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / 'scripts'
@@ -64,7 +66,61 @@ def _catalogs():
         abort(503, description='The saved source directory is temporarily unavailable.')
     series = [row for row in definitions['series'] if row.get('enabled') is True and
               row.get('reference_type') in TYPES and re.fullmatch(r'[a-z][a-z0-9_]{1,100}', row.get('id', ''))]
+    indicator_names = {row['id']: row['name'] for row in snapshot['worldbank'].get('indicators', [])}
+    series = [dict(row, indicator=row['api_config']['indicator'],
+                   indicator_name=indicator_names.get(row['api_config']['indicator'], row['name']))
+              if row.get('source_id') == 'worldbank' else row for row in series]
+    bulk = _bulk_definitions(series, snapshot)
+    bulk_ids = {row['id'] for row in bulk}
+    series = [row for row in series if row['id'] not in bulk_ids] + bulk
     return series, registry, snapshot
+
+
+def _bulk_definitions(series, snapshot):
+    """A small saved index enables paging without reading every history file."""
+    manifest = safe_json(_data_directory() / 'worldbank_manifest.json')
+    if manifest is None:
+        return []
+    config = safe_json(SCRIPT_DIR / 'worldbank_bulk_series.json')
+    if (not isinstance(manifest, dict) or manifest.get('schema_version') != 1 or
+            manifest.get('source_id') != 'worldbank' or manifest.get('source_database') != 2 or
+            not isinstance(manifest.get('series'), list) or len(manifest['series']) > 2000 or
+            not isinstance(config, dict) or not isinstance(config.get('indicators'), list)):
+        abort(503, description='The saved country reference index is temporarily unavailable.')
+    economies = {row['id']: row for row in snapshot['worldbank'].get('economies', [])}
+    indicators = {row['indicator']: row for row in config['indicators'] if row.get('enabled') is True and
+                  row.get('license') == 'CC BY-4.0' and row.get('reference_type') in TYPES}
+    aliases = {(row['api_config']['country'], row['api_config']['indicator']): row['id']
+               for row in series if row.get('source_id') == 'worldbank'}
+    result, seen = [], set()
+    for row in manifest['series']:
+        if not isinstance(row, dict):
+            continue
+        economy, indicator = economies.get(row.get('economy_id')), indicators.get(row.get('indicator'))
+        if economy is None or indicator is None:
+            continue
+        try:
+            definition = worldbank_definition(indicator, economy, aliases)
+        except (KeyError, TypeError):
+            abort(503, description='The saved country reference configuration is temporarily unavailable.')
+        if row.get('id') != definition['id'] or definition['id'] in seen:
+            continue
+        path = _data_directory() / (definition['id'] + '.json')
+        try:
+            if path.is_symlink() or path.parent.is_symlink() or not path.is_file() or path.stat().st_size > MAX_JSON_BYTES:
+                continue
+        except OSError:
+            continue
+        latest = _points({'history': [row.get('latest')]})
+        count = row.get('observation_count')
+        checked = row.get('checked_on')
+        if (not latest or isinstance(count, bool) or not isinstance(count, int) or not 1 <= count <= 20000 or
+                not isinstance(checked, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', checked)):
+            continue
+        definition['_saved_summary'] = {'latest': latest[0], 'count': count, 'checked': checked}
+        seen.add(definition['id'])
+        result.append(definition)
+    return result
 
 
 def _data_directory():
@@ -92,6 +148,10 @@ def _points(payload):
         point = {'date': when, 'period': period, 'price': value}
         if isinstance(row.get('status'), str):
             point['status'] = row['status'][:40]
+        if isinstance(row.get('footnote'), str):
+            point['footnote'] = row['footnote'][:4000]
+        if isinstance(row.get('source_decimal'), int) and not isinstance(row['source_decimal'], bool):
+            point['source_decimal'] = row['source_decimal']
         points[when] = point
     return [points[key] for key in sorted(points)]
 
@@ -103,25 +163,34 @@ def exact_value(value):
 
 def preview_value(value):
     """Keep list comparisons readable; exact source values remain in detail."""
-    return format(value, '.6g') if value is not None else 'Unavailable'
+    if value is None:
+        return 'Unavailable'
+    divisor, suffix = next(((size, suffix) for size, suffix in
+                            ((1e12, 'T'), (1e9, 'B'), (1e6, 'M')) if abs(value) >= size), (1, ''))
+    label = format(Decimal(format(value / divisor, '.6g')), ',f')
+    if '.' in label:
+        label = label.rstrip('0').rstrip('.')
+    return label + suffix
 
 
-def _record(series, economies):
+def _record(series, economies, full_history=True):
     # Definition metadata is trusted public catalog content; only observations
     # and safe timestamps are read from the cached data file.
     record = dict(series)
-    payload = safe_json(_data_directory() / (series['id'] + '.json'))
+    summary = series.get('_saved_summary') if not full_history else None
+    payload = None if summary else safe_json(_data_directory() / (series['id'] + '.json'))
     points = _points(payload) if isinstance(payload, dict) and payload.get('id') == series['id'] else []
     record['history'] = points
-    record['available'] = bool(points)
-    record['latest'] = points[-1] if points else None
+    record['available'] = bool(points) or bool(summary)
+    record['latest'] = summary['latest'] if summary else points[-1] if points else None
+    record['observation_count'] = summary['count'] if summary else len(points)
     record['type_label'] = TYPES[series['reference_type']]
     record['countries_label'] = ' · '.join(economies.get(code, 'Euro area' if code == 'euro_area' else code)
                                          for code in series['countries'])
     record['unit_label'] = (series['currency'] + ' / ' + series['unit']
                             if series['reference_type'] == 'retail_fuel_price' else series['unit'])
     stamp = payload.get('fetched_at', '') if isinstance(payload, dict) else ''
-    record['checked'] = stamp[:10] if isinstance(stamp, str) and re.match(r'^\d{4}-\d{2}-\d{2}', stamp) else None
+    record['checked'] = summary['checked'] if summary else stamp[:10] if isinstance(stamp, str) and re.match(r'^\d{4}-\d{2}-\d{2}', stamp) else None
     record['revision_count'] = len(payload.get('revisions', [])) if isinstance(payload, dict) and isinstance(payload.get('revisions'), list) else 0
     if len(points) > 1:
         change = round(points[-1]['price'] - points[-2]['price'], 6)
@@ -161,13 +230,29 @@ def _pagination(rows, endpoint, **parameters):
 @bp.get('/references')
 def index():
     series, registry, snapshot = _catalogs()
-    q, kind = _query('q'), _query('kind')
+    q, kind, country, indicator, publisher = _query('q'), _query('kind'), _query('country'), _query('indicator'), _query('source')
     if kind and kind not in TYPES:
         abort(400, description='Choose a reference type from the list.')
-    records = [_record(row, _economies(snapshot)) for row in series]
+    if publisher and publisher not in {row['source_id'] for row in series}:
+        abort(400, description='Choose a publisher with saved references.')
+    countries = sorted({(code, _economies(snapshot).get(code, 'Euro area' if code == 'euro_area' else code))
+                        for row in series for code in row['countries']}, key=lambda item: item[1])
+    indicators = sorted({(row['indicator'], row['indicator_name']) for row in series if row.get('indicator')}, key=lambda item: item[1])
+    if country and country not in {code for code, _ in countries} or indicator and indicator not in {code for code, _ in indicators}:
+        abort(400, description='Choose a country or measure from the saved references.')
+    records = [_record(row, _economies(snapshot), full_history=False) for row in series]
     filtered = [row for row in records if (not kind or row['reference_type'] == kind) and
+                (not publisher or row['source_id'] == publisher) and
+                (not country or country in row['countries']) and (not indicator or row.get('indicator') == indicator) and
                 (not q or q.casefold() in (' '.join([row['name'], row['countries_label'], row['source_name'], row['type_label']])).casefold())]
-    return render_template('global_reference/index.html', records=filtered, q=q, kind=kind,
+    filtered.sort(key=lambda row: (row['countries_label'], row.get('indicator_name', row['name'])))
+    pagination = _pagination(filtered, 'global_reference.index', q=q, kind=kind, country=country, indicator=indicator, source=publisher)
+    loaded = [row for row in records if row['available']]
+    return render_template('global_reference/index.html', records=pagination['items'], q=q, kind=kind,
+                           country=country, indicator=indicator, countries=countries, indicators=indicators,
+                           publisher=publisher, publisher_label=next((row['source_name'] for row in series if row['source_id'] == publisher), ''),
+                           pagination=pagination, country_count=len({code for row in loaded if row.get('source_id') == 'worldbank' for code in row['countries']}),
+                           worldbank_count=sum(row['source_id'] == 'worldbank' for row in loaded),
                            types=TYPES, total=len(records), available=sum(row['available'] for row in records),
                            publishers=len({row['source_id'] for row in records}), exact_value=exact_value,
                            preview_value=preview_value,
@@ -212,13 +297,18 @@ def sources():
     catalog = _pagination(filtered, 'global_reference.sources', catalog=catalog_kind, q=q,
                           provider_q=provider_q, region=region, status=status)
     counts = {}
+    loaded_worldbank = []
     for row in series:
         if row['source_id'] == 'worldbank':
+            if not _record(row, _economies(snapshot), full_history=False)['available']:
+                continue
+            loaded_worldbank.append(row)
             key = row['api_config']['indicator'] if catalog_kind == 'indicators' else row['api_config']['country']
             counts[key] = counts.get(key, 0) + 1
     return render_template('global_reference/sources.html', providers=providers, provider_q=provider_q,
                            region=region, status=status, regions=regions, readiness=READINESS, access=ACCESS,
                            catalog=catalog, catalog_kind=catalog_kind, q=q, snapshot=snapshot,
-                           registry=registry, counts=counts,
+                           registry=registry, counts=counts, loaded_worldbank=len(loaded_worldbank),
+                           loaded_economies=len({row['api_config']['country'] for row in loaded_worldbank}),
                            meta_title='Public source directory | BenchmarkWatcher',
                            meta_description='Review official source access, licensing and readiness, and search the saved World Bank indicator and economy catalog.')

@@ -8,8 +8,16 @@
         <p class="text-sm theme-text-muted"><time datetime="2026-10-03">October 3, 2026</time> · By BenchmarkWatcher</p>
     </header>
     <section class="release-entry">
+        <h2>1,248 country histories you can open</h2>
+        <p>Global reference now includes 1,248 downloaded World Bank histories across 217 economies, alongside eight currency, inflation and retail-fuel references from the other readers. These are saved observations, with a chart and an exact-value table for each history.</p>
+        <p>The six country measures are population, GDP, GDP per person, consumer inflation, agriculture's share of GDP and industry's share of GDP. GDP and GDP per person use constant 2015 US dollars. Coverage varies by measure: missing years remain missing, and regional aggregates are excluded from the country list.</p>
+        <p>Choose a country and a measure, or search for a name. The list shows 30 histories per page so a phone can browse the collection without loading every chart. Annual observations keep their original year labels, including in the chart popup.</p>
+        <p>The initial country batch contains 31,088 observations from 2000–2025 and required six public API requests. A country history, an indicator and a publisher are different counts: this expansion adds histories from the World Bank, rather than claiming 1,248 separate APIs.</p>
+        <p class="mt-4"><a href="{{ url_for('global_reference.index', source='worldbank') }}">Browse downloaded country histories →</a></p>
+    </section>
+    <section class="release-entry">
         <h2>Five additional official readers</h2>
-        <p>The first international ingestion set contains 21 series. Seven Bank of Canada commodity indices appear with the commodity benchmarks. Fourteen other series have their own Global reference section: ECB and Canadian exchange references, German and French consumer inflation, agriculture's share of GDP in six economies, and Malaysian administered retail fuel prices.</p>
+        <p>The first international ingestion set contained 21 series. Seven Bank of Canada commodity indices appear with the commodity benchmarks. ECB and Canadian exchange references, German and French consumer inflation, and Malaysian administered retail fuel prices have their own Global reference section. The six original agriculture histories now receive the country-wide update and keep their existing links.</p>
         <p>Each history names its publisher, measure, unit and country or coverage. Monthly and annual data retain their source period labels. A plotting date marks the period; it does not imply a daily quote or publication date. Different measures stay separate, and no currency conversion or index rebasing happens silently.</p>
         <p class="mt-4"><a href="{{ url_for('global_reference.index') }}">Explore Global reference →</a></p>
     </section>

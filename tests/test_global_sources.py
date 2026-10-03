@@ -451,6 +451,11 @@ def test_daily_run_shares_and_closes_one_bounded_global_client(tmp_path, monkeyp
     monkeypatch.setattr(daily, "OfficialClient", BatchClient)
     monkeypatch.setattr(daily, "load_config", lambda: [legacy, index])
     monkeypatch.setattr(daily, "load_reference_config", lambda: [fx])
+    bulk_calls = []
+    def bulk(client, directory):
+        bulk_calls.append((client, directory))
+        return {'results': [], 'series_count': 0, 'economies_count': 0, 'indicator_count': 0}
+    monkeypatch.setattr(daily, 'update_worldbank_bulk', bulk)
     def update(series, client=None):
         calls.append((series["id"], client))
         return True
@@ -459,3 +464,165 @@ def test_daily_run_shares_and_closes_one_bounded_global_client(tmp_path, monkeyp
     assert len(clients) == 1
     assert calls == [("legacy", None), (index["id"], clients[0]), (fx["id"], clients[0])]
     assert clients[0].closed is True
+    assert bulk_calls == [(clients[0], tmp_path / 'global-reference')]
+
+
+def bulk_payload(rows, **metadata):
+    return [{'page': 1, 'pages': 1, 'total': len(rows), 'sourceid': '2', **metadata}, rows]
+
+
+def bulk_row(iso3='JPN', iso2='JP', value=1.01, period='2024', **extra):
+    return {'indicator': {'id': 'NV.AGR.TOTL.ZS'}, 'country': {'id': iso2},
+            'countryiso3code': iso3, 'date': period, 'value': value, 'unit': '', **extra}
+
+
+def test_bulk_partitions_actual_economies_and_keeps_zero_flags_notes_and_gaps():
+    economies = [{'id': 'JPN', 'iso2': 'JP'}]
+    aggregates = [{'id': 'HIC', 'iso2': 'XD'}]
+    rows = [bulk_row(value=0, obs_status='e', decimal=2, footnote='Historical estimate'),
+            bulk_row(value=None, period='2023'), bulk_row(iso3='', iso2='XD', value=55)]
+    parsed = reader.parse_worldbank_bulk(bulk_payload(rows), 'NV.AGR.TOTL.ZS', economies, aggregates, 2000, 2025)
+    assert parsed == {'JPN': [{'date': '2024-01-01', 'period': '2024', 'price': 0.0,
+                             'status': 'e', 'source_decimal': 2, 'footnote': 'Historical estimate'}]}
+
+
+@pytest.mark.parametrize('change', [
+    {'countryiso3code': 'UNKNOWN'}, {'country': {'id': 'BR'}}, {'indicator': {'id': 'SP.POP.TOTL'}},
+    {'date': '2026'}, {'date': '2024-Q1'}, {'unit': 'unexpected'},
+])
+def test_bulk_refuses_changed_identity_periods_and_units(change):
+    row = bulk_row(); row.update(change)
+    with pytest.raises(reader.SourceError):
+        reader.parse_worldbank_bulk(bulk_payload([row]), 'NV.AGR.TOTL.ZS', [{'id': 'JPN', 'iso2': 'JP'}], [], 2000, 2025)
+
+
+@pytest.mark.parametrize('metadata', [{'pages': 2}, {'page': 2}, {'total': 99}, {'sourceid': '11'}])
+def test_bulk_refuses_incomplete_pages_and_wrong_database(metadata):
+    with pytest.raises(reader.SourceError):
+        reader.parse_worldbank_bulk(bulk_payload([bulk_row()], **metadata), 'NV.AGR.TOTL.ZS', [{'id': 'JPN', 'iso2': 'JP'}], [], 2000, 2025)
+
+
+def test_bulk_refuses_conflicting_duplicate_country_year():
+    with pytest.raises(reader.SourceError, match='conflicting'):
+        reader.parse_worldbank_bulk(bulk_payload([bulk_row(), bulk_row(value=9)]), 'NV.AGR.TOTL.ZS', [{'id': 'JPN', 'iso2': 'JP'}], [], 2000, 2025)
+
+
+def test_bulk_updates_preserve_old_histories_revisions_and_published_aliases(tmp_path, monkeypatch):
+    from scripts import global_sources as gs
+    config = deepcopy(gs.load_worldbank_bulk())
+    config['indicators'] = [next(row for row in config['indicators'] if row['indicator'] == 'NV.AGR.TOTL.ZS')]
+    snapshot = {'worldbank': {'economies': [{'id': 'JPN', 'iso2': 'JP', 'name': 'Japan', 'region': 'East Asia & Pacific'}], 'aggregates': []}}
+    original = {'id': 'jp_wb_agriculture_share', 'history': [
+        {'date': '1990-01-01', 'period': '1990', 'price': 5},
+        {'date': '2024-01-01', 'period': '2024', 'price': 1.0, 'status': 'e'}],
+        'revisions': [{'date': '1989-01-01', 'note': 'Prior archive'}], 'public_metadata': 'preserve'}
+    path = tmp_path / 'jp_wb_agriculture_share.json'; path.write_text(json.dumps(original))
+    monkeypatch.setattr(gs, 'fetch_worldbank_bulk', lambda *args: {'JPN': [{'date': '2024-01-01', 'period': '2024', 'price': 1.01}]})
+    class Client: request_count = 0
+    result = gs.update_worldbank_bulk(Client(), tmp_path, config, snapshot)
+    saved = json.loads(path.read_text())
+    assert result['series_count'] == result['economies_count'] == 1
+    assert result['observation_count'] == 2
+    assert saved['history'][0] == original['history'][0]
+    assert saved['public_metadata'] == 'preserve'
+    assert len(saved['revisions']) == 2 and saved['revisions'][-1]['previous']['status'] == 'e'
+    assert not (tmp_path / 'wb_jpn_agriculture_share.json').exists()
+    manifest = json.loads((tmp_path / gs.BULK_MANIFEST).read_text())
+    assert manifest['series'][0]['id'] == 'jp_wb_agriculture_share'
+    gs.update_worldbank_bulk(Client(), tmp_path, config, snapshot)
+    assert len(json.loads(path.read_text())['revisions']) == 2
+
+
+@pytest.mark.parametrize('conflict', [
+    {'source_id': 'operator_custom'}, {'unit': 'million JPY', 'currency': 'JPY'},
+    {'countries': ['BR']}, {'source_id': None},
+    {'api_config': {'provider': 'worldbank', 'country': 'BR', 'indicator': 'NV.AGR.TOTL.ZS'}},
+])
+def test_bulk_conflicting_legacy_identity_preserves_record_and_old_index_entry(tmp_path, monkeypatch, conflict):
+    from scripts import global_sources as gs
+    config = deepcopy(gs.load_worldbank_bulk())
+    config['indicators'] = [next(row for row in config['indicators'] if row['indicator'] == 'NV.AGR.TOTL.ZS')]
+    snapshot = {'worldbank': {'economies': [{'id': 'JPN', 'iso2': 'JP', 'name': 'Japan', 'region': 'East Asia & Pacific'}], 'aggregates': []}}
+    original = {**next(row for row in load_series() if row['id'] == 'jp_wb_agriculture_share'),
+                'history': [{'date': '1990-01-01', 'period': '1990', 'price': 900}], 'revisions': [], **conflict}
+    path = tmp_path / (original['id'] + '.json'); path.write_text(json.dumps(original)); before = path.read_bytes()
+    entry = {'id': original['id'], 'economy_id': 'JPN', 'indicator': 'NV.AGR.TOTL.ZS',
+             'latest': original['history'][-1], 'observation_count': 1, 'checked_on': '2026-10-02'}
+    (tmp_path / gs.BULK_MANIFEST).write_text(json.dumps({'schema_version': 1, 'source_id': 'worldbank', 'series': [entry]}))
+    monkeypatch.setattr(gs, 'fetch_worldbank_bulk', lambda *args: {'JPN': [{'date': '2024-01-01', 'period': '2024', 'price': 1.01}]})
+    class Client: request_count = 0
+    result = gs.update_worldbank_bulk(Client(), tmp_path, config, snapshot)
+    assert result['results'][0]['status'] == 'failed'
+    assert 'conflicting identity or units' in result['results'][0]['reason']
+    assert path.read_bytes() == before
+    assert json.loads((tmp_path / gs.BULK_MANIFEST).read_text())['series'] == [entry]
+
+
+def test_bulk_legacy_published_metadata_is_compatible_but_new_ids_require_reviewed_definition(tmp_path, monkeypatch):
+    from scripts import global_sources as gs
+    snapshot = {'worldbank': {'economies': [{'id': 'JPN', 'iso2': 'JP', 'name': 'Japan', 'region': 'East Asia & Pacific'}], 'aggregates': []}}
+    history = [{'date': '2024-01-01', 'period': '2024', 'price': 1.01}]
+    monkeypatch.setattr(gs, 'fetch_worldbank_bulk', lambda *args: {'JPN': history})
+    class Client: request_count = 0
+    config = deepcopy(gs.load_worldbank_bulk())
+    config['indicators'] = [next(row for row in config['indicators'] if row['indicator'] == 'NV.AGR.TOTL.ZS')]
+    legacy = {**next(row for row in load_series() if row['id'] == 'jp_wb_agriculture_share'),
+              'history': history, 'revisions': [], 'operator_note': 'Keep this published archive'}
+    path = tmp_path / (legacy['id'] + '.json'); path.write_text(json.dumps(legacy))
+    result = gs.update_worldbank_bulk(Client(), tmp_path, config, snapshot)
+    assert result['results'][0]['status'] == 'fetched'
+    assert json.loads(path.read_text())['operator_note'] == legacy['operator_note']
+    config = deepcopy(gs.load_worldbank_bulk()); config['indicators'] = config['indicators'][:1]
+    identifier = 'wb_jpn_population'
+    path = tmp_path / (identifier + '.json')
+    path.write_text(json.dumps({'id': identifier, 'history': history})); before = path.read_bytes()
+    result = gs.update_worldbank_bulk(Client(), tmp_path, config, snapshot)
+    assert result['results'][0]['status'] == 'failed'
+    assert path.read_bytes() == before
+    assert identifier not in {row['id'] for row in json.loads((tmp_path / gs.BULK_MANIFEST).read_text())['series']}
+
+
+def test_reference_merge_keeps_operator_annotations_and_authoritatively_removes_old_source_flags():
+    from scripts import global_sources as gs
+    previous = {'date': '2024-01-01', 'period': '2024', 'price': 5, 'status': 'e',
+                'footnote': 'Previous estimate', 'source_decimal': 1, 'operator_note': 'Reviewed locally'}
+    existing = {'history': [previous], 'revisions': [{'note': 'Prior archive'}]}
+    history, revisions = gs.merge_reference_history(existing, [dict(previous)], '2026-10-03')
+    assert history == [previous] and revisions == existing['revisions']
+    source = {'date': '2024-01-01', 'period': '2024', 'price': 5}
+    history, revisions = gs.merge_reference_history(existing, [source], '2026-10-03')
+    assert history == [{**source, 'operator_note': 'Reviewed locally'}]
+    assert revisions[-1]['previous'] == previous
+    assert revisions[-1]['replacement'] == history[-1]
+    assert previous['status'] == 'e'  # Input archive was not mutated.
+
+
+def test_bulk_failure_never_advertises_unsaved_or_empty_histories(tmp_path, monkeypatch):
+    from scripts import global_sources as gs
+    config = deepcopy(gs.load_worldbank_bulk()); config['indicators'] = config['indicators'][:1]
+    snapshot = {'worldbank': {'economies': [{'id': 'JPN', 'iso2': 'JP', 'name': 'Japan', 'region': 'East Asia & Pacific'}], 'aggregates': []}}
+    monkeypatch.setattr(gs, 'fetch_worldbank_bulk', lambda *args: {'JPN': [{'date': '2024-01-01', 'period': '2024', 'price': 0}]})
+    original_save = gs.save_atomic
+    monkeypatch.setattr(gs, 'save_atomic', lambda path, data: original_save(path, data) if path.endswith(gs.BULK_MANIFEST) else False)
+    class Client: request_count = 0
+    result = gs.update_worldbank_bulk(Client(), tmp_path, config, snapshot)
+    assert result['series_count'] == 0 and result['results'][0]['status'] == 'failed'
+    assert not (tmp_path / 'wb_jpn_population.json').exists()
+
+
+def test_daily_worldbank_bulk_replaces_individual_calls_with_shared_client(tmp_path, monkeypatch):
+    client = object(); calls = []
+    class BatchClient:
+        request_count = 0
+        def close(self): pass
+    client = BatchClient()
+    monkeypatch.setattr(daily, 'OfficialClient', lambda **kw: client)
+    monkeypatch.setattr(daily, 'DATA_DIR', str(tmp_path))
+    monkeypatch.setattr(daily, 'load_config', lambda: [])
+    monkeypatch.setattr(daily, 'load_reference_config', lambda: [row for row in load_series() if row['source_id'] == 'worldbank'])
+    monkeypatch.setattr(daily, 'update_commodity', lambda *args, **kwargs: pytest.fail('Individual World Bank call made'))
+    def bulk(batch, path):
+        calls.append((batch, path)); return {'results': [], 'series_count': 1001, 'economies_count': 217, 'indicator_count': 6}
+    monkeypatch.setattr(daily, 'update_worldbank_bulk', bulk)
+    daily.main()
+    assert calls == [(client, tmp_path / 'global-reference')]

@@ -15,6 +15,7 @@ import sys
 import json
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from dotenv import load_dotenv
@@ -29,7 +30,7 @@ load_dotenv(os.path.join(PROJECT_ROOT, '.env'))
 
 from scripts.fetchers import FETCHER_REGISTRY
 from scripts.fetchers.global_reference import OfficialClient
-from scripts.global_sources import load_series
+from scripts.global_sources import load_series, merge_reference_history, update_worldbank_bulk
 from scripts.fetchers._shared import (
     merge_history,
     compute_metrics,
@@ -126,15 +127,7 @@ def fetch_new_data(commodity: Dict[str, Any],
 
 def _merge_reference_history(existing: Dict[str, Any], new_data: List[Dict[str, Any]],
                              checked_at: str) -> tuple:
-    """Retain the archive and record superseded source values or flags."""
-    previous = {point['date']: point for point in existing.get('history', []) if point.get('date')}
-    revisions = list(existing.get('revisions', []))
-    for point in new_data:
-        old = previous.get(point.get('date'))
-        if old is not None and any(old.get(key) != point.get(key) for key in ('price', 'period', 'status')):
-            revisions.append({'date': point['date'], 'previous': dict(old), 'replacement': dict(point),
-                              'previous_fetched_at': existing.get('fetched_at'), 'checked_at': checked_at})
-    return merge_history(existing.get('history', []), new_data), revisions
+    return merge_reference_history(existing, new_data, checked_at)
 
 
 def update_commodity(commodity: Dict[str, Any],
@@ -232,7 +225,7 @@ def main():
     fail = 0
     client = OfficialClient(max_requests=20)
     try:
-        for commodity in config + references:
+        for commodity in config + [row for row in references if row.get('source_id') != 'worldbank']:
             try:
                 result = (update_commodity(commodity, client=client)
                           if commodity.get('source_type') == 'GLOBAL_REFERENCE'
@@ -244,6 +237,15 @@ def main():
             except Exception as e:
                 logger.error(f"  Exception updating {commodity.get('name', '?')}: {e}")
                 fail += 1
+        try:
+            bulk = update_worldbank_bulk(client, Path(DATA_DIR) / 'global-reference')
+            success += sum(row['status'] == 'fetched' for row in bulk['results'])
+            fail += sum(row['status'] == 'failed' for row in bulk['results'])
+            logger.info('World Bank bulk: %s saved histories across %s economies / %s indicators',
+                        bulk['series_count'], bulk['economies_count'], bulk['indicator_count'])
+        except Exception as exc:
+            logger.error('World Bank bulk update failed; existing histories retained: %s', exc)
+            fail += 1
     finally:
         client.close()
 

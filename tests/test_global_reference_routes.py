@@ -46,7 +46,7 @@ def test_reference_list_is_typed_cached_and_country_searchable(reference_client)
     body = response.get_data(as_text=True)
     assert response.status_code == 200
     assert '14 configured references' in body
-    assert '4 saved series' in body
+    assert '4 saved histories' in body
     assert 'No live provider calls' in body
     assert '1.23456789' in body
     assert 'private-sentinel-never-display' not in body
@@ -147,7 +147,7 @@ def test_source_catalog_pagination_search_economies_and_readiness_are_honest(ref
     assert '1 economies matching' in economy
     assert 'JPN · JP' in economy
     indicator = client.get('/sources?q=NV.AGR.TOTL.ZS').get_data(as_text=True)
-    assert '6 configured economy series' in indicator
+    assert '1 saved economy histories' in indicator
     providers = client.get('/sources?status=needs_registration').get_data(as_text=True)
     assert 'id="source-ecb"' not in providers
 
@@ -181,3 +181,87 @@ def test_snapshot_stat_change_refreshes_cached_values(reference_client):
     payload['history'][-1]['price'] = 1.25
     path.write_text(json.dumps(payload))
     assert '<strong>1.25</strong>' in client.get('/reference/ecb_eur_usd').get_data(as_text=True)
+
+
+def seed_bulk_fixture(directory, count=1001):
+    from scripts import global_sources as gs
+    config = gs.load_worldbank_bulk()
+    snapshot = json.loads((gs.SCRIPT_DIR / 'global_catalog_snapshot.json').read_text())
+    aliases = {(row['api_config']['country'], row['api_config']['indicator']): row['id']
+               for row in gs.load_series() if row['source_id'] == 'worldbank'}
+    entries = []
+    for economy in snapshot['worldbank']['economies']:
+        for indicator in config['indicators']:
+            if len(entries) >= count:
+                break
+            definition = gs.worldbank_definition(indicator, economy, aliases)
+            history = [{'date': '2023-01-01', 'period': '2023', 'price': 0},
+                       {'date': '2025-01-01', 'period': '2025', 'price': 1.234567891234,
+                        'status': 'e', 'footnote': 'Official source estimate <not html>', 'source_decimal': 2}]
+            (directory / (definition['id'] + '.json')).write_text(json.dumps({'id': definition['id'], 'history': history, 'fetched_at': '2026-10-03T00:00:00Z'}))
+            entries.append({'id': definition['id'], 'economy_id': economy['id'], 'indicator': indicator['indicator'],
+                            'latest': history[-1], 'observation_count': 2, 'checked_on': '2026-10-03'})
+    manifest = {'schema_version': 1, 'source_id': 'worldbank', 'source_database': 2, 'series': entries}
+    (directory / 'worldbank_manifest.json').write_text(json.dumps(manifest))
+    return entries
+
+
+def test_thousand_saved_histories_are_paged_filtered_and_linked_without_reading_all_files(reference_client, monkeypatch):
+    client, directory = reference_client
+    entries = seed_bulk_fixture(directory)
+    reads = []; original = gr.safe_json
+    def observe(path):
+        reads.append(str(path)); return original(path)
+    monkeypatch.setattr(gr, 'safe_json', observe)
+    body = client.get('/references').get_data(as_text=True)
+    assert '1,001 nonempty country histories' in body
+    assert body.count('class="gr-reference-row"') == 30
+    assert '/references?' in body and 'page=2' in body
+    # The manifest supplies list summaries; the thousand histories are never
+    # opened on a browse request. Only the remaining original series are read.
+    assert len([path for path in reads if '/global-reference/' in path and not path.endswith('worldbank_manifest.json')]) <= 14
+    filtered = client.get('/references?country=JP&indicator=SP.POP.TOTL').get_data(as_text=True)
+    assert filtered.count('class="gr-reference-row"') == 1
+    assert '/reference/wb_jpn_population' in filtered
+    assert 'Page 1 / 1' in filtered
+    page = client.get('/references?page=2').get_data(as_text=True)
+    assert '31–60 of' in page
+    evidence = client.get('/sources?catalog=economies&q=Japan').get_data(as_text=True)
+    assert '6 saved histories' in evidence and 'country=JP' in evidence
+    indicator = client.get('/sources?q=SP.POP.TOTL').get_data(as_text=True)
+    assert 'saved economy histories' in indicator and 'indicator=SP.POP.TOTL' in indicator
+
+
+def test_bulk_detail_retains_exact_values_annual_periods_source_notes_and_correct_units(reference_client):
+    client, directory = reference_client
+    seed_bulk_fixture(directory)
+    body = client.get('/reference/wb_jpn_population').get_data(as_text=True)
+    assert '1.234567891234' in body and '<td>0</td>' in body
+    assert '<th scope="row">2025</th>' in body
+    assert 'Official source estimate &lt;not html&gt;' in body
+    assert 'CC BY-4.0' in body and 'Indicator license evidence' in body
+    assert 'Values are percentages' not in body
+    gdp = client.get('/reference/wb_jpn_gdp_constant').get_data(as_text=True)
+    assert 'constant 2015 US$' in gdp and 'Values are percentages' not in gdp
+    inflation = client.get('/reference/wb_jpn_consumer_inflation').get_data(as_text=True)
+    assert 'Values are percentages' in inflation and 'percentage points' in inflation
+
+
+def test_bulk_manifest_cannot_allow_unknown_ids_aggregate_regions_or_missing_files(reference_client):
+    client, directory = reference_client
+    entries = seed_bulk_fixture(directory, 1)
+    manifest_path = directory / 'worldbank_manifest.json'
+    payload = json.loads(manifest_path.read_text())
+    payload['series'].extend([{**entries[0], 'id': 'private_file'}, {**entries[0], 'economy_id': 'HIC', 'id': 'wb_hic_population'}])
+    (directory / (entries[0]['id'] + '.json')).unlink()  # Temporary test fixture only.
+    manifest_path.write_text(json.dumps(payload))
+    body = client.get('/references').get_data(as_text=True)
+    assert '4 saved histories' in body
+    assert client.get('/reference/private_file').status_code == 404
+    assert client.get('/reference/wb_hic_population').status_code == 404
+
+
+@pytest.mark.parametrize('query', ['country=UNKNOWN', 'indicator=UNREVIEWED', 'page=0'])
+def test_bulk_browse_filters_are_allowlisted(reference_client, query):
+    client, _ = reference_client
+    assert client.get('/references?' + query).status_code == 400
