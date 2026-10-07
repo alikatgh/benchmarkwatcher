@@ -50,6 +50,48 @@ test('footer fills the available page width and stays reachable on desktop and m
   }
 });
 
+test('homepage dataset links stay contained and keyboard reachable across phone widths and themes', async ({page}) => {
+  await page.goto('/?view=compact');
+  const datasets=page.getByRole('navigation',{name:'Homepage datasets'});
+  const links=datasets.getByRole('link');
+  await expect(links).toHaveCount(4);
+  await expect(datasets.getByRole('link',{name:'Full data library',exact:true})).toBeVisible();
+  await expect(datasets.getByRole('link',{name:'Companies',exact:true})).toBeVisible();
+  for (const theme of ['light','dark','mono-light','mono-dark','bloomberg','ft']) {
+    await page.locator('#settings-button').click();
+    await page.locator('#theme-'+theme).click();
+    await page.getByRole('button',{name:'Close settings',exact:true}).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
+    for (const width of [320,390,720]) {
+      await page.setViewportSize({width,height:900});
+      const geometry=await datasets.evaluate(node=>{
+        const box=node.getBoundingClientRect();
+        return {
+          overflow:document.documentElement.scrollWidth-innerWidth,
+          navigationOverflow:node.scrollWidth-node.clientWidth,
+          links:Array.from(node.querySelectorAll('a')).map(link=>{
+            const linkBox=link.getBoundingClientRect();
+            return {left:linkBox.left-box.left,right:box.right-linkBox.right,overflow:link.scrollWidth-link.clientWidth,height:linkBox.height};
+          }),
+        };
+      });
+      expect(geometry.overflow,`${theme} at ${width}px`).toBeLessThanOrEqual(1);
+      expect(geometry.navigationOverflow,`${theme} at ${width}px`).toBeLessThanOrEqual(1);
+      for (const link of geometry.links) {
+        expect(link.left).toBeGreaterThanOrEqual(-1);
+        expect(link.right).toBeGreaterThanOrEqual(-1);
+        expect(link.overflow).toBeLessThanOrEqual(1);
+        expect(link.height).toBeGreaterThanOrEqual(44);
+      }
+      for (const link of await links.all()) {
+        await link.focus();
+        await expect(link).toBeFocused();
+        await expect(link).toBeInViewport();
+      }
+    }
+  }
+});
+
 test('desktop navigation stays below the header at the page end and scrolls internally', async ({page}) => {
   await page.setViewportSize({width:1440,height:500});
   await page.goto('/?view=compact');
