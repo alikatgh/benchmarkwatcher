@@ -60,7 +60,7 @@ html[data-theme] .bw-sidebar nav a:hover,html[data-theme] .bw-sidebar-bottom a:h
 .bw-featured>summary {display:none;}
 .bw-featured {margin:0;}
 @media(max-width:540px) {
-  .home-datasets {margin-bottom:14px;gap:0;}
+  .home-datasets {margin-bottom:8px;gap:0;}
   .home-datasets a {flex:1 1 50%;justify-content:center;gap:6px;padding:8px 4px;font-size:13px;}
   .home-country-discovery {display:none;}
   .bw-featured>summary {display:list-item;min-height:44px;padding:12px 10px;font-size:12px;font-weight:550;color:var(--control-text);background:var(--control-panel);border:1px solid var(--theme-border);border-radius:6px;cursor:pointer;}
