@@ -13,6 +13,22 @@
         </p>
     </header>
 
+    <article class="release-entry" id="public-data-library">
+        <time datetime="2026-10-07">October 7, 2026</time>
+        <h2>A searchable public data library</h2>
+        <ul>
+            <li>Added 700,178 saved histories containing 11,813,386 observations: World Bank WDI, FAOSTAT production, land use and agricultural trade, and selected SEC company disclosures.</li>
+            <li>World Bank coverage includes 243,741 histories, 4,385,363 observations, 217 economies and 1,488 populated eligible indicators. Restricted indicators are excluded.</li>
+            <li>FAOSTAT production adds 57,756 histories and 1,314,190 observations across 204 economies and territories. Land use adds 8,873 histories and 191,972 observations across 241; agricultural trade adds 319,840 histories and 5,508,009 observations across 204, with 2,416 populated item-and-element measures.</li>
+            <li>Country imports preserve available observations within 2000–2025; the saved agricultural-trade release currently ends in 2024. Missing years remain gaps and reported zeroes remain zeroes.</li>
+            <li>Country data supports searches by country, crop or measure, publisher and dataset filters, entity and indicator links, and 40-result pagination. Dataset coverage and latest refresh dates are visible alongside the results.</li>
+            <li>Companies groups 69,968 histories and 413,852 observations by SEC CIK across 12,363 reporting companies. Company pages expose eight selected USD US-GAAP concepts from 2015–2025 calendar frames, preserving actual reporting periods and filing accessions. Revenue concepts remain separate; this is selected disclosure coverage rather than a global company census.</li>
+            <li>History pages offer Line, Step, Bars and Dots, saved-history ranges, pointer, touch and keyboard inspection, and latest-first exact-observation tables. Country tables and CSV exports retain original decimal text.</li>
+            <li>Source notes preserve World Bank footnotes, FAOSTAT flags and definitions, SEC filing evidence, units, attribution and reuse terms. CSV exports carry these details with the values. Sources distinguishes saved observations from catalog metadata.</li>
+            <li>Integrated bounded maintenance into the regular data-fetch job: at most one due saved dataset per run, eligible after seven days for SEC, fourteen for World Bank and thirty for FAOSTAT. Complete dataset updates commit together; failed imports preserve saved history and revised values retain their earlier evidence.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.public_data_library_story') }}">Read the data-library guide</a> · <a href="{{ url_for('public_library.index') }}">Browse country data</a> · <a href="{{ url_for('public_library.companies') }}">Browse companies</a> · <a href="{{ url_for('global_reference.sources') }}">Inspect sources</a></p>
+    </article>
     <article class="release-entry" id="charts-and-country-home">
         <time datetime="2026-10-03">October 3, 2026</time>
         <h2>Country data at home, charts in focus</h2>

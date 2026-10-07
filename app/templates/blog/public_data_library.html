@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <header class="mb-6">
+        <p class="text-sm mb-4"><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">A public data library for country and company research</h1>
+        <p class="leading-relaxed mb-4">Find a country's economic indicators, agricultural production, land use and trade, or open a company's reported financial figures. The new library brings saved public observations together with their units, reporting periods and source evidence.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-07">October 7, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+
+    <section class="release-entry" aria-labelledby="library-coverage">
+        <h2 id="library-coverage">700,178 histories, with the coverage behind the count</h2>
+        <p class="mb-4 leading-relaxed">The completed collection contains 11,813,386 observations across five saved datasets. A history belongs to a particular entity and measure; it is not a separate publisher or API. Here is the October 7 snapshot:</p>
+        <ul class="mb-4">
+            <li><strong>World Bank World Development Indicators:</strong> 243,741 histories and 4,385,363 observations across 217 economies, with 1,488 populated indicators.</li>
+            <li><strong>FAOSTAT crops and livestock production (QCL):</strong> 57,756 histories and 1,314,190 observations across 204 economies and territories.</li>
+            <li><strong>FAOSTAT land use (RL):</strong> 8,873 histories and 191,972 observations across 241 economies and territories.</li>
+            <li><strong>FAOSTAT agricultural trade (TCL):</strong> 319,840 histories and 5,508,009 observations across 204 economies and territories, with 2,416 populated item-and-element measures.</li>
+            <li><strong>SEC selected company disclosures:</strong> 69,968 histories and 413,852 observations across 12,363 reporting companies.</li>
+        </ul>
+        <p class="leading-relaxed">Country imports cover available observations within 2000–2025; the saved agricultural-trade release currently ends in 2024. SEC imports use 2015–2025 calendar frames. These windows describe the requested coverage, and do not imply a figure exists for every entity, measure or year. Regional and world aggregates are excluded from the country collection.</p>
+        <p class="mt-4"><a href="{{ url_for('public_library.index') }}">Open country data →</a> · <a href="{{ url_for('public_library.companies') }}">Open companies →</a></p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="library-country-search">
+        <h2 id="library-country-search">Start with a country, crop or measure</h2>
+        <p class="mb-4 leading-relaxed">Open Country data and search for a country name, an indicator or a crop. For example, <a href="{{ url_for('public_library.index', source='faostat', dataset='QCL', q='Mongolia wheat') }}">search Mongolia wheat in Crops and livestock</a>. Read the measure and unit on each result: production, harvested area and yield describe different things even when the country and crop match.</p>
+        <p class="mb-4 leading-relaxed">The Publisher filter narrows results to World Bank or FAOSTAT. Dataset links open World Development Indicators, Crops and livestock, Land use or Agricultural trade while retaining your search. Country and measure links can also keep browsing within one entity or indicator. Search and filters remain in the page address so you can share the same view.</p>
+        <p class="leading-relaxed">Results show the latest saved observation, its period, unit, publisher and history length. Previous and Next browse 40 results at a time. Expand Saved coverage and latest refresh to see each dataset's observation count, history count and last refresh date before opening a history.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="library-company-search">
+        <h2 id="library-company-search">Open a company, then choose its reported measure</h2>
+        <p class="mb-4 leading-relaxed"><a href="{{ url_for('public_library.companies', q='Apple') }}">Search Apple in Companies</a>, or use another company name or measure. The directory groups histories by the SEC's Central Index Key (CIK), which keeps company identity separate from a name or ticker. Open a company to browse its available measures and their histories.</p>
+        <p class="mb-4 leading-relaxed">This collection includes eight selected US-GAAP concepts reported in US dollars: assets, stockholders' equity, cash and cash equivalents, net cash from operating activities, net income, and three revenue concepts. Revenue from customer contracts excluding assessed tax, Revenues and Sales revenue, net remain separate measures. One is never substituted for another to fill a gap.</p>
+        <p class="leading-relaxed">This is selected SEC reporting coverage, not a global company census or a complete set of financial statements. Calendar frames retain each company's actual reporting start and end dates and filing accession. The chart places a figure at its period end; different companies can have different fiscal periods. Check the concept, unit and dates before comparing figures.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="library-history">
+        <h2 id="library-history">Read the chart and the exact observation together</h2>
+        <p class="mb-4 leading-relaxed">Open a result to see its published history. Range offers All saved, Last 5 years and Last year; Chart switches between Line, Step, Bars and Dots. Use the pointer, touch or the left and right arrow keys to inspect observations. These controls change how you read the saved values.</p>
+        <p class="mb-4 leading-relaxed">The exact-observation table lists the latest periods first. Country tables retain the publisher's original decimal text, while charts use numeric plotting values. Annual dates mark the source year rather than the publication day. Missing observations remain gaps, and a reported zero remains zero.</p>
+        <p class="leading-relaxed">Each row links to the publisher or filing and can expand Source notes. World Bank footnotes and indicator/year notes, FAOSTAT flags and their definitions, and SEC reporting dates and filing accessions stay attached to their observations. Estimates and provisional figures retain their source status.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="library-evidence">
+        <h2 id="library-evidence">Keep the definition, citation and reuse terms</h2>
+        <p class="mb-4 leading-relaxed">Source &amp; meaning identifies the publisher, coverage, measure code, units, last refresh and reuse terms. Expand Attribution and definition for the measure's metadata, and follow Official source to the publisher. FAO area and UN M49 identifiers are preserved as those identifiers; they are not relabelled as ISO country codes.</p>
+        <p class="mb-4 leading-relaxed">World Bank indicators keep their individual reuse terms, and restricted indicators are excluded. FAOSTAT datasets carry CC BY 4.0 attribution. The <a href="{{ url_for('global_reference.sources') }}">Sources directory</a> distinguishes saved coverage from discovered definitions and other catalog metadata. A definition alone does not establish downloaded observations.</p>
+        <p class="leading-relaxed">Use Download CSV on a history to take the periods and values into your own work. Exports include units, entity and measure names, publisher, dataset, source links, source notes, attribution, licence and measure metadata. Country values retain their original decimal text in the export, so the chart is not the only record of a figure.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="library-maintenance">
+        <h2 id="library-maintenance">Saved history, with bounded maintenance</h2>
+        <p class="mb-4 leading-relaxed">Browsing searches the saved collection; opening a page does not download from a publisher or start an import. The library's maintenance path is integrated into the regular data-fetch job, with at most one due, already populated dataset refreshed per run. SEC becomes eligible after seven days, World Bank after fourteen and FAOSTAT after thirty. These intervals are maintenance rules, not promises about when publishers release new observations.</p>
+        <p class="mb-4 leading-relaxed">A refresh commits a complete dataset update together. Failed imports leave the saved observations intact, missing source points do not erase older history, and changed observations retain their superseded values and evidence. The history page shows when superseded observations have been retained. Refreshes have request and runtime limits and defer when storage headroom is inadequate.</p>
+        <p class="leading-relaxed">The existing <a href="{{ url_for('main.index') }}">commodity benchmarks</a> and <a href="{{ url_for('global_reference.index') }}">Global reference histories</a> remain available. The library adds a wider way to find and inspect historical source observations. Coverage can be delayed, missing or revised, so begin with the dates, definition and evidence behind the number.</p>
+    </section>
+    <nav aria-label="Explore the data library" class="pt-8 border-t border-brand-black-60/20 dark:border-white/10">
+        <a href="{{ url_for('public_library.index') }}">Country data</a> · <a href="{{ url_for('public_library.companies') }}">Companies</a> · <a href="{{ url_for('global_reference.sources') }}">Sources</a> · <a href="{{ url_for('main.changelog') }}#public-data-library">Release notes</a>
+    </nav>
+</article>
+{% endblock %}

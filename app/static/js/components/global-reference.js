@@ -10,11 +10,12 @@
     const range = document.getElementById('gr-range');
     const type = document.getElementById('gr-chart-type');
     const caption = document.getElementById('gr-range-caption');
-    const gaps = {daily: 4, weekly: 10, monthly: 40, annual: 370};
+    // A 53-week fiscal year spans 371 days; it is still a consecutive annual report.
+    const gaps = {daily: 4, weekly: 10, monthly: 40, annual: 400};
     let chart, frame;
     function inspect(point) {
         if (!point) return;
-        readout.querySelector('strong').textContent = String(point.value);
+        readout.querySelector('strong').textContent = String(point.display_value ?? point.value);
         readout.querySelector('span').textContent = `${data.unit} · Period ${point.period || point.date}${point.status ? ' · Source flag ' + point.status : ''}`;
     }
     function render() {
@@ -46,5 +47,9 @@
     const theme = new MutationObserver(schedule);
     theme.observe(document.documentElement, {attributes: true, attributeFilter: ['data-theme']});
     render();
-    window.addEventListener('pagehide', () => { cancelAnimationFrame(frame); chart?.destroy(); resize.disconnect(); theme.disconnect(); }, {once: true});
+    window.addEventListener('pagehide', event => {
+        // A back/forward-cache entry resumes this same document and its controls.
+        if (event.persisted) return;
+        cancelAnimationFrame(frame); chart?.destroy(); resize.disconnect(); theme.disconnect();
+    });
 })();

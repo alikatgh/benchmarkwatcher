@@ -21,6 +21,7 @@ class Config:
     # Use abspath to correctly resolve relative to config.py even in WSGI/Passenger where CWD may differ
     BASE_DIR = _BASE_DIR
     JSON_DATA_DIR = os.path.join(_BASE_DIR, 'data')
+    PUBLIC_LIBRARY_DB = os.environ.get('PUBLIC_LIBRARY_DB')
 
     # Cache Configuration — FileSystemCache (shared across ALL Passenger workers AND
     # persistent across restarts), NOT SimpleCache (per-process, wiped on every restart).

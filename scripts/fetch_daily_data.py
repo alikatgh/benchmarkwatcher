@@ -249,6 +249,19 @@ def main():
     finally:
         client.close()
 
+    # Expanded public data refreshes use their own source budgets. At most one
+    # already-populated dataset is refreshed when due; missing libraries are
+    # never bootstrapped implicitly by the daily commodity job.
+    try:
+        from scripts.refresh_public_library import refresh_due, configured_database
+        library = refresh_due(configured_database(DATA_DIR))
+        logger.info('Public data library: %s', library)
+        if library.get('status') == 'failed':
+            fail += 1
+    except Exception as exc:
+        logger.error('Public data library refresh failed; saved observations retained: %s', exc)
+        fail += 1
+
     logger.info(f"\n{'=' * 50}")
     logger.info(f"Fetch complete: {success} success, {fail} failed, {len(config)} commodities, {len(references)} global references")
     logger.info(f"Global official requests: {client.request_count}/20; no automatic retries")

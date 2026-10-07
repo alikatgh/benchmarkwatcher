@@ -4,7 +4,9 @@ import json
 import math
 import os
 import re
+import sqlite3
 import stat
+import time
 from decimal import Decimal
 from datetime import date
 from functools import lru_cache
@@ -12,6 +14,7 @@ from pathlib import Path
 
 from flask import Blueprint, abort, current_app, render_template, request, url_for
 from scripts.global_sources import worldbank_definition
+from scripts.public_data_store import SOURCES, read_connection
 
 bp = Blueprint('global_reference', __name__)
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / 'scripts'
@@ -24,6 +27,9 @@ READINESS = {'adapter_ready': 'Reader ready', 'catalogued': 'Catalogued',
 ACCESS = {'free_public': 'Free public access', 'free_registered': 'Free registered access',
           'public_access_documented_cost_not_verified': 'Public access; cost not verified',
           'cost_not_verified': 'Cost not verified', 'access_not_verified': 'Access not verified'}
+LIBRARY_DATASET_NAMES = {'WDI': 'World Development Indicators', 'QCL': 'Crops and livestock',
+                         'RL': 'Land use', 'TCL': 'Agricultural trade',
+                         'frames': 'Company financial disclosures'}
 
 
 @lru_cache(maxsize=48)
@@ -56,7 +62,7 @@ def safe_json(path):
         return None
 
 
-def _catalogs():
+def _catalogs(include_bulk=True):
     definitions = safe_json(SCRIPT_DIR / 'global_series.json')
     registry = safe_json(SCRIPT_DIR / 'source_registry.json')
     snapshot = safe_json(SCRIPT_DIR / 'global_catalog_snapshot.json')
@@ -70,9 +76,10 @@ def _catalogs():
     series = [dict(row, indicator=row['api_config']['indicator'],
                    indicator_name=indicator_names.get(row['api_config']['indicator'], row['name']))
               if row.get('source_id') == 'worldbank' else row for row in series]
-    bulk = _bulk_definitions(series, snapshot)
-    bulk_ids = {row['id'] for row in bulk}
-    series = [row for row in series if row['id'] not in bulk_ids] + bulk
+    if include_bulk:
+        bulk = _bulk_definitions(series, snapshot)
+        bulk_ids = {row['id'] for row in bulk}
+        series = [row for row in series if row['id'] not in bulk_ids] + bulk
     return series, registry, snapshot
 
 
@@ -302,7 +309,7 @@ def detail(identifier):
 
 @bp.get('/sources')
 def sources():
-    series, registry, snapshot = _catalogs()
+    series, registry, snapshot = _catalogs(include_bulk=False)
     provider_q, region, status = _query('provider_q'), _query('region'), _query('status')
     regions = sorted({row['region'] for row in registry['sources']})
     if region and region not in regions or status and status not in READINESS:
@@ -319,19 +326,79 @@ def sources():
         ' '.join(row.get(field, [])) if isinstance(row.get(field), list) else str(row.get(field, '')) for field in fields).casefold()]
     catalog = _pagination(filtered, 'global_reference.sources', catalog=catalog_kind, q=q,
                           provider_q=provider_q, region=region, status=status)
-    counts = {}
-    loaded_worldbank = []
-    for row in series:
-        if row['source_id'] == 'worldbank':
-            if not _record(row, _economies(snapshot), full_history=False)['available']:
-                continue
-            loaded_worldbank.append(row)
-            key = row['api_config']['indicator'] if catalog_kind == 'indicators' else row['api_config']['country']
-            counts[key] = counts.get(key, 0) + 1
+    library = _library_coverage(catalog_kind, catalog['items'])
+    counts, catalog_links = library['counts'], {}
+    wdi = library['worldbank']
+    if wdi:
+        loaded_worldbank, loaded_economies = wdi['series_count'], wdi['entity_count']
+        for item in catalog['items']:
+            if counts.get(item['id']):
+                values = {'indicator': item['id']} if catalog_kind == 'indicators' else {'entity': item['id']}
+                catalog_links[item['id']] = url_for('public_library.index', source='worldbank', **values)
+    else:
+        # The legacy JSON subset remains the fallback. Once broad WDI exists,
+        # its overlapping histories are neither opened nor counted a second time.
+        bulk = _bulk_definitions(series, snapshot)
+        bulk_ids = {row['id'] for row in bulk}
+        series = [row for row in series if row['id'] not in bulk_ids] + bulk
+        loaded, counts = [], {}
+        for row in series:
+            if row['source_id'] == 'worldbank' and _record(row, _economies(snapshot), full_history=False)['available']:
+                loaded.append(row)
+                key = row['api_config']['indicator'] if catalog_kind == 'indicators' else row['api_config']['country']
+                counts[key] = counts.get(key, 0) + 1
+        loaded_worldbank = len(loaded)
+        loaded_economies = len({row['api_config']['country'] for row in loaded})
+        for item in catalog['items']:
+            key = item['id'] if catalog_kind == 'indicators' else item['iso2']
+            if counts.get(key):
+                catalog_links[item['id']] = (url_for('global_reference.index', indicator=item['id'])
+                    if catalog_kind == 'indicators' else url_for('global_reference.index', country=item['iso2'], source='worldbank'))
+        counts = {item['id']: counts.get(item['id'] if catalog_kind == 'indicators' else item['iso2'], 0)
+                  for item in catalog['items']}
     return render_template('global_reference/sources.html', providers=providers, provider_q=provider_q,
                            region=region, status=status, regions=regions, readiness=READINESS, access=ACCESS,
                            catalog=catalog, catalog_kind=catalog_kind, q=q, snapshot=snapshot,
-                           registry=registry, counts=counts, loaded_worldbank=len(loaded_worldbank),
-                           loaded_economies=len({row['api_config']['country'] for row in loaded_worldbank}),
+                           registry=registry, counts=counts, catalog_links=catalog_links,
+                           loaded_worldbank=loaded_worldbank, loaded_economies=loaded_economies,
+                           library=library, library_sources=SOURCES, dataset_names=LIBRARY_DATASET_NAMES,
+                           saved_worldbank_url=url_for('public_library.index', source='worldbank') if wdi else url_for('global_reference.index'),
                            meta_title='Public source directory | BenchmarkWatcher',
                            meta_description='Review official source access, licensing and readiness, and search the saved World Bank indicator and economy catalog.')
+
+
+def _library_coverage(catalog_kind, items):
+    """Read committed coverage and at most one catalog page of indexed counts."""
+    empty = {'datasets': [], 'worldbank': None, 'counts': {}, 'unavailable': False}
+    path = Path(current_app.config.get('PUBLIC_LIBRARY_DB') or
+                Path(current_app.config['JSON_DATA_DIR']) / 'public-library.sqlite3')
+    connection = None
+    try:
+        connection = read_connection(path)
+        if connection is None:
+            return empty
+        started = time.monotonic()
+        connection.set_progress_handler(lambda: time.monotonic() - started > 3, 10000)
+        connection.execute('BEGIN')  # One read snapshot across totals and page counts.
+        datasets = [dict(row) for row in connection.execute(
+            'SELECT * FROM datasets WHERE series_count>0 AND observation_count>0 ORDER BY source,dataset')
+            if row['source'] in SOURCES]
+        for dataset in datasets:
+            endpoint = 'public_library.companies' if dataset['source'] == 'sec' else 'public_library.index'
+            dataset['url'] = url_for(endpoint, source=dataset['source'], dataset=dataset['dataset'])
+        wdi = next((row for row in datasets if row['source'] == 'worldbank' and row['dataset'] == 'WDI'), None)
+        counts = {}
+        if wdi and items:
+            field = 'indicator_id' if catalog_kind == 'indicators' else 'entity_id'
+            index = 'library_indicator_saved' if catalog_kind == 'indicators' else 'library_summary'
+            identifiers = [item['id'] for item in items]
+            placeholders = ','.join('?' for _ in identifiers)
+            query = (f'SELECT {field},COUNT(*) FROM series INDEXED BY {index} WHERE source=? AND dataset=? '
+                     f"AND entity_type='country' AND observation_count>0 AND {field} IN ({placeholders}) GROUP BY {field}")
+            counts = {row[0]: row[1] for row in connection.execute(query, ['worldbank', 'WDI', *identifiers])}
+        return {'datasets': datasets, 'worldbank': wdi, 'counts': counts, 'unavailable': False}
+    except (sqlite3.Error, OSError, ValueError):
+        return {**empty, 'unavailable': True}
+    finally:
+        if connection is not None:
+            connection.close()

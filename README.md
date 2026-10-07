@@ -105,6 +105,12 @@ Global-source readers cover the Bank of Canada, European Central Bank, Eurostat,
 
 Every history identifies its provider, units and observation cadence. Public pages read cached data; browsing does not trigger upstream downloads. Readers use bounded request budgets. Free access does not remove publisher-specific reuse terms or rate limits. See [global source coverage](docs/GLOBAL_SOURCES.md) and the [data fetching guide](docs/DATA_FETCHING_GUIDE.md).
 
+The [indexed public data library](docs/PUBLIC_DATA_LIBRARY.md) adds country-data
+search, an SEC company directory, source notes and CSV exports. The October 7
+collection contains 11.81 million observations across 700,178 histories from World
+Bank WDI, FAOSTAT production/land use/agricultural trade and 12,363 SEC reporting
+companies. The library includes source attribution, saved coverage, interactive histories and CSV downloads.
+
 Percentage-change and indexed comparisons require a positive baseline. The workspace also offers Index 100; raw Value comparisons require matching currency and units. Baseline dates use each series' first available observation in the selected window. Missing observations are not filled or treated as zero; normalized lines do not imply equal prices or causation.
 
 </details>

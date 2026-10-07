@@ -48,6 +48,9 @@ def create_app(config_class=Config):
     from app.global_reference import bp as global_reference_bp
     app.register_blueprint(global_reference_bp)
 
+    from app.public_library import bp as public_library_bp
+    app.register_blueprint(public_library_bp)
+
     # Opt-in account workspace; public benchmark routes remain available.
     if app.config.get('WORKSPACE_ENABLED', os.getenv('WORKSPACE_ENABLED') == '1'):
         from app.workspace_store import init_workspace

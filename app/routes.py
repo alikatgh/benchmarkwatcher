@@ -376,6 +376,14 @@ def global_sources_story():
                            meta_description='Explore official international reference series and a searchable public-source catalog, with units, periods and access conditions kept visible.')
 
 
+@bp.route('/blog/a-public-data-library-for-country-and-company-research')
+def public_data_library_story():
+    """A guide to the saved country and selected company observation library."""
+    return render_template('blog/public_data_library.html',
+                           meta_title='A public data library for country and company research | BenchmarkWatcher',
+                           meta_description='Search World Bank, FAOSTAT and SEC histories, inspect exact observations and source notes, and export country and company data with attribution.')
+
+
 @bp.route('/blog/research-on-each-device')
 def native_research_story():
     return render_template('blog/native_research.html',
@@ -416,8 +424,10 @@ def sitemap():
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
              url_for('main.new_icon_story'), url_for('main.global_sources_story'),
+             url_for('main.public_data_library_story'),
              url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),
-             url_for('global_reference.sources')]
+             url_for('global_reference.sources'), url_for('public_library.index'),
+             url_for('public_library.companies')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):

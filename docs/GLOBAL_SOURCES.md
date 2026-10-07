@@ -1,5 +1,10 @@
 # Global public-source coverage
 
+The broader indexed WDI, FAOSTAT and SEC library is documented in
+[Public data library](PUBLIC_DATA_LIBRARY.md). This page describes the earlier
+bounded reference readers and their verified October 3 coverage. The `/sources`
+page reads current saved library coverage separately from publisher metadata.
+
 BenchmarkWatcher has five bounded official readers, 31 catalogued publishers,
 and **1,248 downloaded World Bank country histories across 217 economies**,
 plus eight other global references and seven Canadian commodity indices.

@@ -2,6 +2,8 @@
 
 import json
 import re
+import sqlite3
+from html import unescape
 
 import pytest
 
@@ -193,6 +195,173 @@ def test_source_catalog_pagination_search_economies_and_readiness_are_honest(ref
     assert '1 saved economy histories' in indicator
     providers = client.get('/sources?status=needs_registration').get_data(as_text=True)
     assert 'id="source-ecb"' not in providers
+
+
+def seed_public_library(client, directory, *, include_worldbank=True, database=None):
+    """Small corpus with a WDI history overlapping the legacy Japan fixture."""
+    from scripts.public_data_store import LibraryWriter, series_id
+    database = database or directory.parent / 'public-library.sqlite3'
+    rows = [
+        ('worldbank', 'WDI', 'JPN', 'Japan', 'NV.AGR.TOTL.ZS', 'Agriculture share', '%', [('2023', 1.0), ('2024', 1.01)]),
+        ('worldbank', 'WDI', 'MNG', 'Mongolia', 'NV.AGR.TOTL.ZS', 'Agriculture share', '%', [('2024', 12.0)]),
+        ('worldbank', 'WDI', 'JPN', 'Japan', 'SP.POP.TOTL', 'Population, total', 'people', [('2024', 123_000_000)]),
+        ('faostat', 'QCL', 'FAO:141', 'Mongolia', 'QCL:15:5510', 'Wheat — Production', 't', [('2024', 400_000)]),
+        ('sec', 'frames', '0000320193', 'Apple Inc.', 'us-gaap:Assets', 'Total assets', 'USD', [('2024-09-30', 364_980_000_000)]),
+    ]
+    for source, dataset in [('worldbank', 'WDI'), ('faostat', 'QCL'), ('sec', 'frames')]:
+        if source == 'worldbank' and not include_worldbank:
+            continue
+        with LibraryWriter(database, source, dataset, fetched_at='2026-10-07T00:00:00Z') as writer:
+            for publisher, group, entity, name, indicator, measure, unit, points in rows:
+                if publisher != source or group != dataset:
+                    continue
+                writer.add_series(dict(id=series_id(source, entity, indicator, unit), source=source,
+                    dataset=dataset, entity_id=entity, entity_name=name,
+                    entity_type='company' if source == 'sec' else 'country', indicator_id=indicator,
+                    indicator_name=measure, unit=unit, frequency='annual',
+                    source_url='https://data.worldbank.org/indicator/' + indicator if source == 'worldbank'
+                        else 'https://www.fao.org/faostat/en/#data/QCL' if source == 'faostat'
+                        else 'https://www.sec.gov/search-filings/edgar-application-programming-interfaces',
+                    attribution='Official source test fixture', license='CC BY-4.0' if source != 'sec' else 'Public SEC filings'),
+                    [{'period': period, 'value': value} for period, value in points])
+    return database
+
+
+def saved_catalog_link(body, label):
+    return unescape(re.search(r'href="([^"]+)">' + re.escape(label), body).group(1))
+
+
+def test_source_directory_uses_corpus_totals_without_double_counting_legacy(reference_client, monkeypatch):
+    client, directory = reference_client
+    database = seed_public_library(client, directory)
+    queries = []
+    original = gr.read_connection
+
+    def traced(path):
+        connection = original(path)
+        connection.set_trace_callback(queries.append)
+        return connection
+
+    def forbidden_legacy(*args, **kwargs):
+        raise AssertionError('Broad WDI coverage must not scan or count legacy histories')
+
+    monkeypatch.setattr(gr, 'read_connection', traced)
+    monkeypatch.setattr(gr, '_record', forbidden_legacy)
+    monkeypatch.setattr(gr, '_bulk_definitions', forbidden_legacy)
+    before = database.read_bytes()
+    response = client.get('/sources?q=NV.AGR.TOTL.ZS')
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert '3 saved country histories · 2 economies' in body
+    assert 'contains 2 measures and 4 observations' in body
+    assert '2 saved economy histories' in body
+    assert 'Saved dataset coverage' in body
+    assert 'FAOSTAT · Crops and livestock' in body and 'SEC filings · Company financial disclosures' in body
+    assert '/data?source=faostat&amp;dataset=QCL' in body
+    assert '/companies?source=sec&amp;dataset=frames' in body
+    assert '4 saved country histories' not in body  # The overlapping JSON history is not added.
+    assert database.read_bytes() == before
+    assert all(query.lstrip().upper().startswith(('SELECT ', 'BEGIN')) for query in queries)
+    counts = [query for query in queries if 'FROM series ' in query]
+    assert len(counts) == 1 and "indicator_id IN ('NV.AGR.TOTL.ZS')" in counts[0]
+    assert not any('metadata' in query.lower() or 'FROM observations' in query for query in queries)
+
+
+def test_source_catalog_corpus_links_open_matching_indicator_and_economy_histories(reference_client):
+    client, directory = reference_client
+    seed_public_library(client, directory)
+    indicator = client.get('/sources?q=NV.AGR.TOTL.ZS').get_data(as_text=True)
+    indicator_link = saved_catalog_link(indicator, '2 saved economy histories')
+    assert indicator_link == '/data?source=worldbank&indicator=NV.AGR.TOTL.ZS'
+    result = client.get(indicator_link)
+    assert result.status_code == 200
+    assert 'Japan' in result.get_data(as_text=True) and 'Mongolia' in result.get_data(as_text=True)
+    economy = client.get('/sources?catalog=economies&q=Japan').get_data(as_text=True)
+    economy_link = saved_catalog_link(economy, '2 saved histories')
+    assert economy_link == '/data?source=worldbank&entity=JPN'
+    result = client.get(economy_link)
+    assert result.status_code == 200 and 'Population, total' in result.get_data(as_text=True)
+    histories = re.search(r'<ul class="gr-reference-list">(.*?)</ul>', result.get_data(as_text=True), re.S).group(1)
+    assert 'Mongolia' not in histories
+
+
+@pytest.mark.parametrize('url, field, lookup', [
+    ('/sources?page=2', 'indicator_id', 'library_indicator_saved (source=? AND dataset=? AND indicator_id=?)'),
+    ('/sources?catalog=economies&page=2', 'entity_id', 'library_summary (entity_type=? AND source=? AND entity_id=?)'),
+])
+def test_source_catalog_only_counts_displayed_page_of_corpus(reference_client, monkeypatch, url, field, lookup):
+    client, directory = reference_client
+    database = seed_public_library(client, directory)
+    statements = []
+    original = gr.read_connection
+
+    def traced(path):
+        connection = original(path)
+        connection.set_trace_callback(statements.append)
+        return connection
+
+    monkeypatch.setattr(gr, 'read_connection', traced)
+    assert client.get(url).status_code == 200
+    query = next(statement for statement in statements if 'FROM series ' in statement)
+    page_ids = re.search(field + r' IN \((.*?)\)', query).group(1)
+    assert len(re.findall(r"'[^']+'", page_ids)) == gr.PAGE_SIZE
+    with sqlite3.connect(f'file:{database}?mode=ro', uri=True) as connection:
+        plan = [row[3] for row in connection.execute('EXPLAIN QUERY PLAN ' + query)]
+    assert any(lookup in step for step in plan), plan
+    assert not any('TEMP B-TREE FOR GROUP BY' in step for step in plan), plan
+
+
+@pytest.mark.parametrize('state', ['absent', 'empty', 'unavailable'])
+def test_source_directory_preserves_legacy_fallback_when_corpus_is_not_ready(reference_client, state):
+    client, directory = reference_client
+    database = directory.parent / 'public-library.sqlite3'
+    if state == 'empty':
+        from scripts.public_data_store import SCHEMA
+        with sqlite3.connect(database) as connection:
+            connection.executescript(SCHEMA)
+    elif state == 'unavailable':
+        database.write_bytes(b'Invalid SQLite fixture')
+    response = client.get('/sources?q=NV.AGR.TOTL.ZS')
+    body = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert '1 saved country histories · 1 economies' in body
+    assert '1 saved economy histories' in body
+    assert '/references?indicator=NV.AGR.TOTL.ZS' in body
+    assert 'Saved dataset coverage' not in body
+    if state == 'absent':
+        assert not database.exists()
+    if state == 'unavailable':
+        assert 'saved data library is temporarily unavailable' in body
+        assert database.read_bytes() == b'Invalid SQLite fixture'
+
+
+def test_source_directory_shows_other_saved_datasets_without_claiming_broad_wdi(reference_client):
+    client, directory = reference_client
+    seed_public_library(client, directory, include_worldbank=False)
+    body = client.get('/sources?q=NV.AGR.TOTL.ZS').get_data(as_text=True)
+    assert 'Saved dataset coverage' in body
+    assert 'FAOSTAT · Crops and livestock' in body and 'SEC filings · Company financial disclosures' in body
+    assert '1 saved country histories · 1 economies' in body
+    assert '/references?indicator=NV.AGR.TOTL.ZS' in body
+
+
+def test_source_directory_reads_configured_library_and_refreshes_dynamic_totals(reference_client):
+    client, directory = reference_client
+    database = directory.parent / 'configured-library.sqlite3'
+    client.application.config['PUBLIC_LIBRARY_DB'] = str(database)
+    seed_public_library(client, directory, database=database)
+    assert '3 saved country histories · 2 economies' in client.get('/sources').get_data(as_text=True)
+    from scripts.public_data_store import LibraryWriter, series_id
+    with LibraryWriter(database, 'worldbank', 'WDI', fetched_at='2026-10-08T00:00:00Z') as writer:
+        writer.add_series(dict(id=series_id('worldbank', 'MNG', 'SP.POP.TOTL', 'people'),
+            source='worldbank', dataset='WDI', entity_id='MNG', entity_name='Mongolia',
+            entity_type='country', indicator_id='SP.POP.TOTL', indicator_name='Population, total',
+            unit='people', frequency='annual', source_url='https://data.worldbank.org/indicator/SP.POP.TOTL',
+            attribution='World Bank fixture', license='CC BY-4.0'), [{'period': '2024', 'value': 3_500_000}])
+    body = client.get('/sources?q=SP.POP.TOTL').get_data(as_text=True)
+    assert '4 saved country histories · 2 economies' in body and '2 saved economy histories' in body
+    assert 'contains 2 measures and 5 observations' in body
+    assert not (directory.parent / 'public-library.sqlite3').exists()
 
 
 @pytest.mark.parametrize('path', ['/references?kind=bad', '/sources?catalog=bad', '/sources?page=-1',
