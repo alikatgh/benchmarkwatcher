@@ -271,23 +271,21 @@ def test_templates_do_not_contain_forbidden_strings():
             for word in forbidden:
                 if word in content:
                     # Check it's not in a comment or aria-label explaining what we DON'T do
-                    violations.append(f"{os.path.basename(template_path)}: contains '{word}'")
+                    violations.append((template_path, word))
     
     # Allow certain exceptions (negation phrases near the forbidden word)
     allowed_contexts = ['does not', 'not for', 'should not', 'no ', 'disclaimer', 'generate', 'changelog', 'window']
     filtered_violations = []
-    for v in violations:
-        # Re-check with context
-        template_name = v.split(':')[0]
-        word = v.split("'")[1]
-        template_path = [t for t in templates if os.path.basename(t) == template_name][0]
+    for template_path, word in violations:
+        # Keep the exact path: different template folders can share a filename.
         with open(template_path, 'r') as f:
             content = f.read().lower()
             # Widen context window to 200 chars to catch negations further before the word
             idx = content.find(word)
             context = content[max(0, idx-200):idx+len(word)+200]
             if not any(allowed in context for allowed in allowed_contexts):
-                filtered_violations.append(v)
+                template_name = os.path.relpath(template_path, template_dir)
+                filtered_violations.append(f"{template_name}: contains '{word}'")
     
     assert len(filtered_violations) == 0, f"Forbidden strings found: {filtered_violations}"
 
