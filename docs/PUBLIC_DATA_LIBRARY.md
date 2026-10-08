@@ -121,8 +121,8 @@ the three `test_*_library.py` importer suites.
 
 ## Wider catalog and full historical imports (8 October 2026)
 
-The official FAOSTAT manifest contains 69 domains. Forty have explicit annual
-country schema profiles. The remaining 29 retain concrete limitations, including
+The official FAOSTAT manifest contains 69 domains. Thirty-nine have supported annual country schema profiles; a fortieth
+configured profile (TCLI) is explicitly blocked pending unit and reuse review. The remaining 30 retain concrete limitations, including
 monthly periods, survey dimensions, bilateral trade identities, projections and
 provider-specific reuse review. `scripts/faostat_catalog_snapshot.json` is a dated
 inventory, not imported data. Browse `/sources` for the saved and pending states.
@@ -173,3 +173,25 @@ Full existing-dataset refreshes still require the original conservative storage
 reserve. Successful incremental additions do not mean that reserve is available.
 The larger remaining archives and historical backfills stay pending when capacity
 is insufficient; no catalog item or queued job is counted as saved coverage.
+
+## Publication rights and retained data
+
+As of 8 October, nine additional published FAOSTAT domains (LC, IC, FDI, CB, GF,
+GV, RM, RY, IG) contribute 51,246 histories and 916,719 observations. Current public
+coverage is 431,584 histories / 7,222,096 observations across thirteen datasets.
+The earlier October 7 totals are an archived ingestion snapshot, not current
+public availability.
+
+`scripts/public_data_policy.py` holds twelve FAO domains while third-party
+permission, attribution or provenance remains unresolved. In particular, the
+individual FAO trade and fertilizer metadata preserves UN Comtrade restrictions,
+and bioenergy includes UNSD energy terms. The existing TCL import is also held.
+Nothing is deleted: local observations and evidence remain accessible to the
+operator. Holds apply to listing/search counts, dataset links, direct detail and
+CSV, coverage totals, expansion queues and scheduled maintenance. Source pages
+show each hold and its primary terms link. They do not claim unrestricted CC BY
+rights over identified third-party material.
+
+The public total excludes held data even when an import completed successfully.
+The remaining larger backfills still require storage headroom; the policy and
+capacity checks are independent of whether access is free of charge.

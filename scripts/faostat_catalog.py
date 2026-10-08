@@ -10,10 +10,11 @@ from dataclasses import dataclass
 BULK_BASE = "https://bulks-faostat.fao.org/production/"
 
 
-# IC's normalized CSV leaves units blank for these dimensionless measures.
-# The official dataset metadata explicitly calls them index and ratio. Match
-# both code and current source name so unrelated missing units remain invalid.
+# These normalized CSVs leave units blank for specific dimensionless measures.
+# Match both code and source name against the official dataset unit metadata;
+# unrelated missing units remain invalid.
 IC_METADATA_URL = "https://data.fao.org/catalog/dataset/416665a7-6b87-4304-a476-9e73939d7181"
+IG_METADATA_URL = "https://data.fao.org/catalog/dataset/b2d69af9-55f2-4fb7-8876-389fec38eede"
 BLANK_UNIT_RESOLUTIONS = {
     ("IC", "6193"): {
         "element_name": "Agriculture orientation index US$, 2015 prices",
@@ -25,6 +26,18 @@ BLANK_UNIT_RESOLUTIONS = {
         "unit": "ratio", "source_url": IC_METADATA_URL,
         "basis": "FAO metadata: credit to agriculture divided by agriculture value added is a ratio.",
     },
+    ("IG", "6197"): {
+        "element_name": "SDG 2.a.1: Agriculture Orientation Index (AOI) for Government Expenditure",
+        "unit": "ratio", "source_url": IG_METADATA_URL,
+        "basis": "FAO government-expenditure metadata explicitly identifies the agriculture orientation index unit as ratio.",
+    },
+}
+
+
+# Official CAHD Releases.csv and the normalized rows share this alphanumeric
+# release code. Keep its exact spelling in metadata and series identity.
+NON_NUMERIC_CODE_PROFILES = {
+    ("CAHD", "Release", "7S2026"): "July 2026 (SOFI report)",
 }
 
 
@@ -102,6 +115,7 @@ DATASETS = {
 # Reasons identify concrete unsupported structures or review work. They are
 # shown alongside newly discovered domains rather than omitted from coverage.
 DOMAIN_LIMITATIONS = {
+    "TCLI": ("unsupported_units", "The official archive has blank units for ratio/index indicators and decimal indicator code 509.02. The catalog's generic Percent (%) unit does not establish their individual units; exact indicator profiles and UNSD/Eurostat redistribution exceptions require review."),
     "QI": ("unsupported_units", "Production-index rows have blank source units; an explicit index-unit profile is required without inventing units."),
     "TI": ("schema_review_required", "Trade-index source units and series identity need a reviewed index profile."),
     "SUA": ("unsupported_dimensions", "Food-group and nutrient-indicator dimensions require a separate schema profile."),

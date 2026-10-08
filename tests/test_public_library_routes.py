@@ -153,7 +153,7 @@ def test_broad_listings_use_covering_indexes(library, url, total):
 
 
 @pytest.mark.parametrize('url, total', [
-    ('/data?source=faostat&dataset=TCL&q=Mongolia+wheat', 2),
+    ('/data?source=faostat&dataset=CB&q=Mongolia+wheat', 2),
     ('/data?q=Mongolia+wheat', 3),
     ('/data?q=Mongolia+population', 1),
     ('/companies?q=assets', 2),
@@ -164,7 +164,7 @@ def test_search_reads_matching_fts_rowids(library, url, total):
     client, path, _ = library
     seed(path, 'sec', '9000', 'Baker Inc.', 'us-gaap:Assets', 'Total assets')
     seed(path, entity='320193', name='Country entry', label='Total assets')
-    for dataset, indicators in [('TCL', ['TCL:15:5610', 'TCL:15:5910']), ('QCL', ['QCL:15:5510'])]:
+    for dataset, indicators in [('CB', ['CB:15:5610', 'CB:15:5910']), ('QCL', ['QCL:15:5510'])]:
         with LibraryWriter(path, 'faostat', dataset) as writer:
             for indicator in indicators:
                 writer.add_series(dict(id=series_id('faostat', 'FAO:141', indicator, 't'), source='faostat',
@@ -189,8 +189,8 @@ def test_search_reads_matching_fts_rowids(library, url, total):
     assert response.status_code == 200
     assert rendered[0]['pagination']['total'] == total
     assert len(rendered[0]['records']) == total
-    if 'dataset=TCL' in url:
-        assert all(row['source'] == 'faostat' and row['dataset'] == 'TCL' and row['unit'] == 't'
+    if 'dataset=CB' in url:
+        assert all(row['source'] == 'faostat' and row['dataset'] == 'CB' and row['unit'] == 't'
                    for row in rendered[0]['records'])
     if url.startswith('/companies'):
         assert [row['entity_name'] for row in rendered[0]['records']] == ['Apple Inc.', 'Baker Inc.']
@@ -395,3 +395,35 @@ def test_html_escaped_and_fts_syntax_not_executable(library):
     assert b'&lt;script&gt;evil()&lt;/script&gt;' in response.data
     assert client.get('/data?q=%22+OR+NOT+*').status_code==200
     assert b'No matching data' in client.get('/data?q=NoSuchCountry').data
+
+
+@pytest.mark.parametrize('dataset', ['RFN','RFB','RT','BE','GN','RP','PD','PA','RA','TCL','TCLI','CAHD'])
+def test_reuse_hold_blocks_all_public_paths_and_preserves_data(library, dataset):
+    client, path, _ = library
+    identifier = series_id('faostat', '1', dataset + '_measure', 't')
+    with LibraryWriter(path, 'faostat', dataset) as writer:
+        writer.add_series(dict(id=identifier, source='faostat', dataset=dataset,
+            entity_id='1', entity_name='Held country', entity_type='country', country_code='',
+            indicator_id=dataset + '_measure', indicator_name='Restricted unique measure',
+            unit='t', frequency='annual', source_url='https://www.fao.org/faostat/en/#data/' + dataset,
+            attribution='FAO', license='CC-BY-4.0'), [{'period':'2024','value':123}])
+    for url in ['/data', '/data?q=Restricted', '/data?source=faostat', '/data?source=faostat&entity=1',
+                '/data?source=faostat&indicator=' + dataset + '_measure']:
+        response = client.get(url)
+        assert response.status_code == 200
+        assert identifier not in response.text
+        assert 'Restricted unique measure' not in response.text
+    assert client.get('/data?source=faostat&dataset=' + dataset).status_code == 400
+    assert client.get('/data/' + identifier).status_code == 404
+    assert client.get('/data/' + identifier + '.csv').status_code == 404
+    sources = client.get('/sources').text
+    assert 'Reuse review' in sources
+    assert 'Retained locally, unavailable for public browsing' in sources
+    from scripts.library_coverage import coverage, expansion_plan
+    report = coverage(path)
+    assert report['saved_dataset_count'] == 2
+    assert report['saved_observation_count'] == 4
+    assert report['held_dataset_count'] == 1
+    assert dataset not in {r['dataset'] for r in expansion_plan(path)['queued_faostat']}
+    with closing(sqlite3.connect(path)) as conn:
+        assert conn.execute('SELECT value FROM observations WHERE series_id=?', (identifier,)).fetchone()[0] == 123

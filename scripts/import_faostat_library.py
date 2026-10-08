@@ -36,7 +36,7 @@ if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.public_data_store import LibraryWriter, decode_metadata, series_id
-from scripts.faostat_catalog import BLANK_UNIT_RESOLUTIONS, BULK_BASE, DATASETS, DOMAIN_LIMITATIONS, Dataset
+from scripts.faostat_catalog import BLANK_UNIT_RESOLUTIONS, BULK_BASE, DATASETS, DOMAIN_LIMITATIONS, NON_NUMERIC_CODE_PROFILES, Dataset
 
 
 MANIFEST_URL = "https://bulks-faostat.fao.org/production/datasets_E.xml"
@@ -121,6 +121,16 @@ def _code(value, field):
     if not re.fullmatch(r"\d+", value) or int(value) <= 0:
         raise FAOSTATError("Invalid FAOSTAT " + field)
     return str(int(value))
+
+
+def _profile_code(value, *, dataset, dimension, name):
+    code = str(value or "").strip().removeprefix("'")
+    reviewed_name = NON_NUMERIC_CODE_PROFILES.get((dataset, dimension, code))
+    if reviewed_name is not None:
+        if name != reviewed_name:
+            raise FAOSTATError("FAOSTAT " + dimension.lower() + " code does not match its reviewed name")
+        return code
+    return _code(value, dimension.lower() + " code")
 
 
 def _m49(value):
@@ -240,12 +250,12 @@ def parse_row(row, *, dataset="QCL", start_year=None, end_year=None,
     fbs = row.get("Item Code (FBS)", "").strip().removeprefix("'")
     dimensions = {}
     for name in spec.dimensions:
-        code = _code(row[name + " Code"], name.lower() + " code")
         label = row[name].strip()
         if not label:
             raise FAOSTATError("Missing FAOSTAT dimension name: " + name)
         if _forecast_label(label):
             return None, "forecast"
+        code = _profile_code(row[name + " Code"], dataset=dataset, dimension=name, name=label)
         dimensions[name] = {"code": code, "name": label}
     entity_id = "FAO:" + area_code
     indicator_id = ":".join((dataset, item_code, element_code))
@@ -381,6 +391,8 @@ def import_faostat_archive(archive_path, database_path, *, dataset="QCL",
     """Atomically merge one full bulk member, preserving history and revisions."""
     limits = limits or Limits()
     spec = _dataset(dataset)
+    if dataset in DOMAIN_LIMITATIONS:
+        raise FAOSTATError("Unsupported FAOSTAT dataset: " + DOMAIN_LIMITATIONS[dataset][1])
     start_year, end_year = _years(start_year, end_year)
     source_updated = _source_update(source_updated)
     path = Path(archive_path)
@@ -540,6 +552,8 @@ def parse_manifest(content):
             status, reason = "unsupported_format", "A normalized CSV ZIP archive is required."
         elif spec and url != spec.archive_url:
             status, reason = "source_changed", "The official archive URL changed; review its schema before importing."
+        elif code in DOMAIN_LIMITATIONS:
+            status, reason = DOMAIN_LIMITATIONS[code]
         elif spec:
             status, reason = "supported", "Reviewed annual country/territory schema; archive headers and historical rows are validated at import."
         else:

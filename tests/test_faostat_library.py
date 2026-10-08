@@ -408,18 +408,52 @@ def test_food_balance_item_alias_is_preserved_in_its_own_methodology_namespace(t
     assert decode_metadata(definition["metadata"])["item_code_fbs"] == "S2501"
 
 
-def test_indicator_measure_profile_uses_its_original_code_and_name(tmp_path):
-    headers = [h for h in HEADERS if h not in {"Element", "Element Code"}] + ["Indicator Code", "Indicator"]
+def test_known_indicator_measure_schema_uses_its_original_code_and_name():
     data = row(**{"Indicator Code": "1234", "Indicator": "Share of exports"})
     data.pop("Element")
     data.pop("Element Code")
-    source = archive(tmp_path, [data], dataset="TCLI", headers=headers)
-    db = tmp_path / "library.sqlite3"
-    fao.import_faostat_archive(source, db, dataset="TCLI", end_year=2024)
-    definition = database_rows(db, "series")[0]
+    definition, _ = fao.parse_row(data, dataset="TCLI", end_year=2024)
     assert definition["indicator_id"] == "TCLI:221:1234"
     assert definition["indicator_name"].endswith("Share of exports")
-    assert decode_metadata(definition["metadata"])["measure_dimension"] == "Indicator"
+    assert definition["metadata"]["measure_dimension"] == "Indicator"
+
+
+def test_cahd_reviewed_alphanumeric_release_remains_exact_and_distinct(tmp_path):
+    rows = [row(**{"Release Code": "7S2026", "Release": "July 2026 (SOFI report)", "Value": "3.141590000"}),
+            row(**{"Release Code": "7", "Release": "Separate numeric release", "Value": "2.500000"})]
+    source = archive(tmp_path, rows, dataset="CAHD", headers=[*HEADERS, "Release Code", "Release"])
+    db = tmp_path / "library.sqlite3"
+    summary = fao.import_faostat_archive(source, db, dataset="CAHD", end_year=2024)
+    definitions = database_rows(db, "series")
+    assert summary["series_count"] == summary["observation_count"] == 2
+    assert {d["indicator_id"] for d in definitions} == {"CAHD:221:5312:release=7S2026", "CAHD:221:5312:release=7"}
+    reviewed = next(d for d in definitions if d["indicator_id"].endswith("=7S2026"))
+    assert decode_metadata(reviewed["metadata"])["source_dimensions"]["Release"] == {"code": "7S2026", "name": "July 2026 (SOFI report)"}
+    observations = database_rows(db, "observations")
+    assert {decode_metadata(o["metadata"])["source_value"] for o in observations} == {"3.141590000", "2.500000"}
+    assert len({d["id"] for d in definitions}) == 2
+
+
+@pytest.mark.parametrize("changes", [
+    {"Release Code": "8S2027", "Release": "New release"},
+    {"Release Code": "7s2026", "Release": "July 2026 (SOFI report)"},
+    {"Release Code": "7S2026", "Release": "Unexpected revised release name"},
+])
+def test_cahd_unreviewed_release_code_or_name_rolls_back_flushed_rows(tmp_path, changes):
+    valid = row(**{"Release Code": "7S2026", "Release": "July 2026 (SOFI report)"})
+    invalid = row(**changes)
+    source = archive(tmp_path, [valid, invalid], dataset="CAHD", headers=[*HEADERS, "Release Code", "Release"])
+    db = tmp_path / "library.sqlite3"
+    with pytest.raises(fao.FAOSTATError, match="release code"):
+        fao.import_faostat_archive(source, db, dataset="CAHD", end_year=2024, limits=replace(fao.Limits(), batch_size=1))
+    assert database_rows(db, "series") == []
+    assert database_rows(db, "observations") == []
+
+
+def test_alphanumeric_release_code_is_specific_to_reviewed_dataset_and_dimension():
+    data = row(**{"Source Code": "7S2026", "Source": "July 2026 (SOFI report)"})
+    with pytest.raises(fao.FAOSTATError, match="source code"):
+        fao.parse_row(data, dataset="GF", end_year=2024)
 
 
 def test_forecasts_use_flag_descriptions_and_explicit_dimensions():
@@ -452,6 +486,9 @@ def test_ic_blank_dimensionless_units_use_verified_official_metadata_and_keep_or
     ("IC", "6110", "Value US$"),
     ("IC", "6193", "An unexpected new indicator name"),
     ("QCL", "6193", "Agriculture orientation index US$, 2015 prices"),
+    ("IG", "6197", "An unexpected new government expenditure indicator"),
+    ("IG", "6110", "Value US$"),
+    ("IC", "6197", "SDG 2.a.1: Agriculture Orientation Index (AOI) for Government Expenditure"),
 ])
 def test_unit_metadata_resolution_never_fills_other_missing_units(dataset, code, name):
     data = row(**{"Element Code": code, "Element": name, "Unit": ""})
@@ -488,6 +525,40 @@ def test_ic_verified_dimensionless_units_and_provenance_survive_import(tmp_path)
     assert {d["unit"] for d in database_rows(db, "series")} == {"index", "ratio"}
     assert all(decode_metadata(d["metadata"])["unit_resolution"]["source_unit"] == "" for d in database_rows(db, "series"))
     assert all(decode_metadata(o["metadata"])["source_unit"] == "" for o in database_rows(db, "observations"))
+
+
+def test_ig_aoi_blank_unit_uses_official_ratio_unit_without_changing_value(tmp_path):
+    data = row(**{"Element Code": "6197", "Element": "SDG 2.a.1: Agriculture Orientation Index (AOI) for Government Expenditure",
+                  "Unit": "", "Value": "0.003690000", "Flag": "A"})
+    source = archive(tmp_path, [data], dataset="IG")
+    db = tmp_path / "library.sqlite3"
+    fao.import_faostat_archive(source, db, dataset="IG", end_year=2024)
+    definition = database_rows(db, "series")[0]
+    metadata = decode_metadata(definition["metadata"])
+    official = "https://data.fao.org/catalog/dataset/b2d69af9-55f2-4fb7-8876-389fec38eede"
+    assert definition["unit"] == "ratio"
+    assert definition["indicator_id"] == "IG:221:6197"
+    assert metadata["source_unit"] == ""
+    assert metadata["unit_resolution"]["source_unit"] == ""
+    assert metadata["unit_resolution"]["resolved_unit"] == "ratio"
+    assert metadata["unit_resolution"]["source_url"] == official
+    observation = database_rows(db, "observations")[0]
+    assert observation["value"] == float("0.003690000")
+    assert decode_metadata(observation["metadata"]) == {"flag": "A", "source_value": "0.003690000", "source_unit": "", "unit_resolution_source": official}
+    definition, observation = fao.parse_row({**data, "Unit": "%"}, dataset="IG", end_year=2024)
+    assert definition["unit"] == "%"
+    assert "unit_resolution" not in definition["metadata"]
+    assert "source_unit" not in observation["metadata"]
+
+
+def test_ig_unreviewed_blank_unit_rolls_back_prior_flushed_ratio(tmp_path):
+    valid = row(**{"Element Code": "6197", "Element": "SDG 2.a.1: Agriculture Orientation Index (AOI) for Government Expenditure", "Unit": ""})
+    source = archive(tmp_path, [valid, row(Unit="")], dataset="IG")
+    db = tmp_path / "library.sqlite3"
+    with pytest.raises(fao.FAOSTATError, match="Missing FAOSTAT series name or unit"):
+        fao.import_faostat_archive(source, db, dataset="IG", end_year=2024, limits=replace(fao.Limits(), batch_size=1))
+    assert database_rows(db, "series") == []
+    assert database_rows(db, "observations") == []
 
 
 @pytest.mark.parametrize("batch_size", [1, 100])
@@ -566,6 +637,34 @@ def test_catalog_discovers_supported_unsupported_and_new_domains_separately():
     assert catalog["TM"]["support_status"] == "unsupported_dimensions"
     assert catalog["ZZ"]["support_status"] == "schema_review_required"
     assert all(d["coverage_status"] == "inventory_only" for d in catalog.values())
+
+
+def test_tcli_known_schema_is_explicitly_blocked_pending_unit_identity_and_terms_review(tmp_path):
+    content = ("<Datasets>" + manifest_entry("TCLI") + "</Datasets>").encode()
+    entry = fao.parse_manifest(content)[0]
+    assert entry["support_status"] == "unsupported_units"
+    assert entry["measure_dimension"] == "Indicator"
+    assert "509.02" in entry["support_reason"]
+    assert "UNSD/Eurostat" in entry["support_reason"]
+    assert entry["coverage_status"] == "inventory_only"
+    with pytest.raises(fao.FAOSTATError, match="Unsupported FAOSTAT release"):
+        fao.fetch_release(Session(Response(content)), "TCLI")
+    data = row(**{"Indicator Code": "503", "Indicator": "Share of agricultural exports to GDP", "Unit": "%"})
+    headers = [h for h in HEADERS if h not in {"Element", "Element Code"}] + ["Indicator Code", "Indicator"]
+    source = archive(tmp_path, [data], dataset="TCLI", headers=headers)
+    db = tmp_path / "library.sqlite3"
+    with pytest.raises(fao.FAOSTATError, match="Unsupported FAOSTAT dataset"):
+        fao.import_faostat_archive(source, db, dataset="TCLI", end_year=2024)
+    assert not db.exists()
+
+
+@pytest.mark.parametrize("code,name", [("501", "Import dependency ratio"), ("509.02", "Revealed comparative advantage index")])
+def test_tcli_unreviewed_blank_units_and_decimal_codes_are_never_inferred(code, name):
+    data = row(**{"Indicator Code": code, "Indicator": name, "Unit": ""})
+    data.pop("Element")
+    data.pop("Element Code")
+    with pytest.raises(fao.FAOSTATError):
+        fao.parse_row(data, dataset="TCLI", end_year=2024)
 
 
 @pytest.mark.parametrize("content", [

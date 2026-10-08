@@ -84,9 +84,9 @@ def test_sec_refresh_rotation_uses_only_matching_committed_batches(tmp_path):
 
 def test_new_faostat_domains_participate_in_maintenance(tmp_path):
     path=tmp_path/'library.sqlite3'
-    populated(path, 'faostat', 'RP', '2026-01-01T00:00:00Z')
-    assert due_dataset(path,datetime(2026,10,8,tzinfo=timezone.utc)) == ('faostat','RP')
-    assert command_for('faostat','RP',path,tmp_path)[-2:] == ['--dataset','RP']
+    populated(path, 'faostat', 'IC', '2026-01-01T00:00:00Z')
+    assert due_dataset(path,datetime(2026,10,8,tzinfo=timezone.utc)) == ('faostat','IC')
+    assert command_for('faostat','IC',path,tmp_path)[-2:] == ['--dataset','IC']
 
 
 def test_failed_oldest_source_does_not_starve_another_due_source(tmp_path):
@@ -106,7 +106,7 @@ def test_failed_oldest_source_does_not_starve_another_due_source(tmp_path):
 
 def test_multiple_failed_domains_do_not_starve_other_publishers(tmp_path):
     path=tmp_path/'library.sqlite3'
-    for dataset in ('QCL','RL','TCL'):
+    for dataset in ('QCL','RL','IC'):
         populated(path,'faostat',dataset,'2026-08-01T00:00:00Z')
     populated(path,'worldbank','WDI','2026-09-15T00:00:00Z')
     populated(path,'sec','frames','2026-09-27T00:00:00Z')
@@ -118,13 +118,20 @@ def test_multiple_failed_domains_do_not_starve_other_publishers(tmp_path):
         for day in range(12):
             report=refresh_due(path,tmp_path,now=now+timedelta(days=day))
             selected.append((report['source'],report['dataset']))
-    assert set(selected[:5])=={('faostat','QCL'),('faostat','RL'),('faostat','TCL'),('worldbank','WDI'),('sec','frames')}
+    assert set(selected[:5])=={('faostat','QCL'),('faostat','RL'),('faostat','IC'),('worldbank','WDI'),('sec','frames')}
     assert selected[5:10]==selected[:5]
     conn=read_connection(path)
     try:
         stamps={(r['source'],r['dataset']):r['checked_at'][:10] for r in conn.execute('SELECT * FROM datasets')}
         assert stamps[('worldbank','WDI')]=='2026-09-15'
         assert stamps[('sec','frames')]=='2026-09-27'
-        assert all(stamps[('faostat',d)]=='2026-08-01' for d in ('QCL','RL','TCL'))
+        assert all(stamps[('faostat',d)]=='2026-08-01' for d in ('QCL','RL','IC'))
     finally:
         conn.close()
+
+
+def test_publication_holds_are_not_scheduled(tmp_path):
+    path = tmp_path / 'library.sqlite3'
+    for dataset in ('TCL', 'RFN', 'BE'):
+        populated(path, 'faostat', dataset, '2020-01-01T00:00:00Z')
+    assert due_dataset(path, datetime(2026,10,8,tzinfo=timezone.utc)) is None

@@ -17,6 +17,7 @@ from scripts.global_sources import worldbank_definition
 from scripts.public_data_store import SOURCES, read_connection
 from scripts.faostat_catalog import DATASETS as FAOSTAT_DATASETS
 from scripts.library_coverage import coverage as expansion_coverage
+from scripts.public_data_policy import publication_allowed
 
 bp = Blueprint('global_reference', __name__)
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / 'scripts'
@@ -389,7 +390,7 @@ def _library_coverage(catalog_kind, items):
         connection.execute('BEGIN')  # One read snapshot across totals and page counts.
         datasets = [dict(row) for row in connection.execute(
             'SELECT * FROM datasets WHERE series_count>0 AND observation_count>0 ORDER BY source,dataset')
-            if row['source'] in SOURCES]
+            if row['source'] in SOURCES and publication_allowed(row['source'], row['dataset'])]
         for dataset in datasets:
             endpoint = 'public_library.companies' if dataset['source'] == 'sec' else 'public_library.index'
             dataset['url'] = url_for(endpoint, source=dataset['source'], dataset=dataset['dataset'])

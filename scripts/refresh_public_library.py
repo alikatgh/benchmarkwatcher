@@ -16,6 +16,7 @@ if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.public_data_store import read_connection
+from scripts.public_data_policy import publication_allowed
 from scripts.faostat_catalog import DATASETS as FAOSTAT_DATASETS
 
 INTERVALS = {('worldbank', 'WDI'): 14, ('faostat', 'QCL'): 30,
@@ -43,7 +44,7 @@ def due_dataset(database, now=None):
                         for r in conn.execute('SELECT * FROM refresh_attempts')}
         for row in conn.execute('SELECT source,dataset,checked_at FROM datasets'):
             interval = INTERVALS.get((row['source'], row['dataset']))
-            if interval is None:
+            if interval is None or not publication_allowed(row['source'], row['dataset']):
                 continue
             attempted = attempts.get((row['source'], row['dataset']))
             # A failing provider must not monopolize every subsequent daily run.

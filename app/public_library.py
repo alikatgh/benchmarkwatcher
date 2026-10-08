@@ -15,6 +15,7 @@ from app.extensions import limiter
 from app.global_reference import exact_value, preview_value
 from scripts.public_data_store import SOURCES, read_connection, decode_metadata
 from scripts.faostat_catalog import DATASETS as FAOSTAT_DATASETS
+from scripts.public_data_policy import publication_allowed, public_sql
 
 bp = Blueprint('public_library', __name__)
 PAGE_SIZE = 40
@@ -75,7 +76,7 @@ def _pagination(total, page, endpoint, **values):
 
 
 def _datasets(conn):
-    return [dict(row) for row in conn.execute('SELECT * FROM datasets ORDER BY source,dataset')] if conn else []
+    return [dict(row) for row in conn.execute('SELECT * FROM datasets WHERE ' + public_sql() + ' ORDER BY source,dataset')] if conn else []
 
 
 @lru_cache(maxsize=1)
@@ -117,7 +118,7 @@ def _listing(company=False, entity_id=None):
         applicable = [row for row in datasets if (row['source']=='sec') == company]
         if dataset and (source, dataset) not in {(d['source'], d['dataset']) for d in applicable}:
             abort(400, description='Choose a saved dataset and its publisher.')
-        where, args = ["s.entity_type='company'" if company else "s.entity_type='country'", 's.observation_count>0'], []
+        where, args = ["s.entity_type='company'" if company else "s.entity_type='country'", 's.observation_count>0', public_sql('s.')], []
         for key, value in [('source', source), ('dataset', dataset), ('indicator_id', indicator), ('entity_id', entity_id)]:
             if value:
                 where.append('s.' + key + '=?')
@@ -208,7 +209,7 @@ def _detail(identifier):
         abort(404)
     with connection() as conn:
         row = conn.execute('SELECT * FROM series WHERE id=? AND observation_count>0', (identifier,)).fetchone() if conn else None
-        if not row:
+        if not row or not publication_allowed(row['source'], row['dataset']):
             abort(404)
         record = dict(row)
         if record['observation_count'] > 2000:
