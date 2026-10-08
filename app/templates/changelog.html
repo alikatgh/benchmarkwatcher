@@ -13,6 +13,18 @@
         </p>
     </header>
 
+    <article class="release-entry" id="historical-data-expansion">
+        <time datetime="2026-10-08">October 8, 2026</time>
+        <h2>Ten more FAOSTAT datasets and an explicit coverage inventory</h2>
+        <ul>
+            <li>Added 74,245 histories and 1,261,171 observations across pesticides, fertilizers, land cover, bioenergy, agricultural credit, foreign investment, non-food balances and agricultural energy emissions. The library now holds 774,423 histories and 13,074,557 observations across fifteen datasets.</li>
+            <li>New FAOSTAT imports preserve available annual country history within 1900–2025, with durable source-vintage and import-window evidence. Existing WDI, production, land-use and agricultural-trade backfills remain pending.</li>
+            <li>Sources now distinguishes all 69 discovered FAOSTAT domains, 40 reviewed readers, saved observations and verified historical import scope. Unsupported domains state the remaining schema or reuse work.</li>
+            <li>Catalogued 7,868 US-GAAP financial concepts and selected 98 for a resumable SEC expansion. Saved company data remains eight measures; catalogued concepts are not counted as observations. Future batches preserve exact decimals, units, official notices and committed checkpoints.</li>
+            <li>Added bounded, atomic merging of new datasets, with collision checks, rollback, elapsed-time limits and disk reserves. Scheduled SEC maintenance rotates up to 400 frames per batch; larger imports still defer when storage is insufficient.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.public_data_library_story') }}#library-expansion">Read the expanded data-library guide</a> · <a href="{{ url_for('global_reference.sources') }}#gr-expansion-heading">Inspect coverage and gaps</a></p>
+    </article>
     <article class="release-entry" id="public-data-library">
         <time datetime="2026-10-07">October 7, 2026</time>
         <h2>A searchable public data library</h2>

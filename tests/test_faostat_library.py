@@ -339,9 +339,267 @@ def test_empty_selection_does_not_publish_success(tmp_path):
 
 
 def test_historical_bounds_reject_current_future_or_reversed_years():
-    for start, end in [(2000, date.today().year), (2000, date.today().year + 1), (2024, 2023), (1900, 2000)]:
+    for start, end in [(2000, date.today().year), (2000, date.today().year + 1), (2024, 2023), (1899, 2000)]:
         with pytest.raises(fao.FAOSTATError, match="historical"):
             fao._years(start, end)
+
+
+def test_default_window_preserves_pre_2000_history(tmp_path):
+    source = archive(tmp_path, [row(**{"Year": "1961", "Year Code": "1961"}),
+                               row(**{"Year": "1990", "Year Code": "1990"}), row()])
+    db = tmp_path / "library.sqlite3"
+    summary = fao.import_faostat_archive(source, db, end_year=2024)
+    assert summary["start_year"] == 1900
+    assert {r["period"] for r in database_rows(db, "observations")} == {"1961", "1990", "2024"}
+
+
+@pytest.mark.parametrize("dataset", ["RP", "RFN", "RFB", "RT", "LC", "BE", "IC", "FDI", "CB", "GN",
+                                    "QV", "FO", "CBH", "SCL", "IG", "MK", "PD", "PA", "RA", "RM", "RY",
+                                    "EI", "EK", "EM", "EMN", "ESB", "GPP"])
+def test_additional_reviewed_country_domains_preserve_units_codes_and_precision(tmp_path, dataset):
+    source = archive(tmp_path, [row(Value="0.001230000", Flag="P")], dataset=dataset,
+                     headers=[h for h in HEADERS if h != "Item Code (CPC)"])
+    db = tmp_path / "library.sqlite3"
+    summary = fao.import_faostat_archive(source, db, dataset=dataset, end_year=2024, source_updated="2026-07-30")
+    definition = database_rows(db, "series")[0]
+    observation = database_rows(db, "observations")[0]
+    assert summary["dataset"] == dataset
+    assert definition["indicator_id"] == dataset + ":221:5312"
+    assert definition["unit"] == "ha"
+    assert decode_metadata(definition["metadata"])["source_updated_at"] == "2026-07-30"
+    assert decode_metadata(observation["metadata"]) == {"flag": "P", "source_value": "0.001230000"}
+
+
+@pytest.mark.parametrize("dimension", ["Partner Code", "Sex", "Scenario", "Months", "Survey"])
+def test_unknown_dimensions_are_rejected_without_flattening(dimension, tmp_path):
+    data = row(**{dimension: "1"})
+    with pytest.raises(fao.FAOSTATError, match="lose identity"):
+        fao.parse_row(data, end_year=2024)
+    source = archive(tmp_path, [data], headers=[*HEADERS, dimension])
+    db = tmp_path / "library.sqlite3"
+    with pytest.raises(fao.FAOSTATError, match="lose identity"):
+        fao.import_faostat_archive(source, db, end_year=2024)
+    assert database_rows(db, "observations") == []
+
+
+@pytest.mark.parametrize("dataset,dimension", [("GF", "Source"), ("GV", "Source"), ("CAHD", "Release"),
+                                              ("GCE", "Source"), ("GI", "Source"), ("GLE", "Source"), ("GT", "Source")])
+def test_reviewed_source_and_release_dimensions_do_not_collide(tmp_path, dataset, dimension):
+    data = [row(**{dimension + " Code": "1", dimension: "Source release one"}),
+            row(**{dimension + " Code": "2", dimension: "Source release two", "Value": "3"})]
+    source = archive(tmp_path, data, dataset=dataset, headers=[*HEADERS, dimension + " Code", dimension])
+    db = tmp_path / "library.sqlite3"
+    summary = fao.import_faostat_archive(source, db, dataset=dataset, end_year=2024)
+    definitions = database_rows(db, "series")
+    assert summary["series_count"] == summary["observation_count"] == 2
+    assert {d["indicator_id"] for d in definitions} == {dataset + ":221:5312:" + dimension.lower() + "=" + code for code in ("1", "2")}
+    assert {decode_metadata(d["metadata"])["source_dimensions"][dimension]["name"] for d in definitions} == {"Source release one", "Source release two"}
+    assert len({d["id"] for d in definitions}) == 2
+
+
+@pytest.mark.parametrize("dataset", ["FBS", "FBSH"])
+def test_food_balance_item_alias_is_preserved_in_its_own_methodology_namespace(tmp_path, dataset):
+    headers = [h for h in HEADERS if h != "Item Code (CPC)"] + ["Item Code (FBS)"]
+    source = archive(tmp_path, [row(**{"Item Code (FBS)": "'S2501", "Item Code": "2501"})], dataset=dataset, headers=headers)
+    db = tmp_path / "library.sqlite3"
+    fao.import_faostat_archive(source, db, dataset=dataset, end_year=2024)
+    definition = database_rows(db, "series")[0]
+    assert definition["indicator_id"] == dataset + ":2501:5312"
+    assert decode_metadata(definition["metadata"])["item_code_fbs"] == "S2501"
+
+
+def test_indicator_measure_profile_uses_its_original_code_and_name(tmp_path):
+    headers = [h for h in HEADERS if h not in {"Element", "Element Code"}] + ["Indicator Code", "Indicator"]
+    data = row(**{"Indicator Code": "1234", "Indicator": "Share of exports"})
+    data.pop("Element")
+    data.pop("Element Code")
+    source = archive(tmp_path, [data], dataset="TCLI", headers=headers)
+    db = tmp_path / "library.sqlite3"
+    fao.import_faostat_archive(source, db, dataset="TCLI", end_year=2024)
+    definition = database_rows(db, "series")[0]
+    assert definition["indicator_id"] == "TCLI:221:1234"
+    assert definition["indicator_name"].endswith("Share of exports")
+    assert decode_metadata(definition["metadata"])["measure_dimension"] == "Indicator"
+
+
+def test_forecasts_use_flag_descriptions_and_explicit_dimensions():
+    assert fao.parse_row(row(Flag="Z"), flags={"Z": "Projected value"}, end_year=2024) == (None, "forecast")
+    data = row(**{"Source Code": "1", "Source": "Projected baseline"})
+    assert fao.parse_row(data, dataset="GF", end_year=2024) == (None, "forecast")
+    assert fao.parse_row(row(Flag="Q"), end_year=2024) == (None, "missing")
+
+
+@pytest.mark.parametrize("code,name,unit,value", [
+    ("6193", "Agriculture orientation index US$, 2015 prices", "index", "0.003690"),
+    ("61631", "Ratio of Value Added (Agriculture, Forestry and Fishing) US$, 2015 prices", "ratio", "0.123450"),
+])
+def test_ic_blank_dimensionless_units_use_verified_official_metadata_and_keep_original_unit(code, name, unit, value):
+    data = row(**{"Item Code": "23068", "Item": "Credit to Agriculture, Forestry and Fishing",
+                  "Element Code": code, "Element": name, "Unit": "", "Value": value, "Flag": "A"})
+    definition, observation = fao.parse_row(data, dataset="IC", end_year=2024)
+    official_metadata = "https://data.fao.org/catalog/dataset/416665a7-6b87-4304-a476-9e73939d7181"
+    assert definition["unit"] == unit
+    assert definition["indicator_id"] == "IC:23068:" + code
+    assert definition["metadata"]["source_unit"] == ""
+    assert definition["metadata"]["unit_resolution"]["source_url"] == official_metadata
+    assert definition["metadata"]["unit_resolution"]["resolved_unit"] == unit
+    assert "numeric values unchanged" in definition["metadata"]["transformations"]
+    assert observation["value"] == float(value)
+    assert observation["metadata"] == {"flag": "A", "source_value": value, "source_unit": "", "unit_resolution_source": official_metadata}
+
+
+@pytest.mark.parametrize("dataset,code,name", [
+    ("IC", "6110", "Value US$"),
+    ("IC", "6193", "An unexpected new indicator name"),
+    ("QCL", "6193", "Agriculture orientation index US$, 2015 prices"),
+])
+def test_unit_metadata_resolution_never_fills_other_missing_units(dataset, code, name):
+    data = row(**{"Element Code": code, "Element": name, "Unit": ""})
+    with pytest.raises(fao.FAOSTATError, match="Missing FAOSTAT series name or unit"):
+        fao.parse_row(data, dataset=dataset, end_year=2024)
+
+
+def test_ic_source_units_are_authoritative_when_not_blank():
+    data = row(**{"Element Code": "6193", "Element": "Agriculture orientation index US$, 2015 prices", "Unit": "source-specified unit"})
+    definition, observation = fao.parse_row(data, dataset="IC", end_year=2024)
+    assert definition["unit"] == "source-specified unit"
+    assert "unit_resolution" not in definition["metadata"]
+    assert "source_unit" not in observation["metadata"]
+
+
+def test_ic_unexpected_blank_unit_rolls_back_a_prior_flushed_verified_index(tmp_path):
+    valid = row(**{"Element Code": "6193", "Element": "Agriculture orientation index US$, 2015 prices", "Unit": ""})
+    invalid = row(**{"Element Code": "6110", "Element": "Value US$", "Unit": ""})
+    source = archive(tmp_path, [valid, invalid], dataset="IC", headers=[h for h in HEADERS if h != "Item Code (CPC)"])
+    db = tmp_path / "library.sqlite3"
+    with pytest.raises(fao.FAOSTATError, match="Missing FAOSTAT series name or unit"):
+        fao.import_faostat_archive(source, db, dataset="IC", end_year=2024, limits=replace(fao.Limits(), batch_size=1))
+    assert database_rows(db, "series") == []
+    assert database_rows(db, "observations") == []
+
+
+def test_ic_verified_dimensionless_units_and_provenance_survive_import(tmp_path):
+    source = archive(tmp_path, [row(**{"Element Code": "6193", "Element": "Agriculture orientation index US$, 2015 prices", "Unit": ""}),
+                               row(**{"Element Code": "61631", "Element": "Ratio of Value Added (Agriculture, Forestry and Fishing) US$, 2015 prices", "Unit": ""})],
+                     dataset="IC", headers=[h for h in HEADERS if h != "Item Code (CPC)"])
+    db = tmp_path / "library.sqlite3"
+    summary = fao.import_faostat_archive(source, db, dataset="IC", end_year=2024)
+    assert summary["observation_count"] == summary["series_count"] == 2
+    assert {d["unit"] for d in database_rows(db, "series")} == {"index", "ratio"}
+    assert all(decode_metadata(d["metadata"])["unit_resolution"]["source_unit"] == "" for d in database_rows(db, "series"))
+    assert all(decode_metadata(o["metadata"])["source_unit"] == "" for o in database_rows(db, "observations"))
+
+
+@pytest.mark.parametrize("batch_size", [1, 100])
+def test_duplicate_source_observations_fail_atomically_across_batch_boundaries(tmp_path, batch_size):
+    source = archive(tmp_path, [row(), row(Value="8")])
+    db = tmp_path / "library.sqlite3"
+    with pytest.raises(fao.FAOSTATError, match="Duplicate FAOSTAT source observation"):
+        fao.import_faostat_archive(source, db, end_year=2024, limits=replace(fao.Limits(), batch_size=batch_size))
+    assert database_rows(db, "observations") == []
+    assert database_rows(db, "observation_revisions") == []
+
+
+def test_successful_archives_record_exact_window_counts_and_keep_prior_run_history(tmp_path):
+    source = archive(tmp_path, [row(**{"Year": "1961", "Year Code": "1961"}), row(),
+                               row(Value="", Flag="L"), row(Flag="F"),
+                               row(**{"Area Code": "5000", "Area Code (M49)": "'001", "Area": "World"}),
+                               row(**{"Year": "2027", "Year Code": "2027"})])
+    db = tmp_path / "library.sqlite3"
+    fao.import_faostat_archive(source, db, end_year=2024, source_updated="2026-07-30", fetched_at="2026-10-07T00:00:00Z")
+    first = database_rows(db, "faostat_import_runs")[0]
+    assert first == {"dataset": "QCL", "checked_at": "2026-10-07T00:00:00+00:00", "source_updated_at": "2026-07-30",
+                     "start_year": 1900, "end_year": 2024, "archive_name": source.name, "archive_bytes": source.stat().st_size,
+                     "rows_read": 6, "observations_imported": 2,
+                     "skipped_counts": '{"aggregate":1,"forecast":1,"missing":1,"year":1}'}
+    fao.import_faostat_archive(source, db, start_year=2024, end_year=2024, source_updated="2026-07-30", fetched_at="2026-10-08T00:00:00Z")
+    runs = database_rows(db, "faostat_import_runs")
+    assert len(runs) == 2
+    assert runs[0] == first
+    assert runs[1]["observations_imported"] == 1
+    assert json.loads(runs[1]["skipped_counts"])["year"] == 2
+
+
+def test_run_evidence_rolls_back_when_dataset_finalization_fails(tmp_path, monkeypatch):
+    source = archive(tmp_path, [row()])
+    db = tmp_path / "library.sqlite3"
+    fao.import_faostat_archive(source, db, end_year=2024, fetched_at="2026-10-07T00:00:00Z")
+    before_runs = database_rows(db, "faostat_import_runs")
+    before_values = database_rows(db, "observations")
+
+    def fail_finish(self):
+        raise ValueError("Finalization failed")
+
+    monkeypatch.setattr(fao.LibraryWriter, "_finish", fail_finish)
+    with pytest.raises(ValueError, match="Finalization failed"):
+        fao.import_faostat_archive(source, db, end_year=2024, fetched_at="2026-10-08T00:00:00Z")
+    assert database_rows(db, "faostat_import_runs") == before_runs
+    assert database_rows(db, "observations") == before_values
+
+
+def test_reused_retrieval_timestamp_is_rejected_without_creating_another_run(tmp_path):
+    source = archive(tmp_path, [row()])
+    db = tmp_path / "library.sqlite3"
+    stamp = "2026-10-07T00:00:00Z"
+    fao.import_faostat_archive(source, db, end_year=2024, fetched_at=stamp)
+    with pytest.raises(fao.FAOSTATError, match="distinct retrieval timestamp"):
+        fao.import_faostat_archive(source, db, end_year=2024, fetched_at=stamp)
+    assert len(database_rows(db, "faostat_import_runs")) == 1
+
+
+def manifest_entry(code, *, url=None, name=None, description="", rows="100"):
+    spec = fao.DATASETS.get(code)
+    return (f"<Dataset><DatasetCode>{code}</DatasetCode><DatasetName>{name or (spec.name if spec else 'New domain')}</DatasetName>"
+            f"<FileLocation>{url or (spec.archive_url if spec else fao.BULK_BASE + 'New_domain_E_All_Data_(Normalized).zip')}</FileLocation>"
+            f"<DateUpdate>2026-07-30T00:00:00</DateUpdate><FileSize>743KB</FileSize><FileRows>{rows}</FileRows>"
+            f"<DatasetDescription>{description}</DatasetDescription></Dataset>")
+
+
+def test_catalog_discovers_supported_unsupported_and_new_domains_separately():
+    content = ("<Datasets>" + manifest_entry("RP", description="Original source description") + manifest_entry("TM") + manifest_entry("ZZ") + "</Datasets>").encode()
+    catalog = {d["dataset"]: d for d in fao.parse_manifest(content)}
+    assert set(catalog) == {"RP", "TM", "ZZ"}
+    assert catalog["RP"]["support_status"] == "supported"
+    assert catalog["RP"]["reported_size_bytes"] == 743 * 1024
+    assert catalog["RP"]["reported_row_count"] == 100
+    assert catalog["RP"]["description"] == "Original source description"
+    assert catalog["TM"]["support_status"] == "unsupported_dimensions"
+    assert catalog["ZZ"]["support_status"] == "schema_review_required"
+    assert all(d["coverage_status"] == "inventory_only" for d in catalog.values())
+
+
+@pytest.mark.parametrize("content", [
+    "<Datasets>" + manifest_entry("RP") + manifest_entry("RP") + "</Datasets>",
+    "<Datasets>" + manifest_entry("ZZ", url="https://other.example/source.zip") + "</Datasets>",
+    "<Datasets>" + manifest_entry("ZZ", url=fao.BULK_BASE + "../New_domain_E_All_Data_(Normalized).zip") + "</Datasets>",
+    "<Datasets>" + manifest_entry("ZZ", url=fao.BULK_BASE + "New_domain_E_All_Data_(Normalized).zip?token=value") + "</Datasets>",
+    "<Datasets>" + manifest_entry("ZZ", rows="not-rows") + "</Datasets>",
+    '<!DOCTYPE Datasets [<!ENTITY x "replacement">]><Datasets></Datasets>',
+])
+def test_manifest_rejects_duplicates_untrusted_urls_and_malformed_inventory(content):
+    with pytest.raises(fao.FAOSTATError):
+        fao.parse_manifest(content.encode())
+
+
+def test_manifest_refuses_non_utf8_entity_declarations_and_oversized_direct_inputs():
+    dangerous = '<!DOCTYPE Datasets [<!ENTITY x "replacement">]><Datasets></Datasets>'.encode("utf-16")
+    for content in (dangerous, b"x" * (fao.Limits.max_manifest_bytes + 1), b""):
+        with pytest.raises(fao.FAOSTATError):
+            fao.parse_manifest(content)
+
+
+def test_supported_domain_url_changes_remain_visible_but_are_not_imported():
+    content = ("<Datasets>" + manifest_entry("RP", url=fao.BULK_BASE + "Changed_E_All_Data_(Normalized).zip") + "</Datasets>").encode()
+    assert fao.parse_manifest(content)[0]["support_status"] == "source_changed"
+    with pytest.raises(fao.FAOSTATError, match="URL changed"):
+        fao.fetch_release(Session(Response(content)), "RP")
+
+
+def test_catalog_keeps_official_unsupported_formats_visible_without_import_claims():
+    content = ("<Datasets>" + manifest_entry("ZZ", url=fao.BULK_BASE + "New_domain_Wide.xlsx") + "</Datasets>").encode()
+    entry = fao.parse_manifest(content)[0]
+    assert entry["support_status"] == "unsupported_format"
+    assert entry["coverage_status"] == "inventory_only"
 
 
 class Response:
@@ -369,6 +627,12 @@ class Session:
     def get(self, url, **kwargs):
         self.calls.append((url, kwargs))
         return self.response
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
 
 
 def test_official_manifest_is_bounded_and_url_is_verified():
@@ -419,3 +683,14 @@ def test_offline_cli_uses_no_network(tmp_path, monkeypatch, capsys):
     result = json.loads(capsys.readouterr().out)
     assert result["observation_count"] == 1 and result["source_updated_at"] == "2025-12-31"
     assert source.exists()
+
+
+def test_catalog_cli_requires_no_database_and_does_not_download_archives(monkeypatch, capsys):
+    content = ("<Datasets>" + manifest_entry("RP") + manifest_entry("TM") + "</Datasets>").encode()
+    session = Session(Response(content))
+    monkeypatch.setattr(fao.requests, "Session", lambda: session)
+    assert fao.main(["--catalog"]) == 0
+    catalog = json.loads(capsys.readouterr().out)
+    assert catalog["dataset_count"] == 2
+    assert len(session.calls) == 1
+    assert session.calls[0][0] == fao.MANIFEST_URL

@@ -16,9 +16,11 @@ if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from scripts.public_data_store import read_connection
+from scripts.faostat_catalog import DATASETS as FAOSTAT_DATASETS
 
 INTERVALS = {('worldbank', 'WDI'): 14, ('faostat', 'QCL'): 30,
              ('faostat', 'RL'): 30, ('faostat', 'TCL'): 30, ('sec', 'frames'): 7}
+INTERVALS.update({('faostat', code): 30 for code in FAOSTAT_DATASETS})
 ROOT = Path(__file__).resolve().parents[1]
 REFRESH_TIMEOUTS = {('worldbank','WDI'): 3600, ('faostat','TCL'): 7200}
 
@@ -71,11 +73,38 @@ def command_for(source, dataset, database, scratch):
         if dataset == 'TCL':
             command += ['--max-seconds', '7000']
     elif source == 'sec':
-        # Eight measures across at most twelve years stay within 100 requests.
-        # The merge retains previously saved older periods.
+        # Rotate through all reviewed core measures over the recent twelve-year
+        # window. One scheduled run remains bounded even as the catalog grows.
+        from scripts.import_sec_library import CONCEPTS, catalog_sha256
         end_year = date.today().year - 1
-        command += ['--start-year', str(max(2015, end_year - 11)), '--end-year', str(end_year)]
+        start_year = max(2009, end_year - 11)
+        catalog_hash = catalog_sha256(CONCEPTS)
+        total = len(CONCEPTS) * (end_year - start_year + 1)
+        offset = next_sec_offset(database, catalog_hash, start_year, end_year, total)
+        command += ['--start-year', str(start_year), '--end-year', str(end_year),
+                    '--max-requests', '400', '--frame-limit', '400',
+                    '--frame-offset', str(offset), '--expected-catalog-sha256', catalog_hash]
     return command
+
+
+def next_sec_offset(database, catalog_hash, start_year, end_year, total):
+    """Resume after the last committed batch; failed attempts never advance it."""
+    conn = read_connection(database)
+    if conn is None:
+        return 0
+    try:
+        if not conn.execute("SELECT 1 FROM sqlite_master WHERE name='sec_frame_batches'").fetchone():
+            return 0
+        row = conn.execute('SELECT frame_offset,frame_limit FROM sec_frame_batches '
+                           'WHERE catalog_sha256=? AND start_year=? AND end_year=? '
+                           'ORDER BY committed_at DESC,id DESC LIMIT 1',
+                           (catalog_hash, start_year, end_year)).fetchone()
+        if row and 0 <= row[0] < total and 0 < row[1] <= 500:
+            following = row[0] + row[1]
+            return following if following < total else 0
+        return 0
+    finally:
+        conn.close()
 
 
 def record_attempt(database, source, dataset, now):

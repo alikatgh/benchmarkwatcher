@@ -6,6 +6,7 @@ import re
 import sqlite3
 import time
 from contextlib import contextmanager
+from functools import lru_cache
 from pathlib import Path
 
 from flask import Blueprint, Response, abort, current_app, render_template, request, url_for
@@ -13,11 +14,14 @@ from flask import Blueprint, Response, abort, current_app, render_template, requ
 from app.extensions import limiter
 from app.global_reference import exact_value, preview_value
 from scripts.public_data_store import SOURCES, read_connection, decode_metadata
+from scripts.faostat_catalog import DATASETS as FAOSTAT_DATASETS
 
 bp = Blueprint('public_library', __name__)
 PAGE_SIZE = 40
 DATASET_NAMES = {'WDI': 'World Development Indicators', 'QCL': 'Crops and livestock',
                  'RL': 'Land use', 'TCL': 'Agricultural trade', 'frames': 'Company financial disclosures'}
+DATASET_NAMES.update({code: spec.name for code, spec in FAOSTAT_DATASETS.items()
+                     if code not in DATASET_NAMES})
 
 
 def database_path():
@@ -72,6 +76,32 @@ def _pagination(total, page, endpoint, **values):
 
 def _datasets(conn):
     return [dict(row) for row in conn.execute('SELECT * FROM datasets ORDER BY source,dataset')] if conn else []
+
+
+@lru_cache(maxsize=1)
+def _catalog_notice():
+    # Company-directory cards do not read individual measure metadata. Include
+    # the shipped taxonomy notice once for that company scope without a scan of
+    # every saved series. The catalog is immutable for a deployed app revision.
+    with (Path(__file__).resolve().parents[1] / 'scripts' / 'sec_concepts.json').open(encoding='utf-8') as stream:
+        catalog = json.load(stream)
+    return {'notice': catalog['authorized_uses_notice'], 'url': catalog['terms_url']}
+
+
+def _taxonomy_notices(rows, company_directory=False):
+    notices, seen = [], set()
+    for row in rows:
+        if row.get('source') != 'sec':
+            continue
+        raw = row.get('metadata', {})
+        metadata = raw if isinstance(raw, dict) else decode_metadata(raw)
+        notice = metadata.get('authorized_uses_notice') if isinstance(metadata, dict) else None
+        if isinstance(notice, str) and notice and notice not in seen:
+            seen.add(notice)
+            notices.append({'notice': notice, 'url': metadata.get('taxonomy_terms_url', '')})
+    if company_directory and rows and not notices:
+        notices.append(_catalog_notice())
+    return notices
 
 
 def _listing(company=False, entity_id=None):
@@ -149,7 +179,8 @@ def _listing(company=False, entity_id=None):
                            records=rows, datasets=applicable, all_datasets=datasets, company=company, grouped=grouped,
                            entity_name=entity_name, entity_id=entity_id, q=q, source=source, dataset=dataset,
                            indicator=indicator, pagination=pagination, sources=SOURCES, dataset_names=DATASET_NAMES,
-                           preview_value=preview_value, exact_value=exact_value)
+                           preview_value=preview_value, exact_value=exact_value,
+                           taxonomy_notices=_taxonomy_notices(rows, company_directory=grouped))
 
 
 @bp.get('/data')
@@ -214,6 +245,7 @@ def detail(identifier):
     record = _detail(identifier)
     return render_template('public_library/detail.html', meta_title=record['entity_name']+' · '+record['indicator_name'],
                            record=record, sources=SOURCES, exact_value=exact_value,
+                           taxonomy_notices=_taxonomy_notices([record]),
                            chart=dict(name=record['indicator_name'], unit=record['unit'], frequency='annual', history=record['history']))
 
 

@@ -1,5 +1,7 @@
 from contextlib import closing
 import json
+import csv
+import io
 import sqlite3
 from unittest.mock import patch
 
@@ -328,6 +330,55 @@ def test_source_decimal_text_survives_table_and_export(library):
                      (json.dumps({'source_value':precise}),identifier,'2024'))
     assert precise.encode() in client.get('/data/'+identifier).data
     assert precise.encode() in client.get('/data/'+identifier+'.csv').data
+
+
+def test_imported_taxonomy_notice_is_visible_and_survives_csv_export(app_client, tmp_path, monkeypatch):
+    from markupsafe import escape
+    from scripts import import_sec_library as sec
+
+    path = tmp_path / 'sec-notice.sqlite3'
+    app_client.application.config['PUBLIC_LIBRARY_DB'] = str(path)
+    concept = next(c for c in sec.CONCEPTS if c.tag == 'EarningsPerShareDiluted')
+    basic = next(c for c in sec.CONCEPTS if c.tag == 'EarningsPerShareBasic')
+    payload = {'taxonomy': concept.taxonomy, 'tag': concept.tag, 'label': concept.official_label,
+               'uom': concept.unit, 'ccp': 'CY2024', 'pts': 1,
+               'data': [{'cik': 123, 'entityName': 'Example plc', 'accn': '0000000123-25-000001',
+                         'start': '2024-01-01', 'end': '2024-12-31', 'val': 1.25}]}
+    monkeypatch.setattr(sec.FrameClient, 'fetch', lambda client, url: (
+        {**payload, 'tag': basic.tag, 'label': basic.official_label} if '/EarningsPerShareBasic/' in url else payload))
+    sec.import_library(path, tmp_path / 'scratch', 2024, 2024, concepts=(concept, basic))
+    identifier = series_id('sec', '0000000123', 'us-gaap:' + concept.tag, concept.unit)
+    notice = sec.CATALOG['authorized_uses_notice']
+    for url in ('/data/' + identifier, '/companies/0000000123', '/companies/0000000123?q=earnings',
+                '/companies?q=earnings', '/companies'):
+        response = app_client.get(url)
+        assert response.status_code == 200
+        html = response.get_data(as_text=True)
+        assert html.count('aria-labelledby="gr-taxonomy-notice-heading"') == 1
+        notice_section = html.split('aria-labelledby="gr-taxonomy-notice-heading"', 1)[1].split('</section>', 1)[0]
+        assert '<details' not in notice_section
+        if url.startswith(('/data/', '/companies/0000000123')):
+            assert concept.official_label in html
+        for paragraph in notice.split('\n'):
+            assert '<p>' + str(escape(paragraph)) + '</p>' in notice_section
+        assert sec.CATALOG['terms_url'] in notice_section
+    assert 'gr-taxonomy-notice-heading' not in app_client.get('/data').get_data(as_text=True)
+    exported = app_client.get('/data/' + identifier + '.csv')
+    assert exported.status_code == 200
+    rows = list(csv.DictReader(io.StringIO(exported.get_data(as_text=True))))
+    assert len(rows) == 1
+    metadata = json.loads(rows[0]['series_metadata'])
+    assert metadata['authorized_uses_notice'] == notice
+    assert metadata['taxonomy_terms_sha256'] == sec.CATALOG['terms_sha256']
+    assert metadata['catalog_metadata_source'] == sec.CATALOG['sources']['fasb2026']
+
+
+def test_taxonomy_notice_stays_off_unaffected_country_pages_and_empty_company_directory(library, app_client, tmp_path):
+    client, path, identifier = library
+    assert b'gr-taxonomy-notice-heading' not in client.get('/data').data
+    assert b'gr-taxonomy-notice-heading' not in client.get('/data/' + identifier).data
+    app_client.application.config['PUBLIC_LIBRARY_DB'] = str(tmp_path / 'not-created.sqlite3')
+    assert b'gr-taxonomy-notice-heading' not in app_client.get('/companies').data
 
 
 @pytest.mark.parametrize('url',['/data?page=0','/data?page=-1','/data?page=NaN','/data?source=unknown',

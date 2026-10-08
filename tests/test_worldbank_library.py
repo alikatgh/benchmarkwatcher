@@ -116,6 +116,14 @@ def test_retains_precise_units_attribution_definitions_and_annotations(tmp_path)
     assert notes["indicator_year_note"] == "Census reference year."
 
 
+def test_default_range_keeps_available_pre_2000_history(tmp_path):
+    report = wdi.import_archive(archive(tmp_path), tmp_path / "library.sqlite3",
+                                scratch_dir=tmp_path, catalog_path=None)
+    assert report["start_year"] == 1960
+    assert report["end_year"] == date.today().year - 1
+    assert {row["period"] for row in rows(tmp_path, "observations")} == {"1999", "2000", "2001", "2002"}
+
+
 @pytest.mark.parametrize("year", ["yr2001", "Yr2001", "yR2001"])
 def test_annotation_year_prefix_is_case_insensitive(tmp_path, year):
     # The official October 2026 archive includes 92 lowercase yrYYYY

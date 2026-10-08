@@ -353,7 +353,7 @@ def _guard_archive_vintage(connection, evidence):
             raise WorldBankImportError("An older WDI archive would replace a saved newer source release")
 
 
-def import_archive(archive_path, database, *, scratch_dir, start_year=2000, end_year=None,
+def import_archive(archive_path, database, *, scratch_dir, start_year=1960, end_year=None,
                    max_download_mb=DEFAULT_DOWNLOAD_MB, max_expanded_mb=DEFAULT_EXPANDED_MB,
                    catalog_path=CATALOG_PATH, fetched_at=None, source_last_modified=None):
     """Import one complete archive; any data error aborts the writer transaction."""
@@ -505,7 +505,8 @@ def main(argv=None):
     parser.add_argument("--database", type=Path, required=True)
     parser.add_argument("--scratch-dir", type=Path, required=True, help="Existing session-owned scratch directory")
     parser.add_argument("--archive", type=Path, help="Existing official ZIP; makes no network requests")
-    parser.add_argument("--start-year", type=int, default=2000)
+    parser.add_argument("--start-year", type=int, default=1960,
+                        help="First historical year; default includes the WDI archive from 1960")
     parser.add_argument("--end-year", type=int, default=date.today().year - 1)
     parser.add_argument("--max-download-mb", type=float, default=DEFAULT_DOWNLOAD_MB)
     parser.add_argument("--max-expanded-mb", type=float, default=DEFAULT_EXPANDED_MB)

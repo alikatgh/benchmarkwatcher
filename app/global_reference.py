@@ -15,6 +15,8 @@ from pathlib import Path
 from flask import Blueprint, abort, current_app, render_template, request, url_for
 from scripts.global_sources import worldbank_definition
 from scripts.public_data_store import SOURCES, read_connection
+from scripts.faostat_catalog import DATASETS as FAOSTAT_DATASETS
+from scripts.library_coverage import coverage as expansion_coverage
 
 bp = Blueprint('global_reference', __name__)
 SCRIPT_DIR = Path(__file__).resolve().parents[1] / 'scripts'
@@ -30,6 +32,8 @@ ACCESS = {'free_public': 'Free public access', 'free_registered': 'Free register
 LIBRARY_DATASET_NAMES = {'WDI': 'World Development Indicators', 'QCL': 'Crops and livestock',
                          'RL': 'Land use', 'TCL': 'Agricultural trade',
                          'frames': 'Company financial disclosures'}
+LIBRARY_DATASET_NAMES.update({code: spec.name for code, spec in FAOSTAT_DATASETS.items()
+                             if code not in LIBRARY_DATASET_NAMES})
 
 
 @lru_cache(maxsize=48)
@@ -327,6 +331,8 @@ def sources():
     catalog = _pagination(filtered, 'global_reference.sources', catalog=catalog_kind, q=q,
                           provider_q=provider_q, region=region, status=status)
     library = _library_coverage(catalog_kind, catalog['items'])
+    expansion = expansion_coverage(Path(current_app.config.get('PUBLIC_LIBRARY_DB') or
+                Path(current_app.config['JSON_DATA_DIR']) / 'public-library.sqlite3'))
     counts, catalog_links = library['counts'], {}
     wdi = library['worldbank']
     if wdi:
@@ -362,6 +368,7 @@ def sources():
                            registry=registry, counts=counts, catalog_links=catalog_links,
                            loaded_worldbank=loaded_worldbank, loaded_economies=loaded_economies,
                            library=library, library_sources=SOURCES, dataset_names=LIBRARY_DATASET_NAMES,
+                           expansion=expansion,
                            saved_worldbank_url=url_for('public_library.index', source='worldbank') if wdi else url_for('global_reference.index'),
                            meta_title='Public source directory | BenchmarkWatcher',
                            meta_description='Review official source access, licensing and readiness, and search the saved World Bank indicator and economy catalog.')

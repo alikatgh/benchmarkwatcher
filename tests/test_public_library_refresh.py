@@ -60,7 +60,33 @@ def test_scheduled_sec_refresh_stays_inside_request_budget_after_2027(tmp_path):
     start=int(command[command.index('--start-year')+1])
     end=int(command[command.index('--end-year')+1])
     assert (start,end)==(2019,2030)
-    assert (end-start+1)*8 <= 100
+    assert int(command[command.index('--max-requests')+1]) == 400
+    assert int(command[command.index('--frame-limit')+1]) <= 400
+    assert command[command.index('--frame-offset')+1] == '0'
+    assert '--expected-catalog-sha256' in command
+
+
+def test_sec_refresh_rotation_uses_only_matching_committed_batches(tmp_path):
+    import sqlite3
+    from scripts.refresh_public_library import next_sec_offset
+    path=tmp_path/'library.sqlite3'
+    populated(path, 'sec', 'frames')
+    with sqlite3.connect(path) as conn:
+        conn.execute('CREATE TABLE sec_frame_batches (id INTEGER PRIMARY KEY, committed_at TEXT, catalog_sha256 TEXT, start_year INTEGER, end_year INTEGER, frame_offset INTEGER, frame_limit INTEGER)')
+        conn.execute("INSERT INTO sec_frame_batches VALUES (1,'2026-01-01','current',2014,2025,0,400)")
+        conn.execute("INSERT INTO sec_frame_batches VALUES (2,'2026-02-01','other',2014,2025,800,376)")
+    assert next_sec_offset(path,'current',2014,2025,1176) == 400
+    assert next_sec_offset(path,'current',2015,2026,1176) == 0
+    with sqlite3.connect(path) as conn:
+        conn.execute("INSERT INTO sec_frame_batches VALUES (3,'2026-03-01','current',2014,2025,800,376)")
+    assert next_sec_offset(path,'current',2014,2025,1176) == 0
+
+
+def test_new_faostat_domains_participate_in_maintenance(tmp_path):
+    path=tmp_path/'library.sqlite3'
+    populated(path, 'faostat', 'RP', '2026-01-01T00:00:00Z')
+    assert due_dataset(path,datetime(2026,10,8,tzinfo=timezone.utc)) == ('faostat','RP')
+    assert command_for('faostat','RP',path,tmp_path)[-2:] == ['--dataset','RP']
 
 
 def test_failed_oldest_source_does_not_starve_another_due_source(tmp_path):
