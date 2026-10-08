@@ -7,7 +7,7 @@
 @media(max-width:360px){.bw-header>nav:first-child[aria-label="Primary navigation"]{gap:7px}}
 #tw-visual-actions{display:contents}.bw-quick-row{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:30px;min-height:32px;padding:5px;border-color:transparent;background:transparent;color:var(--theme-text-muted)}
 #tw-visual-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
-@container benchmark-table (max-width:767px){.table-workspace .tw-tools>#tw-visual-actions{display:contents}.table-workspace .tw-toolbar{grid-template-columns:minmax(0,1fr) auto auto}#tw-visual-actions button{width:44px;padding:8px}#tw-visual-actions .bw-quick-label{display:none}}
+@container benchmark-table (max-width:767px){.table-workspace .tw-tools>#tw-visual-actions{display:contents}.table-workspace .tw-toolbar{grid-template-columns:minmax(0,1fr) auto auto}#tw-visual-actions .bw-quick-label{display:none}}
 .tw-mobile-meta .bw-quick-row{margin-left:auto;min-width:44px;min-height:44px}.tw-mobile-meta{align-items:center}.commodity-cell>.bw-graphic-status:not(:empty){max-width:130px;white-space:normal;font-size:10px}
 @media(max-width:700px){.bw-create-graphic{min-height:44px}.bw-quick-row{min-width:44px}}
 @media print{.bw-create-graphic,.bw-visual-catalog-actions{display:none}}

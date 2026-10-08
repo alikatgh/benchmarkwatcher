@@ -22,7 +22,7 @@ async function openDashboard(page: Page) {
 }
 
 async function expectContainedControls(page: Page) {
-  const problems = await page.locator('.tw-control-heading .tw-button, .tw-view-picker select, .tw-search, .tw-tools .tw-button, #tw-range-select, .tw-context .range-btn').evaluateAll(elements => {
+  const problems = await page.locator('.tw-control-heading .tw-button, .tw-view-picker select, .tw-search, .tw-tools .tw-button, #tw-range-select, .tw-context .range-btn, #tw-visual-actions button').evaluateAll(elements => {
     const visible = elements.filter(el => el.getClientRects().length);
     const issues: string[] = [];
     visible.forEach(el => {
@@ -39,6 +39,23 @@ async function expectContainedControls(page: Page) {
   });
   expect(problems).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+}
+
+async function expectConsistentControls(page: Page) {
+  const geometry = await page.evaluate(() => {
+    const selectors = ['.tw-search', '#tw-filter-button', '#tw-visual-actions button', '#tw-range-select', '#tw-filter-chips .tw-chip'];
+    return selectors.map(selector => {
+      const element = document.querySelector(selector)!;
+      const style = getComputedStyle(element);
+      const text = getComputedStyle(selector === '.tw-search' ? element.querySelector('input')! : element);
+      return {selector, height: element.getBoundingClientRect().height, radius: style.borderRadius, font: text.fontSize};
+    }).filter(item => item.height > 0);
+  });
+  expect(geometry.map(item => item.height)).toEqual(geometry.map(() => 44));
+  expect(new Set(geometry.map(item => item.radius)).size).toBe(1);
+  expect(geometry.map(item => item.font)).toEqual(geometry.map(() => '16px'));
+  const gaps = await page.locator('.tw-toolbar, .tw-data-controls, .tw-chip-items').evaluateAll(elements => elements.map(element => getComputedStyle(element).columnGap));
+  expect(new Set(gaps).size).toBe(1);
 }
 
 async function moreCommand(page: Page, command: string) {
@@ -172,6 +189,7 @@ for (const width of [320, 390, 600]) {
     await expect(page.locator('#tw-filter-chips').getByRole('button', { name: 'Clear all view filters' })).toHaveCount(0);
     await expectCompactHierarchy(page);
     await expectContainedControls(page);
+    await expectConsistentControls(page);
     const rows = await page.evaluate(() => {
       const center = (selector: string) => {
         const rect = document.querySelector(selector)!.getBoundingClientRect();
@@ -287,6 +305,7 @@ test('a widened desktop details pane adapts the remaining dashboard by container
   expect(remainingWidth).toBeLessThanOrEqual(605);
   await expectCompactHierarchy(page);
   await page.locator('#tw-query').fill('Gold');
+  await expectConsistentControls(page);
   await page.locator('#tw-filter-button').click();
   const modal = await page.locator('#tw-tool-sheet').boundingBox();
   expect(modal?.x).toBeGreaterThan(400);

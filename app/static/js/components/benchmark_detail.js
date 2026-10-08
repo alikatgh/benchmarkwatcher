@@ -374,7 +374,9 @@
         const chart = element('section');
         chart.id = 'benchmark-detail-history';
         const source = element('section', 'benchmark-detail-source');
-        source.append(element('h3', '', 'Source & context'), element('p', '', record.source_name || 'Source not supplied'));
+        const sourceHeading = element('div', 'benchmark-detail-source-heading');
+        sourceHeading.append(element('span', 'benchmark-detail-source-name', record.source_name || 'Source not supplied'));
+        source.append(element('h3', '', 'Source & context'), sourceHeading);
         if (record.source_url) {
             try {
                 const url = new URL(record.source_url);
@@ -383,16 +385,16 @@
                     link.href = url.href;
                     link.target = '_blank';
                     link.rel = 'noopener noreferrer';
-                    const paragraph = element('p');
-                    paragraph.append(link);
-                    source.append(paragraph);
+                    sourceHeading.append(link);
                 }
             } catch (_) { /* Unusable source URLs remain plain source names. */ }
         }
-        source.append(element('p', 'benchmark-detail-muted', 'Historical reference observations. Sources may publish with a delay or revise earlier values. Observation dates can differ across benchmarks.'));
-        if (record.updated_at) source.append(element('p', 'benchmark-detail-muted', 'Dataset updated: ' + String(record.updated_at).slice(0, 10)));
-        const research = element('section');
-        research.append(element('h3', '', 'Your research'), element('p', 'benchmark-detail-chart-note', 'Add your notes, tags, and review status alongside this benchmark. Source values remain read-only.'), button('Add to research', () => addResearch([record])), element('p', 'benchmark-detail-chart-note', 'Research and watchlist entries are saved in this browser only.'));
+        if (record.updated_at) source.append(element('p', 'benchmark-detail-muted benchmark-detail-source-updated', 'Dataset updated: ' + String(record.updated_at).slice(0, 10)));
+        source.append(element('p', 'benchmark-detail-muted benchmark-detail-source-context', 'Historical reference observations. Publication may be delayed and values revised; observation dates vary by benchmark.'));
+        const research = element('section', 'benchmark-detail-research');
+        const researchHeading = element('div', 'benchmark-detail-research-heading');
+        researchHeading.append(element('h3', '', 'Your research'), button('Add to research', () => addResearch([record])));
+        research.append(researchHeading, element('p', 'benchmark-detail-chart-note', 'Add notes, tags and review status. Source values remain read-only.'), element('p', 'benchmark-detail-muted benchmark-detail-research-local', 'Research and watchlist entries are saved in this browser only.'));
         byId('benchmark-detail-body').replaceChildren(value, chart, source, research);
         renderHistory();
         syncWatchButtons();
@@ -554,6 +556,7 @@
         exact.append(element('summary', '', 'Exact dates'), form);
         exact.addEventListener('toggle', () => { if (exact.isConnected) state.exactDatesOpen = exact.open; });
         const presentation = element('div', 'benchmark-detail-presentation');
+        const styleControl = element('div', 'benchmark-detail-style-control');
         const styleLabel = element('label', '', 'Chart type'); styleLabel.htmlFor = 'benchmark-chart-style';
         const select = element('select'); select.id = styleLabel.htmlFor;
         [['line', 'Line'], ['area', 'Area'], ['step', 'Step'], ['scatter', 'Dots'], ['bar', 'Bars']].forEach(([value, label]) => { const option = element('option', '', label); option.value = value; select.append(option); });
@@ -563,8 +566,8 @@
         const dots = element('input'); dots.type = 'checkbox'; dots.id = 'benchmark-chart-dots'; dots.checked = state.showDots;
         dots.addEventListener('change', () => { state.showDots = dots.checked; state.settingsOpen = true; saveChartSettings(); redrawChart('#benchmark-chart-dots'); });
         dotsLabel.append(dots, document.createTextNode('Observation dots'));
-        presentation.append(styleLabel, select, dotsLabel);
-        details.append(rangeSlider(all, window), exact, presentation, element('p', 'benchmark-detail-chart-note', 'Drag either handle to adjust the range. Handles snap to source dates and apply on release. Exact dates include both endpoints; source gaps stay open.'));
+        styleControl.append(styleLabel, select); presentation.append(styleControl, dotsLabel);
+        details.append(rangeSlider(all, window), element('p', 'benchmark-detail-chart-note benchmark-detail-range-help', 'Drag handles to source dates; release to apply. Exact dates include both endpoints; source gaps stay open.'), exact, presentation);
         return details;
     }
     function svgNode(tag, attrs, content) {
