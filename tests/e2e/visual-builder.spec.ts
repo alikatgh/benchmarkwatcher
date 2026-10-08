@@ -1,4 +1,4 @@
-import {test,expect} from '@playwright/test';
+import {test,expect,type Page,type Locator} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
@@ -7,7 +7,34 @@ test.beforeEach(async({context,baseURL})=>{
   await context.route('**/*',route=>new URL(route.request().url()).origin===baseURL ? route.continue() : route.abort());
 });
 
-test('320px shared header keeps Visual Builder and navigation controls reachable',async({page})=>{
+const quickDialog=(page:Page)=>page.getByRole('dialog',{name:'Quick visual',exact:true});
+const editorDialog=(page:Page)=>page.getByRole('dialog',{name:'Graphic builder',exact:true});
+
+async function readyTable(page:Page) {
+  await expect(page.locator('#table-workspace')).toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>Boolean((window as any).BW?.TableWorkspace?.ready))).toBe(true);
+  await expect.poll(()=>page.evaluate(()=>(window as any).BW?.CompactTable?.sparklineData?.length || 0)).toBeGreaterThan(0);
+}
+
+async function showTableControls(page:Page) {
+  if(!await page.locator('#tw-controls').isVisible()) await page.locator('#tw-controls-toggle').click();
+}
+
+async function customize(page:Page) {
+  const quick=quickDialog(page);
+  await expect(quick.locator('svg')).toBeVisible();
+  await quick.getByRole('button',{name:'Customize graphic',exact:true}).click();
+  const editor=editorDialog(page);
+  await expect(editor).toBeVisible();
+  return editor;
+}
+
+async function sourceRows(dialog:Locator) {
+  await dialog.getByText('Source details',{exact:true}).click();
+  return dialog.locator('tbody tr');
+}
+
+test('320px shared header and on-demand visual controls remain reachable',async({page})=>{
   await page.setViewportSize({width:320,height:800});
   for(const path of ['/', '/?view=compact', '/data', '/help']) {
     await page.goto(path);
@@ -20,26 +47,72 @@ test('320px shared header keeps Visual Builder and navigation controls reachable
       expect(control.left,`${path}: ${control.name}`).toBeGreaterThanOrEqual(0);
       expect(control.right,`${path}: ${control.name}`).toBeLessThanOrEqual(320);
     }
-    const trigger=page.getByRole('button',{name:'Open Visual Builder'});
-    await trigger.click();
-    const dialog=page.getByRole('dialog',{name:'Graphic builder'});
-    await expect(dialog).toBeVisible();
-    expect(await dialog.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
-    await page.keyboard.press('Escape');
-    await expect(dialog).toHaveCount(0);
-    await expect(trigger).toBeInViewport();
+    await expect(page.locator('.bw-header [data-open-visual-builder]')).toHaveCount(0);
+    await expect(quickDialog(page)).toHaveCount(0);
   }
+  await page.goto('/?category=energy&view=compact');
+  await readyTable(page);
+  const rowTrigger=page.getByRole('button',{name:'Quick visual for Oil',exact:true});
+  await rowTrigger.click();
+  const quick=quickDialog(page);
+  await expect(quick.locator('svg')).toBeVisible();
+  expect(await quick.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
+  const bounds=await quick.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(0);
+  expect(bounds!.x+bounds!.width).toBeLessThanOrEqual(320);
+  await page.keyboard.press('Escape');
+  await expect(quick).toHaveCount(0);
+  await expect(rowTrigger).toBeFocused();
+  await page.goto('/data');
+  await page.getByRole('button',{name:'Toggle light and dark mode',exact:true}).click();
+  await expect(page.locator('html')).toHaveClass(/dark/);
+  const catalogTrigger=page.getByRole('button',{name:'Visualize this page',exact:true});
+  await catalogTrigger.click();
+  await expect(quick.locator('svg')).toBeVisible();
+  expect(await quick.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
+  const axe=await new AxeBuilder({page}).include('.bw-quick-visual').withTags(['wcag2a','wcag2aa']).analyze();
+  expect(axe.violations).toEqual([]);
+  await quick.getByRole('button',{name:'Close quick visual',exact:true}).click();
+  await expect(quick).toHaveCount(0);
+  await expect(catalogTrigger).toBeFocused();
 });
 
-test('Energy graphic opens an editable, saved and attributed export on desktop and mobile',async({page},info)=>{
+test('Energy stays table-first and a row opens a compact D3 visual on demand',async({page},info)=>{
+  const requests:string[]=[];
+  page.on('request',request=>requests.push(new URL(request.url()).pathname));
+  await page.goto('/?category=energy&view=compact');
+  await readyTable(page);
+  await expect(page.locator('#bw-category-graphic,[data-category-preview]')).toHaveCount(0);
+  await expect(quickDialog(page)).toHaveCount(0);
+  await expect(editorDialog(page)).toHaveCount(0);
+  const oil=page.locator('#table-body tr[data-id="oil"]:visible,#tw-mobile-list [data-mobile-id="oil"]:visible');
+  await expect(oil).toContainText('Oil');
+  await expect(oil).toContainText('USD');
+  const trigger=page.getByRole('button',{name:'Quick visual for Oil',exact:true});
+  await trigger.click();
+  const quick=quickDialog(page);
+  await expect(quick.locator('svg')).toBeVisible();
+  await expect(quick.locator('svg path,svg circle')).not.toHaveCount(0);
+  await expect(quick).toContainText('Oil');
+  await expect(quick).toContainText('Synthetic test data');
+  await expect(quick.getByLabel('Headline',{exact:true})).toHaveCount(0);
+  await expect(editorDialog(page)).toHaveCount(0);
+  expect(await quick.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
+  await page.screenshot({path:info.outputPath('quick-visual-energy.png')});
+  await quick.getByRole('button',{name:'Close quick visual',exact:true}).click();
+  await expect(quick).toHaveCount(0);
+  await expect(oil).toBeVisible();
+  await expect(trigger).toBeFocused();
+  expect(requests).not.toContain('/api/commodity/oil');
+});
+
+test('optional customization saves an attributed export on desktop and mobile',async({page},info)=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/?category=energy&view=compact');
-  const preview=page.locator('[data-category-preview]');
-  await expect(preview.locator('svg')).toBeVisible();
-  await expect(preview).toContainText('Oil');
-  await expect(page.locator('#bw-featured')).toBeHidden();
-  await page.getByRole('button',{name:'Edit this graphic',exact:true}).click();
-  const dialog=page.getByRole('dialog',{name:'Graphic builder'});
+  await readyTable(page);
+  const trigger=page.getByRole('button',{name:'Quick visual for Oil',exact:true});
+  await trigger.click();
+  const dialog=await customize(page);
   await dialog.getByLabel('Headline',{exact:true}).fill('Energy reference history');
   await dialog.getByLabel('Subtitle',{exact:true}).fill('Saved observations · synthetic test fixture');
   await dialog.getByLabel('Graphic',{exact:true}).selectOption('line');
@@ -69,19 +142,93 @@ test('Energy graphic opens an editable, saved and attributed export on desktop a
   expect(await dialog.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
   await page.screenshot({path:info.outputPath('visual-builder-energy.png')});
   await dialog.getByRole('button',{name:'Close graphic builder'}).click();
-  await page.getByRole('button',{name:'Edit this graphic',exact:true}).click();
+  await trigger.click();
+  await customize(page);
   await dialog.getByRole('button',{name:'Restore saved draft'}).click();
   await expect(dialog.getByLabel('Headline',{exact:true})).toHaveValue('Energy reference history');
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole('button',{name:'Edit this graphic',exact:true})).toBeFocused();
+  await expect(trigger).toBeFocused();
   expect(errors).toEqual([]);
+});
+
+test('row, selection and filtered visuals use the current table observations',async({page})=>{
+  await page.goto('/?view=compact&range=ALL');
+  await readyTable(page);
+  await showTableControls(page);
+  await page.locator('#range-1M').click();
+  await expect.poll(()=>page.evaluate(()=>(window as any).BW?.CompactTable?.loadedRange)).toBe('1M');
+  const histories=await page.evaluate(()=>(window as any).BW.CompactTable.sparklineData
+    .filter((record:any)=>['oil','gold'].includes(record.id))
+    .map((record:any)=>({name:record.name,points:record.history.map((point:any)=>({date:point.date,value:point.price}))})));
+  expect(histories).toHaveLength(2);
+  for(const history of histories) expect(history.points).toHaveLength(31);
+  const oil=histories.find((history:any)=>history.name==='Oil')!;
+  const requests:string[]=[];
+  page.on('request',request=>requests.push(new URL(request.url()).pathname));
+  const rowTrigger=page.getByRole('button',{name:'Quick visual for Oil',exact:true});
+  await rowTrigger.click();
+  const quick=quickDialog(page);
+  await expect(quick.locator('svg')).toBeVisible();
+  const rowData=await sourceRows(quick);
+  await expect(rowData).toHaveCount(31);
+  const shownRow=await rowData.evaluateAll(rows=>rows.map(row=>{
+    const cells=row.querySelectorAll('td');
+    return {date:cells[1].textContent,value:Number(cells[2].textContent)};
+  }));
+  expect(shownRow).toEqual(oil.points);
+  await expect(quick.locator('tbody')).toContainText('USD / test unit');
+  await expect(quick.locator('tbody')).toContainText('Synthetic test data');
+  await page.keyboard.press('Escape');
+  await expect(rowTrigger).toBeFocused();
+  for(const name of ['Gold','Oil']) {
+    await page.locator(`#table-body input[aria-label="Select ${name}"]:visible,#tw-mobile-list input[aria-label="Select ${name}"]:visible`).check();
+  }
+  const selectionTrigger=page.locator('#tw-selection').getByRole('button',{name:'Quick visual',exact:true});
+  await selectionTrigger.click();
+  await expect(quick.locator('svg')).toBeVisible();
+  const selectedData=await sourceRows(quick);
+  await expect(selectedData).toHaveCount(62);
+  const selected=await selectedData.evaluateAll(rows=>rows.map(row=>{
+    const cells=row.querySelectorAll('td');
+    return `${cells[0].textContent}|${cells[1].textContent}|${Number(cells[2].textContent)}`;
+  }));
+  const expected=histories.flatMap((history:any)=>history.points.map((point:any)=>`${history.name}|${point.date}|${point.value}`));
+  expect(selected.sort()).toEqual(expected.sort());
+  await page.keyboard.press('Escape');
+  await expect(selectionTrigger).toBeFocused();
+  await showTableControls(page);
+  await page.locator('#tw-query').fill('Oil');
+  await expect(page.locator('#tw-result-count')).toHaveText('1 of 3 benchmarks');
+  // The filtered action follows the visible rows even while Gold is selected outside the filter.
+  const filteredTrigger=page.getByRole('button',{name:'Visualize filtered',exact:true});
+  await filteredTrigger.click();
+  await expect(quick.locator('svg')).toBeVisible();
+  const filteredData=await sourceRows(quick);
+  await expect(filteredData).toHaveCount(1);
+  await expect(quick.locator('tbody')).toContainText('Oil');
+  await expect(quick.locator('tbody')).not.toContainText('Gold');
+  await expect(quick.locator('tbody')).toContainText(oil.points.at(-1).date);
+  await expect(quick.locator('tbody')).toContainText(String(oil.points.at(-1).value));
+  await quick.getByRole('button',{name:'Close quick visual',exact:true}).click();
+  await expect(filteredTrigger).toBeFocused();
+  expect(requests).not.toContain('/api/commodity/oil');
+  expect(requests).not.toContain('/api/commodity/gold');
 });
 
 test('country ranking and history preserve source flags and the selected period',async({page},info)=>{
   await page.goto('/data');
   await page.getByRole('button',{name:'Visualize this page',exact:true}).click();
-  const dialog=page.getByRole('dialog',{name:'Graphic builder'});
+  const quick=quickDialog(page);
+  await expect(quick.locator('svg')).toBeVisible();
+  await expect(quick).toContainText('Synthetic wind capacity');
+  await expect(quick).toContainText('2025');
+  const rankingRows=await sourceRows(quick);
+  await expect(rankingRows).toHaveCount(2);
+  await expect(quick.locator('tbody')).toContainText('Sample North');
+  await expect(quick.locator('tbody')).toContainText('Sample South');
+  await expect(quick.locator('tbody')).toContainText('E');
+  const dialog=await customize(page);
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Synthetic wind capacity');
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Sample North');
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Sample South');
@@ -90,21 +237,29 @@ test('country ranking and history preserve source flags and the selected period'
   await expect(dialog.locator('tbody')).toContainText('E');
   await page.screenshot({path:info.outputPath('visual-builder-ranking.png')});
   await dialog.getByRole('button',{name:'Close graphic builder'}).click();
-  await page.getByRole('button',{name:'Create graphic for Sample North Synthetic wind capacity',exact:true}).click();
+  await page.getByRole('button',{name:'Quick visual for Sample North Synthetic wind capacity',exact:true}).click();
+  await expect(quick).toContainText('Sample North');
+  await expect(quick).not.toContainText('Sample South');
+  await customize(page);
   await expect(dialog.getByLabel('Headline',{exact:true})).toHaveValue('Sample North · Synthetic wind capacity');
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Original reporting periods');
   await dialog.getByRole('button',{name:'Close graphic builder'}).click();
   await page.locator('.gr-reference-name a').first().click();
   await page.locator('#gr-range').selectOption('1');
-  await page.locator('.gr-chart-controls').getByRole('button',{name:'Create graphic',exact:true}).click();
+  await page.locator('.gr-chart-controls').getByRole('button',{name:'Quick visual',exact:true}).click();
+  await expect(await sourceRows(quick)).toHaveCount(2);
+  await expect(quick.locator('tbody')).toContainText('2024');
+  await expect(quick.locator('tbody')).toContainText('2025');
+  await expect(quick.locator('tbody')).not.toContainText('2023');
+  await customize(page);
   await dialog.locator('.bw-vb-data>summary').click();
   await expect(dialog.locator('tbody tr')).toHaveCount(2);
 });
 
 test('paste validation keeps the last valid graphic and GeoJSON produces a real map',async({page})=>{
-  await page.goto('/help');
-  await page.getByRole('button',{name:'Open Visual Builder'}).click();
-  const dialog=page.getByRole('dialog',{name:'Graphic builder'});
+  await page.goto('/data');
+  await page.getByRole('button',{name:'Visualize this page',exact:true}).click();
+  const dialog=await customize(page);
   await dialog.locator('.bw-vb-paste>summary').click();
   await dialog.getByLabel('Source data',{exact:true}).fill('label,value,unit,period,status,source\nNorth,24,GW,2025,Estimated,Synthetic source\nSouth,12,GW,2025,Observed,Synthetic source');
   await dialog.getByRole('button',{name:'Validate and apply data'}).click();
@@ -125,40 +280,49 @@ test('paste validation keeps the last valid graphic and GeoJSON produces a real 
   expect(await dialog.locator('svg').innerHTML()).not.toMatch(/NaN|Infinity/);
 });
 
-test('benchmark pane and Research open the shared builder without losing modal keyboard focus',async({page})=>{
+test('benchmark pane and Research open quick visuals without losing modal keyboard focus',async({page})=>{
   await page.goto('/?view=compact');
   await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   const pane=page.locator('#benchmark-detail');
-  await pane.getByRole('button',{name:'Create graphic',exact:true}).click();
-  const dialog=page.getByRole('dialog',{name:'Graphic builder'});
-  await expect(dialog.getByLabel('Headline',{exact:true})).toHaveValue('Gold over time');
+  const trigger=pane.getByRole('button',{name:'Quick visual',exact:true});
+  await trigger.click();
+  const dialog=quickDialog(page);
+  await expect(dialog).toContainText('Gold over time');
+  await expect(dialog.locator('svg')).toBeVisible();
   await page.keyboard.press('Tab');
   expect(await dialog.evaluate(element=>element.contains(document.activeElement))).toBe(true);
   await page.keyboard.press('Escape');
   await expect(pane).toBeVisible();
-  await expect(pane.getByRole('button',{name:'Create graphic',exact:true})).toBeFocused();
+  await expect(trigger).toBeFocused();
   await pane.getByRole('button',{name:'Close benchmark details'}).click();
   await page.locator('#table-body input[type=checkbox][aria-label="Select Gold"]:visible, #tw-mobile-list input[aria-label="Select Gold"]:visible').check();
   await page.getByRole('button',{name:'Add to research',exact:true}).click();
   await page.locator('#rw-editor').getByRole('button',{name:'Close entry',exact:true}).click();
-  await page.locator('#research-workspace').getByRole('button',{name:'Create graphic',exact:true}).click();
-  await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Gold');
+  await page.locator('#research-workspace').getByRole('button',{name:'Quick visual',exact:true}).click();
+  await expect(dialog.locator('svg')).toBeVisible();
+  await expect(dialog).toContainText('Gold');
 });
 
-test('failed or empty selections cannot reopen a stale graphic',async({page},info)=>{
+test('failed or empty filtered results cannot reopen a stale graphic',async({page})=>{
   await page.goto('/?category=energy&view=compact');
-  await expect(page.getByRole('button',{name:'Edit this graphic',exact:true})).toBeVisible();
-  if(info.project.name === 'desktop') await page.getByRole('link',{name:'Indices',exact:true}).click();
-  else await page.goto('/?category=index&view=compact'); // Empty categories have no mobile filter option.
-  await expect(page.locator('#bw-category-graphic > [role=status]')).toContainText('No saved benchmarks');
-  await expect(page.getByRole('button',{name:'Edit this graphic',exact:true})).toBeHidden();
+  await readyTable(page);
+  await page.getByRole('button',{name:'Quick visual for Oil',exact:true}).click();
+  await expect(quickDialog(page).locator('svg')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await showTableControls(page);
+  await page.locator('#tw-query').fill('No matching benchmark 987654');
+  await expect(page.locator('#tw-empty')).toBeVisible();
+  await page.getByRole('button',{name:'Visualize filtered',exact:true}).click();
+  await expect(page.locator('#table-workspace [role=status]').filter({hasText:'No matching observations to visualize'})).toBeVisible();
+  await expect(quickDialog(page)).toHaveCount(0);
+  await expect(editorDialog(page)).toHaveCount(0);
   await page.locator('#bw-visual-explorer>summary').click();
   const lab=page.getByRole('region',{name:'Visual explorer'});
-  await expect(lab.getByRole('button',{name:'Create graphic',exact:true})).toBeEnabled();
+  await expect(lab.getByRole('button',{name:'Quick visual',exact:true})).toBeEnabled();
   await page.route('**/api/commodity/oil',route=>route.fulfill({status:503,json:{error:'Synthetic outage'}}));
   await lab.getByLabel('Benchmark',{exact:true}).selectOption('oil');
   await expect(lab.locator('.bw-visual-note')).toContainText('Could not load');
-  await expect(lab.getByRole('button',{name:'Create graphic',exact:true})).toBeDisabled();
+  await expect(lab.getByRole('button',{name:'Quick visual',exact:true})).toBeDisabled();
 });
 
 test('workbook periods and company fiscal selections open with their own evidence',async({page})=>{
@@ -185,8 +349,10 @@ test('workbook periods and company fiscal selections open with their own evidenc
   await expect(chat.getByLabel('AI response',{exact:true})).toBeVisible();
   await chat.getByRole('link',{name:'View analysis'}).click();
   if(await page.getByRole('button',{name:'Minimize AI chat'}).isVisible()) await page.getByRole('button',{name:'Minimize AI chat'}).click();
-  await page.locator('.studio-analysis-step[open]').getByRole('button',{name:'Create graphic',exact:true}).first().click();
-  const dialog=page.getByRole('dialog',{name:'Graphic builder'});
+  await page.locator('.studio-analysis-step[open]').getByRole('button',{name:'Quick visual',exact:true}).first().click();
+  await expect(quickDialog(page).locator('svg')).toBeVisible();
+  await expect(quickDialog(page)).toContainText('Sample Company.xlsx');
+  const dialog=await customize(page);
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Q124');
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Sample Company.xlsx');
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText(/source order|elapsed time/i);
@@ -197,7 +363,13 @@ test('workbook periods and company fiscal selections open with their own evidenc
   expect(response.ok()).toBe(true);
   await page.goto((await response.json()).url);
   await page.getByRole('button',{name:'Quarterly',exact:true}).click();
-  await page.locator('.company-chart-toolbar').getByRole('button',{name:'Create graphic',exact:true}).click();
+  await page.locator('.company-chart-toolbar').getByRole('button',{name:'Quick visual',exact:true}).click();
+  const quick=quickDialog(page);
+  await expect(quick.locator('svg')).toBeVisible();
+  await expect(await sourceRows(quick)).toHaveCount(12);
+  await expect(quick.locator('tbody')).toContainText('Q4 2025');
+  await expect(quick.locator('tbody')).toContainText('sec.gov');
+  await customize(page);
   await dialog.locator('.bw-vb-data>summary').click();
   await expect(dialog.locator('tbody tr')).toHaveCount(12);
   await expect(dialog.locator('tbody')).toContainText('Q4 2025');

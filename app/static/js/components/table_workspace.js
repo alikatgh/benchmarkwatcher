@@ -164,6 +164,7 @@
                     const watch = button('☆', () => document.dispatchEvent(new CustomEvent('bw:watch-toggle', { detail: { id: row.dataset.id } })), 'tw-watch');
                     identity.append(watch);
                 }
+                if (identity && !identity.querySelector('.bw-quick-row')) BW.VisualBuilderSources?.attachRow(identity, row.dataset.id, row.dataset.name);
                 ['category', 'frequency'].forEach(key => { if (!row.querySelector(`[data-col="${key}"]`)) { const cell = node('td', '', key === 'frequency' ? (row.dataset.frequency === 'daily' ? 'Daily' : 'Monthly') : row.dataset.category); cell.dataset.col = key; row.append(cell); } });
                 const priceElement = row.querySelector('.price-value');
                 const preferences = BW.CompactTable?.getSettings?.()?.price || {};
@@ -270,6 +271,7 @@
                 if (visible.has('updated')) meta.append(node('span', '', `Observed ${data.date || '—'}`));
                 if (visible.has('category')) meta.append(node('span', '', data.category));
                 if (visible.has('frequency')) meta.append(node('span', '', data.frequency === 'daily' ? 'Daily observations' : 'Monthly observations'));
+                BW.VisualBuilderSources?.attachRow(meta, data.id, data.name);
                 if (meta.childElementCount) item.append(meta);
                 if (visible.has('chg')) { const absolute = node('div', 'tw-mobile-extra'); absolute.append(node('span', '', 'Change'), node('span', '', row.querySelector('.chg-value')?.textContent?.trim() || '—')); item.append(absolute); }
                 list.append(item);

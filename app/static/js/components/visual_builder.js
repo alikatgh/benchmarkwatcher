@@ -202,15 +202,16 @@
         return [zero && lo === 0 ? 0 : lo - pad, zero && hi === 0 ? 0 : hi + pad];
     }
     function styleAxis(group) {
-        group.attr('font-family', 'Arial, Helvetica, sans-serif').attr('font-size', 14).attr('color', MUTED);
+        group.attr('class', 'bw-vb-axis').attr('font-family', 'Arial, Helvetica, sans-serif').attr('font-size', 14).attr('color', MUTED);
         group.selectAll('text').attr('fill', MUTED).attr('font-family', 'Arial, Helvetica, sans-serif').attr('font-size', 14);
         group.selectAll('path,line').attr('stroke', GRID); group.select('.domain').remove();
     }
     function emptyGraphic(svg, box, message) {
         svg.append('rect').attr('x', box.left).attr('y', box.top).attr('width', box.right - box.left).attr('height', box.bottom - box.top)
             .attr('fill', '#f8e8dc').attr('stroke', GRID).attr('stroke-dasharray', '4 5');
-        splitLines(message, 66).forEach((line, index) => svgText(svg, line, (box.left + box.right) / 2,
-            (box.top + box.bottom) / 2 + index * 25, 18, { fill: MUTED, anchor: 'middle' }));
+        const lines = splitLines(message, box.quick ? Math.max(20, Math.floor((box.right - box.left) / 7)) : 66);
+        lines.forEach((line, index) => svgText(svg, line, (box.left + box.right) / 2,
+            (box.top + box.bottom) / 2 + (index - (box.quick ? (lines.length - 1) / 2 : 0)) * (box.quick ? 19 : 25), box.quick ? 12 : 18, { fill: MUTED, anchor: 'middle' }));
     }
     function drawTimeline(svg, spec, data, box) {
         const d = window.d3;
@@ -223,16 +224,17 @@
         const x = (spec.ordinal ? d.scaleLinear() : d.scaleUtc()).domain([first, last]).range([box.left, box.right]);
         const y = d.scaleLinear().domain(domain(points.map(point => point.value), spec.zero)).nice(5).range([box.bottom, box.top]);
         const grid = svg.append('g').attr('transform', `translate(${box.right},0)`)
-            .call(d.axisRight(y).ticks(5).tickSize(-(box.right - box.left)).tickFormat(value => pretty(value)));
+            .call(d.axisRight(y).ticks(box.quick ? 4 : 5).tickSize(-(box.right - box.left)).tickFormat(value => box.quick ? d.format('.3~s')(value) : pretty(value)));
         styleAxis(grid); grid.selectAll('.tick line').attr('stroke-width', 1).attr('stroke-opacity', .85);
         const bottomAxis = d.axisBottom(x);
         if (spec.ordinal) {
-            const step = Math.max(1, Math.ceil(spec.ordinalLabels.length / 7));
+            const step = Math.max(1, Math.ceil(spec.ordinalLabels.length / (box.quick ? Math.max(2, Math.floor((box.right - box.left) / 100)) : 7)));
             bottomAxis.tickValues(spec.ordinalLabels.map((label, index) => index).filter(index => index % step === 0 || index === spec.ordinalLabels.length - 1))
-                .tickFormat(index => spec.ordinalLabels[index].length > 20 ? spec.ordinalLabels[index].slice(0, 18) + '…' : spec.ordinalLabels[index]);
-        } else bottomAxis.ticks(6).tickFormat(d.utcFormat(last - first > 2 * 365 * DAY ? '%Y' : last - first > 100 * DAY ? '%b %Y' : '%d %b'));
+                .tickFormat(index => spec.ordinalLabels[index].length > (box.quick ? 12 : 20) ? spec.ordinalLabels[index].slice(0, box.quick ? 10 : 18) + '…' : spec.ordinalLabels[index]);
+        } else bottomAxis.ticks(box.quick ? Math.max(2, Math.floor((box.right - box.left) / 110)) : 6).tickFormat(d.utcFormat(last - first > 2 * 365 * DAY ? '%Y' : last - first > 100 * DAY ? '%b %Y' : '%d %b'));
         const axis = svg.append('g').attr('transform', `translate(0,${box.bottom})`).call(bottomAxis);
         styleAxis(axis); axis.selectAll('line').remove(); axis.selectAll('text').attr('dy', '1.1em');
+        axis.classed('bw-vb-bottom-axis', true);
         if (spec.zero) svg.append('line').attr('class', 'bw-vb-zero').attr('x1', box.left).attr('x2', box.right)
             .attr('y1', y(0)).attr('y2', y(0)).attr('stroke', MUTED).attr('stroke-width', 1.3);
         data.series.forEach((series, index) => {
@@ -264,7 +266,7 @@
                     .append('title').text(pointTitle(point, series)));
             }
         });
-        timelineInspection(svg, spec, data, x, y, box, position);
+        if (!box.quick) timelineInspection(svg, spec, data, x, y, box, position);
     }
     function timelineInspection(svg, spec, data, x, y, box, position) {
         const observations = data.series.flatMap((series, index) => series.points.filter(point => !point.invalidDate && point.value !== null)
@@ -299,21 +301,23 @@
         const d = window.d3;
         const ranked = [...rows].filter(row => row.value !== null).sort((a, b) => b.value - a.value || a.index - b.index).slice(0, spec.limit);
         if (!ranked.length) { emptyGraphic(svg, box, 'No compatible values to rank. Choose a dataset or apply your source data.'); return; }
-        const left = box.left + 200, right = box.right - 62;
+        const labelWidth = box.quick ? Math.min(155, (box.right - box.left) * .4) : 200;
+        const left = box.left + labelWidth, right = box.right - (box.quick ? 8 : 62);
         const x = d.scaleLinear().domain(domain(ranked.map(row => row.value), true)).nice(5).range([left, right]);
-        const y = d.scaleBand().domain(ranked.map((row, index) => index)).range([box.top + 35, box.bottom]).padding(.26);
-        const axis = svg.append('g').attr('transform', `translate(0,${box.top})`).call(d.axisTop(x).ticks(5).tickSize(-(box.bottom - box.top)).tickFormat(value => pretty(value)));
+        const y = d.scaleBand().domain(ranked.map((row, index) => index)).range([box.top + (box.quick ? 20 : 35), box.bottom]).padding(.26);
+        const axis = svg.append('g').attr('transform', `translate(0,${box.top})`).call(d.axisTop(x).ticks(box.quick ? Math.max(2, Math.floor((right - left) / 70)) : 5).tickSize(-(box.bottom - box.top)).tickFormat(value => box.quick ? d.format('.3~s')(value) : pretty(value)));
         styleAxis(axis); axis.selectAll('.tick line').attr('stroke-opacity', .7);
         svg.append('line').attr('class', 'bw-vb-zero').attr('x1', x(0)).attr('x2', x(0)).attr('y1', box.top + 20).attr('y2', box.bottom).attr('stroke', MUTED).attr('stroke-width', 1.3);
         ranked.forEach((row, index) => {
             const center = y(index) + y.bandwidth() / 2;
-            const label = row.label.length > 27 ? row.label.slice(0, 25) + '…' : row.label;
-            svgText(svg, label, left - 13, center + 5, 16, { anchor: 'end' }).append('title').text(row.label);
-            if (row.period) svgText(svg, row.period, left - 13, center + 20, 11, { anchor: 'end', fill: MUTED });
+            const maxLabel = box.quick ? Math.max(8, Math.floor(labelWidth / 7)) : 27;
+            const label = row.label.length > maxLabel ? row.label.slice(0, maxLabel - 2) + '…' : row.label;
+            svgText(svg, label, left - (box.quick ? 8 : 13), center + 5, box.quick ? 12 : 16, { anchor: 'end' }).append('title').text(row.label);
+            if (row.period && !box.quick) svgText(svg, row.period, left - 13, center + 20, 11, { anchor: 'end', fill: MUTED });
             svg.append('rect').attr('class', 'bw-vb-mark').attr('data-period', row.period).attr('x', Math.min(x(0), x(row.value)))
                 .attr('y', y(index)).attr('width', Math.abs(x(row.value) - x(0))).attr('height', y.bandwidth())
                 .attr('fill', colorFor(spec, 0, row.id || row.label)).append('title').text(pointTitle(row));
-            svgText(svg, pretty(row.value), x(row.value) + (row.value < 0 ? -8 : 8), center + 5, 15,
+            if (!box.quick) svgText(svg, pretty(row.value), x(row.value) + (row.value < 0 ? -8 : 8), center + 5, 15,
                 { anchor: row.value < 0 ? 'end' : 'start', bold: true });
         });
     }
@@ -322,11 +326,14 @@
         if (!usable.length) { emptyGraphic(svg, box, 'No compatible category values. Apply label,value source data to begin.'); return; }
         const x = d.scaleBand().domain(rows.map((row, index) => index)).range([box.left, box.right]).padding(.32);
         const y = d.scaleLinear().domain(domain(usable.map(row => row.value), spec.type === 'bar' || spec.zero)).nice(5).range([box.bottom, box.top]);
-        const grid = svg.append('g').attr('transform', `translate(${box.right},0)`).call(d.axisRight(y).ticks(5).tickSize(-(box.right - box.left)).tickFormat(value => pretty(value)));
+        const grid = svg.append('g').attr('transform', `translate(${box.right},0)`).call(d.axisRight(y).ticks(box.quick ? 4 : 5).tickSize(-(box.right - box.left)).tickFormat(value => box.quick ? d.format('.3~s')(value) : pretty(value)));
         styleAxis(grid);
-        const step = Math.max(1, Math.ceil(rows.length / 8)), selected = rows.map((row, index) => index).filter(index => index % step === 0);
-        const axis = svg.append('g').attr('transform', `translate(0,${box.bottom})`).call(d.axisBottom(x).tickValues(selected).tickFormat(index => rows[index].label.length > 18 ? rows[index].label.slice(0, 16) + '…' : rows[index].label));
+        const tickCount = box.quick ? Math.max(2, Math.floor((box.right - box.left) / 95)) : 8;
+        const step = Math.max(1, Math.ceil(rows.length / tickCount)), selected = rows.map((row, index) => index).filter(index => index % step === 0);
+        const labelLength = box.quick ? 12 : 18;
+        const axis = svg.append('g').attr('transform', `translate(0,${box.bottom})`).call(d.axisBottom(x).tickValues(selected).tickFormat(index => rows[index].label.length > labelLength ? rows[index].label.slice(0, labelLength - 2) + '…' : rows[index].label));
         styleAxis(axis); axis.selectAll('line').remove(); axis.selectAll('text').attr('dy', '1.1em');
+        axis.classed('bw-vb-bottom-axis', true);
         if (spec.zero || spec.type === 'bar') svg.append('line').attr('class', 'bw-vb-zero').attr('x1', box.left).attr('x2', box.right).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', MUTED);
         rows.forEach((row, index) => {
             if (row.value === null) return;
@@ -392,8 +399,11 @@
         features.forEach(feature => {
             const name = text(feature.properties?.[spec.geoKey || 'name'] ?? feature.id);
             const row = matches.get(name.trim().toLowerCase());
+            const centroid = box.quick ? path.centroid(feature) : null;
+            const center = centroid?.every(Number.isFinite) ? centroid : [(box.left + box.right) / 2, (box.top + box.bottom) / 2];
             if (row && row.value !== null) matched += 1;
             svg.append('path').attr('class', 'bw-vb-geography').attr('d', path(feature)).attr('fill', row?.value !== undefined && row?.value !== null ? fill(row.value) : '#e6ded8')
+                .attr('data-inspect-x', box.quick ? center[0] : null).attr('data-inspect-y', box.quick ? center[1] : null)
                 .attr('stroke', PAPER).attr('stroke-width', 1).append('title').text(row ? pointTitle(row) : `${name || 'Geography'} · No matching observation`);
         });
         svgText(svg, `${matched} of ${features.length} geographic features have compatible observations`, box.left, box.bottom - 20, 14, { fill: MUTED });
@@ -405,8 +415,64 @@
             svgText(svg, pretty(extent[1]), box.right, box.bottom + 16, 13, { fill: MUTED, anchor: 'end' });
         }
     }
-    function render(target, input = {}) {
+    function quickInspection(svg, box, onInspect) {
+        const marks = svg.selectAll('.bw-vb-mark,.bw-vb-geography').nodes().map(node => ({ node,
+            x: node.hasAttribute('data-inspect-x') ? Number(node.getAttribute('data-inspect-x')) : node.hasAttribute('cx') ? Number(node.getAttribute('cx')) : Number(node.getAttribute('x')) + Number(node.getAttribute('width')) / 2,
+            y: node.hasAttribute('data-inspect-y') ? Number(node.getAttribute('data-inspect-y')) : node.hasAttribute('cy') ? Number(node.getAttribute('cy')) : Number(node.getAttribute('y')) + Number(node.getAttribute('height')) / 2,
+            text: node.querySelector('title')?.textContent || '' }));
+        if (box.timeline) marks.sort((a, b) => a.x - b.x);
+        if (!marks.length) return;
+        const ring = svg.append('circle').attr('class', 'bw-qv-active-mark').attr('r', 5).attr('fill', 'none').attr('stroke-width', 2).attr('visibility', 'hidden').attr('pointer-events', 'none');
+        let selected = -1;
+        function hide() { ring.attr('visibility', 'hidden'); onInspect?.(null); }
+        function inspect(index) {
+            selected = Math.max(0, Math.min(marks.length - 1, index));
+            const item = marks[selected];
+            ring.attr('cx', item.x).attr('cy', item.y).attr('visibility', 'visible'); onInspect?.(item);
+        }
+        svg.attr('tabindex', 0).attr('aria-label', svg.attr('aria-label') + ' Use left and right arrow keys to inspect exact source observations.');
+        svg.on('keydown.quick', event => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault(); event.stopPropagation();
+            inspect(event.key === 'Home' ? 0 : event.key === 'End' ? marks.length - 1 : selected < 0 ? (event.key === 'ArrowLeft' ? marks.length - 1 : 0) : selected + (event.key === 'ArrowLeft' ? -1 : 1));
+        }).on('blur.quick', hide).on('mouseleave.quick', hide).on('pointermove.quick', event => {
+            const [x, y] = window.d3.pointer(event, svg.node());
+            if (x < box.left || x > box.right || y < box.top || y > box.bottom) { hide(); return; }
+            let nearest = 0, distance = Infinity;
+            marks.forEach((item, index) => { const next = (x - item.x) ** 2 + (y - item.y) ** 2; if (next < distance) { nearest = index; distance = next; } });
+            inspect(nearest);
+        });
+        svg.selectAll('.bw-vb-mark,.bw-vb-geography').on('mouseenter.quick', function () { inspect(marks.findIndex(item => item.node === this)); });
+    }
+    function renderQuick(target, input, options) {
+        const d = window.d3, spec = normalize(input), data = compatible(spec), ranked = ranking(spec, data);
+        const width = Math.max(240, Math.min(1000, number(options.width) || target?.clientWidth || 700));
+        const rankedCount = Math.min(spec.limit, ranked.filter(row => row.value !== null).length);
+        const height = spec.type === 'horizontal' ? Math.max(200, Math.min(440, rankedCount * 29 + 50)) : width < 450 ? 250 : 290;
+        const box = { left: 8, right: width - (spec.type === 'horizontal' || spec.type === 'map' ? 12 : 54), top: spec.type === 'horizontal' ? 25 : 16, bottom: height - 38, quick: true,
+            timeline: spec.series.length > 0 && !['horizontal', 'map'].includes(spec.type) };
+        const caption = captions(spec, data, ranked), isSvg = target?.tagName?.toLowerCase() === 'svg';
+        const svg = target ? (isSvg ? d.select(target) : d.select(target).selectAll('svg.bw-builder-graphic').data([null]).join('svg')) : d.create('svg');
+        svg.selectAll('*').remove();
+        svg.attr('class', 'bw-builder-graphic bw-quick-graphic').attr('viewBox', `0 0 ${width} ${height}`).attr('xmlns', 'http://www.w3.org/2000/svg')
+            .attr('role', 'img').attr('aria-label', `${spec.title}. ${spec.unit || 'Unit not specified'}. ${caption.notes.join(' ')}`)
+            .attr('style', 'display:block;width:100%;height:auto');
+        svg.append('title').text(spec.title);
+        svg.append('desc').text([spec.subtitle, spec.unit, ...caption.sources.map(source => 'Source: ' + source), ...caption.notes].filter(Boolean).join('\n'));
+        const metadata = { ...spec }; delete metadata.datasets; delete metadata.units;
+        svg.append('metadata').text(JSON.stringify(metadata));
+        if (spec.type === 'horizontal') drawRanking(svg, spec, ranked, box);
+        else if (spec.type === 'map') drawMap(svg, spec, ranked, box);
+        else if (!spec.series.length && ['bar', 'scatter'].includes(spec.type)) drawCategories(svg, spec, data.rows, box);
+        else drawTimeline(svg, spec, data, box);
+        svg.selectAll('.bw-vb-bottom-axis .tick text').filter((value, index, nodes) => index === 0 || index === nodes.length - 1)
+            .attr('text-anchor', (value, index, nodes) => index === 0 ? 'start' : 'end');
+        quickInspection(svg, box, options.onInspect);
+        return { svg: svg.node(), spec, caption, legend: data.series.map((series, index) => ({ id: series.id, name: series.name, color: colorFor(spec, index, series.id) })), destroy() { if (!isSvg) svg.remove(); } };
+    }
+    function render(target, input = {}, options = {}) {
         if (!window.d3) throw new Error('D3 must load before the graphic builder.');
+        if (options.presentation === 'quick') return renderQuick(target, input, options);
         const d = window.d3, spec = normalize(input), data = compatible(spec), ranked = ranking(spec, data);
         const width = Math.max(640, Math.min(1600, number(spec.width) || 960)), inset = 42;
         const titleLines = splitLines(spec.title, Math.floor((width - 2 * inset) / 18));
@@ -574,10 +640,10 @@
     function button(parent, label, action, className = '') {
         const node = element('button', label, className); node.type = 'button'; node.dataset.vbAction = action; parent.append(node); return node;
     }
-    function open(input = {}) {
+    function open(input = {}, options = {}) {
         input = input && typeof input === 'object' ? input : {};
         if (active) active.close();
-        const opener = document.activeElement, datasets = array(input.datasets), edits = new Map(), authoredByDataset = new Map();
+        const opener = options.trigger || document.activeElement, datasets = array(input.datasets), edits = new Map(), authoredByDataset = new Map();
         let authoredFields = new Set();
         let current = normalize(input), controller;
         const dialog = element('dialog', undefined, 'bw-visual-builder'); dialog.setAttribute('aria-labelledby', 'bw-vb-title');
@@ -730,12 +796,16 @@
             catch (error) { announce(error.message, true); } finally { target.disabled = false; }
         });
         function filename(extension) { return (current.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80) || 'benchmark-graphic') + '.' + extension; }
+        let closed = false;
         function close() {
+            if (closed) return;
+            closed = true;
             if (dialog.isConnected) {
                 if (dialog.open && typeof dialog.close === 'function') dialog.close(); dialog.remove();
-                if (opener?.isConnected) opener.focus();
+                if (opener?.isConnected) opener.focus({ preventScroll: true });
             }
             if (active === controller) active = null;
+            options.onClose?.();
         }
         closeButton.addEventListener('click', close);
         dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });

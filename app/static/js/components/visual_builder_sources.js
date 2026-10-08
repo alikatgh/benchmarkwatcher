@@ -8,8 +8,8 @@
     const unit = record => [record.currency, record.unit].filter(Boolean).join(' / ');
     const source = record => [record.source_name || record.source, record.source_url].filter(Boolean).join(' · ');
     const gaps = {daily:7, weekly:10, monthly:62, quarterly:115, annual:400};
-    let selectedIds = [], catalogPromise, pageSpec;
-    function attach(host, specification, label = 'Create graphic') {
+    let selectedIds = [], pageSpec;
+    function attach(host, specification, label = 'Quick visual') {
         if (!host) return null;
         let binding = bindings.get(host);
         if (binding) { binding.spec = specification; binding.button.textContent = label; return binding.button; }
@@ -17,12 +17,12 @@
         const status = node('span', '', 'bw-graphic-status'); status.setAttribute('role', 'status');
         binding = {button, status, spec:specification}; bindings.set(host, binding);
         button.addEventListener('click', async () => {
-            if (!BW.VisualBuilder) return;
+            if (!BW.QuickVisuals) return;
             button.disabled = true; status.textContent = '';
             try {
                 const spec = await (typeof binding.spec === 'function' ? binding.spec() : binding.spec);
-                if (host.isConnected) BW.VisualBuilder.open(spec || {});
-            } catch (_) { status.textContent = 'Could not load these observations. Try again.'; }
+                if (host.isConnected) { button.disabled = false; BW.QuickVisuals.open(spec || {}, {trigger:button}); }
+            } catch (error) { status.textContent = error.visualMessage || 'Could not load these observations. Try again.'; }
             finally { button.disabled = false; }
         });
         host.append(button, status); return button;
@@ -57,37 +57,49 @@
                     period:item.period, source:[item.source,item.sourceUrl].filter(Boolean).join(' · '), status:item.status, footnote:item.footnote}))};
         });
     }
-    async function getCatalog() {
-        if (!catalogPromise) catalogPromise = fetch('/api/commodities?include_history=false').then(async response => {
-            if (!response.ok) throw new Error('Catalog unavailable');
-            const payload = await response.json(); return Array.isArray(payload) ? payload : payload.data || payload.commodities || [];
-        }).catch(error => { catalogPromise = null; throw error; });
-        return catalogPromise;
+    function unavailable(message) { const error = new Error(message); error.visualMessage = message; throw error; }
+    function cachedRecord(row) {
+        const record = BW.CompactTable?.sparklineData?.find(item => String(item.id) === row.dataset.id);
+        if (!record) unavailable('Observations are still loading. Try again when the table is ready.');
+        return {...record, frequency:record.frequency || row.dataset.frequency};
     }
-    async function loadBenchmark(id) {
-        const response = await fetch('/api/commodity/' + encodeURIComponent(id));
-        if (!response.ok) throw new Error('History unavailable');
-        const payload = await response.json(); return payload.data || payload.commodity || payload;
-    }
-    async function tableSpec() {
-        const visible = [...document.querySelectorAll('#table-body tr[data-id]')].filter(row => !row.hidden && row.style.display !== 'none');
-        const category = new URLSearchParams(location.search).get('category');
-        const catalog = await getCatalog();
-        const ids = selectedIds.length ? selectedIds : [visible[0]?.dataset.id || catalog.find(record=>!category || record.category === category)?.id].filter(Boolean);
-        if (!ids.length) return {};
-        if (ids.length > 8) throw new Error('Choose up to eight histories');
-        const records = await Promise.all(ids.map(loadBenchmark));
-        const specs = records.map(record => benchmark(record));
-        if (records.length === 1) return specs[0];
-        const sameUnit = specs.every(spec=>spec.unit === specs[0].unit);
-        const combined = {id:'comparison:' + ids.join(','), name:'Selected histories', title:'Selected benchmark histories', type:'line',
-            unit:sameUnit ? specs[0].unit : '', source:[...new Set(specs.map(spec=>spec.source))].join('; '),
-            notes:'Selected benchmarks. Only matching units share an axis; original observation dates are retained.', series:specs.flatMap(spec=>spec.series)};
+    function tableSpec(mode = 'selected', id) {
+        if (document.getElementById('data-table')?.getAttribute('aria-busy') === 'true') unavailable('Observations are updating. Try again when the table is ready.');
+        const all = [...document.querySelectorAll('#table-body tr[data-id]')];
+        const visible = BW.TableWorkspace?.getVisibleRows?.() || all.filter(row => !row.hidden && row.style.display !== 'none');
+        const selected = BW.TableWorkspace?.getSelectedIds?.() || selectedIds;
+        const rows = id ? all.filter(row => row.dataset.id === id) : mode === 'filtered' ? visible : all.filter(row => selected.includes(row.dataset.id));
+        if (!rows.length) unavailable(id ? 'This benchmark is no longer in the table.' : mode === 'filtered' ? 'No matching observations to visualize. Adjust the table filters.' : 'Select one or more benchmarks to visualize.');
+        if (mode !== 'filtered' && rows.length > 8) unavailable('Select up to eight benchmark histories for a quick visual.');
+        const records = rows.map(cachedRecord);
+        const range = document.getElementById('date-range-display')?.textContent.trim() || BW.TableWorkspace?.current?.range || 'Current table range';
+        const note = 'Table range: ' + range + '. Historical reference observations; source gaps remain open.';
+        if (mode === 'filtered') return {
+            id:'table:filtered:' + rows.map(row=>row.dataset.id).join(','), title:'Filtered reference values', type:'ranking',
+            unit:unit(records[0]), source:[...new Set(records.map(source))].join('; '),
+            notes:note + ' Only filtered rows are included. Reference dates can differ; inspect each value for its original period. Units are shown separately.',
+            rows:records.map(record=>({id:record.id,label:record.name,value:record.price,unit:unit(record),period:record.date,
+                source:source(record),sourceUrl:record.source_url,status:record.status,footnote:record.footnote}))
+        };
+        const specs = records.map(record => benchmark(record,record.history,{notes:note}));
+        if (specs.length === 1) return specs[0];
+        const combined = {id:'selection:' + records.map(record=>record.id).join(','), name:'Selected histories', title:'Selected benchmark histories', type:'line',
+            unit:specs[0].unit, source:[...new Set(specs.map(spec=>spec.source))].join('; '),
+            notes:note + ' Only selected rows are included. Units are shown separately.', series:specs.flatMap(spec=>spec.series)};
         return {...combined, datasets:[combined,...specs.map(spec=>({...spec,name:spec.title}))]};
+    }
+    function attachRow(host, id, name) {
+        const button = attach(host,()=>tableSpec('row',id));
+        if (!button || button.classList.contains('bw-quick-row')) return button;
+        button.classList.add('bw-quick-row'); button.setAttribute('aria-label','Quick visual for ' + name); button.title = 'Quick visual';
+        const icon = document.createElementNS('http://www.w3.org/2000/svg','svg');
+        icon.setAttribute('viewBox','0 0 24 24'); icon.setAttribute('width','16'); icon.setAttribute('height','16'); icon.setAttribute('fill','none'); icon.setAttribute('stroke','currentColor'); icon.setAttribute('stroke-width','1.7'); icon.setAttribute('aria-hidden','true');
+        const line = document.createElementNS(icon.namespaceURI,'path'); line.setAttribute('d','M4 4v16h16M7 15l4-5 4 3 5-7'); icon.append(line); button.replaceChildren(icon);
+        return button;
     }
     async function defaultSpec() {
         if (pageSpec) return typeof pageSpec === 'function' ? pageSpec() : pageSpec;
-        if (document.getElementById('table-workspace') || document.getElementById('grid-view')) return tableSpec();
+        if (document.getElementById('table-workspace') || document.getElementById('grid-view')) return tableSpec(selectedIds.length ? 'selected' : 'filtered');
         const data = json('gr-chart-data'); if (data) return reference(data,json('bw-visual-source') || {});
         return {id:'custom', title:'Untitled graphic', notes:'Add your data and its source to create a graphic.'};
     }
@@ -110,69 +122,24 @@
                     const doc = new DOMParser().parseFromString(await response.text(),'text/html');
                     const data = JSON.parse(doc.getElementById('gr-chart-data').textContent);
                     const meta = JSON.parse(doc.getElementById('bw-visual-source')?.textContent || '{}');
-                    BW.VisualBuilder.open(reference(data,meta));
+                    button.disabled = false; BW.QuickVisuals.open(reference(data,meta),{trigger:button});
                 } catch (_) { if (status?.matches('[role=status]')) status.textContent = 'History could not load. Try again.'; }
                 finally { button.disabled = false; }
             });
         });
     }
-    function initCategory() {
-        const section = document.getElementById('bw-category-graphic'); if (!section) return;
-        const select = section.querySelector('select'), stage = section.querySelector('[data-category-preview]');
-        const status = section.querySelector('[role=status]'), heading = section.querySelector('h2');
-        let sequence = 0, currentId = '', graphic, spec;
-        async function load() {
-            const token = ++sequence; status.textContent = 'Loading saved history…';
-            stage.setAttribute('aria-busy','true'); section.querySelector('[data-category-actions]').hidden = true;
-            try {
-                const record = await loadBenchmark(select.value); if (token !== sequence) return;
-                spec = benchmark(record,undefined,{type:'area',title:record.name + ' · historical reference prices'});
-                graphic?.destroy(); graphic = BW.VisualBuilder.render(stage,spec);
-                attach(section.querySelector('[data-category-actions]'),()=>spec,'Edit this graphic');
-                section.querySelector('[data-category-actions]').hidden = false; status.textContent = '';
-            } catch (_) { if (token === sequence) { stage.replaceChildren(); status.textContent = 'History is unavailable. Choose a benchmark to retry.'; } }
-            finally { if (token === sequence) stage.removeAttribute('aria-busy'); }
-        }
-        async function update() {
-            const params = new URLSearchParams(location.search), category = params.get('category');
-            const shown = !!category && (!params.get('workspace') || params.get('workspace') === 'benchmarks');
-            section.hidden = !shown;
-            const featured = document.getElementById('bw-featured'); if (featured) featured.hidden = shown;
-            if (!shown) { ++sequence; currentId=''; return; }
-            if (category === currentId) return;
-            currentId = category; const token = ++sequence;
-            spec = null; section.querySelector('[data-category-actions]').hidden = true;
-            const names = {energy:'Energy',metal:'Metals',precious:'Precious metals',agricultural:'Agriculture',index:'Indices'};
-            heading.textContent = (names[category] || 'Benchmark') + ' in graphics';
-            const related = section.querySelector('footer a');
-            related.href = '/data?q=' + encodeURIComponent(names[category] || category);
-            related.textContent = 'Explore related country data →';
-            stage.replaceChildren(); status.textContent = 'Loading saved benchmarks…';
-            try {
-                const records = (await getCatalog()).filter(record=>record.category === category); if (token !== sequence) return;
-                select.replaceChildren(...records.map(record => new Option(record.name,record.id)));
-                if (records.length) await load();
-                else status.textContent = 'No saved benchmarks in this category yet.';
-            } catch (_) { if (token === sequence) { currentId=''; status.textContent = 'Could not load this category. Reopen it to retry.'; } }
-        }
-        select.addEventListener('change',load);
-        document.addEventListener('bw:table-view-change',()=>queueMicrotask(update));
-        document.addEventListener('bw:table-ready',()=>queueMicrotask(update));
-        document.addEventListener('click',event=>{if(event.target.closest('[data-workspace-category],[data-workspace]')) setTimeout(update,0);});
-        window.addEventListener('popstate',()=>queueMicrotask(update));
-        update();
-    }
-    BW.VisualBuilderSources = {attach,benchmark,reference,catalogSpecs,setPage,defaultSpec};
+    BW.VisualBuilderSources = {attach,attachRow,benchmark,reference,catalogSpecs,setPage,defaultSpec,tableSpec};
     document.addEventListener('bw:table-selection',event=>{selectedIds=event.detail?.ids || [];});
     document.addEventListener('DOMContentLoaded',()=>{
-        const launch = document.querySelector('[data-open-visual-builder]');
-        if (launch) launch.addEventListener('click',async()=>{
-            launch.disabled=true;
-            try { BW.VisualBuilder.open(await defaultSpec()); }
-            catch (_) { BW.VisualBuilder.open({title:'Untitled graphic',notes:'Saved data could not load. Paste data to begin, or close and retry.'}); }
-            finally {launch.disabled=false;}
-        });
-        initCatalog(); initCategory();
+        initCatalog();
+        const filtered = attach(document.getElementById('tw-visual-actions'),()=>tableSpec('filtered'),'Visualize filtered');
+        if (filtered) {
+            filtered.setAttribute('aria-label','Visualize filtered'); filtered.title = 'Visualize filtered';
+            const label = node('span','Visualize filtered','bw-quick-label');
+            const icon = document.createElementNS('http://www.w3.org/2000/svg','svg');
+            icon.setAttribute('viewBox','0 0 24 24'); icon.setAttribute('width','16'); icon.setAttribute('height','16'); icon.setAttribute('fill','none'); icon.setAttribute('stroke','currentColor'); icon.setAttribute('stroke-width','1.7'); icon.setAttribute('aria-hidden','true');
+            const line = document.createElementNS(icon.namespaceURI,'path'); line.setAttribute('d','M4 4v16h16M7 15l4-5 4 3 5-7'); icon.append(line); filtered.replaceChildren(icon,label);
+        }
         attach(document.getElementById('tw-selection'),tableSpec);
     });
 })();
