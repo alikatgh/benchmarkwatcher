@@ -7,6 +7,30 @@ test.beforeEach(async({context,baseURL})=>{
   await context.route('**/*',route=>new URL(route.request().url()).origin===baseURL ? route.continue() : route.abort());
 });
 
+test('320px shared header keeps Visual Builder and navigation controls reachable',async({page})=>{
+  await page.setViewportSize({width:320,height:800});
+  for(const path of ['/', '/?view=compact', '/data', '/help']) {
+    await page.goto(path);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth),path).toBeLessThanOrEqual(1);
+    const controls=await page.locator('.bw-header a,.bw-header button').evaluateAll(elements=>elements.map(element=>{
+      const rect=element.getBoundingClientRect();
+      return {name:element.getAttribute('aria-label'),left:rect.left,right:rect.right};
+    }));
+    for(const control of controls) {
+      expect(control.left,`${path}: ${control.name}`).toBeGreaterThanOrEqual(0);
+      expect(control.right,`${path}: ${control.name}`).toBeLessThanOrEqual(320);
+    }
+    const trigger=page.getByRole('button',{name:'Open Visual Builder'});
+    await trigger.click();
+    const dialog=page.getByRole('dialog',{name:'Graphic builder'});
+    await expect(dialog).toBeVisible();
+    expect(await dialog.evaluate(element=>element.scrollWidth-element.clientWidth)).toBeLessThanOrEqual(1);
+    await page.keyboard.press('Escape');
+    await expect(dialog).toHaveCount(0);
+    await expect(trigger).toBeInViewport();
+  }
+});
+
 test('Energy graphic opens an editable, saved and attributed export on desktop and mobile',async({page},info)=>{
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/?category=energy&view=compact');
