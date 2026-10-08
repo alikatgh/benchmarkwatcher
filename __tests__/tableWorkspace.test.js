@@ -10,6 +10,10 @@ function setup(saved) {
     localStorage.clear();
     if (saved) localStorage.setItem('bw-table-workspace-v1', JSON.stringify(saved));
     document.body.innerHTML = `<section id="table-workspace"><div id="tw-views"></div><div id="tw-view-status"></div><div id="tw-storage-warning" hidden></div><div id="tw-announcement"></div><input id="tw-query"><select id="tw-category"></select><select id="tw-frequency"><option value=""></option><option value="daily"></option></select><select id="tw-density"><option value="comfortable"></option><option value="compact"></option></select><div id="tw-filter-chips"></div><div id="tw-property-list"></div><div id="tw-sort-rules"></div><div id="tw-result-count"></div><div id="tw-empty"></div><div id="tw-selection"><strong id="tw-selection-count"></strong></div><button id="tw-export-selected"></button><button id="tw-compare-selected"></button><table id="data-table"><thead><tr><th data-col="selection"><input type="checkbox" id="tw-select-all"></th></tr></thead><tbody id="table-body">${row({ id: 'z', name: 'Zinc', price: 20, change: -3, date: '2025-02-01' })}${row({ id: 'c', name: 'Copper', price: 100, change: 2, date: '2025-01-01' })}${row({ id: 'g', name: 'Gold', category: 'precious', frequency: 'monthly' })}${row({ id: 'a', name: 'Aluminium', price: 0, change: 0, date: '2025-02-01' })}</tbody></table></section>`;
+    const ranges = ['1W', '1M', '3M', '6M', '1Y', 'ALL'];
+    const rangeControls = document.createElement('div');
+    rangeControls.innerHTML = '<select id="tw-range-select" aria-label="Observation range">' + ranges.map(range => `<option value="${range}">${range}</option>`).join('') + '</select>' + ranges.map(range => `<button id="range-${range}" class="range-btn">${range}</button>`).join('');
+    document.getElementById('table-workspace').append(rangeControls);
     window.history.replaceState({}, '', '/');
     global.BW = { CompactTable: { setDataRange: jest.fn() } };
     window.eval(script);
@@ -158,15 +162,36 @@ test('failed range request retains observations and restores the previously disp
     const table = loadCompactIntegration(w);
     global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503 });
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    table.setDataRange('1M');
+    document.getElementById('tw-range-select').value = '1M';
+    document.getElementById('tw-range-select').dispatchEvent(new Event('change'));
     expect(w.current.range).toBe('1M');
+    expect(document.getElementById('tw-range-select').value).toBe('1M');
     expect(document.getElementById('data-table').getAttribute('aria-busy')).toBe('true');
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(w.current.range).toBe('1Y');
+    expect(document.getElementById('tw-range-select').value).toBe('1Y');
+    expect(document.getElementById('range-1Y').getAttribute('aria-pressed')).toBe('true');
+    expect(document.getElementById('range-1M').getAttribute('aria-pressed')).toBe('false');
     expect(w.getRows()).toHaveLength(4);
     expect(document.getElementById('tw-range-error').textContent).toContain('Previous observations are still shown');
     expect(document.getElementById('data-table').getAttribute('aria-busy')).toBe('false');
     expect(new URLSearchParams(location.search).get('range')).toBe('1Y');
+});
+
+test('native range selection updates observations, URL, persisted range and desktop buttons together', async () => {
+    const w = setup();
+    const table = loadCompactIntegration(w);
+    global.fetch = jest.fn().mockResolvedValue({ok:true,json:async()=>[{id:'g',name:'Gold',category:'precious',currency:'USD',price:2100,date:'2025-03-01',change:100,change_percent:5}]});
+    document.getElementById('tw-range-select').value = '3M';
+    document.getElementById('tw-range-select').dispatchEvent(new Event('change'));
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(table.loadedRange).toBe('3M');
+    expect(w.current.range).toBe('3M');
+    expect(JSON.parse(localStorage.getItem('bw-table-workspace-v1')).current.range).toBe('3M');
+    expect(document.getElementById('tw-range-select').value).toBe('3M');
+    expect(document.getElementById('range-3M').getAttribute('aria-pressed')).toBe('true');
+    expect(new URLSearchParams(location.search).get('range')).toBe('3M');
+    expect(w.getRows().map(row => [row.dataset.id,row.dataset.price])).toEqual([['g','2100']]);
 });
 
 test('AJAX refresh preserves unavailable change and raw precision in workspace CSV', () => {

@@ -277,6 +277,7 @@ function rebootDetail() {
 }
 function customDates(start, end) {
     click('Custom');
+    document.getElementById('benchmark-exact-dates').open = true;
     document.getElementById('benchmark-chart-start').value = start;
     document.getElementById('benchmark-chart-end').value = end;
     document.querySelector('.benchmark-detail-date-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
@@ -401,6 +402,10 @@ test('custom window includes both endpoints, handles a single observation, and c
     expect(document.querySelector('.benchmark-detail-empty').textContent).toContain('No usable observations');
     expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(0);
     expect(document.getElementById('benchmark-detail-observation')).toBeNull();
+    expect(document.querySelector('.benchmark-detail-range-dates').textContent).toContain('Apr 2, 2025');
+    expect(document.querySelector('.benchmark-detail-range-dates').textContent).toContain('Apr 30, 2025');
+    expect(document.querySelector('.benchmark-detail-range-handles').hidden).toBe(true);
+    expect(document.querySelector('.benchmark-detail-date-slider').textContent).toContain('No source dates in this interval');
 });
 
 test('area display preserves source gaps, table expansion and observation focus; hidden dots retain hover values', async () => {
@@ -467,4 +472,42 @@ test.each([0,-10])('range readout keeps a nonpositive baseline absolute instead 
     await BW.BenchmarkDetail.open('gold');
     expect(document.querySelector('.benchmark-detail-range-change').textContent).not.toContain('%');
     expect(document.querySelector('.benchmark-detail-readout').textContent).not.toMatch(/NaN|Infinity/);
+});
+
+
+test('date handles preview without rebuilding, apply on release, preserve focus and cannot cross', async () => {
+    fetch.mockResolvedValue(response(sample('gold', { history: [
+        {date:'2025-01-01',price:100}, {date:'2025-02-01',price:110},
+        {date:'2025-03-01',price:null}, {date:'2025-04-01',price:120}
+    ] })));
+    await BW.BenchmarkDetail.open('gold'); click('Custom');
+    expect(document.getElementById('benchmark-exact-dates').open).toBe(false);
+    let start = document.getElementById('benchmark-range-start');
+    const plot = document.querySelector('.benchmark-detail-plot');
+    start.value = '1'; start.dispatchEvent(new Event('input'));
+    expect(start.getAttribute('aria-valuetext')).toBe('2025-02-01');
+    expect(document.querySelector('.benchmark-detail-plot')).toBe(plot);
+    start.dispatchEvent(new Event('change'));
+    expect(document.querySelector('[data-detail-range="CUSTOM"]').getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(3);
+    expect(document.activeElement.id).toBe('benchmark-range-start');
+    const end = document.getElementById('benchmark-range-end'); end.value='0'; end.dispatchEvent(new Event('input'));
+    expect(end.value).toBe('1'); end.dispatchEvent(new Event('change'));
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(1);
+    expect(document.getElementById('benchmark-range-end').getAttribute('aria-valuetext')).toBe('2025-02-01');
+    click('All');
+    expect(document.getElementById('benchmark-range-start').value).toBe('0');
+    expect(document.getElementById('benchmark-range-end').value).toBe('3');
+});
+
+test('date handles disable for one source date and do not fabricate dates or fetch data', async () => {
+    fetch.mockResolvedValue(response(sample('gold', {history:[{date:'2025-05-01',price:100}]})));
+    await BW.BenchmarkDetail.open('gold'); click('Custom');
+    expect(document.getElementById('benchmark-range-start').disabled).toBe(true);
+    expect(document.getElementById('benchmark-range-end').disabled).toBe(true);
+    expect(document.getElementById('benchmark-range-start').getAttribute('aria-valuetext')).toBe('2025-05-01');
+    const calls=fetch.mock.calls.length;
+    document.getElementById('benchmark-range-start').dispatchEvent(new Event('change'));
+    expect(fetch).toHaveBeenCalledTimes(calls);
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(1);
 });

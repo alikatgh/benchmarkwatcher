@@ -12,7 +12,7 @@
         mode: 'percent', seq: 0, controller: null, trigger: null, triggerScope: null,
         inertNodes: [], open: false, initialized: false, noticeTimer: null, noticeHome: null,
         widths: { ...DEFAULT_WIDTHS }, width: 560, drag: null,
-        custom: { start: '', end: '' }, chartStyle: 'line', showDots: false, settingsOpen: false, inspectedDate: null,
+        custom: { start: '', end: '' }, chartStyle: 'line', showDots: false, settingsOpen: false, exactDatesOpen: false, inspectedDate: null,
         chart: null, resizeChart: null, chartObserver: null
     };
     const byId = id => document.getElementById(id);
@@ -441,7 +441,8 @@
             const control = button(range === 'ALL' ? 'All' : range === 'CUSTOM' ? 'Custom' : range, () => {
                 if (range === 'CUSTOM') {
                     state.settingsOpen = true; byId('benchmark-chart-settings').open = true;
-                    byId('benchmark-chart-start').focus({ preventScroll: true });
+                    const handle = byId('benchmark-range-start');
+                    (handle && !handle.disabled && !handle.parentElement.hidden ? handle : byId('benchmark-exact-dates').querySelector('summary')).focus({ preventScroll: true });
                     byId('benchmark-chart-settings').scrollIntoView?.({block:'nearest'}); return;
                 }
                 state.range = range; redrawChart('[data-detail-range="' + range + '"]');
@@ -450,6 +451,72 @@
             control.setAttribute('aria-pressed', String(range === state.range)); controls.append(control);
         });
         return controls;
+    }
+    function rangeSlider(dates, window) {
+        const wrap = element('div', 'benchmark-detail-date-slider');
+        const readout = element('div', 'benchmark-detail-range-dates');
+        const from = element('output'), to = element('output');
+        const track = element('div', 'benchmark-detail-range-track'), selected = element('span'); track.append(selected);
+        const controls = element('div', 'benchmark-detail-range-handles');
+        const maximum = Math.max(0, dates.length - 1);
+        const empty = !dates.some(date => dateValue(date) >= window.start && dateValue(date) <= window.end);
+        let first = dates.findIndex(date => dateValue(date) >= window.start);
+        if (first < 0) first = maximum;
+        let last = dates.length - 1;
+        while (last > 0 && dateValue(dates[last]) > window.end) last -= 1;
+        first = Math.min(Math.max(0, first), Math.max(0, last));
+        const start = element('input'), end = element('input');
+        [start, end].forEach((input, index) => {
+            input.type = 'range'; input.min = '0'; input.max = String(maximum); input.step = '1';
+            input.id = index ? 'benchmark-range-end' : 'benchmark-range-start';
+            input.setAttribute('aria-label', index ? 'Range end' : 'Range start');
+            input.disabled = dates.length < 2 || empty;
+        });
+        start.value = String(first); end.value = String(Math.max(0, last));
+        from.htmlFor = start.id; to.htmlFor = end.id;
+        const label = date => date ? new Date(date + 'T00:00:00Z').toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric', timeZone:'UTC'}) : 'No dates';
+        let collapsedAnchor = null, pointerValue = null;
+        function preview(input, committing = false) {
+            if (collapsedAnchor !== null && input) {
+                const value = committing && pointerValue !== null ? pointerValue : +input.value;
+                pointerValue = value;
+                start.value = String(Math.min(value, collapsedAnchor)); end.value = String(Math.max(value, collapsedAnchor));
+            }
+            if (input === start && +start.value > +end.value) start.value = end.value;
+            if (input === end && +end.value < +start.value) end.value = start.value;
+            const left = dates[+start.value], right = dates[+end.value];
+            from.textContent = label(left); to.textContent = label(right);
+            start.setAttribute('aria-valuetext', left || 'No source dates'); end.setAttribute('aria-valuetext', right || 'No source dates');
+            wrap.style.setProperty('--range-start', (maximum ? +start.value / maximum * 100 : 0) + '%');
+            wrap.style.setProperty('--range-end', (maximum ? +end.value / maximum * 100 : 100) + '%');
+            // At the last date, expose the start handle so a collapsed range can reopen.
+            start.style.zIndex = +start.value === maximum ? '3' : '1';
+        }
+        [start, end].forEach(input => {
+            // An overlapping thumb expands toward the drag, including earlier dates.
+            input.addEventListener('pointerdown', () => { collapsedAnchor = +start.value === +end.value ? +start.value : null; pointerValue = collapsedAnchor; });
+            input.addEventListener('keydown', () => { collapsedAnchor = pointerValue = null; });
+            input.addEventListener('pointercancel', () => { collapsedAnchor = pointerValue = null; if (input.isConnected) redrawChart('#' + input.id); });
+            input.addEventListener('input', () => preview(input));
+            function commit() {
+                if (dates.length < 2 || empty || !input.isConnected) return;
+                preview(input, true);
+                const focus = collapsedAnchor !== null && pointerValue < collapsedAnchor ? start.id : input.id;
+                state.custom = {start: dates[+start.value], end: dates[+end.value]};
+                state.range = 'CUSTOM'; state.settingsOpen = true;
+                redrawChart('#' + focus);
+            }
+            input.addEventListener('change', commit);
+            // Moving the other endpoint can leave the captured input unchanged.
+            input.addEventListener('pointerup', () => { if (collapsedAnchor !== null && pointerValue !== collapsedAnchor) commit(); });
+        });
+        preview();
+        if (Number.isFinite(window.start)) from.textContent = label(new Date(window.start).toISOString().slice(0, 10));
+        if (Number.isFinite(window.end)) to.textContent = label(new Date(window.end).toISOString().slice(0, 10));
+        readout.append(from, element('span', '', '–'), to); controls.append(track, start, end);
+        controls.hidden = empty; wrap.append(readout, controls);
+        if (empty) wrap.append(element('p', 'benchmark-detail-chart-note', 'No source dates in this interval. Choose a preset or change exact dates.'));
+        return wrap;
     }
     function chartSettings() {
         const details = element('details', 'benchmark-detail-settings');
@@ -461,7 +528,7 @@
         const endLabel = element('label', '', 'To'); endLabel.htmlFor = 'benchmark-chart-end';
         const start = element('input'); start.type = 'date'; start.id = startLabel.htmlFor; start.required = true;
         const end = element('input'); end.type = 'date'; end.id = endLabel.htmlFor; end.required = true;
-        const all = state.records.filter(record => !record.error).flatMap(record => history(record)).map(point => point.date).sort();
+        const all = [...new Set(state.records.filter(record => !record.error).flatMap(record => history(record)).map(point => point.date))].sort();
         const window = rangeWindow(state.records);
         start.value = Number.isFinite(window.start) ? new Date(window.start).toISOString().slice(0, 10) : all[0] || '';
         end.value = Number.isFinite(window.end) ? new Date(window.end).toISOString().slice(0, 10) : all[all.length - 1] || '';
@@ -479,10 +546,13 @@
                 error.textContent = from === null || to === null ? 'Enter valid start and end dates.' : 'Start date must be on or before end date.';
                 error.hidden = false; (from === null || from > to ? start : end).focus(); return;
             }
-            state.custom = { start: start.value, end: end.value }; state.range = 'CUSTOM'; state.settingsOpen = true;
+            state.custom = { start: start.value, end: end.value }; state.range = 'CUSTOM'; state.settingsOpen = true; state.exactDatesOpen = true;
             redrawChart('#benchmark-chart-apply');
         });
         form.append(startGroup, endGroup, apply, error);
+        const exact = element('details', 'benchmark-detail-exact-dates'); exact.id = 'benchmark-exact-dates'; exact.open = state.exactDatesOpen;
+        exact.append(element('summary', '', 'Exact dates'), form);
+        exact.addEventListener('toggle', () => { if (exact.isConnected) state.exactDatesOpen = exact.open; });
         const presentation = element('div', 'benchmark-detail-presentation');
         const styleLabel = element('label', '', 'Chart type'); styleLabel.htmlFor = 'benchmark-chart-style';
         const select = element('select'); select.id = styleLabel.htmlFor;
@@ -494,7 +564,7 @@
         dots.addEventListener('change', () => { state.showDots = dots.checked; state.settingsOpen = true; saveChartSettings(); redrawChart('#benchmark-chart-dots'); });
         dotsLabel.append(dots, document.createTextNode('Observation dots'));
         presentation.append(styleLabel, select, dotsLabel);
-        details.append(form, presentation, element('p', 'benchmark-detail-chart-note', 'Ranges use the latest source observation, not today. Custom dates include both endpoints. Gaps remain unfilled.'));
+        details.append(rangeSlider(all, window), exact, presentation, element('p', 'benchmark-detail-chart-note', 'Drag either handle to adjust the range. Handles snap to source dates and apply on release. Exact dates include both endpoints; source gaps stay open.'));
         return details;
     }
     function svgNode(tag, attrs, content) {

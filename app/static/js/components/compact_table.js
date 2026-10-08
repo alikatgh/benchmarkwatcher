@@ -377,6 +377,8 @@ BW.CompactTable = {
 
     // Update range button styles
     updateRangeButtons: function (activeRange) {
+        const picker = document.getElementById('tw-range-select');
+        if (picker) picker.value = activeRange;
         const ranges = ['1W', '1M', '3M', '6M', '1Y', 'ALL'];
         ranges.forEach(range => {
             const btn = document.getElementById(`range-${range}`);

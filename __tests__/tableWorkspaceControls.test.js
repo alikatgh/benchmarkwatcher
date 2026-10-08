@@ -171,3 +171,66 @@ test('phone values exclude the desktop tooltip copy after an AJAX range refresh'
     expect(id('tw-mobile-list').querySelector('.tw-mobile-extra').textContent).toBe('Change+12');
     expect(id('tw-mobile-list').textContent).not.toContain('tooltip');
 });
+
+test('native range control uses the shared request path and stays in sync with restored views', () => {
+    window.BW.CompactTable.setDataRange.mockImplementation(range => workspace.rangeChanged(range));
+    expect(id('tw-range-select').value).toBe('1Y');
+    id('tw-range-select').value = '3M';
+    id('tw-range-select').dispatchEvent(new Event('change'));
+    expect(window.BW.CompactTable.setDataRange).toHaveBeenLastCalledWith('3M');
+    expect(workspace.current.range).toBe('3M');
+    workspace.saveView('Quarterly review');
+    const savedId = workspace.activeId;
+    workspace.rangeChanged('1W');
+    expect(id('tw-range-select').value).toBe('1W');
+    workspace.activateView(savedId);
+    expect(window.BW.CompactTable.setDataRange).toHaveBeenLastCalledWith('3M');
+    expect(id('tw-range-select').value).toBe('3M');
+    const calls = window.BW.CompactTable.setDataRange.mock.calls.length;
+    id('tw-range-select').value = '';
+    id('tw-range-select').dispatchEvent(new Event('change'));
+    expect(window.BW.CompactTable.setDataRange).toHaveBeenCalledTimes(calls);
+});
+
+test('compact result count names its scope and a single chip removes itself while multiple filters can clear together', () => {
+    const copper = workspace.getRows()[0].cloneNode(true);
+    copper.dataset.id = 'copper'; copper.dataset.name = 'Copper'; copper.dataset.category = 'industrial';
+    id('table-body').append(copper); workspace.refresh();
+    id('table-workspace').getBoundingClientRect = () => ({width:320,top:300});
+    workspace.updateLayout();
+    workspace.change({filters:{category:'precious'}, range:'3M'}, true);
+    expect(id('tw-compact-count').textContent).toBe('1 of 2');
+    expect(id('tw-compact-count').getAttribute('aria-label')).toBe('1 of 2 benchmarks');
+    expect(id('tw-filter-button').getAttribute('aria-label')).toBe('Filter, 1 active filter');
+    expect(id('tw-filter-count').textContent).toBe('(1)');
+    expect(id('tw-filter-chips').querySelector('[aria-label="Clear all view filters"]')).toBeNull();
+    id('tw-filter-chips').querySelector('[aria-label^="Remove Category filter:"]').click();
+    expect(workspace.current.filters.category).toBe('');
+    expect(id('tw-compact-count').textContent).toBe('2 of 2');
+    expect(id('tw-filter-button').getAttribute('aria-label')).toBe('Filter');
+    workspace.change({query:'Gold',filters:{category:'precious',frequency:'daily'}}, true);
+    expect(id('tw-filter-button').getAttribute('aria-label')).toBe('Filter, 2 active filters');
+    id('tw-filter-chips').querySelector('[aria-label="Clear all view filters"]').click();
+    expect(workspace.current.query).toBe('');
+    expect(Object.values(workspace.current.filters).some(Boolean)).toBe(false);
+    expect(workspace.current.range).toBe('3M');
+    expect(id('tw-filter-chips').hidden).toBe(true);
+});
+
+test('switching compact and desktop layouts preserves the saved view, query, range, sort and selection', () => {
+    workspace.change({query:'Gold',filters:{category:'precious'},range:'6M',sorts:[{key:'price',direction:'desc'}]}, true);
+    workspace.selected.add('gold'); workspace.updateSelection();
+    workspace.saveView('Precious reference review');
+    const current = JSON.stringify(workspace.current), activeId = workspace.activeId;
+    for (const width of [600,1000,390]) {
+        id('table-workspace').getBoundingClientRect = () => ({width,top:300}); workspace.updateLayout();
+        expect(workspace.compactLayout).toBe(width <= 767);
+        expect(JSON.stringify(workspace.current)).toBe(current);
+        expect(workspace.activeId).toBe(activeId);
+        expect(id('tw-view-select').value).toBe(activeId);
+        expect(id('tw-query').value).toBe('Gold');
+        expect(id('tw-range-select').value).toBe('6M');
+        expect(workspace.selected.has('gold')).toBe(true);
+        expect(workspace.getVisibleRows().map(row => row.dataset.id)).toEqual(['gold']);
+    }
+});

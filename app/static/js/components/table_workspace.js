@@ -203,6 +203,8 @@
             this.applyColumns(); this.updateSelection(); this.renderChips();
             const count = this.getVisibleRows().length;
             if (byId('tw-result-count')) byId('tw-result-count').textContent = `${count} of ${rows.length} benchmarks`;
+            const compactCount = byId('tw-compact-count');
+            if (compactCount) { compactCount.textContent = `${count} of ${rows.length}`; compactCount.setAttribute('aria-label', `${count} of ${rows.length} benchmarks`); }
             this.renderCompactSummary();
             if (byId('tw-empty')) byId('tw-empty').hidden = count > 0;
             if (byId('tw-export-filtered')) byId('tw-export-filtered').disabled = count === 0;
@@ -412,10 +414,11 @@
             if (this.current.query) items.append(button(`Search: ${this.current.query} ×`, () => this.change({ query: '' }, true), 'tw-chip'));
             if (this.navigationWatchOnly) items.append(node('span', 'tw-help', 'Watchlist navigation is also applied'));
             if (this.externalQuery || this.externalFilter !== 'all') items.append(node('span', 'tw-help', 'Global search is also applied'));
-            if (count || this.current.query) { const clear = button(this.compactLayout ? 'Clear' : 'Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'); if (this.compactLayout) clear.setAttribute('aria-label', 'Clear all view filters'); container.append(clear); }
+            if ((count || this.current.query) && (!this.compactLayout || count + Number(Boolean(this.current.query)) > 1)) { const clear = button(this.compactLayout ? 'Clear' : 'Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'); if (this.compactLayout) clear.setAttribute('aria-label', 'Clear all view filters'); container.append(clear); }
             container.hidden = items.childElementCount === 0;
             if (byId('tw-filter-count')) byId('tw-filter-count').textContent = count ? `(${count})` : '';
             byId('tw-filter-button')?.classList.toggle('tw-filter-active', count > 0);
+            byId('tw-filter-button')?.setAttribute('aria-label', count ? `Filter, ${count} active ${count === 1 ? 'filter' : 'filters'}` : 'Filter');
         },
         renderViews() {
             const container = byId('tw-views'); if (!container) return;
@@ -511,6 +514,7 @@
             return true;
         },
         renderControls() {
+            if (byId('tw-range-select')) byId('tw-range-select').value = this.current.range;
             if (byId('tw-query')) byId('tw-query').value = this.current.query;
             this.renderCategories();
             Object.entries(this.current.filters).forEach(([key, value]) => { if (byId(`tw-${key}`)) byId(`tw-${key}`).value = value; });
@@ -651,6 +655,9 @@
                 else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
             }));
             byId('tw-view-select')?.addEventListener('change', event => this.activateView(event.target.value));
+            byId('tw-range-select')?.addEventListener('change', event => {
+                if (RANGES.includes(event.target.value)) BW.CompactTable?.setDataRange(event.target.value);
+            });
             byId('tw-more-button')?.addEventListener('click', () => this.togglePanel('tw-more-menu', byId('tw-more-button')));
             byId('tw-more-menu')?.querySelectorAll('[data-tw-command]').forEach(command => command.addEventListener('click', () => {
                 const target = {'new-view':'tw-view-menu','view-settings':'tw-view-menu','sort':'tw-sort-panel','properties':'tw-properties','actions':'tw-actions'}[command.dataset.twCommand];

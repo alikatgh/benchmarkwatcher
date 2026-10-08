@@ -156,7 +156,8 @@ test('row, selection and filtered visuals use the current table observations',as
   await page.goto('/?view=compact&range=ALL');
   await readyTable(page);
   await showTableControls(page);
-  await page.locator('#range-1M').click();
+  if(await page.locator('#tw-range-select').isVisible()) await page.locator('#tw-range-select').selectOption('1M');
+  else await page.locator('#range-1M').click();
   await expect.poll(()=>page.evaluate(()=>(window as any).BW?.CompactTable?.loadedRange)).toBe('1M');
   const histories=await page.evaluate(()=>(window as any).BW.CompactTable.sparklineData
     .filter((record:any)=>['oil','gold'].includes(record.id))
