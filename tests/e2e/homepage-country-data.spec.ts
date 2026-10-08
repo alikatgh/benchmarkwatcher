@@ -9,7 +9,7 @@ for (const width of [320, 390, 1440]) {
     await page.goto('/?view=compact');
     const datasets = page.getByRole('navigation', { name: 'Homepage datasets' });
     await expect(datasets.getByRole('link', { name: /Commodities/ })).toHaveAttribute('aria-current', 'page');
-    await datasets.getByRole('link', { name: /Country data/ }).click();
+    await datasets.getByRole('link', { name: /Country highlights/ }).click();
     await expect(page).toHaveURL(/dataset=countries/);
     await expect(page.getByRole('heading', { name: 'Country data', exact: true })).toBeVisible();
     await expect(page.locator('.gr-reference-row')).toHaveCount(30);

@@ -1,0 +1,78 @@
+<section id="home-overview" class="home-overview" aria-labelledby="home-title">
+    <header class="home-intro">
+        <div>
+            <p class="home-kicker">THE BENCHMARKWATCHER DATA LIBRARY</p>
+            <h1 id="home-title">Commodities. Countries.<br>Companies.</h1>
+            <p class="home-description">Explore public data, inspect the history behind a number, and bring the evidence into your research.</p>
+        </div>
+        <div class="home-library-total">
+            {% if coverage.status == 'available' %}
+            <strong>{{ '{:,}'.format(coverage.observation_count) }}</strong>
+            <span>observations in the country &amp; company library</span>
+            <p>{{ '{:,}'.format(coverage.history_count) }} histories · {{ coverage.dataset_count }} datasets</p>
+            {% else %}
+            <strong>Public reference data</strong>
+            <span>{% if coverage.status == 'unavailable' %}Library counts are temporarily unavailable.{% else %}Library observations have not been loaded yet.{% endif %}</span>
+            {% endif %}
+            <a href="{{ url_for('global_reference.sources') }}">Check coverage &amp; sources <span aria-hidden="true">↗</span></a>
+        </div>
+    </header>
+
+    <nav class="home-collections" aria-label="Explore the data collections">
+        <a class="home-collection" href="{{ url_for('main.index', view='compact') }}">
+            <span class="home-collection-kind">BENCHMARK PRICES</span>
+            <span class="home-collection-title">Commodities <span aria-hidden="true">↗</span></span>
+            <span class="home-collection-count"><strong>{{ '{:,}'.format(commodity_count) }}</strong> reference series</span>
+            <span class="home-collection-description">Energy, metals, agriculture and commodity indices. Compare histories, units and observation dates.</span>
+            <span class="home-collection-action">Open benchmark workspace →</span>
+        </a>
+        <a class="home-collection" href="{{ url_for('public_library.index') }}">
+            <span class="home-collection-kind">WORLD BANK · FAOSTAT</span>
+            <span class="home-collection-title">Countries &amp; agriculture <span aria-hidden="true">↗</span></span>
+            <span class="home-collection-count">{% if coverage.status == 'available' %}<strong>{{ '{:,}'.format(coverage.country_histories) }}</strong> histories{% else %}Explore the country library{% endif %}</span>
+            <span class="home-collection-description">Economic indicators, crops, land, agricultural finance, machinery and environmental statistics.</span>
+            <span class="home-collection-action">Explore country data →</span>
+        </a>
+        <a class="home-collection" href="{{ url_for('public_library.companies') }}">
+            <span class="home-collection-kind">SEC COMPANY DISCLOSURES</span>
+            <span class="home-collection-title">Companies <span aria-hidden="true">↗</span></span>
+            <span class="home-collection-count">{% if coverage.companies %}<strong>{{ '{:,}'.format(coverage.companies) }}</strong> companies{% else %}Explore the company directory{% endif %}</span>
+            <span class="home-collection-description">Reported financial figures and their periods.{% if coverage.company_histories %} {{ '{:,}'.format(coverage.company_histories) }} histories across selected disclosure measures.{% endif %}</span>
+            <span class="home-collection-action">Browse company disclosures →</span>
+        </a>
+    </nav>
+    <p class="home-count-note">A history is one measure for one entity, with its saved observations. Commodity series are counted separately. Coverage and reporting dates vary.</p>
+
+    <section class="home-catalog" aria-labelledby="home-catalog-title">
+        <div class="home-section-heading"><h2 id="home-catalog-title">Inside the library</h2><a href="{{ url_for('public_library.index') }}">Search country data →</a></div>
+        {% if coverage.datasets %}
+        <div class="home-dataset-grid">
+            {% for dataset in coverage.datasets %}
+            <a class="home-dataset" href="{{ url_for('public_library.companies' if dataset.source == 'sec' else 'public_library.index', source=dataset.source, dataset=dataset.dataset) }}">
+                <span><strong>{{ dataset.name }}</strong><small>{{ dataset.publisher }} · {{ dataset.dataset }}</small></span>
+                <span class="home-dataset-count">{{ '{:,}'.format(dataset.series_count) }}<small>histories <span aria-hidden="true">→</span></small></span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="home-empty">{% if coverage.status == 'unavailable' %}The saved dataset inventory is temporarily unavailable. You can still explore benchmarks and research tools.{% else %}Saved datasets will appear here as observations become available.{% endif %} <a href="{{ url_for('global_reference.sources') }}">View the source catalog →</a></p>
+        {% endif %}
+        <p class="home-count-note">Counts include published, saved data. The source catalog lists additional sources, import progress and reuse conditions.</p>
+    </section>
+
+    <section class="home-tools" aria-labelledby="home-tools-title">
+        <div class="home-section-heading"><h2 id="home-tools-title">Work with the evidence</h2><span>From a first comparison to a saved research note</span></div>
+        <div class="home-tools-grid">
+            <a href="{{ url_for('main.index', view='compact') }}"><strong>Compare &amp; visualize <span aria-hidden="true">↗</span></strong><span>Historical charts, side-by-side benchmarks, distributions and monthly patterns. Export observations as CSV.</span><small>Public benchmark workspace</small></a>
+            <a href="{{ url_for('main.index', workspace='research', view='compact') }}"><strong>Keep your research <span aria-hidden="true">↗</span></strong><span>Watchlists, saved table views and notes linked to benchmarks. Organize what you want to revisit.</span><small>Saved in this browser</small></a>
+            {% if config.get('WORKSPACE_ENABLED') %}
+            <a href="{{ url_for('workspace.home') }}"><strong>{% if config.get('WORKBOOK_LIBRARY_ENABLED') %}Workbook research{% else %}Company research{% endif %} <span aria-hidden="true">↗</span></strong><span>{% if config.get('WORKBOOK_LIBRARY_ENABLED') %}Inspect workbook data, calculate across periods and keep source cells with your analysis.{% else %}Search SEC filers, compare financial periods and inspect the filing behind a reported figure.{% endif %} Optional AI commentary uses your connected provider.</span><small>Account required · AI provider charges may apply</small></a>
+            {% else %}
+            <a href="{{ url_for('main.company_research_story') }}"><strong>Company research guide <span aria-hidden="true">↗</span></strong><span>Learn how filing evidence, financial periods and source-linked calculations fit together.</span><small>Read the workflow guide</small></a>
+            {% endif %}
+            <a href="{{ url_for('global_reference.index') }}"><strong>Explore global references <span aria-hidden="true">↗</span></strong><span>Exchange references, national statistics and administered prices, with source notes and reporting periods.</span><small>Selected international reference series</small></a>
+        </div>
+    </section>
+    <div class="home-guides"><p>Free public sources. Clear attribution. Historical observations.</p><nav aria-label="Learn about the service"><a href="{{ url_for('main.help_page') }}">How to use BenchmarkWatcher</a><a href="{{ url_for('main.homepage_story') }}">What’s new</a><a href="{{ url_for('main.native_research_story') }}">Native apps: development update</a></nav></div>
+    <div class="home-benchmark-divider"><span>START EXPLORING BELOW</span><a href="#bw-page-title">Commodity benchmark table ↓</a></div>
+</section>

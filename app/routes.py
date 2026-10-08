@@ -228,7 +228,8 @@ def internal_api_commodities():
 @bp.route('/')
 @cache.cached(timeout=600, query_string=True)
 def index():
-    """Browse commodity observations or saved country histories at home."""
+    """Discover the public library and browse benchmark observations."""
+    from app.homepage import homepage_coverage
     from app.global_reference import country_summary, listing_context
     from werkzeug.exceptions import HTTPException
 
@@ -257,8 +258,13 @@ def index():
         include_history=False
     )
 
+    show_home_overview = not any(key in request.args for key in ('view', 'workspace', 'category', 'range', 'dataset'))
     return render_template(
         'index.html',
+        show_home_overview=show_home_overview,
+        coverage=homepage_coverage() if show_home_overview else None,
+        meta_title='Public data, benchmarks & company research | BenchmarkWatcher' if show_home_overview else None,
+        meta_description='Explore commodity benchmarks, country and agricultural data, company disclosures, charts, CSV exports and research tools.' if show_home_overview else None,
         commodities=commodities,
         market_summary=build_market_summary(commodities),
         date_range=date_range,
@@ -384,6 +390,13 @@ def public_data_library_story():
                            meta_description='Search World Bank, FAOSTAT and SEC histories, inspect exact observations and source notes, and export country and company data with attribution.')
 
 
+@bp.route('/blog/explore-the-whole-library')
+def homepage_story():
+    return render_template('blog/homepage.html',
+                           meta_title='A homepage for the whole library | BenchmarkWatcher',
+                           meta_description='Find benchmark prices, country and agricultural histories, company disclosures and research tools from one homepage.')
+
+
 @bp.route('/blog/research-on-each-device')
 def native_research_story():
     return render_template('blog/native_research.html',
@@ -424,7 +437,7 @@ def sitemap():
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
              url_for('main.new_icon_story'), url_for('main.global_sources_story'),
-             url_for('main.public_data_library_story'),
+             url_for('main.public_data_library_story'), url_for('main.homepage_story'),
              url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),
              url_for('global_reference.sources'), url_for('public_library.index'),
              url_for('public_library.companies')]

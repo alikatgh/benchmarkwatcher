@@ -1,6 +1,7 @@
 <nav class="home-datasets" aria-label="Homepage datasets">
+  <a href="{{ url_for('main.index') }}">Overview</a>
   <a href="{{ url_for('main.index', view='compact') }}"{% if active_dataset != 'countries' %} aria-current="page"{% endif %}>Commodities <span>{{ "{:,}".format(commodity_count) }}</span></a>
-  <a href="{{ url_for('main.index', dataset='countries') }}"{% if active_dataset == 'countries' %} aria-current="page"{% endif %}>Country data{% if country_summary %} <span>{{ "{:,}".format(country_summary.histories) }}</span>{% endif %}</a>
+  <a href="{{ url_for('main.index', dataset='countries') }}"{% if active_dataset == 'countries' %} aria-current="page"{% endif %}>Country highlights</a>
   <a href="{{ url_for('public_library.index') }}">Full data library</a>
   <a href="{{ url_for('public_library.companies') }}">Companies</a>
 </nav>

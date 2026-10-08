@@ -4,8 +4,9 @@
     {% include 'components/workspace_sidebar.html' %}
     <div class="bw-main-content">
         <section id="benchmark-workspace" aria-labelledby="bw-page-title">
+            {% if show_home_overview %}{% include 'components/home_overview.html' %}{% endif %}
             {% include 'components/home_datasets.html' %}
-            <div class="bw-page-heading"><div><h1 id="bw-page-title">Commodity benchmarks</h1><p id="bw-page-description">A clearer view of energy, metals and agriculture.</p></div><div class="bw-layout-switch" aria-label="Benchmark layout"><a href="{{ url_for('main.index', view='compact', range=date_range, category=selected_category) }}" {% if active_view == 'compact' %}aria-current="page"{% endif %}>Table</a><a href="{{ url_for('main.index', view='grid', range=date_range, category=selected_category) }}" {% if active_view == 'grid' %}aria-current="page"{% endif %}>Cards</a></div></div>
+            <div class="bw-page-heading"><div>{% if show_home_overview %}<h2 id="bw-page-title">Commodity benchmarks</h2>{% else %}<h1 id="bw-page-title">Commodity benchmarks</h1>{% endif %}<p id="bw-page-description">A clearer view of energy, metals and agriculture.</p></div><div class="bw-layout-switch" aria-label="Benchmark layout"><a href="{{ url_for('main.index', view='compact', range=date_range, category=selected_category) }}" {% if active_view == 'compact' %}aria-current="page"{% endif %}>Table</a><a href="{{ url_for('main.index', view='grid', range=date_range, category=selected_category) }}" {% if active_view == 'grid' %}aria-current="page"{% endif %}>Cards</a></div></div>
             <details id="bw-featured" class="bw-featured"><summary>Featured observations</summary><section id="bw-overview" class="bw-overview" aria-label="Selected reference observations"></section></details>
             <details id="bw-visual-explorer" class="bw-visual-disclosure"><summary>Visual explorer <span>History, distributions, monthly patterns &amp; coverage</span></summary></details>
             <div class="bw-section-heading"><h2 id="bw-table-heading">Explore benchmarks</h2><span>Historical observations · source schedules vary</span></div>

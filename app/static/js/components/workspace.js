@@ -31,7 +31,7 @@
                 }
                 if (target.dataset.workspace === 'watchlist' && !BW.TableWorkspace?.ready) return;
                 event.preventDefault(); const url = new URL(location.href); url.searchParams.delete('category');
-                if (target.dataset.workspace === 'benchmarks') url.searchParams.delete('workspace'); else url.searchParams.set('workspace', target.dataset.workspace);
+                if (target.dataset.workspace === 'benchmarks') { url.searchParams.delete('workspace'); url.searchParams.set('view', $('index-page-state').dataset.activeView || 'compact'); } else url.searchParams.set('workspace', target.dataset.workspace);
                 this.go(url);
             });
             document.addEventListener('bw:watch-toggle', event => BW.BenchmarkDetail?.toggleWatch(event.detail?.id));
@@ -117,6 +117,14 @@
             const params = new URLSearchParams(location.search);
             const requested = params.get('workspace'); this.current = ['research','watchlist'].includes(requested) ? requested : 'benchmarks';
             const research = this.current === 'research';
+            const homeOverview = $('home-overview');
+            if (homeOverview) homeOverview.hidden = ['view', 'workspace', 'category', 'dataset'].some(key => params.has(key));
+            const title = $('bw-page-title');
+            const titleTag = homeOverview && !homeOverview.hidden ? 'H2' : 'H1';
+            if (title.tagName !== titleTag) {
+                const heading = document.createElement(titleTag.toLowerCase());
+                heading.id = title.id; heading.textContent = title.textContent; title.replaceWith(heading);
+            }
             if (research) BW.TableWorkspace?.closePanels(false);
             if (!research) $('research-workspace').querySelectorAll('dialog[open]').forEach(dialog => BW.ResearchWorkspace?.closeDialog(dialog));
             $('benchmark-workspace').hidden = research; $('research-workspace').hidden = !research;
@@ -129,7 +137,7 @@
             $('bw-table-heading').textContent = this.current === 'watchlist' ? 'Saved benchmarks' : 'Explore benchmarks';
             this.updateNavigation(params.get('category') || ''); this.renderOverview();
             this.navigating = false;
-            if (focus) { const heading = (research ? $('research-workspace') : $('benchmark-workspace')).querySelector('h1'); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); } }
+            if (focus) { const heading = (research ? $('research-workspace').querySelector('h1') : $('bw-page-title')); if (heading) { heading.tabIndex = -1; heading.focus({ preventScroll: true }); } }
         },
         restoreWatchlist() {
             const ids = BW.BenchmarkDetail?.getWatchlist() || [];

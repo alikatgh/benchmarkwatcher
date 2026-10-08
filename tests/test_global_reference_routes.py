@@ -63,7 +63,7 @@ def test_homepage_exposes_saved_country_data_with_accurate_counts(reference_clie
     client, _ = reference_client
     home = client.get('/').get_data(as_text=True)
     assert 'Homepage datasets' in home and 'dataset=countries' in home
-    assert 'Country data <span>1</span>' in home
+    assert '>Country highlights</a>' in home
     country_home = client.get('/?dataset=countries').get_data(as_text=True)
     assert '<h1>Country data</h1>' in country_home
     assert '1 saved histories · 1 economies' in country_home

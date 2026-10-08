@@ -724,7 +724,7 @@
             if (urlCategory) this.current.filters.category = urlCategory;
             const watches = BW.BenchmarkDetail?.getWatchlist?.(); if (Array.isArray(watches)) this.watched = new Set(watches.map(String));
             this.updateLayout(); this.renderHeaders(); this.bind(); this.hydrateRows(); this.renderControls(); this.apply(); this.persist();
-            if (this.current.range !== renderedRange || urlCategory) BW.CompactTable?.setDataRange(this.current.range, { history: 'replace' });
+            if (this.current.range !== renderedRange || urlCategory) BW.CompactTable?.setDataRange(this.current.range, { history: document.getElementById('home-overview') ? 'none' : 'replace' });
             document.dispatchEvent(new CustomEvent('bw:table-ready'));
         }
     };
