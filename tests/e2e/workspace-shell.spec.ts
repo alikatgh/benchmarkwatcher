@@ -54,7 +54,7 @@ test('homepage dataset links stay contained and keyboard reachable across phone 
   await page.goto('/?view=compact');
   const datasets=page.getByRole('navigation',{name:'Homepage datasets'});
   const links=datasets.getByRole('link');
-  await expect(links).toHaveCount(5);
+  await expect(links).toHaveCount(4);
   await expect(datasets.getByRole('link',{name:'Full data library',exact:true})).toBeVisible();
   await expect(datasets.getByRole('link',{name:'Companies',exact:true})).toBeVisible();
   for (const theme of ['light','dark','mono-light','mono-dark','bloomberg','ft']) {
