@@ -43,17 +43,30 @@ async function expectContainedControls(page: Page) {
 
 async function expectConsistentControls(page: Page) {
   const geometry = await page.evaluate(() => {
-    const selectors = ['.tw-search', '#tw-filter-button', '#tw-visual-actions button', '#tw-range-select', '#tw-filter-chips .tw-chip'];
+    const selectors = ['#tw-view-select', '#tw-more-button', '.tw-search', '#tw-filter-button', '#tw-visual-actions button', '#tw-range-select', '#tw-filter-chips .tw-chip'];
     return selectors.map(selector => {
       const element = document.querySelector(selector)!;
       const style = getComputedStyle(element);
       const text = getComputedStyle(selector === '.tw-search' ? element.querySelector('input')! : element);
-      return {selector, height: element.getBoundingClientRect().height, radius: style.borderRadius, font: text.fontSize};
+      return {selector, height: element.getBoundingClientRect().height, radius: style.borderRadius, font: text.fontSize, weight: text.fontWeight, line: text.lineHeight, border: style.borderTopWidth};
     }).filter(item => item.height > 0);
   });
   expect(geometry.map(item => item.height)).toEqual(geometry.map(() => 44));
   expect(new Set(geometry.map(item => item.radius)).size).toBe(1);
   expect(geometry.map(item => item.font)).toEqual(geometry.map(() => '16px'));
+  expect(geometry.map(item => item.weight)).toEqual(geometry.map(() => '400'));
+  expect(geometry.map(item => item.line)).toEqual(geometry.map(() => '20px'));
+  expect(geometry.map(item => item.border)).toEqual(geometry.map(() => '1px'));
+  await expect(page.locator('#tw-filter-count')).toBeHidden();
+  const textStyles = await page.locator('#tw-compact-count, .tw-chip-label, #tw-filter-chips .tw-button').evaluateAll(elements => elements.map(element => {
+    const style = getComputedStyle(element); return [style.fontSize, style.fontWeight, style.lineHeight];
+  }));
+  for (const style of textStyles) expect(style).toEqual(['16px', '400', '20px']);
+  const chevrons = await page.locator('.tw-view-picker, .tw-range-picker').evaluateAll(elements => elements.map(element => {
+    const style = getComputedStyle(element, '::after'); return [style.width, style.height, style.right];
+  }));
+  expect(chevrons).toEqual([['16px', '16px', '12px'], ['16px', '16px', '12px']]);
+
   const gaps = await page.locator('.tw-toolbar, .tw-data-controls, .tw-chip-items').evaluateAll(elements => elements.map(element => getComputedStyle(element).columnGap));
   expect(new Set(gaps).size).toBe(1);
 }
@@ -71,7 +84,7 @@ async function expectCompactHierarchy(page: Page) {
   await expect(page.locator('#tw-range-select')).toHaveAccessibleName('Observation range');
   await expect(page.locator('.tw-context .range-tabs')).toBeHidden();
   await expect(page.locator('#tw-compact-count')).toBeVisible();
-  expect(await page.locator('.tw-control-shell').evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(164);
+  expect(await page.locator('.tw-control-shell').evaluate(el => el.getBoundingClientRect().height)).toBeLessThanOrEqual(168);
   const distance = await page.evaluate(() => {
     const root = document.getElementById('table-workspace')!.getBoundingClientRect();
     const rows = document.querySelector('#tw-mobile-list .tw-mobile-row') || document.querySelector('.tw-table-region');
@@ -169,7 +182,7 @@ for (const width of [320, 390, 600]) {
     await expectCompactHierarchy(page);
     await expect(page.locator('#tw-range-select')).toHaveValue('6M');
     expect(await page.locator('#tw-range-select option').evaluateAll(options => options.map(option => (option as HTMLOptionElement).value))).toEqual(['1W', '1M', '3M', '6M', '1Y', 'ALL']);
-    await expect(page.locator('#tw-compact-count')).toHaveText('3 of 3');
+    await expect(page.locator('#tw-compact-count')).toHaveText('3/3');
     await expect(page.locator('#tw-compact-count')).toHaveAccessibleName('3 of 3 benchmarks');
     await expect(page.locator('#tw-more-button')).toHaveAccessibleName('More view options');
 
@@ -184,7 +197,7 @@ for (const width of [320, 390, 600]) {
     await expect.poll(() => page.evaluate(() => (window as any).BW.TableWorkspace.historyClosing)).toBe(false);
     await expect(page.locator('#tw-filter-button')).toHaveAccessibleName('Filter, 1 active filter');
     await expect(page.locator('#tw-filter-count')).toHaveText('(1)');
-    await expect(page.locator('#tw-compact-count')).toHaveText('1 of 3');
+    await expect(page.locator('#tw-compact-count')).toHaveText('1/3');
     await expect(page.locator('#tw-compact-count')).toHaveAccessibleName('1 of 3 benchmarks');
     await expect(page.locator('#tw-filter-chips').getByRole('button', { name: 'Clear all view filters' })).toHaveCount(0);
     await expectCompactHierarchy(page);
@@ -240,7 +253,7 @@ test('compact range changes keep data, URL and desktop range buttons together af
   await expect(page.locator('#tw-range-select')).toHaveValue('1M');
   await expect(page.locator('#tw-query')).toHaveValue('Gold');
   await expect(page.locator('#tw-mobile-list input[aria-label="Select Gold"]')).toBeChecked();
-  await expect(page.locator('#tw-compact-count')).toHaveText('1 of 3');
+  await expect(page.locator('#tw-compact-count')).toHaveText('1/3');
 });
 
 test('multiple compact filter chips scroll inside their row and remain removable by keyboard', async ({ page }, testInfo) => {
@@ -262,13 +275,14 @@ test('multiple compact filter chips scroll inside their row and remain removable
   await page.keyboard.press('Enter');
   await expect(category).toHaveCount(0);
   await expect(page.locator('#tw-filter-count')).toHaveText('(2)');
-  const clear = page.getByRole('button', { name: 'Clear all view filters' });
+  const clear = strip.getByRole('button', { name: 'Clear all view filters' });
+  await expectConsistentControls(page);
   await clear.focus();
   await page.keyboard.press('Enter');
   await expect(page.locator('#tw-filter-count')).toHaveText('');
   await expect(page.locator('#tw-query')).toHaveValue('');
   await expect(page.locator('#tw-filter-chips')).toBeHidden();
-  await expect(page.locator('#tw-compact-count')).toHaveText('3 of 3');
+  await expect(page.locator('#tw-compact-count')).toHaveText('3/3');
   await page.locator('.tw-control-shell').screenshot({ path: testInfo.outputPath('compact-toolbar-cleared-320.png') });
 });
 

@@ -199,14 +199,14 @@ test('compact result count names its scope and a single chip removes itself whil
     id('table-workspace').getBoundingClientRect = () => ({width:320,top:300});
     workspace.updateLayout();
     workspace.change({filters:{category:'precious'}, range:'3M'}, true);
-    expect(id('tw-compact-count').textContent).toBe('1 of 2');
+    expect(id('tw-compact-count').textContent).toBe('1/2');
     expect(id('tw-compact-count').getAttribute('aria-label')).toBe('1 of 2 benchmarks');
     expect(id('tw-filter-button').getAttribute('aria-label')).toBe('Filter, 1 active filter');
     expect(id('tw-filter-count').textContent).toBe('(1)');
     expect(id('tw-filter-chips').querySelector('[aria-label="Clear all view filters"]')).toBeNull();
     id('tw-filter-chips').querySelector('[aria-label^="Remove Category filter:"]').click();
     expect(workspace.current.filters.category).toBe('');
-    expect(id('tw-compact-count').textContent).toBe('2 of 2');
+    expect(id('tw-compact-count').textContent).toBe('2/2');
     expect(id('tw-filter-button').getAttribute('aria-label')).toBe('Filter');
     workspace.change({query:'Gold',filters:{category:'precious',frequency:'daily'}}, true);
     expect(id('tw-filter-button').getAttribute('aria-label')).toBe('Filter, 2 active filters');

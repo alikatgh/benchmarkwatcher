@@ -204,7 +204,7 @@
             const count = this.getVisibleRows().length;
             if (byId('tw-result-count')) byId('tw-result-count').textContent = `${count} of ${rows.length} benchmarks`;
             const compactCount = byId('tw-compact-count');
-            if (compactCount) { compactCount.textContent = `${count} of ${rows.length}`; compactCount.setAttribute('aria-label', `${count} of ${rows.length} benchmarks`); }
+            if (compactCount) { compactCount.textContent = `${count}/${rows.length}`; compactCount.setAttribute('aria-label', `${count} of ${rows.length} benchmarks`); }
             this.renderCompactSummary();
             if (byId('tw-empty')) byId('tw-empty').hidden = count > 0;
             if (byId('tw-export-filtered')) byId('tw-export-filtered').disabled = count === 0;
@@ -404,17 +404,24 @@
             const container = byId('tw-filter-chips'); if (!container) return;
             container.replaceChildren();
             const items = node('div', 'tw-chip-items'); container.append(items);
+            const chipButton = (label, callback, accessibleLabel) => {
+                const chip = button('', callback, 'tw-chip');
+                const close = node('span', 'tw-chip-close'); close.setAttribute('aria-hidden', 'true');
+                chip.append(node('span', 'tw-chip-label', label), close);
+                chip.setAttribute('aria-label', accessibleLabel); chip.title = accessibleLabel;
+                return chip;
+            };
             const labels = { category: 'Category', frequency: 'Frequency', availability: 'Availability', direction: 'Direction', watch: 'Membership' };
             let count = 0;
             Object.entries(this.current.filters).forEach(([key, value]) => {
                 if (!value) return; count += 1;
                 const select = byId(`tw-${key}`), option = Array.from(select?.options || []).find(item => item.value === value);
-                const chip = button(`${this.compactLayout ? '' : labels[key] + ': '}${option?.textContent || value} ×`, () => this.change({ filters: { ...this.current.filters, [key]: '' } }, true), 'tw-chip'); chip.setAttribute('aria-label', `Remove ${labels[key]} filter: ${option?.textContent || value}`); items.append(chip);
+                items.append(chipButton(`${this.compactLayout ? '' : labels[key] + ': '}${option?.textContent || value}`, () => this.change({ filters: { ...this.current.filters, [key]: '' } }, true), `Remove ${labels[key]} filter: ${option?.textContent || value}`));
             });
-            if (this.current.query) items.append(button(`Search: ${this.current.query} ×`, () => this.change({ query: '' }, true), 'tw-chip'));
+            if (this.current.query) items.append(chipButton(`Search: ${this.current.query}`, () => this.change({ query: '' }, true), `Remove search filter: ${this.current.query}`));
             if (this.navigationWatchOnly) items.append(node('span', 'tw-help', 'Watchlist navigation is also applied'));
             if (this.externalQuery || this.externalFilter !== 'all') items.append(node('span', 'tw-help', 'Global search is also applied'));
-            if ((count || this.current.query) && (!this.compactLayout || count + Number(Boolean(this.current.query)) > 1)) { const clear = button(this.compactLayout ? 'Clear' : 'Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'); if (this.compactLayout) clear.setAttribute('aria-label', 'Clear all view filters'); container.append(clear); }
+            if ((count || this.current.query) && (!this.compactLayout || count + Number(Boolean(this.current.query)) > 1)) { const clear = button(this.compactLayout ? 'Clear' : 'Reset view filters', () => this.clearFilters(), 'tw-button tw-subtle'); if (this.compactLayout) clear.setAttribute('aria-label', 'Clear all view filters'); (this.compactLayout ? items : container).append(clear); }
             container.hidden = items.childElementCount === 0;
             if (byId('tw-filter-count')) byId('tw-filter-count').textContent = count ? `(${count})` : '';
             byId('tw-filter-button')?.classList.toggle('tw-filter-active', count > 0);
