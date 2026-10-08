@@ -29,7 +29,7 @@ async function expectContainedControls(page: Page) {
       const rect = el.getBoundingClientRect();
       const container = el.closest('.tw-control-shell')!.getBoundingClientRect();
       if (rect.left < container.left - 1 || rect.right > container.right + 1 || el.scrollWidth > el.clientWidth + 1) issues.push(`${el.id}: clipped`);
-      if (container.width <= 767 && (rect.height < 44 || rect.width < 44)) issues.push(`${el.id || el.className}: small touch target`);
+      if (rect.height < 32 || rect.width < 32) issues.push(`${el.id || el.className}: small toolbar target`);
     });
     visible.forEach((a, index) => visible.slice(index + 1).forEach(b => {
       const x = a.getBoundingClientRect(), y = b.getBoundingClientRect();
@@ -51,21 +51,21 @@ async function expectConsistentControls(page: Page) {
       return {selector, height: element.getBoundingClientRect().height, radius: style.borderRadius, font: text.fontSize, weight: text.fontWeight, line: text.lineHeight, border: style.borderTopWidth};
     }).filter(item => item.height > 0);
   });
-  expect(geometry.map(item => item.height)).toEqual(geometry.map(() => 44));
+  expect(geometry.map(item => item.height)).toEqual(geometry.map(() => 32));
   expect(new Set(geometry.map(item => item.radius)).size).toBe(1);
-  expect(geometry.map(item => item.font)).toEqual(geometry.map(() => '14px'));
+  expect(geometry.map(item => item.font)).toEqual(geometry.map(() => '12px'));
   expect(geometry.map(item => item.weight)).toEqual(geometry.map(() => '400'));
-  expect(geometry.map(item => item.line)).toEqual(geometry.map(() => '20px'));
+  expect(geometry.map(item => item.line)).toEqual(geometry.map(() => '18px'));
   expect(geometry.map(item => item.border)).toEqual(geometry.map(() => '1px'));
   await expect(page.locator('#tw-filter-count')).toBeHidden();
   const textStyles = await page.locator('#tw-compact-count, .tw-chip-label, #tw-filter-chips .tw-button').evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element); return [style.fontSize, style.fontWeight, style.lineHeight];
   }));
-  for (const style of textStyles) expect(style).toEqual(['14px', '400', '20px']);
+  for (const style of textStyles) expect(style).toEqual(['12px', '400', '18px']);
   const chevrons = await page.locator('.tw-view-picker, .tw-range-picker').evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element, '::after'); return [style.width, style.height, style.right];
   }));
-  expect(chevrons).toEqual([['16px', '16px', '12px'], ['16px', '16px', '12px']]);
+  expect(chevrons).toEqual([['16px', '16px', '10px'], ['16px', '16px', '10px']]);
 
   // Reserve the live catalog's wider count, which the three-row fixture cannot expose.
   const viewLabelSpace = await page.evaluate(() => {
@@ -314,6 +314,20 @@ test('desktop dashboard retains the overview strip and horizontal toolbar', asyn
   await expect(page.locator('.tw-context .range-tabs')).toBeVisible();
   await expect(page.locator('#tw-compact-count')).toBeHidden();
   await expectContainedControls(page);
+  const referenceControls = await page.evaluate(() => {
+    const geometry = (element: Element) => {
+      const text = getComputedStyle(element.matches('.tw-search') ? element.querySelector('input')! : element);
+      return {height: element.getBoundingClientRect().height, font: text.fontSize, weight: text.fontWeight, line: text.lineHeight};
+    };
+    const reference = document.querySelector('#tw-view-menu-button')!;
+    const referenceStyle = getComputedStyle(reference);
+    const controls = [...document.querySelectorAll('.tw-control-heading .tw-button, .tw-view-picker select, .tw-search, .tw-tools .tw-button, .tw-context .range-btn, #tw-visual-actions button')].filter(element => element.getClientRects().length);
+    return {reference: geometry(reference), radius: referenceStyle.borderRadius, border: referenceStyle.borderTopWidth, padding: [referenceStyle.paddingTop, referenceStyle.paddingRight, referenceStyle.paddingBottom, referenceStyle.paddingLeft], controls: controls.map(element => ({id: element.id || element.className, geometry: geometry(element)}))};
+  });
+  expect(referenceControls.reference).toEqual({height: 32, font: '12px', weight: '400', line: '18px'});
+  expect([referenceControls.radius, referenceControls.border]).toEqual(['6px', '1px']);
+  expect(referenceControls.padding).toEqual(['6px', '10px', '6px', '10px']);
+  for (const control of referenceControls.controls) expect(control.geometry, control.id).toEqual(referenceControls.reference);
   await page.locator('#benchmark-workspace').screenshot({ path: testInfo.outputPath('dashboard-desktop.png') });
 });
 
