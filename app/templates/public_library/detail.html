@@ -14,5 +14,5 @@
   {% include 'public_library/_taxonomy_notice.html' %}
 </div>
 <script id="bw-visual-source" type="application/json">{{ {'id': record.id, 'title':record.entity_name ~ ' · ' ~ record.indicator_name, 'source':sources[record.source] ~ ' · ' ~ record.source_url, 'sourceUrl':record.source_url, 'notes':record.attribution ~ ' Original reporting periods; estimates and source flags retained.'}|tojson }}</script>
-<script id="gr-chart-data" type="application/json">{{ chart|tojson }}</script><script defer src="{{ url_for('static',filename='js/components/global-reference.js') }}"></script>
+<script id="gr-chart-data" type="application/json">{{ chart|tojson }}</script><script defer src="{{ url_for('static',filename='js/components/global-reference.js', v='3ae1b26') }}"></script>
 {% endblock %}

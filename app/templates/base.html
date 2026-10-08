@@ -52,7 +52,7 @@
     <script defer src="{{ url_for('static', filename='js/core/visuals.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/components/visual_builder.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/components/visual_builder_sources.js') }}"></script>
-    <script defer src="{{ url_for('static', filename='js/components/visual_explorer.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/components/visual_explorer.js', v='3ae1b26') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visuals.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder-sources.css') }}">
@@ -765,8 +765,8 @@
     {% include 'components/settings_modal.html' %}
     {% include 'components/benchmark_detail.html' %}
     <script src="{{ url_for('static', filename='js/components/workspace.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/components/research_workspace.js') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/components/benchmark_detail.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/research_workspace.js', v='3ae1b26') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/benchmark_detail.js', v='3ae1b26') }}" defer></script>
 </body>
 
 </html>
