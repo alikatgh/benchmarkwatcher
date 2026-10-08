@@ -67,6 +67,23 @@ async function expectConsistentControls(page: Page) {
   }));
   expect(chevrons).toEqual([['16px', '16px', '12px'], ['16px', '16px', '12px']]);
 
+  // Reserve the live catalog's wider count, which the three-row fixture cannot expose.
+  const viewLabelSpace = await page.evaluate(() => {
+    const select = document.querySelector('#tw-view-select') as HTMLSelectElement;
+    const count = document.querySelector('#tw-compact-count')!;
+    const style = getComputedStyle(select);
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    context.font = style.font;
+    const labelWidth = context.measureText(select.selectedOptions[0].textContent!).width;
+    const originalCount = count.textContent;
+    count.textContent = '17/93';
+    const available = select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    count.textContent = originalCount;
+    return available - labelWidth;
+  });
+  expect(viewLabelSpace).toBeGreaterThanOrEqual(0);
+
   const gaps = await page.locator('.tw-toolbar, .tw-data-controls, .tw-chip-items').evaluateAll(elements => elements.map(element => getComputedStyle(element).columnGap));
   expect(new Set(gaps).size).toBe(1);
 }
