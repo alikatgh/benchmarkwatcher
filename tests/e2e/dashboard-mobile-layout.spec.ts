@@ -53,7 +53,7 @@ async function expectConsistentControls(page: Page) {
   });
   expect(geometry.map(item => item.height)).toEqual(geometry.map(() => 44));
   expect(new Set(geometry.map(item => item.radius)).size).toBe(1);
-  expect(geometry.map(item => item.font)).toEqual(geometry.map(() => '16px'));
+  expect(geometry.map(item => item.font)).toEqual(geometry.map(() => '14px'));
   expect(geometry.map(item => item.weight)).toEqual(geometry.map(() => '400'));
   expect(geometry.map(item => item.line)).toEqual(geometry.map(() => '20px'));
   expect(geometry.map(item => item.border)).toEqual(geometry.map(() => '1px'));
@@ -61,7 +61,7 @@ async function expectConsistentControls(page: Page) {
   const textStyles = await page.locator('#tw-compact-count, .tw-chip-label, #tw-filter-chips .tw-button').evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element); return [style.fontSize, style.fontWeight, style.lineHeight];
   }));
-  for (const style of textStyles) expect(style).toEqual(['16px', '400', '20px']);
+  for (const style of textStyles) expect(style).toEqual(['14px', '400', '20px']);
   const chevrons = await page.locator('.tw-view-picker, .tw-range-picker').evaluateAll(elements => elements.map(element => {
     const style = getComputedStyle(element, '::after'); return [style.width, style.height, style.right];
   }));
