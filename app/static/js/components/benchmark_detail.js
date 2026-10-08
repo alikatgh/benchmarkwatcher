@@ -219,6 +219,8 @@
     }
     function onKey(event) {
         if (!state.open) return;
+        // A native authoring dialog above this pane owns its own focus and Escape.
+        if (event.target.closest?.('dialog[open]')) return;
         if (event.key === 'Escape' && !event.defaultPrevented) {
             event.preventDefault();
             if (state.drag) finishResize(false); else close();
@@ -617,6 +619,8 @@
             container.append(element('p', 'benchmark-detail-chart-note', (state.range === 'CUSTOM' ? 'Custom window: ' + state.custom.start + ' to ' + state.custom.end + '. ' : 'Range ends at the latest published observation. ') + (usable.length === 1 ? 'Only one observation; no change is calculated.' : 'Extended gaps are left open.')));
         } else container.append(plot([{record, points}], false));
         container.append(chartSettings(), observationTable(record, points, false));
+        if (BW.VisualBuilderSources) BW.VisualBuilderSources.attach(heading,
+            BW.VisualBuilderSources.benchmark(record,points,{type:state.chartStyle}));
     }
     function compatible(records) {
         return records.length > 1 && records.every(record => !record.error && record.currency && record.unit && record.currency === records[0].currency && record.unit === records[0].unit);
@@ -701,6 +705,14 @@
         section.append(legend);
         if (state.records.some(record => record.error)) section.append(button('Retry unavailable series', load));
         series.forEach(item => section.append(observationTable(item.record, item.points, indexed ? state.mode : false)));
+        if (BW.VisualBuilderSources) BW.VisualBuilderSources.attach(section, {
+            id:'compare:' + state.ids.join(','),title:'Compared benchmark histories', type:state.chartStyle,
+            unit:indexed ? (state.mode === 'percent' ? '%' : 'Index') : unit(state.records[0]),
+            source:[...new Set(state.records.map(record=>[record.source_name || record.source,record.source_url].filter(Boolean).join(' · ')).filter(Boolean))].join('; '),
+            notes:indexed ? 'Each history uses its own first available positive baseline in this window. Baseline dates can differ; missing observations remain gaps.' : 'Original reference values in matching currency and units. Missing observations remain gaps.',
+            series:series.map(item=>({name:item.record.name,unit:indexed ? (state.mode === 'percent' ? '%' : 'Index') : unit(item.record),points:item.points,
+                source:[item.record.source_name || item.record.source,item.record.source_url].filter(Boolean).join(' · '),gapDays:item.record.is_daily ? 7 : 62}))
+        });
         byId('benchmark-detail-body').replaceChildren(section);
         if (previousMode && previousMode !== state.mode && window.requestAnimationFrame) {
             modes.style.setProperty('--mode-index', ['percent','indexed','absolute'].indexOf(previousMode));

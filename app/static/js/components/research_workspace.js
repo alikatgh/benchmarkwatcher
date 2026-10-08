@@ -221,6 +221,59 @@
                 return compare ? compare * (view.direction === 'asc' ? 1 : -1) : a.id.localeCompare(b.id);
             });
         },
+        graphicDatasets() {
+            const entries = this.rows(), snapshots = new Map(), datasets = [];
+            entries.forEach(entry => {
+                const snapshot = entry.benchmark; if (!snapshot) return;
+                const unit = [snapshot.currency && !(snapshot.unit || '').includes(snapshot.currency) ? snapshot.currency : '', snapshot.unit].filter(Boolean).join(' ');
+                const key = JSON.stringify([snapshot.id, unit]);
+                if (!snapshots.has(key)) snapshots.set(key, { snapshot, unit, entries: [] });
+                snapshots.get(key).entries.push(entry);
+            });
+            snapshots.forEach(group => {
+                const { snapshot, unit } = group;
+                const points = group.entries.map(entry => {
+                    const source = entry.benchmark, value = typeof source.price === 'number' && Number.isFinite(source.price) ? source.price : null;
+                    return { date: validDate(source.date) ? source.date : undefined, period: source.date || 'Observation date not recorded', value, display_value: value == null ? '—' : value.toLocaleString(undefined, { maximumFractionDigits: 10 }), source: [source.source || 'Source not recorded', safeURL(source.sourceUrl)].filter(Boolean).join(' · '), status: value == null ? 'Unavailable' : 'Linked snapshot', footnote: entry.title || source.name };
+                });
+                datasets.push({
+                    id: 'research-snapshot-' + snapshot.id + '-' + unit, name: snapshot.name + ' · Linked snapshots', title: snapshot.name + ' · Research snapshots',
+                    subtitle: 'Linked observations in the current Research view', unit, type: 'line', source: 'Read-only linked benchmark snapshots',
+                    notes: 'Observation dates and values were captured when these entries were added. These snapshots are not the complete published history and do not refresh automatically. Missing values remain gaps.' + (points.some(point => !point.date) ? ' Some snapshots have no valid observation date; their original period labels are retained.' : ''),
+                    series: [{ id: snapshot.id, name: snapshot.name, unit, source: snapshot.source || 'Source not recorded', sourceUrl: safeURL(snapshot.sourceUrl) || '', points }]
+                });
+            });
+            this.state.properties.filter(property => property.type === 'number').forEach(property => {
+                const rows = entries.map(entry => {
+                    const draft = entry.drafts && own(entry.drafts, property.id), value = entry.values[property.id];
+                    const savedNumber = !draft && typeof value === 'number' && Number.isFinite(value);
+                    const citations = entry.citations.split('\n').map(value => safeURL(value.trim())).filter(Boolean);
+                    return { label: entry.title || 'Untitled entry', value: savedNumber ? value : null,
+                        period: entry.benchmark?.date || 'Saved edit: ' + entry.updatedAt.slice(0, 10), unit: property.unit,
+                        source: ['Personal property', ...citations].join(' · '), status: draft ? 'Numeric draft excluded' : savedNumber ? 'Personal value' : 'Unavailable' };
+                });
+                if (!rows.some(row => typeof row.value === 'number')) return;
+                datasets.push({
+                    id: 'research-property-' + property.id, name: property.name + (property.unit ? ' · ' + property.unit : ''), title: property.name + ' · Research',
+                    subtitle: 'Personal values in the current Research view', unit: property.unit, type: 'ranking', source: 'Browser-local personal Research values', rows,
+                    notes: 'Personal properties are your own values and assumptions, separate from linked source observations. Only valid numbers are included; unfinished numeric drafts remain missing. Periods retain linked snapshot dates where available; otherwise the saved entry edit date is labelled explicitly. Citation links are supplied by the author.' + (!property.unit ? ' No measurement unit was specified for this property.' : '')
+                });
+            });
+            return datasets;
+        },
+        graphicSpec() {
+            const datasets = this.graphicDatasets();
+            return datasets.length ? { ...datasets[0], datasets } : { id: 'research-empty', title: 'Research', rows: [], notes: 'Add a linked numeric snapshot or a valid personal number to the current Research view.' };
+        },
+        renderGraphicAction() {
+            const host = this.root?.querySelector('.rw-toolbar-actions');
+            if (!host || !window.BW?.VisualBuilderSources) return;
+            const button = window.BW.VisualBuilderSources.attach(host, () => this.graphicSpec());
+            const available = this.graphicDatasets().some(dataset => [...(dataset.rows || []), ...(dataset.series || []).flatMap(series => series.points || [])].some(point => typeof point.value === 'number' && Number.isFinite(point.value)));
+            button.disabled = !available;
+            button.title = available ? 'Create a graphic from this Research view' : 'Add a linked snapshot or a valid number to create a graphic';
+            button.classList.add('rw-button');
+        },
         render() {
             if (!this.root) return;
             const view = this.state.view, properties = this.allProperties();
@@ -254,6 +307,7 @@
             this.$('rw-empty-copy').textContent = view.query || view.status ? 'Try another search or clear the filters. Your entries are still here.' : view.archived ? 'Archived entries stay here until you restore them.' : 'Start with a note, or add a benchmark from the collection. Your source data stays read-only.';
             this.$('rw-undo').disabled = this.undoStack.length === 0;
             this.renderSaveState();
+            this.renderGraphicAction();
             document.dispatchEvent(new CustomEvent('bw:research-count', { detail: { count: this.state.entries.filter(e => !e.archived).length } }));
         },
         createEntry(benchmark = null) {
@@ -421,4 +475,5 @@
     };
     window.BW = window.BW || {}; window.BW.ResearchWorkspace = Research;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => Research.init(), { once: true }); else Research.init();
+    document.addEventListener('DOMContentLoaded', () => Research.renderGraphicAction(), { once: true });
 })();

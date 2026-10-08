@@ -511,6 +511,7 @@
     </details>
 </div>
 
+<script id="bw-visual-source" type="application/json">{{ {'id': commodity.id, 'title': commodity.name, 'source': commodity.source_name|default('') ~ ' · ' ~ commodity.source_url|default(''), 'sourceUrl': commodity.source_url|default('')}|tojson }}</script>
 <script id="commodity-history" type="application/json">
 {{ commodity.history | tojson }}
 </script>

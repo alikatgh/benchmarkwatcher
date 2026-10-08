@@ -355,6 +355,17 @@ BW.Commodity = {
             }
         });
         if (BW.VisualExplorer) BW.VisualExplorer.detail(filtered, this.commodityName, [this.currency, primaryUnit].filter(Boolean).join(' / '));
+        if (BW.VisualBuilderSources) {
+            let metadata = {};
+            try { metadata = JSON.parse(document.getElementById('bw-visual-source')?.textContent || '{}'); } catch (_) {}
+            const spec = {id:'commodity:' + this.commodityId, title:comparing ? 'Compared benchmark histories' : this.commodityName + ' over time',
+                type:this.currentChartType, unit:series[0].unit, series:series.map((item,index)=>({...item,
+                    source:index ? [records[index].source_name,records[index].source_url].filter(Boolean).join(' · ') : metadata.source})),
+                source:[...new Set([metadata.source,...records.slice(1).map(record=>[record.source_name,record.source_url].filter(Boolean).join(' · '))].filter(Boolean))].join('; '),
+                notes:comparisonNote.textContent || 'Historical reference observations in the selected date range. Missing periods remain gaps.'};
+            BW.VisualBuilderSources.attach(document.querySelector('.chart-action-strip > div:last-child'),spec);
+            BW.VisualBuilderSources.setPage(spec);
+        }
         if (!this.chartResizeObserver && typeof ResizeObserver !== 'undefined') {
             let size = target.clientWidth;
             this.chartResizeObserver = new ResizeObserver(() => {

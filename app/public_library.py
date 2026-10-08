@@ -164,11 +164,19 @@ def _listing(company=False, entity_id=None):
                 page_args = [*args, *names]
             select = ('WITH page AS (SELECT s.rowid FROM series s'+index+page_clause+
                       ' ORDER BY s.entity_name'+direction+',s.indicator_name'+direction+',s.id'+direction+' LIMIT ? OFFSET ?) '
-                      'SELECT s.* FROM page JOIN series s ON s.rowid=page.rowid '
+                      'SELECT s.*,latest.metadata AS latest_metadata,latest.source_url AS latest_source_url '
+                      'FROM page JOIN series s ON s.rowid=page.rowid '
+                      'LEFT JOIN observations latest ON latest.series_id=s.id AND latest.period=s.last_period '
                       'ORDER BY s.entity_name,s.indicator_name,s.id')
             args = page_args
         rows = [dict(row) for row in conn.execute(select,
                 [*args, limit, offset])] if conn else []
+        if not grouped:
+            for row in rows:
+                metadata = decode_metadata(row.pop('latest_metadata') or '{}')
+                row['last_status'] = metadata.get('flag', metadata.get('status', ''))
+                row['last_note'] = metadata.get('note', metadata.get('footnote', ''))
+                row['last_display_value'] = source_value({'metadata': metadata, 'value': row['last_value']})
         entity_name = None
         if entity_id and company:
             entity = conn.execute('SELECT entity_name FROM series WHERE source=? AND entity_id=? LIMIT 1',

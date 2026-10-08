@@ -82,6 +82,36 @@
         const periods = report.periods.filter(p => p.frequency === frequency).sort((a, b) => a.end.localeCompare(b.end));
         return $('#company-range').value === 'all' ? periods : periods.slice(frequency === 'annual' ? -6 : -12);
     };
+    const filingEvidence = sources => (sources || []).map(source => [source.form, source.filed ? 'Filed ' + source.filed : '', source.tag, typeof source.value === 'number' ? String(source.value) + ' ' + (source.unit || '') : '', source.start ? source.start + ' to ' + source.end : source.end ? 'As of ' + source.end : '', source.url].filter(Boolean).join(' · ')).join('; ');
+    function financialGraphic(metric, points, reportingFrequency, subtitle, basis) {
+        const evidence = points.map(point => ({
+            date: point.end, period: point.period,
+            value: typeof point.value === 'number' && Number.isFinite(point.value) ? point.value : null,
+            display_value: typeof point.value === 'number' && Number.isFinite(point.value) ? String(point.value) : '—',
+            status: point.method || (point.value == null ? 'Unavailable' : 'Reported'),
+            footnote: [point.method, point.start ? point.start + ' to ' + point.end : point.end ? 'As of ' + point.end : ''].filter(Boolean).join(' · '),
+            source: filingEvidence(point.sources), sourceUrl: point.sources?.find(source => source.url)?.url || ''
+        }));
+        return {
+            id: 'company-' + report.cik + '-' + metric.id + '-' + reportingFrequency,
+            title: report.company + ' · ' + metric.label, subtitle, unit: metric.unit,
+            type: $('#company-chart-type').value,
+            source: 'Historical SEC filings' + (report.checked ? ' · Checked ' + report.checked.slice(0, 10) : ''),
+            notes: [metric.definition, basis || report.basis, reportingFrequency === 'ttm' ? 'Trailing year uses four consecutive quarters; balances are at period end.' : 'Periods follow the company fiscal calendar.', 'Missing periods remain gaps.', metric.axis ? 'Disclosure axis: ' + metric.axis + '. Groups can overlap and must not be added across axes.' : '', report.stale ? 'Cached report; source refresh was unavailable.' : ''].filter(Boolean).join(' '),
+            series: [{ id: metric.id, name: metric.label, unit: metric.unit, frequency: reportingFrequency, gapDays: reportingFrequency === 'annual' ? 390 : 115, source: 'SEC filings', sourceUrl: evidence.find(point => point.sourceUrl)?.sourceUrl || '', points: evidence }]
+        };
+    }
+    function reportGraphic() {
+        const metric = metrics.get($('#company-metric').value);
+        if (!metric) return null;
+        const points = selectedPeriods().map(period => ({ ...metric.values[period.id], end: period.end, period: period.label, value: metric.values[period.id]?.value ?? null }));
+        const frequencyLabel = frequency === 'ttm' ? 'Trailing year' : frequency === 'annual' ? 'Annual' : 'Quarterly';
+        return financialGraphic(metric, points, frequency, frequencyLabel + ' · ' + ($('#company-range').value === 'all' ? 'All available periods' : 'Recent periods'));
+    }
+    function attachReportGraphic() {
+        window.BW?.VisualBuilderSources?.attach($('.company-chart-toolbar'), reportGraphic);
+        answerCharts();
+    }
     function renderChart() {
         const metric = metrics.get($('#company-metric').value), periods = selectedPeriods();
         if (!metric || !window.BW?.Visuals) return;
@@ -191,11 +221,19 @@
     chat.addEventListener('click', event => { const suggestion = event.target.closest('[data-question]'); if (suggestion) { question.value = suggestion.dataset.question; question.focus(); } });
     function answerCharts() {
         chat.querySelectorAll('.company-answer-data').forEach(details => {
-            if (details.dataset.bound) return; details.dataset.bound = 'true';
             const target = details.querySelector('.company-answer-chart'), calc = JSON.parse(target.dataset.calculation);
+            if (window.BW?.VisualBuilderSources) {
+                let controls = details.querySelector('.company-answer-graphics');
+                if (!controls) { controls = node('div', undefined, { class: 'company-answer-graphics' }); target.before(controls); }
+                window.BW.VisualBuilderSources.attach(controls, () => {
+                    const metric = metrics.get(calc.metric_id) || { id: calc.metric_id || calc.metric, label: calc.metric, unit: calc.unit };
+                    return financialGraphic({ ...metric, label: calc.metric, unit: calc.unit }, calc.points, calc.frequency, 'Saved answer · ' + (calc.operation === 'change' ? 'Fiscal period comparison' : 'Calculation history'), calc.basis);
+                });
+            }
+            if (details.dataset.bound) return; details.dataset.bound = 'true';
             let answerChart, answerFrame;
             const draw = () => {
-                if (!details.open || !target.clientWidth) return;
+                if (!details.open || !target.clientWidth || !window.BW?.Visuals) return;
                 answerChart?.destroy();
                 answerChart = window.BW.Visuals.timeSeries(target, [{ name: calc.metric, unit: calc.unit, gapDays: calc.frequency === 'annual' ? 390 : 115, points: calc.points.map(p => ({ date: p.end, value: p.value })) }], { height: 180, width: target.clientWidth, finance: true, yAxisPosition: 'right', yFormat: value => format(value, calc.unit), label: calc.metric + ' calculation history' });
             };
@@ -206,6 +244,7 @@
         });
     }
     answerCharts();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachReportGraphic, { once: true }); else attachReportGraphic();
     let asking = false;
     form.addEventListener('submit', async event => {
         event.preventDefault(); if (asking) return; asking = true;

@@ -38,6 +38,14 @@
             animation: 160,
         });
         target.dataset.rendered = 'true';
+        if (BW.VisualBuilderSources) {
+            let metadata = {};
+            try { metadata = JSON.parse(document.getElementById('bw-visual-source')?.textContent || '{}'); } catch (_) {}
+            const spec = BW.VisualBuilderSources.reference({...data, history:points},metadata);
+            spec.type = type.value;
+            BW.VisualBuilderSources.attach(document.querySelector('.gr-chart-controls'), spec);
+            BW.VisualBuilderSources.setPage(spec);
+        }
     }
     function schedule() { cancelAnimationFrame(frame); frame = requestAnimationFrame(render); }
     range.addEventListener('change', schedule);

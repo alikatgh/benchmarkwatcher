@@ -239,6 +239,11 @@
         const stage = el('div', '', 'bw-visual-stage'), note = el('p', '', 'bw-visual-note'), table = el('div'); note.setAttribute('aria-live', 'polite');
         section.append(controls, stage, note, table); parent.append(section);
         const state = { rows: [], unit: '', section, controls, select, stage, note, table };
+        if (BW.VisualBuilderSources) state.builderButton = BW.VisualBuilderSources.attach(controls, () => state.graphicSpec || {
+            title:state.name || 'Historical observations', unit:state.unit, type:'line',
+            source:state.source || '', notes:note.textContent,
+            series:[{name:state.name || 'Observations',unit:state.unit,points:state.rows}]
+        });
         state.draw = () => { select.sync(); render(stage, state.rows, select.value, state.unit, note, table); };
         select.addEventListener('change', () => state.draw());
         exportButton.addEventListener('click', async () => {
@@ -272,6 +277,9 @@
             detailLab.select.value = 'histogram';
         }
         detailLab.rows = rows; detailLab.unit = unit; detailLab.draw();
+        detailLab.name = name;
+        const metadata = document.getElementById('bw-visual-source');
+        if (metadata) { try { detailLab.source = JSON.parse(metadata.textContent).source; } catch (_) {} }
     }
     function workbooks() {
         document.querySelectorAll('[data-workbook-chart]').forEach(target => {
@@ -281,6 +289,14 @@
             const select = selector(controls, 'Chart type', [['line', 'Line'], ['area', 'Area'], ['bar', 'Bars'], ['scatter', 'Dots']]);
             const caption = target.closest('figure')?.querySelector('figcaption');
             if (caption) caption.append(controls); else target.before(controls);
+            if (BW.VisualBuilderSources) BW.VisualBuilderSources.attach(controls, {
+                id:['workbook',target.dataset.workbookVersion || location.pathname,target.dataset.workbookName,
+                    target.closest('[data-analysis-id]')?.dataset.analysisId || '',target.dataset.label].join(':'),
+                title:target.dataset.label, type:'bar', unit:target.dataset.unit, ordinal:true,
+                source:'Saved workbook values' + (target.dataset.workbookName ? ' · ' + target.dataset.workbookName : '') + ' · source cells retained with each observation',
+                notes:'Workbook periods are shown in source order. Values may include model assumptions; dates alone do not establish historical observations.',
+                series:[{name:target.dataset.label,unit:target.dataset.unit,points:points.map(point=>({...point, value:V.numeric(point.value) === null ? null : V.numeric(point.value) * (point.percent ? 100 : 1)}))}]
+            });
             function draw() {
                 const width = Math.max(260, target.clientWidth || 760), height = 230, svg = V.root(target, width, height, target.dataset.label + '. Exact values in Source data.');
                 const rows = points.map((p, index) => ({...p, index, value: p.value === null ? null : V.numeric(p.value) * (p.percent ? 100 : 1)}));
@@ -307,6 +323,7 @@
     async function dashboard() {
         const parent = document.getElementById('bw-visual-explorer'); if (!parent) return;
         const lab = createLab(parent, 'Visual explorer');
+        if (lab.builderButton) lab.builderButton.disabled = true;
         const benchmark = selector(lab.controls, 'Benchmark', []), range = selector(lab.controls, 'Observation range', [['1Y', 'Last available year'], ['5Y', 'Last available 5 years'], ['ALL', 'All available observations']]);
         lab.controls.prepend(benchmark.parentElement, range.parentElement);
         lab.select.value = 'heatmap';
@@ -319,20 +336,33 @@
             lab.select.value = options.some(option=>option[0]===selected) ? selected : options[0][0];
             lab.select.sync();
             lab.draw = catalog ? () => { lab.select.sync(); catalogView(lab, records, range.value); } : seriesDraw;
+            // Catalog percentage changes are precomputed by the API, which has no 5Y window.
+            range.querySelector('option[value="5Y"]').disabled = catalog;
         }
         lab.select.addEventListener('change', () => { if (!current) { lab.stage.replaceChildren(); lab.table.replaceChildren(); lab.note.textContent = 'Select a benchmark to load observations.'; } });
         async function load() {
             const active = ++request; lab.note.textContent = 'Loading observations…'; lab.stage.setAttribute('aria-busy', 'true');
+            current = null; lab.graphicSpec = null; lab.rows = []; lab.name = ''; lab.unit = '';
+            if (lab.builderButton) lab.builderButton.disabled = true;
             try {
                 const catalog = benchmark.value === '__catalog__';
+                if (catalog && range.value === '5Y') range.value = 'ALL';
                 const response = await fetch(catalog ? '/api/commodities?include_history=false&range=' + range.value : '/api/commodity/' + encodeURIComponent(benchmark.value));
                 if (!response.ok) throw new Error('Unavailable');
                 const payload = await response.json(); if (active !== request) return;
                 current = payload.data || payload.commodity || payload;
-                if (catalog) { records = current; configure(true); lab.draw(); }
+                if (catalog) {
+                    const category = new URLSearchParams(location.search).get('category');
+                    records = category ? current.filter(record=>record.category === category) : current;
+                    lab.graphicSpec = {id:'catalog-changes',title:'Historical benchmark changes',type:'ranking',unit:'%',
+                        source:[...new Set(records.map(record=>record.source_name || record.source).filter(Boolean))].join('; '),
+                        notes:'Changes over ' + (range.value === 'ALL' ? 'all saved history' : range.value) + '. Each series uses its own available endpoints; periods differ.',
+                        rows:records.map(record=>({label:record.name,value:record.change_percent,period:record.date,unit:'%',source:[record.source_name || record.source,record.source_url].filter(Boolean).join(' · ')}))};
+                    configure(true); lab.draw();
+                }
                 else { configure(false); drawRange(); }
             } catch (_) { if (active === request) { current = null; lab.rows = []; lab.stage.replaceChildren(); lab.table.replaceChildren(); lab.note.textContent = 'Could not load observations. Select a benchmark to retry.'; } }
-            finally { if (active === request) lab.stage.removeAttribute('aria-busy'); }
+            finally { if (active === request) { lab.stage.removeAttribute('aria-busy'); if (lab.builderButton) lab.builderButton.disabled = !current; } }
         }
         function drawRange() {
             if (!current) return;
@@ -340,6 +370,8 @@
             if (range.value !== 'ALL') cutoff.setUTCFullYear(cutoff.getUTCFullYear() - (range.value === '5Y' ? 5 : 1));
             lab.rows = range.value === 'ALL' ? points : points.filter(p => p.time >= +cutoff);
             lab.unit = [current.currency, current.unit].filter(Boolean).join(' / '); lab.draw();
+            lab.name = current.name;
+            lab.graphicSpec = BW.VisualBuilderSources?.benchmark(current,lab.rows);
         }
         benchmark.addEventListener('change', load); range.addEventListener('change', () => benchmark.value === '__catalog__' ? load() : drawRange());
         try {

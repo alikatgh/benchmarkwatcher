@@ -50,8 +50,12 @@
     <!-- Pinned, same-origin D3; shared by every data visualization. -->
     <script defer src="{{ url_for('static', filename='js/vendor/d3.v7.9.0.min.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/core/visuals.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/components/visual_builder.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/components/visual_builder_sources.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/components/visual_explorer.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visuals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder-sources.css') }}">
     <style>
         :root {
             /* Base brand colors */

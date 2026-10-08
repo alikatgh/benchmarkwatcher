@@ -5,7 +5,7 @@
   <figure class="studio-series">
     <figcaption><div><h3>{{ group.label }}</h3><span class="muted small">{{ group.unit }}</span></div><div class="studio-series-range"><span>{{ group.first.period }} <strong>{{ group.first.display }}</strong></span>{% if group.points|length > 1 %}<span aria-hidden="true">→</span><span>{{ group.last.period }} <strong>{{ group.last.display }}</strong></span>{% endif %}</div></figcaption>
     {% if group.count and group.points|length > 1 %}
-    <div class="studio-series-chart" data-workbook-chart data-label="{{ result.metric }}, {{ group.label|lower }} saved values" data-unit="{{ group.unit }}" data-points='{{ group.points|tojson }}'></div>
+    <div class="studio-series-chart" data-workbook-chart data-workbook-name="{{ result.filename|default('') }}" data-workbook-version="{{ result.version|default('') }}" data-label="{{ result.metric }}, {{ group.label|lower }} saved values" data-unit="{{ group.unit }}" data-points='{{ group.points|tojson }}'></div>
     {% elif not group.count %}<p class="muted">No usable saved values for these periods.</p>{% endif %}
   </figure>
   {% endfor %}
