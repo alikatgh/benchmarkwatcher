@@ -13,6 +13,18 @@
         </p>
     </header>
 
+    <article class="release-entry" id="pele-source-diagrams">
+        <time datetime="2026-10-18">October 18, 2026</time>
+        <h2>Source diagrams with Pele</h2>
+        <ul>
+            <li>Added source paths beside saved country and company histories, populated Global reference histories, company-report methodology and saved workbook results. Follow the publisher or filing through the saved observations to the chart, or the workbook cells to the saved result.</li>
+            <li>Source periods, units, flags, gaps, filing links and exact workbook cells remain available beside the diagrams. Workbook results read saved cell values; formulas are not executed here, and a workbook may contain assumptions.</li>
+            <li>Pele 1.6.0 is served with the app and loads when a source or methodology section opens. Opening a diagram makes no request to a data or AI provider. Ordered source steps remain readable without JavaScript or if diagram rendering is unavailable.</li>
+            <li>D3 continues to draw numerical charts, comparisons, sparklines, maps and quick visuals, with the existing customization and exports. Aligned the compact Range, Chart and Quick visuals controls for consistent sizing and spacing.</li>
+        </ul>
+        <p><a href="{{ url_for('main.pele_source_diagrams_story') }}">Read the source-diagram guide →</a></p>
+    </article>
+
     <article class="release-entry" id="homepage-library">
         <time datetime="2026-10-08">October 8, 2026</time>
         <h2>A homepage for the full data library</h2>

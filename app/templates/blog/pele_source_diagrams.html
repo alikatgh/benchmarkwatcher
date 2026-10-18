@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Follow the source with Pele diagrams | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header class="mb-6 sm:mb-8">
+        <p class="text-sm mb-4"><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">Follow the source with Pele diagrams</h1>
+        <p class="text-lg leading-relaxed mb-4">A chart shows the observations. A source path shows how the published series, filing or workbook reaches that chart. This update adds Pele diagrams beside the evidence behind a number.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-18">October 18, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+
+    <section class="release-entry" aria-labelledby="pele-source-path">
+        <h2 id="pele-source-path">From a published series to a saved history</h2>
+        <p class="mb-4 leading-relaxed">Open a country or company history from the data library, then expand <strong>How this data reaches the chart</strong> under Source &amp; meaning. The diagram connects four stages:</p>
+        <ol class="mb-4">
+            <li>The publisher and published series.</li>
+            <li>The country or company and its selected measure.</li>
+            <li>The saved observations, their frequency and units.</li>
+            <li>The history chart, exact values and CSV export.</li>
+        </ol>
+        <p class="leading-relaxed">The same source path appears on Global reference pages that have saved observations. It helps connect a named source to the values on screen. Read it together with the source definition and observation table: original reporting periods, units, source flags, gaps and filing links remain part of the evidence.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="pele-company-path">
+        <h2 id="pele-company-path">From SEC filings to a company report</h2>
+        <p class="mb-4 leading-relaxed">In a company report, expand <strong>Sources, coverage and calculation methods</strong>. The diagram follows public SEC filings through reported facts and fiscal periods to the report's reported and derived measures.</p>
+        <p class="leading-relaxed">The calculation methods beneath the path explain the derived measures, and the financial tables retain the filing evidence. Missing inputs stay unavailable. The diagram provides an overview of those stages; the dates, definitions and source links are what let you inspect a particular figure.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="pele-workbook-path">
+        <h2 id="pele-workbook-path">From workbook cells to a saved result</h2>
+        <p class="mb-4 leading-relaxed">Expand <strong>Source data</strong> below a saved workbook result to follow the workbook snapshot, source cells, selected metric and periods through to the result and its chart. Exact values and cell references remain available in that section, including for results added during a conversation.</p>
+        <p class="leading-relaxed">BenchmarkWatcher reads saved cell values from the workbook snapshot. Workbook formulas are not executed here, and a workbook may include assumptions. The source path helps you find the supporting cells; it does not independently verify those assumptions.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="pele-and-d3">
+        <h2 id="pele-and-d3">Pele for source paths, D3 for numerical charts</h2>
+        <p class="mb-4 leading-relaxed"><a href="https://github.com/obsidianmd/pele" target="_blank" rel="noopener noreferrer">Pele</a> renders diagrams as SVG. BenchmarkWatcher uses the MIT-licensed 1.6.0 build, served with the app and loaded when a source or methodology section opens. Opening a diagram does not request a refresh from a publisher or call an AI provider.</p>
+        <p class="mb-4 leading-relaxed">The diagrams follow the page's light or dark appearance and adapt to the available width. Ordered source steps remain readable without JavaScript, when the library cannot load, or when labels are too long for a useful diagram. Those steps also remain available to assistive technology.</p>
+        <p class="leading-relaxed">D3 continues to draw the numerical histories, comparisons, sparklines, maps and quick visuals. Their customization, exact-value views and exports remain available. Pele adds a way to read the source and methodology alongside those tools.</p>
+    </section>
+
+    <nav aria-label="Explore source paths" class="pt-8 border-t border-brand-black-60/20 dark:border-white/10">
+        <a href="{{ url_for('public_library.index') }}">Country data</a> · <a href="{{ url_for('public_library.companies') }}">Companies</a> · <a href="{{ url_for('global_reference.index') }}">Global references</a> · <a href="{{ url_for('main.changelog') }}#pele-source-diagrams">Release notes</a>
+    </nav>
+</article>
+{% endblock %}

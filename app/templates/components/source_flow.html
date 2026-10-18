@@ -1,0 +1,13 @@
+{% macro source_flow(steps, summary='How this data reaches the chart', caption='', expanded=false) %}
+{% set labels = steps|map('truncate', 180, true, '…')|list %}
+<details class="bw-source-flow"{% if expanded %} open{% endif %}>
+  <summary>{{ summary }}</summary>
+  <figure class="bw-diagram" data-bw-diagram>
+    <div class="bw-diagram-stage" aria-hidden="true"></div>
+    <script type="application/json" data-diagram-steps>{{ labels|tojson }}</script>
+    <ol class="bw-diagram-steps" aria-label="{{ summary }}">{% for label in labels %}<li>{{ label }}</li>{% endfor %}</ol>
+    {% if caption %}<figcaption class="bw-diagram-caption">{{ caption }}</figcaption>{% endif %}
+    <p class="bw-diagram-status" role="status" hidden></p>
+  </figure>
+</details>
+{% endmacro %}

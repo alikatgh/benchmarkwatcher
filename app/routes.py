@@ -367,6 +367,14 @@ def d3_visuals_story():
                            meta_description='Explore D3 histories, distributions, monthly heatmaps and coverage views, with exact values, publication gaps and source dates kept visible.')
 
 
+@bp.route('/blog/pele-source-diagrams')
+def pele_source_diagrams_story():
+    """Explain the source paths beside saved histories and research results."""
+    return render_template('blog/pele_source_diagrams.html',
+                           meta_title='Follow the source with Pele diagrams | BenchmarkWatcher',
+                           meta_description='Trace published series, SEC filings and saved workbook cells to charts and research results with Pele source diagrams alongside the existing D3 visualizations.')
+
+
 @bp.route('/blog/a-new-mark-for-benchmarkwatcher')
 def new_icon_story():
     """Explain the shared brand symbol and its use across icon sizes."""
@@ -436,6 +444,7 @@ def sitemap():
              url_for('main.help_page'), url_for('main.support_page'), url_for('main.privacy_page'),
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
+             url_for('main.pele_source_diagrams_story'),
              url_for('main.new_icon_story'), url_for('main.global_sources_story'),
              url_for('main.public_data_library_story'), url_for('main.homepage_story'),
              url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),
