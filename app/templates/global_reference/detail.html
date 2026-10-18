@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'components/source_flow.html' import source_flow %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/global-reference.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/global-reference.css', v='20261018.1') }}">
 <div class="gr-workspace" data-reference-detail>
   <nav class="gr-nav" aria-label="Reference workspace"><a href="{{ url_for('global_reference.index') }}">← Global references</a><a href="{{ url_for('global_reference.sources') }}">Source directory</a></nav>
   <header class="gr-heading"><div><p class="gr-eyebrow">{{ record.type_label }} · {{ record.countries_label }}</p><h1>{{ record.name }}</h1><p>{{ record.source_name }} · {{ record.frequency|capitalize }}</p></div><a class="gr-action no-underline" href="{{ record.source_url }}" target="_blank" rel="noopener noreferrer">Visit source <span aria-hidden="true">↗</span></a></header>

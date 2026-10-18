@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% from 'components/source_flow.html' import source_flow %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static',filename='css/global-reference.css') }}">
+<link rel="stylesheet" href="{{ url_for('static',filename='css/global-reference.css', v='20261018.1') }}">
 <div class="gr-workspace" data-reference-detail>
   <nav class="gr-nav" aria-label="Data library"><a href="{{ url_for('public_library.company',entity_id=record.entity_id) if record.entity_type=='company' else url_for('public_library.index',source=record.source,entity=record.entity_id) }}">← {{ record.entity_name }}</a><a href="{{ url_for('public_library.index') }}">Country data</a><a href="{{ url_for('public_library.companies') }}">Companies</a></nav>
   <header class="gr-heading"><div><p class="gr-eyebrow">{{ record.entity_name }} · {{ sources[record.source] }}</p><h1>{{ record.indicator_name }}</h1><p>{{ record.unit }} · {{ record.frequency|capitalize }}</p></div><a class="gr-action" href="{{ url_for('public_library.download',identifier=record.id) }}">Download CSV</a></header>
