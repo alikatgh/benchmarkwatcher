@@ -86,6 +86,8 @@ test('reference history keeps consistent sizing and synchronized inspection on d
   await panel.locator('#benchmark-detail-history').screenshot({path:testInfo.outputPath('reference-history.png')});
   expect(await panel.evaluate(node=>node.scrollWidth-node.clientWidth)).toBeLessThanOrEqual(1);
   await panel.getByRole('button',{name:'Custom',exact:true}).click();
+  await panel.locator('#benchmark-exact-dates > summary').click();
+  await expect(panel.getByLabel('From',{exact:true})).toBeVisible();
   await panel.getByLabel('From',{exact:true}).fill('2026-01-01');
   await panel.getByLabel('To',{exact:true}).fill('2026-08-01');
   await panel.getByRole('button',{name:'Apply dates'}).click();
