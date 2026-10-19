@@ -367,6 +367,14 @@ def d3_visuals_story():
                            meta_description='Explore D3 histories, distributions, monthly heatmaps and coverage views, with exact values, publication gaps and source dates kept visible.')
 
 
+@bp.route('/blog/a-clearer-research-workspace')
+def reui_workspace_story():
+    """Introduce search, display preferences and source filters in the workspace."""
+    return render_template('blog/reui_workspace.html',
+                           meta_title='A clearer research workspace | BenchmarkWatcher',
+                           meta_description='Find benchmarks and local research with keyboard search, preview all six themes, and explore saved public data with searchable filters.')
+
+
 @bp.route('/blog/pele-source-diagrams')
 def pele_source_diagrams_story():
     """Explain the source paths beside saved histories and research results."""
@@ -444,7 +452,7 @@ def sitemap():
              url_for('main.help_page'), url_for('main.support_page'), url_for('main.privacy_page'),
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
-             url_for('main.pele_source_diagrams_story'),
+             url_for('main.pele_source_diagrams_story'), url_for('main.reui_workspace_story'),
              url_for('main.new_icon_story'), url_for('main.global_sources_story'),
              url_for('main.public_data_library_story'), url_for('main.homepage_story'),
              url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),

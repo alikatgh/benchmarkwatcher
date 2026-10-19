@@ -1,3 +1,4 @@
+import { selectOption } from './select-option';
 import { test, expect, type Locator, type Page } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 
@@ -102,7 +103,7 @@ test('the local Pele renderer loads only on disclosure and preserves D3 history 
   expect(new URL(requests[0]).pathname).toBe(vendorPath);
   expect(await page.evaluate(() => typeof (window as any).pele.mount)).toBe('function');
   await historyKeyboardWorks(page);
-  await page.getByLabel('Chart', { exact: true }).selectOption('bar');
+  await selectOption(page.locator('#gr-chart-type'), 'bar');
   await expect(page.locator('#gr-chart .bw-d3-bar')).toHaveCount(3);
   await page.locator('.gr-chart-controls').getByRole('button', { name: 'Quick visual', exact: true }).click();
   const quick = page.getByRole('dialog', { name: 'Quick visual', exact: true });
@@ -210,7 +211,7 @@ test('a blocked optional vendor leaves readable steps and the existing history c
   await expect(steps.getByRole('listitem')).toHaveCount(4);
   expect(await steps.evaluate(node => getComputedStyle(node).clipPath)).toBe('none');
   await historyKeyboardWorks(page);
-  await page.getByLabel('Chart', { exact: true }).selectOption('bar');
+  await selectOption(page.locator('#gr-chart-type'), 'bar');
   await expect(page.locator('#gr-chart .bw-d3-bar')).toHaveCount(3);
 });
 

@@ -315,6 +315,8 @@ BW.SettingsModal = {
         // Update Theme Buttons (attribute-based active state - CSS handles styling)
         ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach(m => {
             const btn = document.getElementById(`theme-${m}`);
+            // ReUI owns its controlled radio state and aria-checked semantics.
+            if (btn?.getAttribute('role') === 'radio') return;
             if (btn) {
                 if (m === theme) {
                     btn.setAttribute('data-active', 'true');
@@ -329,6 +331,7 @@ BW.SettingsModal = {
         // Update Market Theme Buttons (attribute-based active state)
         ['western', 'asian', 'monochrome'].forEach(m => {
             const btn = document.getElementById(`market-${m}`);
+            if (btn?.getAttribute('role') === 'radio') return;
             if (btn) {
                 if (m === market) {
                     btn.setAttribute('data-active', 'true');

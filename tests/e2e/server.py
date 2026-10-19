@@ -12,12 +12,14 @@ import secrets
 from app import create_app
 from app import analysis_providers
 from tests.e2e.workbook_fixture import write_workbook, provider_response
+from tests.e2e.reference_fixture import seed_references
 
 
 def main(workbooks=False, companies=False, visual_builder=False):
     with TemporaryDirectory(prefix='benchmarkwatcher-e2e-') as directory:
         library = Path(directory) / 'models'
         library.mkdir()
+        seed_references(Path(directory) / 'global-reference')
         write_workbook(library / 'Sample Company.xlsx')
         if workbooks:
             for name in ['005930 Samsung', 'Samsung SDI', 'ZZZ Samsung Research', 'AT&T <Labs>'] + [f'Workbook example {i:03}' for i in range(64)]:

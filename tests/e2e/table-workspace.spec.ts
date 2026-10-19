@@ -1,3 +1,4 @@
+import { selectOption } from './select-option';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
@@ -17,7 +18,7 @@ test.describe('Benchmark table workspace', () => {
         const category = (await row.getAttribute('data-category'))!;
         const name = (await row.getAttribute('data-name'))!;
         await page.locator('#tw-filter-button').click();
-        await page.locator('#tw-category').selectOption(category);
+        await selectOption(page.locator('#tw-category'), category);
         await expect.poll(() => visibleRows(page).count()).toBeGreaterThan(0);
         const categories = await visibleRows(page).evaluateAll(rows => rows.map(row => (row as HTMLElement).dataset.category));
         expect(categories.every(value => value === category)).toBe(true);
@@ -47,7 +48,7 @@ test.describe('Benchmark table workspace', () => {
         const name = (await page.locator('#table-body tr[data-id]').first().getAttribute('data-name'))!;
         await page.locator('#tw-query').fill(name);
         await page.locator('#tw-properties-button').click();
-        await page.locator('#tw-density').selectOption('compact');
+        await selectOption(page.locator('#tw-density'), 'compact');
         await page.locator('#tw-property-list').getByLabel('History', { exact: true }).uncheck();
         await page.keyboard.press('Escape');
         const resize = page.locator('th[data-col="price"] .tw-resizer');

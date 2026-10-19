@@ -1,3 +1,4 @@
+import { selectOption, selectTrigger } from './select-option';
 import { test, expect, type Page } from '@playwright/test';
 
 async function openDashboard(page: Page) {
@@ -22,7 +23,7 @@ async function openDashboard(page: Page) {
 }
 
 async function expectContainedControls(page: Page) {
-  const problems = await page.locator('.tw-control-heading .tw-button, .tw-view-picker select, .tw-search, .tw-tools .tw-button, #tw-range-select, .tw-context .range-btn, #tw-visual-actions button').evaluateAll(elements => {
+  const problems = await page.locator('.tw-control-heading .tw-button, .tw-view-picker [role=combobox], .tw-search, .tw-tools .tw-button, #tw-range-select, .tw-context .range-btn, #tw-visual-actions button').evaluateAll(elements => {
     const visible = elements.filter(el => el.getClientRects().length);
     const issues: string[] = [];
     visible.forEach(el => {
@@ -45,7 +46,8 @@ async function expectConsistentControls(page: Page) {
   const geometry = await page.evaluate(() => {
     const selectors = ['#tw-view-select', '#tw-more-button', '.tw-search', '#tw-filter-button', '#tw-visual-actions button', '#tw-range-select', '#tw-filter-chips .tw-chip'];
     return selectors.map(selector => {
-      const element = document.querySelector(selector)!;
+      const field = document.querySelector(selector)!;
+      const element = field.matches('[data-reui-enhanced]') ? field.nextElementSibling!.querySelector('[role=combobox]')! : field;
       const style = getComputedStyle(element);
       const text = getComputedStyle(selector === '.tw-search' ? element.querySelector('input')! : element);
       return {selector, height: element.getBoundingClientRect().height, radius: style.borderRadius, font: text.fontSize, weight: text.fontWeight, line: text.lineHeight, border: style.borderTopWidth};
@@ -71,14 +73,15 @@ async function expectConsistentControls(page: Page) {
   const viewLabelSpace = await page.evaluate(() => {
     const select = document.querySelector('#tw-view-select') as HTMLSelectElement;
     const count = document.querySelector('#tw-compact-count')!;
-    const style = getComputedStyle(select);
+    const trigger = select.nextElementSibling!.querySelector('[role=combobox]')!;
+    const style = getComputedStyle(trigger);
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d')!;
     context.font = style.font;
     const labelWidth = context.measureText(select.selectedOptions[0].textContent!).width;
     const originalCount = count.textContent;
     count.textContent = '17/93';
-    const available = select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const available = trigger.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
     count.textContent = originalCount;
     return available - labelWidth;
   });
@@ -94,7 +97,7 @@ async function moreCommand(page: Page, command: string) {
 }
 
 async function expectCompactHierarchy(page: Page) {
-  await expect(page.locator('#tw-view-select')).toBeVisible();
+  await expect(selectTrigger(page.locator('#tw-view-select'))).toBeVisible();
   await expect(page.locator('#tw-new-view')).toBeHidden();
   await expect(page.locator('#tw-sort-button')).toBeHidden();
   await expect(page.locator('#tw-range-select')).toBeVisible();
@@ -142,7 +145,7 @@ for (const width of [320, 390]) {
     await page.locator('#tw-filter-button').click();
     await expect(page.locator('#tw-tool-sheet')).toHaveAttribute('open', '');
     await expect(page.locator('#tw-sheet-heading')).toBeFocused();
-    await page.locator('#tw-category').selectOption('precious');
+    await selectOption(page.locator('#tw-category'), 'precious');
     await expect(page.locator('#tw-filter-count')).toHaveText('(1)');
     await expect(page.locator('#tw-sheet-done')).toHaveText('Show 1 result');
     await page.locator('#tw-tool-sheet').screenshot({path:testInfo.outputPath(`dashboard-filter-sheet-${width}.png`)});
@@ -206,7 +209,7 @@ for (const width of [320, 390, 600]) {
     await page.locator('#tw-filter-button').focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#tw-sheet-heading')).toBeFocused();
-    await page.locator('#tw-category').selectOption('precious');
+    await selectOption(page.locator('#tw-category'), 'precious');
     await page.locator('#tw-sheet-done').focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('#tw-tool-sheet')).toBeHidden();
@@ -222,7 +225,9 @@ for (const width of [320, 390, 600]) {
     await expectConsistentControls(page);
     const rows = await page.evaluate(() => {
       const center = (selector: string) => {
-        const rect = document.querySelector(selector)!.getBoundingClientRect();
+        const field = document.querySelector(selector)!;
+        const element = field.matches('[data-reui-enhanced]') ? field.nextElementSibling!.querySelector('[role=combobox]')! : field;
+        const rect = element.getBoundingClientRect();
         return rect.top + rect.height / 2;
       };
       return [
@@ -278,9 +283,9 @@ test('multiple compact filter chips scroll inside their row and remain removable
   await openDashboard(page);
   await page.locator('#tw-query').fill('Gold');
   await page.locator('#tw-filter-button').click();
-  await page.locator('#tw-category').selectOption('precious');
-  await page.locator('#tw-frequency').selectOption('daily');
-  await page.locator('#tw-availability').selectOption('available');
+  await selectOption(page.locator('#tw-category'), 'precious');
+  await selectOption(page.locator('#tw-frequency'), 'daily');
+  await selectOption(page.locator('#tw-availability'), 'available');
   await page.locator('#tw-sheet-done').click();
   await expect(page.locator('#tw-tool-sheet')).toBeHidden();
   const strip = page.locator('#tw-filter-chips .tw-chip-items');
@@ -321,7 +326,7 @@ test('desktop dashboard retains the overview strip and horizontal toolbar', asyn
     };
     const reference = document.querySelector('#tw-view-menu-button')!;
     const referenceStyle = getComputedStyle(reference);
-    const controls = [...document.querySelectorAll('.tw-control-heading .tw-button, .tw-view-picker select, .tw-search, .tw-tools .tw-button, .tw-context .range-btn, #tw-visual-actions button')].filter(element => element.getClientRects().length);
+    const controls = [...document.querySelectorAll('.tw-control-heading .tw-button, .tw-view-picker [role=combobox], .tw-search, .tw-tools .tw-button, .tw-context .range-btn, #tw-visual-actions button')].filter(element => element.getClientRects().length);
     return {reference: geometry(reference), radius: referenceStyle.borderRadius, border: referenceStyle.borderTopWidth, padding: [referenceStyle.paddingTop, referenceStyle.paddingRight, referenceStyle.paddingBottom, referenceStyle.paddingLeft], controls: controls.map(element => ({id: element.id || element.className, geometry: geometry(element)}))};
   });
   expect(referenceControls.reference).toEqual({height: 32, font: '12px', weight: '400', line: '18px'});
@@ -398,7 +403,7 @@ test('phone sheets close on resize without losing filters and a rapid detail ope
   await page.setViewportSize({width:390,height:844});
   await openDashboard(page);
   await page.locator('#tw-filter-button').click();
-  await page.locator('#tw-category').selectOption('precious');
+  await selectOption(page.locator('#tw-category'), 'precious');
   await page.setViewportSize({width:1440,height:1000});
   await expect(page.locator('#tw-tool-sheet')).toBeHidden();
   await expect(page.locator('#tw-filters')).toBeHidden();

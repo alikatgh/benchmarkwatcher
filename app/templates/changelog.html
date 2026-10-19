@@ -13,6 +13,18 @@
         </p>
     </header>
 
+    <article class="release-entry" id="reui-workspace">
+        <time datetime="2026-10-19">October 19, 2026</time>
+        <h2>Clearer search, filters and display settings</h2>
+        <ul>
+            <li>Search benchmarks and local research notes from the shared header, with links to Country data, Companies and Sources. Ctrl/⌘+K opens search; arrow keys, Enter and Escape support navigation. Loading, Retry and empty-result states explain what to do next, and benchmark and navigation links support the browser's modified clicks.</li>
+            <li>Updated selected table, saved-view, library, source and chart selectors with ReUI controls. Lists with more than twelve options include search. Existing filter URLs, saved views and chart controls keep their behavior; Escape closes a dropdown while keeping its mobile sheet open; browser Back closes the sheet and dropdown together.</li>
+            <li>Display settings previews six appearances and three historical-change palettes, with preferences saved in this browser.</li>
+            <li>Uses selected free, MIT-licensed ReUI components within the existing Flask application. D3 charts, exact values, sources and units remain available. The controls add no calls to data or AI providers.</li>
+        </ul>
+        <p><a href="{{ url_for('main.reui_workspace_story') }}">Explore the workspace update →</a></p>
+    </article>
+
     <article class="release-entry" id="pele-source-diagrams">
         <time datetime="2026-10-18">October 18, 2026</time>
         <h2>Source diagrams with Pele</h2>

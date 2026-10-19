@@ -1,3 +1,4 @@
+import { selectOption } from './select-option';
 import { test, expect } from '@playwright/test';
 
 test.describe('Market Pulse', () => {
@@ -100,7 +101,7 @@ test.describe('Market Pulse', () => {
         expect(rowCount).toBeGreaterThan(0);
 
         await page.locator('#tw-filter-button').click();
-        await page.locator('#tw-direction').selectOption('down');
+        await selectOption(page.locator('#tw-direction'), 'down');
         await expect(page.locator('#tw-direction')).toHaveValue('down');
         await page.locator('#tw-query').fill('no-such-benchmark');
         await expect(page.locator('#tw-empty')).toBeVisible();

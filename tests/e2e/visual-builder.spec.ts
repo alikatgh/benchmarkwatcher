@@ -1,3 +1,4 @@
+import { selectOption } from './select-option';
 import {test,expect,type Page,type Locator} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {readFile} from 'node:fs/promises';
@@ -246,7 +247,7 @@ test('country ranking and history preserve source flags and the selected period'
   await expect(dialog.locator('.bw-vb-preview svg')).toContainText('Original reporting periods');
   await dialog.getByRole('button',{name:'Close graphic builder'}).click();
   await page.locator('.gr-reference-name a').first().click();
-  await page.locator('#gr-range').selectOption('1');
+  await selectOption(page.locator('#gr-range'), '1');
   await page.locator('.gr-chart-controls').getByRole('button',{name:'Quick visual',exact:true}).click();
   await expect(await sourceRows(quick)).toHaveCount(2);
   await expect(quick.locator('tbody')).toContainText('2024');

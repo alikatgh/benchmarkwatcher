@@ -151,7 +151,7 @@
         mergeCatalog(records) {
             const map = new Map(this.catalog.map(c => [c.id, c])); records.forEach(c => { if (c && typeof c.id === 'string') map.set(c.id, { ...map.get(c.id), ...c, source: c.source_name || c.source || '' }); });
             this.catalog = [...map.values()]; this.renderOverview(); this.openRequestedEntry();
-            if ($('bw-search-dialog')?.open) this.renderSearch();
+            if (this.isSearchOpen?.() || $('bw-search-dialog')?.open) this.renderSearch();
         },
         openRequestedEntry() {
             if (!$('research-workspace') || !BW.ResearchWorkspace?.root) return;
@@ -166,7 +166,7 @@
         loadCatalog() {
             if (this.catalogLoaded) return Promise.resolve(); if (this.loading) return this.loading;
             this.loadFailed = false;
-            this.loading = fetch('/api/commodities?include_history=false', { headers: { Accept: 'application/json' } }).then(response => { if (!response.ok) throw new Error('Unavailable'); return response.json(); }).then(payload => { if (!Array.isArray(payload.data)) throw new Error('Invalid response'); this.mergeCatalog(payload.data); this.catalogLoaded = true; this.openRequestedEntry(); }).catch(() => { this.loadFailed = true; }).finally(() => { this.loading = null; if ($('bw-search-dialog')?.open) this.renderSearch(); });
+            this.loading = fetch('/api/commodities?include_history=false', { headers: { Accept: 'application/json' } }).then(response => { if (!response.ok) throw new Error('Unavailable'); return response.json(); }).then(payload => { if (!Array.isArray(payload.data)) throw new Error('Invalid response'); this.mergeCatalog(payload.data); this.catalogLoaded = true; this.openRequestedEntry(); }).catch(() => { this.loadFailed = true; }).finally(() => { this.loading = null; if (this.isSearchOpen?.() || $('bw-search-dialog')?.open) this.renderSearch(); });
             return this.loading;
         },
         renderOverview() {
@@ -184,6 +184,7 @@
             });
         },
         initSearch() {
+            if (BW.ReUI?.installWorkspaceSearch(this)) return;
             const dialog = $('bw-search-dialog'); if (!dialog) return;
             if (!/Mac|iPhone|iPad/.test(navigator.platform)) $('bw-search-shortcut').textContent = 'Ctrl K';
             const open = () => { if (document.querySelector('dialog[open]') || document.body.classList.contains('bw-detail-open')) return; this.searchTrigger = document.activeElement; dialog.showModal(); $('bw-global-query').focus(); this.renderSearch(); this.loadCatalog(); };

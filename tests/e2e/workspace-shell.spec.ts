@@ -126,11 +126,12 @@ test('workspace navigation preserves browser back and category links', async ({p
 test('command search opens reference details with keyboard and restores focus', async ({page}) => {
   await page.goto('/?view=compact');
   await page.locator('#bw-search-trigger').click();
-  await page.locator('#bw-global-query').fill('gold');
-  const result = page.locator('#bw-search-results a').filter({hasText:'Gold'}).first();
+  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('gold');
+  const result = page.getByRole('option', { name: /Gold Precious metals/ });
   await expect(result).toBeVisible();
-  await page.locator('#bw-global-query').press('ArrowDown');
-  await expect(result).toBeFocused();
+  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).press('ArrowDown');
+  await expect(result).toHaveAttribute('data-selected', 'true');
+  await expect(page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#bw-search-dialog')).toBeHidden();
   await expect(page.locator('#benchmark-detail')).toBeVisible();
@@ -146,8 +147,8 @@ test('command search finds local research and opens its editor', async ({page}) 
   await expect(page.locator('#rw-save-state')).toHaveText('Saved in this browser');
   await page.locator('[data-workspace="benchmarks"]').click();
   await page.locator('#bw-search-trigger').click();
-  await page.locator('#bw-global-query').fill('Copper supply');
-  await page.locator('#bw-search-results button').filter({hasText:'Copper supply context'}).click();
+  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('Copper supply');
+  await page.getByRole('option', { name: /Copper supply context/ }).click();
   await expect(page.locator('#research-workspace')).toBeVisible();
   await expect(page.locator('#rw-editor [name="title"]')).toHaveValue('Copper supply context');
   await expect(page.locator('#rw-editor :focus')).toHaveCount(1);
@@ -166,7 +167,7 @@ test('shared controls stay distinguishable and accessible across all themes', as
     const settingsAudit=await new AxeBuilder({page}).include('#settings-modal').withTags(['wcag2a','wcag2aa']).analyze();
     const settingsIssues=settingsAudit.violations.filter(v=>['critical','serious'].includes(v.impact||''));
     expect(settingsIssues.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,summary:n.failureSummary}))})), `${theme}: settings controls`).toEqual([]);
-    await page.getByRole('button',{name:'Apply',exact:true}).click();
+    await page.getByRole('button',{name:'Done',exact:true}).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme',theme);
     const selected=page.locator('.tw-context .range-btn[aria-pressed="true"]');
     const idle=page.locator('.tw-context .range-btn[aria-pressed="false"]').first();

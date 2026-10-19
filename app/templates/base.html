@@ -756,6 +756,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark-detail.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/controls.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reui.css', v='20261019.2') }}">
 </head>
 
 <body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
@@ -768,7 +769,8 @@
     {% include 'components/footer.html' %}
     {% include 'components/settings_modal.html' %}
     {% include 'components/benchmark_detail.html' %}
-    <script src="{{ url_for('static', filename='js/components/workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/reui.js', v='20261019.2') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/workspace.js', v='20261019.2') }}" defer></script>
     <script src="{{ url_for('static', filename='js/components/research_workspace.js', v='3ae1b26') }}" defer></script>
     <script src="{{ url_for('static', filename='js/components/benchmark_detail.js', v='3ae1b26') }}" defer></script>
 </body>

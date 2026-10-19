@@ -1,3 +1,4 @@
+import { selectOption } from './select-option';
 import { test, expect, type Page } from '@playwright/test';
 
 async function localOnly(page: Page) {
@@ -38,7 +39,7 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.gr-reference-row')).toHaveCount(30);
     await fits(page);
     await page.locator('.gr-workspace').screenshot({ path: testInfo.outputPath(`references-${width}.png`) });
-    await page.getByLabel('Reference type', { exact: true }).selectOption('consumer_inflation');
+    await selectOption(page.locator('select[name="kind"]'), 'consumer_inflation');
     await page.getByLabel('Search references').fill('Germany');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.locator('.gr-reference-row')).toHaveCount(2);
@@ -50,9 +51,9 @@ for (const width of [390, 1440]) {
     await page.locator('#gr-chart svg').focus();
     await page.keyboard.press('ArrowLeft');
     await expect(page.locator('#gr-readout span')).not.toHaveText(originalReadout!);
-    await page.getByLabel('Range', { exact: true }).selectOption('1');
+    await selectOption(page.locator('#gr-range'), '1');
     await expect(page.locator('#gr-range-caption')).not.toContainText('120 saved observations');
-    await page.getByLabel('Chart', { exact: true }).selectOption('bar');
+    await selectOption(page.locator('#gr-chart-type'), 'bar');
     await expect.poll(() => page.locator('#gr-chart .bw-d3-bar').count()).toBeGreaterThan(0);
     await fits(page);
     await page.locator('.gr-workspace').screenshot({ path: testInfo.outputPath(`reference-detail-${width}.png`) });
@@ -64,7 +65,7 @@ for (const width of [390, 1440]) {
     await fits(page);
     await page.goto('/sources');
     await expect(page.locator('.gr-context')).toContainText('31 publishers catalogued');
-    await page.getByLabel('Readiness', { exact: true }).selectOption('needs_registration');
+    await selectOption(page.locator('select[name="status"]'), 'needs_registration');
     await page.getByRole('button', { name: 'Filter', exact: true }).click();
     await expect(page.locator('#source-ecb')).toHaveCount(0);
     await page.locator('.gr-provider summary').first().click();
@@ -76,12 +77,12 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.gr-pagination')).toContainText('31–60 of 1498');
     await page.getByLabel('Search the catalog').fill('NV.AGR.TOTL.ZS');
     await page.locator('.gr-catalog').getByRole('button', { name: 'Search', exact: true }).click();
-    await expect(page.locator('.gr-catalog-list>li')).toHaveCount(1);
-    await expect(page.locator('.gr-catalog-list')).toContainText('205 saved economy histories');
-    await page.getByLabel('Browse', { exact: true }).selectOption('economies');
+    await expect(page.getByRole('region', { name: 'World Bank discovery catalog', exact: true }).locator('.gr-catalog-list>li')).toHaveCount(1);
+    await expect(page.getByRole('region', { name: 'World Bank discovery catalog', exact: true }).locator('.gr-catalog-list')).toContainText('205 saved economy histories');
+    await selectOption(page.locator('select[name="catalog"]'), 'economies');
     await page.getByLabel('Search the catalog').fill('Japan');
     await page.locator('.gr-catalog').getByRole('button', { name: 'Search', exact: true }).click();
-    await expect(page.locator('.gr-catalog-list')).toContainText('JPN · JP');
+    await expect(page.getByRole('region', { name: 'World Bank discovery catalog', exact: true }).locator('.gr-catalog-list')).toContainText('JPN · JP');
     await fits(page);
     expect(errors).toEqual([]);
   });
@@ -93,13 +94,13 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.gr-footnote')).toContainText('1,248 nonempty country histories');
     await page.getByRole('navigation', { name: 'Reference pages' }).getByRole('link', { name: 'Next', exact: true }).click();
     await expect(page.locator('.gr-pagination')).toContainText('31–60 of 1256');
-    await page.getByLabel('Country / economy', { exact: true }).selectOption('JP');
+    await selectOption(page.locator('select[name="country"]'), 'JP');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     // The country filter includes Japan's EUR/JPY reference as well as six WDI measures.
     await expect(page.locator('.gr-reference-row')).toHaveCount(7);
     await fits(page);
     await page.locator('.gr-workspace').screenshot({ path: testInfo.outputPath(`country-japan-${width}.png`) });
-    await page.getByLabel('Country measure', { exact: true }).selectOption('SP.POP.TOTL');
+    await selectOption(page.locator('select[name="indicator"]'), 'SP.POP.TOTL');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.locator('.gr-reference-row')).toHaveCount(1);
     await page.locator('.gr-reference-name a').click();
@@ -124,7 +125,7 @@ for (const width of [390, 1440]) {
     await expect(page.locator('.gr-evidence')).not.toContainText('Values are percentages');
     await fits(page);
     await page.goto('/sources?catalog=economies&q=Japan');
-    await page.locator('.gr-catalog-list').getByRole('link', { name: '6 saved histories', exact: false }).click();
+    await page.getByRole('region', { name: 'World Bank discovery catalog', exact: true }).locator('.gr-catalog-list').getByRole('link', { name: '6 saved histories', exact: false }).click();
     await expect(page.locator('.gr-reference-row')).toHaveCount(6);
     await fits(page);
   });
