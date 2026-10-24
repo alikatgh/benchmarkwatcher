@@ -26,6 +26,7 @@ beforeEach(() => {
     global.fetch = jest.fn(async url => response(sample(url.split('/').pop())));
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/vendor/d3.v7.9.0.min.js'), 'utf8'));
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/core/visuals.js'), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/components/reference_history.js'), 'utf8'));
     window.eval(script);
     BW.BenchmarkDetail.init();
 });
@@ -273,6 +274,7 @@ function rebootDetail() {
     document.body.innerHTML = '<main id="table-shell"></main>' + template;
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/vendor/d3.v7.9.0.min.js'), 'utf8'));
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/core/visuals.js'), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/components/reference_history.js'), 'utf8'));
     window.eval(script); BW.BenchmarkDetail.init();
 }
 function customDates(start, end) {

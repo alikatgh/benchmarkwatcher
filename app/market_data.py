@@ -182,8 +182,8 @@ def _identity(raw):
     return identity
 
 
-def _page():
-    value = request.args.get('page', '1')
+def _page(name='page'):
+    value = request.args.get(name, '1')
     if not re.fullmatch(r'[0-9]{1,5}', value) or not 1 <= int(value) <= 25000:
         abort(400, description='Choose a valid numbered page.')
     return int(value)
@@ -204,7 +204,7 @@ def _unavailable():
     abort(503, description='Saved histories are temporarily unavailable. Please try again shortly.')
 
 
-def _listing(kind):
+def _filters(kind):
     q = request.args.get('q', '').strip()
     if len(q) > 100 or q and not q.isprintable():
         abort(400, description='Choose a shorter search.')
@@ -212,6 +212,11 @@ def _listing(kind):
     sources = ({'exchangerate_host', 'frankfurter_ecb'} if kind == 'fx' else {'marketstack'})
     if source and source not in sources:
         abort(400, description='Choose a listed source.')
+    return q, source
+
+
+def _listing(kind):
+    q, source = _filters(kind)
     try:
         rows = [_record(row, kind) for row in list_instruments(database_path(), kind)]
     except (StoreError, sqlite3.Error, OSError, ValueError):
@@ -244,6 +249,8 @@ def _listing(kind):
 def _detail(identifier, kind):
     if not IDENTIFIER.fullmatch(identifier) or not identifier.startswith('stock-' if kind == 'stock' else 'fx-'):
         abort(404)
+    q, source = _filters(kind)
+    list_page = _page('list_page')
     open_unavailable = False
     identity = None
     if kind == 'fx' and OPEN_FX_IDENTIFIER.fullmatch(identifier):
@@ -263,9 +270,13 @@ def _detail(identifier, kind):
         raw_identity, open_unavailable = _open_data(open_market_store.read_identity, identifier)
         identity = _identity(raw_identity)
     endpoint = 'market_data.stock_detail' if kind == 'stock' else 'market_data.exchange_rate_detail'
-    history = _pagination(list(reversed(record['history'])), HISTORY_PAGE_SIZE, endpoint, instrument_id=identifier)
+    history = _pagination(list(reversed(record['history'])), HISTORY_PAGE_SIZE, endpoint,
+                          instrument_id=identifier, q=q, source=source, list_page=list_page)
+    list_endpoint = 'market_data.stocks' if kind == 'stock' else 'market_data.exchange_rates'
+    list_url = url_for(list_endpoint, q=q, source=source, page=list_page)
     return render_template('market_data/detail.html', record=record, kind=kind, history=history,
                            identity=identity, open_unavailable=OPEN_UNAVAILABLE if open_unavailable else None,
+                           list_url=list_url,
                            exact_value=exact_value,
                            meta_title=record['name'] + ' history · BenchmarkWatcher',
                            meta_description='Saved daily observations for ' + record['name'] +

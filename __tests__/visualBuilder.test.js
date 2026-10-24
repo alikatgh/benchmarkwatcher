@@ -159,8 +159,9 @@ test('dense area histories suppress ordinary dots while isolated observations an
   points.push({date:'2025-01-01',value:123.1234567890123,period:'2025',footnote:'Exact source precision'});
   const chart = BW.VisualBuilder.render(host(),{type:'area',title:'Dense history',unit:'USD',series:[{name:'Reference',unit:'USD',points}]});
   const marks = [...chart.svg.querySelectorAll('.bw-vb-mark')];
-  expect(marks.slice(0,30).every(mark => mark.getAttribute('fill') === 'transparent')).toBe(true);
-  expect(marks[30].getAttribute('fill')).not.toBe('transparent');
+  expect(marks).toHaveLength(1);
+  expect(marks[0].getAttribute('fill')).not.toBe('transparent');
+  expect(JSON.parse(chart.svg.querySelector('metadata').textContent).series[0].points).toHaveLength(31);
   chart.svg.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true}));
   expect(chart.svg.querySelector('.bw-vb-inspection').getAttribute('visibility')).toBe('visible');
   expect(chart.svg.querySelector('.bw-vb-inspection').textContent).toContain('123.1234567890123');

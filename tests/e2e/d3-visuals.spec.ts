@@ -15,6 +15,9 @@ test('all D3 explorer views, keyboard inspection, range, export and responsive l
   await page.getByRole('button',{name:'1M',exact:true}).click();
   await expect(page.locator('#stat-points')).not.toHaveText('120');
   const lab=page.getByRole('region',{name:'Visual explorer'});
+  await expect(lab.locator('table')).toHaveCount(0);
+  await lab.locator('.bw-visual-data > summary').click();
+  await expect(lab.locator('table')).toHaveCount(1);
   for(const type of ['line','area','step','bar','scatter','change','histogram','cumulative','box','monthly','heatmap','coverage']) {
     await chooseVisualization(lab,type);
     await expect(lab.locator('svg')).toBeVisible();

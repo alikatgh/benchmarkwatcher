@@ -59,8 +59,15 @@
 .reui [data-slot='dialog-overlay'] { z-index: 160; background: rgb(0 0 0 / .3); }
 .reui [data-slot='dialog-content'] { z-index: 161; left: 50%; top: 50%; transform: translate(-50%, -50%); translate: none; max-height: calc(100dvh - 32px); overflow-y: auto; border: 1px solid var(--theme-border); box-shadow: 0 18px 64px rgb(0 0 0 / .2); }
 .reui [data-slot='select-content'], .reui [data-slot='popover-content'] { z-index: 180; max-width: calc(100vw - 24px); background: var(--background); border: 1px solid var(--theme-border); box-shadow: 0 8px 24px rgb(0 0 0 / .12); }
-.reui [data-slot='select-content'] { max-height: min(320px, var(--radix-select-content-available-height)); }
-.reui [data-slot='select-item'] { cursor: pointer; min-height: 32px; font-size: 12px; }
+.reui [data-slot='select-content'] { width: max-content; min-width: max(160px, var(--radix-select-trigger-width)); max-height: min(320px, var(--radix-select-content-available-height)); padding: 4px; border-radius: 7px; }
+/* Selection has a check; the current keyboard/pointer target has one contained cue. */
+.reui.style-nova [data-slot='select-item'] { cursor: pointer; min-height: 32px; gap: 16px; padding: 6px 8px; border: 0; border-radius: 4px; font-size: 12px; line-height: 20px; background: transparent; color: var(--foreground); }
+.reui.style-nova [data-slot='select-item'][data-state='checked'] { font-weight: 600; }
+.reui.style-nova [data-slot='select-item'][data-highlighted] { background: var(--muted); }
+.reui.style-nova [data-slot='select-item']:focus-visible { outline: 1px solid var(--control-focus) !important; outline-offset: -1px; }
+.reui [data-slot='select-item-text'] { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.reui.style-nova .cn-select-item-indicator { position: static; flex: 0 0 16px; width: 16px; height: 16px; margin-left: auto; }
+.reui.style-nova .rui-select-trigger:focus-visible { outline: 2px solid var(--control-focus) !important; outline-offset: 2px; box-shadow: none; }
 .reui [data-slot='command-list'] { overflow-y: auto; overscroll-behavior: contain; }
 .reui [data-slot='command-item'] { cursor: pointer; }
 .reui .cn-command-item-indicator { display: none; }

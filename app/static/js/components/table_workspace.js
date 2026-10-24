@@ -113,7 +113,7 @@
             this.apply();
             if (renderControls) this.renderControls();
         },
-        setExternalQuery(query, filter = 'all') { this.externalQuery = text(query).toLowerCase(); this.externalFilter = filter; this.apply(); },
+        setExternalQuery(query, filter = 'all') { const next = text(query).toLowerCase(); if (this.externalQuery === next && this.externalFilter === filter) return; this.externalQuery = next; this.externalFilter = filter; this.apply(); },
         setWatchOnly(watched) { this.navigationWatchOnly = Boolean(watched); this.renderViews(); this.apply(); },
         setCategory(category) { this.change({ filters: { ...this.current.filters, category: text(category) } }, true); },
         setWatchlist(ids) { this.watched = new Set(Array.isArray(ids) ? ids.map(String) : []); this.apply(); },
@@ -142,6 +142,7 @@
         },
         hydrateRows() {
             this.getRows().forEach(row => {
+                this.columnState?.delete(row);
                 // Only the identity link opens details. Row checkboxes and actions remain independent.
                 row.onclick = null;
                 row.removeAttribute('onclick'); row.removeAttribute('onkeydown'); row.removeAttribute('tabindex'); row.removeAttribute('role');
@@ -190,15 +191,24 @@
         },
         apply() {
             if (!this.ready) return;
-            const rows = this.getRows();
+            const rows = this.getRows(), body = byId('table-body');
             rows.sort((a, b) => compareRows(a, b, this.current.sorts));
+            let cursor = body.firstElementChild;
             rows.forEach(row => {
                 const visible = this.matches(row);
-                row.hidden = !visible; row.style.display = visible ? '' : 'none';
-                row.classList.toggle('quick-find-hidden', !visible);
-                byId('table-body').append(row);
+                if (row.hidden === visible) row.hidden = !visible;
+                const display = visible ? '' : 'none'; if (row.style.display !== display) row.style.display = display;
+                if (row.classList.contains('quick-find-hidden') === visible) row.classList.toggle('quick-find-hidden', !visible);
+                // Filtering leaves row identity/focus intact. Reorder only after a sort actually changes.
+                if (row !== cursor) body.insertBefore(row, cursor);
+                cursor = row.nextElementSibling;
                 const watch = row.querySelector('.tw-watch');
-                if (watch) { const watched = this.watched.has(row.dataset.id); watch.textContent = watched ? '★' : '☆'; watch.setAttribute('aria-pressed', String(watched)); watch.setAttribute('aria-label', `${watched ? 'Unwatch' : 'Watch'} ${row.dataset.name}`); }
+                if (watch) {
+                    const watched = this.watched.has(row.dataset.id), icon = watched ? '★' : '☆', label = `${watched ? 'Unwatch' : 'Watch'} ${row.dataset.name}`;
+                    if (watch.textContent !== icon) watch.textContent = icon;
+                    if (watch.getAttribute('aria-pressed') !== String(watched)) watch.setAttribute('aria-pressed', String(watched));
+                    if (watch.getAttribute('aria-label') !== label) watch.setAttribute('aria-label', label);
+                }
             });
             this.applyColumns(); this.updateSelection(); this.renderChips();
             const count = this.getVisibleRows().length;
@@ -217,31 +227,52 @@
         },
         applyColumns() {
             const table = byId('data-table'); if (!table) return;
-            table.dataset.density = this.current.density;
+            if (table.dataset.density !== this.current.density) table.dataset.density = this.current.density;
             const columns = ['selection', ...this.current.order];
+            const signature = JSON.stringify([columns, this.current.visible, this.current.widths]);
+            this.columnState ||= new WeakMap();
             table.querySelectorAll('tr').forEach(row => {
+                if (this.columnState.get(row) === signature) return;
+                let cursor = row.firstElementChild;
                 columns.forEach(key => {
                     const cell = row.querySelector(`[data-col="${key}"]`); if (!cell) return;
-                    row.append(cell);
+                    if (cell !== cursor) row.insertBefore(cell, cursor);
+                    cursor = cell.nextElementSibling;
                     const visible = key === 'selection' || this.current.visible.includes(key);
-                    cell.hidden = !visible;
-                    cell.style.setProperty('display', visible ? 'table-cell' : 'none', 'important');
+                    if (cell.hidden === visible) cell.hidden = !visible;
+                    const display = visible ? 'table-cell' : 'none';
+                    if (cell.style.display !== display || cell.style.getPropertyPriority('display') !== 'important') cell.style.setProperty('display', display, 'important');
                     const p = property(key); const width = p ? (this.current.widths[key] || p.width) : 42;
-                    cell.style.width = `${width}px`; cell.style.minWidth = `${width}px`; cell.style.maxWidth = `${width}px`;
+                    ['width', 'minWidth', 'maxWidth'].forEach(key => { if (cell.style[key] !== `${width}px`) cell.style[key] = `${width}px`; });
                     const resizer = cell.querySelector('.tw-resizer'); if (resizer) resizer.setAttribute('aria-valuenow', String(width));
                 });
+                this.columnState.set(row, signature);
             });
             const total = 42 + this.current.visible.reduce((sum, key) => sum + (this.current.widths[key] || property(key).width), 0);
-            table.style.width = `${total}px`; table.style.minWidth = `max(100%, ${total}px)`;
+            if (table.style.width !== `${total}px`) table.style.width = `${total}px`;
+            if (table.style.minWidth !== `max(100%, ${total}px)`) table.style.minWidth = `max(100%, ${total}px)`;
         },
         renderMobileRows() {
+            // A synchronous complete render supersedes table mutations already queued by the controller.
+            if (this.mobileFrame) { cancelAnimationFrame(this.mobileFrame); this.mobileFrame = null; }
+            this.mobileObserver?.takeRecords();
             const list = byId('tw-mobile-list'); if (!list || !this.mobileLayout) return;
+            const rows = this.getVisibleRows(), historySource = BW.CompactTable?.sparklineData;
+            const preferences = BW.CompactTable?.getSettings?.()?.trend || {};
+            const snapshot = JSON.stringify([this.current.visible, this.current.density, preferences, rows.map(row => [
+                { ...row.dataset }, this.watched.has(row.dataset.id), this.selected.has(row.dataset.id),
+                ...['.price-value', '.price-currency', '.pct-cell', '.chg-value'].map(selector => row.querySelector(selector)?.textContent),
+                row.querySelector('.commodity-name')?.href
+            ])]);
+            if (snapshot === this.mobileSnapshot && historySource === this.mobileHistorySource && list.childElementCount === rows.length) { this.updateMobileBusy(); return; }
+            this.mobileSnapshot = snapshot; this.mobileHistorySource = historySource;
+            const histories = new Map((historySource || []).map(commodity => [String(commodity.id), commodity]));
             list.dataset.density = this.current.density;
             const focused = document.activeElement?.closest('[data-mobile-id]');
             const focusedId = focused?.dataset.mobileId, focusedAction = document.activeElement?.dataset.mobileAction;
             list.replaceChildren();
             const visible = new Set(this.current.visible);
-            this.getVisibleRows().forEach(row => {
+            rows.forEach(row => {
                 const data = row.dataset, item = node('article', 'tw-mobile-row');
                 item.dataset.mobileId = data.id; item.setAttribute('role', 'listitem');
                 item.classList.toggle('is-selected', this.selected.has(data.id));
@@ -260,12 +291,12 @@
                 if (visible.has('pct')) { const change = node('span', 'tw-mobile-change', (row.querySelector('.pct-cell [data-value]') || row.querySelector('.pct-cell'))?.textContent?.trim() || '—'); change.style.color = `var(--color-${['up', 'down', 'flat'].includes(data.direction) ? data.direction : 'flat'})`; change.setAttribute('aria-label', `Historical change ${change.textContent}`); values.append(change); }
                 if (values.childElementCount) item.append(values);
                 if (visible.has('trend')) {
-                    const history = BW.CompactTable?.sparklineData?.find(commodity => String(commodity.id) === data.id);
+                    const history = histories.get(data.id);
                     if (history && BW.Visuals?.sparkline) {
                         const chart = node('div', 'tw-mobile-history'), svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                         svg.id = `tw-mobile-sparkline-${BW.CompactTable.safeDomId?.(data.id) || data.id}`;
                         svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', `Historical observations for ${data.name}`); chart.append(svg); item.append(chart); list.append(item);
-                        const preferences = BW.CompactTable.getSettings?.()?.trend || {}, count = preferences.points === 'all' ? Infinity : (parseInt(preferences.points, 10) || 30);
+                        const count = preferences.points === 'all' ? Infinity : (parseInt(preferences.points, 10) || 30);
                         BW.Visuals.sparkline(svg, count === Infinity ? (history.history || []) : (history.history || []).slice(-count), {type: preferences.type || 'area', gapDays: history.is_daily ? 7 : 62, showMA: preferences.showMA, showHighLow: preferences.showHighLow});
                     }
                 }
@@ -337,6 +368,7 @@
             PROPERTIES.forEach(p => {
                 let th = tr.querySelector(`[data-col="${p.key}"]`);
                 if (!th) { th = node('th'); th.scope = 'col'; th.dataset.col = p.key; tr.append(th); }
+                this.columnState?.delete(tr);
                 th.onclick = null; th.removeAttribute('onclick'); th.replaceChildren();
                 if (p.type) {
                     const sort = button(p.label, event => this.sortBy(p.key, event.shiftKey), 'tw-header-sort');
@@ -716,9 +748,9 @@
             document.addEventListener('bw:table-data', () => this.renderMobileRows());
             if (byId('tw-mobile-list')) {
                 const table = byId('data-table');
-                this.mobileObserver = new MutationObserver(() => {
+                this.mobileObserver = new MutationObserver(records => {
                     this.updateMobileBusy();
-                    if (!this.mobileLayout || this.mobileFrame) return;
+                    if (!this.mobileLayout || this.mobileFrame || !records.some(record => record.type === 'childList')) return;
                     this.mobileFrame = requestAnimationFrame(() => { this.mobileFrame = null; this.renderMobileRows(); });
                 });
                 this.mobileObserver.observe(table, {subtree:true,childList:true,attributes:true,attributeFilter:['aria-busy']});

@@ -10,6 +10,7 @@ import { portalHost } from './utils';
 const targets = '.gr-filter select, .gr-chart-controls select, #tw-filters select, #tw-view-select, #tw-density';
 const mounted = new Map<HTMLSelectElement, { root: Root; host: HTMLElement; update(): void; dispose(): void }>();
 const EMPTY = '__bw_reui_all__';
+let uninstall: (() => void) | null = null;
 
 function labelFor(select: HTMLSelectElement) {
   if (select.getAttribute('aria-label')) return select.getAttribute('aria-label')!;
@@ -26,17 +27,28 @@ function enhance(select: HTMLSelectElement) {
   host.dataset.reuiSelect = select.id || select.name;
   select.after(host);
   let snapshot = '';
+  let optionRevision = 0;
+  let options = [...select.options].map(option => ({ value: option.value, text: option.text, disabled: option.disabled }));
+  const wasHidden = select.hidden;
   const listeners = new Set<() => void>();
-  const getSnapshot = () => JSON.stringify([select.value, select.disabled, [...select.options].map(option => [option.value, option.text, option.disabled])]);
-  const update = () => { const next = getSnapshot(); if (snapshot === next) return; snapshot = next; listeners.forEach(listener => listener()); };
+  const update = (optionsChanged = false) => {
+    if (optionsChanged) {
+      options = [...select.options].map(option => ({ value: option.value, text: option.text, disabled: option.disabled }));
+      optionRevision += 1;
+    }
+    const next = JSON.stringify([select.value, select.disabled, select.required, optionRevision]);
+    if (snapshot === next) return;
+    snapshot = next; listeners.forEach(listener => listener());
+  };
   update();
-  const observer = new MutationObserver(update);
-  observer.observe(select, { attributes: true, childList: true, subtree: true, characterData: true });
-  select.addEventListener('change', update);
+  const observer = new MutationObserver(() => update(true));
+  observer.observe(select, { attributes: true, attributeFilter: ['disabled', 'required', 'value', 'label', 'selected'], childList: true, subtree: true, characterData: true });
+  const onChange = () => update();
+  select.addEventListener('change', onChange);
   select.form?.addEventListener('reset', onReset);
   function onReset() { queueMicrotask(update); }
   const root = createRoot(host);
-  mounted.set(select, { root, host, update, dispose() { observer.disconnect(); select.removeEventListener('change', update); select.form?.removeEventListener('reset', onReset); } });
+  mounted.set(select, { root, host, update, dispose() { observer.disconnect(); select.removeEventListener('change', onChange); select.form?.removeEventListener('reset', onReset); select.hidden = wasHidden; delete select.dataset.reuiEnhanced; } });
   root.render(<NativeSelect />);
   // Keep the actual field for GET serialization and legacy controller events.
   select.hidden = true;
@@ -60,7 +72,6 @@ function enhance(select: HTMLSelectElement) {
       dialog?.addEventListener('close', closeWhenHidden);
       return () => { visibility.disconnect(); dialog?.removeEventListener('close', closeWhenHidden); };
     }, [open]);
-    const options = [...select.options];
     const commit = (value: string) => {
       select.value = value === EMPTY ? '' : value;
       select.dispatchEvent(new Event('input', { bubbles: true }));
@@ -84,18 +95,38 @@ function enhance(select: HTMLSelectElement) {
 }
 
 export function installNativeSelects() {
-  const scan = () => {
-    for (const [select, item] of mounted) {
-      if (!select.isConnected) { item.dispose(); item.root.unmount(); item.host.remove(); mounted.delete(select); }
+  if (uninstall) return uninstall;
+  const scan = (root: ParentNode = document) => {
+    if (root instanceof Element) {
+      // React's own hidden select and menu DOM are not legacy fields.
+      if (!(root instanceof HTMLElement) || root.closest('.reui')) return;
+      if (root.matches(targets)) enhance(root as HTMLSelectElement);
     }
-    document.querySelectorAll<HTMLSelectElement>(targets).forEach(enhance);
+    root.querySelectorAll<HTMLSelectElement>('select').forEach(select => { if (select.matches(targets)) enhance(select); });
   };
   scan();
-  // Only DOM additions matter: existing controllers still own their panels.
-  new MutationObserver(records => {
-    if (records.some(record => [...record.addedNodes, ...record.removedNodes].some(node => node instanceof Element && (node.matches('select, dialog') || node.querySelector('select'))))) scan();
-  }).observe(document.getElementById('main-content') || document.body, { childList: true, subtree: true });
+  const observer = new MutationObserver(records => {
+    let removed = false;
+    for (const record of records) {
+      if (record.removedNodes.length) removed = true;
+      for (const node of record.addedNodes) if (node instanceof Element) scan(node);
+    }
+    if (removed) for (const [select, item] of mounted) {
+      if (!select.isConnected) { item.dispose(); item.root.unmount(); item.host.remove(); mounted.delete(select); }
+    }
+  });
+  observer.observe(document.getElementById('main-content') || document.body, { childList: true, subtree: true });
   const update = () => mounted.forEach(item => item.update());
+  // Existing fields keep their option observer; a view change only synchronizes values.
+  const ready = () => { scan(); update(); };
   document.addEventListener('bw:table-view-change', update);
-  document.addEventListener('bw:table-ready', () => { scan(); update(); });
+  document.addEventListener('bw:table-ready', ready);
+  uninstall = () => {
+    observer.disconnect();
+    document.removeEventListener('bw:table-view-change', update);
+    document.removeEventListener('bw:table-ready', ready);
+    for (const item of mounted.values()) { item.dispose(); item.root.unmount(); item.host.remove(); }
+    mounted.clear(); uninstall = null;
+  };
+  return uninstall;
 }

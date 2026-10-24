@@ -3,7 +3,8 @@
 import json
 import re
 from dataclasses import replace
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -91,7 +92,8 @@ def test_empty_pages_are_useful_and_never_create_a_database(market_client):
             assert response.status_code == 200
             body = response.get_data(as_text=True)
             assert heading in body
-            assert 'Official currency references' in body
+            if path == '/exchange-rates':
+                assert 'Official currency references' in body
             assert 'first successful refresh' in body
         assert client.get('/stocks/stock-XNAS-AAPL').status_code == 404
         assert client.get('/exchange-rates/fx-USD-EUR').status_code == 404
@@ -118,7 +120,7 @@ def test_cached_lists_and_details_show_source_dates_units_and_manual_updates(mar
         assert 'exchangerate.host' in fx and 'Manual updates' in fx
         assert 'stock-XNAS-AAPL' not in fx
         stock = client.get('/stocks/stock-XNAS-AAPL').get_data(as_text=True)
-        assert 'Daily closing-price history' in stock
+        assert 'Stock history' in stock and 'Reference history' in stock
         assert '<td>245.12345678</td>' in stock
         assert '<th scope="row">2026-10-22</th>' in stock
         assert 'Last successful refresh' in stock
@@ -174,6 +176,50 @@ def test_search_filters_saved_history_and_escapes_the_query(market_client):
     assert '&lt;script&gt;bad&lt;/script&gt;' in empty
     assert client.get('/stocks?q=' + 'a' * 101).status_code == 400
     assert client.get('/exchange-rates?page=-1').status_code == 400
+
+
+@pytest.mark.parametrize('identifier,path,source,query', [
+    ('stock-XNAS-AAPL', '/stocks', 'marketstack', 'AAPL'),
+    ('fx-USD-EUR', '/exchange-rates', 'exchangerate_host', 'USD/EUR'),
+])
+def test_detail_return_and_observation_pages_keep_only_validated_list_context(
+        market_client, monkeypatch, identifier, path, source, query):
+    client, database, _ = market_client
+    seed_cache(database)
+    raw = store.read_instrument(database, identifier, now=NOW)
+    start = date(2026, 1, 1)
+    raw['observations'] = [dict(date=(start + timedelta(days=index)).isoformat(), value=index)
+                           for index in range(101)]
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: raw)
+    captured = {}
+
+    def render(template, **context):
+        captured.update(context)
+        return 'detail'
+
+    monkeypatch.setattr(market_data, 'render_template', render)
+    response = client.get(path + '/' + identifier, query_string=dict(
+        q=query, source=source, list_page=3, page=2, return_to='https://example.org/escape'))
+    assert response.status_code == 200
+    back = urlsplit(captured['list_url'])
+    assert back.scheme == back.netloc == '' and back.path == path
+    assert parse_qs(back.query) == dict(q=[query], source=[source], page=['3'])
+    assert len(captured['record']['history']) == 101
+    for name, page in [('previous', '1'), ('next', '3')]:
+        link = urlsplit(captured['history'][name])
+        assert link.scheme == link.netloc == '' and link.path == path + '/' + identifier
+        assert parse_qs(link.query) == dict(q=[query], source=[source], list_page=['3'], page=[page])
+
+
+@pytest.mark.parametrize('args', [
+    {'q': 'a' * 101}, {'q': 'U\nSD'}, {'source': 'https://example.org'},
+    {'source': 'frankfurter_ecb'}, {'list_page': '-1'}, {'list_page': '25001'},
+    {'list_page': '//example.org'}, {'list_page': '1.0'},
+])
+def test_detail_rejects_invalid_return_context_before_cache_reads(market_client, monkeypatch, args):
+    client, _, _ = market_client
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: pytest.fail('Invalid context read cache'))
+    assert client.get('/stocks/stock-XNAS-AAPL', query_string=args).status_code == 400
 
 
 def test_catalog_content_is_escaped_and_unsafe_source_links_are_omitted(market_client, monkeypatch):

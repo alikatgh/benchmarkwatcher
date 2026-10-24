@@ -252,3 +252,43 @@ test('public search errors preserve local benchmark results and support retry', 
   await query.fill('AAPL');
   await expect(page.locator('#bw-search-dialog a[href="/stocks/stock-XNAS-AAPL"]')).toBeVisible();
 });
+
+
+for (const width of [320,390,600]) {
+  test(`benchmark controls group view/range/count above search at ${width}px`, async ({page}) => {
+    await page.setViewportSize({width,height:844}); await page.goto('/?view=compact');
+    const heading = (await page.locator('.tw-control-heading').boundingBox())!;
+    const view = (await page.locator('[data-reui-select="tw-view-select"]').boundingBox())!;
+    const range = (await page.locator('#tw-range-select').boundingBox())!;
+    const search = (await page.locator('.tw-search').boundingBox())!;
+    expect(Math.abs(view.y-range.y)).toBeLessThanOrEqual(1);
+    expect(range.x).toBeGreaterThanOrEqual(view.x+view.width);
+    expect(search.y).toBeGreaterThanOrEqual(heading.y+heading.height);
+    expect((await page.locator('.tw-control-shell').boundingBox())!.height).toBeLessThanOrEqual(100);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
+    await page.evaluate(()=> (window as any).BW.TableWorkspace.setCategory('energy'));
+    await expect(page.getByRole('button',{name:'Remove Category filter: Energy',exact:true})).toBeVisible();
+    expect((await page.locator('.tw-control-shell').boundingBox())!.height).toBeLessThanOrEqual(140);
+    await page.getByRole('button',{name:'Remove Category filter: Energy',exact:true}).click();
+    await expect(page.locator('#tw-filter-chips')).toBeHidden();
+  });
+}
+
+test('short select menus separate checked state from a contained keyboard focus cue', async ({page}) => {
+  await page.goto('/?view=compact'); await page.locator('#tw-filter-button').click();
+  const trigger = page.locator('[data-reui-select="tw-frequency"] [role="combobox"]');
+  await trigger.focus(); await page.keyboard.press('ArrowDown');
+  const menu = page.locator('[data-slot="select-content"]'); await expect(menu).toBeVisible();
+  const states = await menu.locator('[data-slot="select-item"]').evaluateAll(items=>items.map(item=>{
+    const style=getComputedStyle(item), rect=item.getBoundingClientRect();
+    const indicator=item.querySelector('.cn-select-item-indicator')!.getBoundingClientRect();
+    const text=item.querySelector('[data-slot="select-item-text"]')!.getBoundingClientRect();
+    return {height:rect.height,inside:indicator.right<=rect.right,apart:text.right<=indicator.left,focus:style.outlineOffset};
+  }));
+  expect(states.every(state=>state.height>=32&&state.height<=36&&state.inside&&state.apart)).toBe(true);
+  expect(states.some(state=>state.focus==='-1px')).toBe(true);
+  await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+  await expect(page.locator('#tw-frequency')).toHaveValue('daily');
+  await expect(trigger).toBeFocused();
+  await expect(page.locator('#table-body tr:visible')).toHaveCount(3);
+});

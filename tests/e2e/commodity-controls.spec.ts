@@ -117,6 +117,9 @@ test('grouped explorer keeps all twelve views, native keyboard choice, escape an
   await page.setViewportSize({width:390,height:844});
   await load(page);
   const lab=page.getByRole('region',{name:'Visual explorer',exact:true});
+  await expect(lab.locator('table')).toHaveCount(0);
+  await lab.locator('.bw-visual-data > summary').click();
+  await expect(lab.locator('table')).toHaveCount(1);
   for (const value of ['line','area','step','bar','scatter','change','histogram','cumulative','box','monthly','heatmap','coverage']) {
     await choose(lab,value);
     await expect(lab.locator('.bw-visual-stage svg')).toBeVisible();

@@ -186,15 +186,70 @@ def test_library_queries_use_proven_bounded_lookup_plans(workspace, monkeypatch)
         for sql in queries:
             plan = [row['detail'] for row in conn.execute('EXPLAIN QUERY PLAN ' + sql)]
             if 'SELECT s.entity_id' in sql:
-                assert any('COVERING INDEX library_summary (entity_type=? AND source=?' in step
-                           for step in plan), plan
                 if 's.entity_id IN (' in sql:
+                    assert any('COVERING INDEX library_summary (entity_type=? AND source=?' in step
+                               for step in plan), plan
                     assert any('entity_id=?)' in step for step in plan), plan
+                else:
+                    assert any('SEARCH s USING INTEGER PRIMARY KEY (rowid=?)' in step for step in plan), plan
             else:
                 # The OR over country and SEC metadata otherwise makes SQLite
                 # scan large source indexes before testing FTS membership.
                 assert any('SEARCH s USING INTEGER PRIMARY KEY (rowid=?)' in step for step in plan), plan
                 assert not any('MULTI-INDEX OR' in step for step in plan), plan
+
+
+def test_broad_search_merges_complete_ordered_groups_and_company_aliases(workspace, monkeypatch):
+    client, directory = workspace
+    path = directory / 'library.sqlite3'
+    expected = []
+    companies = []
+    for index in range(24):
+        name = f'USD {index * 2:03d} country'
+        identifier = series(path, entity=str(index), name=name, unit='USD')
+        expected.append((name, 'Population', identifier))
+        name = f'USD {index * 2 + 1:03d} Company'
+        entity = str(1000 + index)
+        identifier = series(path, source='sec', dataset='frames', entity=entity,
+                            name=name, kind='company', unit='USD')
+        expected.append((name, 'Population', identifier))
+        companies.append((name, entity))
+    # A company's saved aliases may differ per measure. Only aliases matching
+    # the name query may supply the displayed company name.
+    alias = series(path, source='sec', dataset='frames', entity='1000', name='Aardvark',
+                   indicator='ALT', label='Other USD measure', kind='company', unit='USD')
+    expected.append(('Aardvark', 'Other USD measure', alias))
+    series(path, source='sec', dataset='frames', entity='1000', name='USD Zulu',
+           indicator='THIRD', label='Third measure', kind='company', unit='USD')
+    series(path, source='faostat', dataset='TCL', entity='held', name='A held USD country', unit='USD')
+    unsaved = series(path, entity='empty', name='A empty USD country', unit='USD')
+    with sqlite3.connect(path) as conn:
+        conn.execute('DELETE FROM observations WHERE series_id=?', (unsaved,))
+        conn.execute('UPDATE series SET observation_count=0 WHERE id=?', (unsaved,))
+    statements = []
+
+    def traced_connection(database):
+        conn = read_connection(database)
+        conn.set_trace_callback(statements.append)
+        return conn
+
+    monkeypatch.setattr(search.public_library, 'read_connection', traced_connection)
+    result = find(client, 'USD')
+    assert result['unavailable'] == []
+    assert [row['id'] for row in result['results'] if row['kind'] == 'dataset'] == [
+        row[2] for row in sorted(expected)[:search.PER_KIND]]
+    assert [(row['name'], row['id']) for row in result['results'] if row['kind'] == 'company'] == sorted(companies)[:search.PER_KIND]
+    assert any('WITH names AS MATERIALIZED' in sql for sql in statements)
+    page = next(sql for sql in statements if sql.startswith('WITH countries AS'))
+    with closing(read_connection(path)) as conn:
+        conn.create_function('workspace_measure_match', 4, lambda *args: 1)
+        plan = [row['detail'] for row in conn.execute('EXPLAIN QUERY PLAN ' + page)]
+    assert any('COVERING INDEX library_browse_saved (entity_type=?)' in step for step in plan), plan
+    assert any('SEARCH s USING INTEGER PRIMARY KEY (rowid=?)' in step for step in plan), plan
+    # Planning does not cache results: a newly saved earlier row is immediately
+    # discoverable, including when it displaces an old first-page result.
+    identifier = series(path, entity='fresh', name='A fresh USD country', unit='USD')
+    assert next(row for row in find(client, 'USD')['results'] if row['kind'] == 'dataset')['id'] == identifier
 
 
 def test_held_unsaved_and_invalid_library_identifiers_are_never_published(workspace):

@@ -77,7 +77,10 @@
     }
     const report = JSON.parse($('#company-report-data').textContent), metrics = new Map(report.metrics.map(m => [m.id, m]));
     let frequency = 'annual', section = report.metrics.some(m => m.section === 'income') ? 'income' : report.metrics[0].section;
-    let chart, frame, lastWidth, inspectedDate;
+    let chart, frame, lastWidth, inspectedDate, disposed = false;
+    const answerCleanups = new Set();
+    const effectiveTheme = () => (document.documentElement.getAttribute('data-theme') || '') + '|' + document.documentElement.classList.contains('dark');
+    let chartTheme = effectiveTheme();
     const selectedPeriods = () => {
         const periods = report.periods.filter(p => p.frequency === frequency).sort((a, b) => a.end.localeCompare(b.end));
         return $('#company-range').value === 'all' ? periods : periods.slice(frequency === 'annual' ? -6 : -12);
@@ -113,9 +116,11 @@
         answerCharts();
     }
     function renderChart() {
+        if (disposed) return;
         const metric = metrics.get($('#company-metric').value), periods = selectedPeriods();
         if (!metric || !window.BW?.Visuals) return;
         chart?.destroy();
+        lastWidth = $('#company-chart').clientWidth;
         const readout = $('#company-chart-readout');
         readout.replaceChildren(node('strong', 'Unavailable'), node('span', 'No values in this range'));
         chart = window.BW.Visuals.timeSeries($('#company-chart'), [{ name: metric.label, unit: metric.unit, gapDays: frequency === 'annual' ? 390 : 115,
@@ -197,9 +202,11 @@
     $('#company-source-close').addEventListener('click', () => $('#company-source').close());
     $('#company-metric').addEventListener('change', renderChart); $('#company-chart-type').addEventListener('change', renderChart);
     $('#company-range').addEventListener('change', () => { renderChart(); renderTable(); });
-    const scheduleChart = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(renderChart); };
-    new ResizeObserver(entries => { const width = entries[0].contentRect.width; if (width !== lastWidth) { lastWidth = width; scheduleChart(); } }).observe($('#company-chart'));
-    new MutationObserver(scheduleChart).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+    const scheduleChart = () => { if (disposed) return; cancelAnimationFrame(frame); frame = requestAnimationFrame(() => {frame = null; renderChart();}); };
+    const chartResize = new ResizeObserver(entries => { const width = entries[0].contentRect.width; if (width !== lastWidth) { lastWidth = width; scheduleChart(); } });
+    chartResize.observe($('#company-chart'));
+    const chartThemeObserver = new MutationObserver(() => {const next = effectiveTheme(); if (next !== chartTheme) {chartTheme = next; scheduleChart();}});
+    chartThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
     renderChart(); renderTable();
     const chat = $('#company-chat'), opener = $('#company-chat-open'), form = $('#company-chat-form'), question = $('#company-question');
     const desktop = window.matchMedia('(min-width:1100px)');
@@ -231,19 +238,28 @@
                 });
             }
             if (details.dataset.bound) return; details.dataset.bound = 'true';
-            let answerChart, answerFrame;
+            let answerChart, answerFrame, answerWidth = target.clientWidth, answerTheme = effectiveTheme();
             const draw = () => {
-                if (!details.open || !target.clientWidth || !window.BW?.Visuals) return;
+                if (disposed || !details.isConnected || !details.open || !target.clientWidth || !window.BW?.Visuals) return;
                 answerChart?.destroy();
                 answerChart = window.BW.Visuals.timeSeries(target, [{ name: calc.metric, unit: calc.unit, gapDays: calc.frequency === 'annual' ? 390 : 115, points: calc.points.map(p => ({ date: p.end, value: p.value })) }], { height: 180, width: target.clientWidth, finance: true, yAxisPosition: 'right', yFormat: value => format(value, calc.unit), label: calc.metric + ' calculation history' });
             };
-            const schedule = () => { cancelAnimationFrame(answerFrame); answerFrame = requestAnimationFrame(draw); };
+            const schedule = () => { if (disposed) return; cancelAnimationFrame(answerFrame); answerFrame = requestAnimationFrame(() => {answerFrame = null; draw();}); };
             details.addEventListener('toggle', schedule);
-            new ResizeObserver(schedule).observe(target);
-            new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+            const resize = new ResizeObserver(() => {const next = target.clientWidth; if (next !== answerWidth) {answerWidth = next; schedule();}});
+            resize.observe(target);
+            const theme = new MutationObserver(() => {const next = effectiveTheme(); if (next !== answerTheme) {answerTheme = next; schedule();}});
+            theme.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+            answerCleanups.add(() => {cancelAnimationFrame(answerFrame); answerChart?.destroy(); resize.disconnect(); theme.disconnect(); details.removeEventListener('toggle', schedule);});
         });
     }
     answerCharts();
+    window.addEventListener('pagehide', event => {
+        if (event.persisted) return;
+        disposed = true; cancelAnimationFrame(frame); chart?.destroy();
+        chartResize.disconnect(); chartThemeObserver.disconnect();
+        answerCleanups.forEach(cleanup => cleanup()); answerCleanups.clear();
+    });
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attachReportGraphic, { once: true }); else attachReportGraphic();
     let asking = false;
     form.addEventListener('submit', async event => {

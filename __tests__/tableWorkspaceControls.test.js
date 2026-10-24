@@ -234,3 +234,31 @@ test('switching compact and desktop layouts preserves the saved view, query, ran
         expect(workspace.getVisibleRows().map(row => row.dataset.id)).toEqual(['gold']);
     }
 });
+
+
+test('mobile rows skip unchanged controller/data events and busy-only updates never queue a redraw', async () => {
+    id('table-workspace').getBoundingClientRect = () => ({width:390,top:300}); workspace.updateLayout();
+    workspace.apply();
+    const list = id('tw-mobile-list'), first = list.firstElementChild;
+    const observer = new MutationObserver(() => {}); observer.observe(list, {childList:true,subtree:true});
+    workspace.apply(); workspace.renderMobileRows();
+    id('data-table').setAttribute('aria-busy','true'); await Promise.resolve();
+    expect(list.firstElementChild).toBe(first);
+    expect(observer.takeRecords()).toEqual([]);
+    expect(workspace.mobileFrame).toBeFalsy();
+    expect(list.getAttribute('aria-busy')).toBe('true');
+    id('data-table').setAttribute('aria-busy','false'); await Promise.resolve();
+    expect(list.getAttribute('aria-busy')).toBe('false');
+    observer.disconnect();
+});
+
+test('an immediate mobile render cancels a queued stale frame and uses the newest row values', () => {
+    id('table-workspace').getBoundingClientRect = () => ({width:390,top:300}); workspace.updateLayout();
+    workspace.mobileFrame = requestAnimationFrame(() => {});
+    const cancel = jest.spyOn(window,'cancelAnimationFrame');
+    const cell = document.createElement('td'); cell.dataset.col = 'price'; cell.innerHTML = '<span class="price-value">2,345.00</span>';
+    workspace.getRows()[0].append(cell); workspace.renderMobileRows();
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(workspace.mobileFrame).toBeNull();
+    expect(id('tw-mobile-list').textContent).toContain('2,345.00');
+});

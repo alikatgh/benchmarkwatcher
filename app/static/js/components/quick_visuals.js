@@ -61,7 +61,10 @@
         const sourceCredits = element('div', undefined, 'bw-qv-credits'), tableHost = element('div', undefined, 'bw-qv-table-wrap');
         sources.append(summary, sourceCredits, tableHost);
         body.append(context, controls, unitLabel, legend, stage, inspection, notes, sources);
-        const footer = element('footer', undefined, 'bw-qv-footer'), customize = button('Customize graphic', 'customize'); footer.append(customize);
+        const footer = element('footer', undefined, 'bw-qv-footer'), customize = button('Customize graphic', 'customize');
+        const allowCustomize = options.allowCustomize !== false;
+        footer.hidden = !allowCustomize; customize.disabled = !allowCustomize;
+        if (allowCustomize) footer.append(customize);
         dialog.append(header, body, footer); document.body.append(dialog); stage.append(tooltip);
         function inspect(item) {
             if (!item) { tooltip.hidden = true; inspection.textContent = ''; chart?.svg.removeAttribute('aria-describedby'); return; }
@@ -141,6 +144,7 @@
         typeSelect.addEventListener('change', () => { current.type = typeSelect.value; current.zero = ['bar', 'horizontal'].includes(current.type); redraw(); });
         sources.addEventListener('toggle', sourceTable);
         customize.addEventListener('click', () => {
+            if (!allowCustomize) return;
             const spec = { ...current, datasets }; close(false);
             BW.VisualBuilder.open(spec, { trigger, onClose: restoreScroll });
         });

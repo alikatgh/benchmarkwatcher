@@ -8,11 +8,11 @@
 .benchmark-detail-muted {color:var(--theme-text-muted,#59636f);font-size:12px;}
 .benchmark-detail-heading .benchmark-detail-muted,.benchmark-detail-body>section:first-child>.benchmark-detail-muted {margin:0;}
 .benchmark-detail-actions {display:flex;flex-wrap:wrap;gap:8px;}
-.benchmark-detail :is(button,.benchmark-detail-link),.benchmark-detail-notice button {min-height:36px;padding:7px 10px;border:1px solid var(--theme-border,#e2e6ea);border-radius:6px;background:transparent;color:var(--theme-text,#202124);font:inherit;font-size:14px;font-weight:500;line-height:20px;cursor:pointer;text-decoration:none;text-align:center;}
-.benchmark-detail :is(button,.benchmark-detail-link):hover,.benchmark-detail-notice button:hover {background:var(--theme-bg,#f7f9fc);}
-.benchmark-detail button[aria-pressed="true"] {background:color-mix(in srgb,var(--theme-accent,#1967d2) 9%,transparent);border-color:var(--theme-accent,#1967d2);color:var(--theme-accent,#1967d2);}
+:is(.benchmark-detail,.bw-reference-history) :is(button,.benchmark-detail-link),.benchmark-detail-notice button {min-height:36px;padding:7px 10px;border:1px solid var(--theme-border,#e2e6ea);border-radius:6px;background:transparent;color:var(--theme-text,#202124);font:inherit;font-size:14px;font-weight:500;line-height:20px;cursor:pointer;text-decoration:none;text-align:center;}
+:is(.benchmark-detail,.bw-reference-history) :is(button,.benchmark-detail-link):hover,.benchmark-detail-notice button:hover {background:var(--theme-bg,#f7f9fc);}
+:is(.benchmark-detail,.bw-reference-history) button[aria-pressed="true"] {background:color-mix(in srgb,var(--theme-accent,#1967d2) 9%,transparent);border-color:var(--theme-accent,#1967d2);color:var(--theme-accent,#1967d2);}
 .benchmark-detail :is(button,a,input,select,summary):focus-visible,.benchmark-detail-notice button:focus-visible {outline:2px solid var(--theme-accent,#1967d2);outline-offset:3px;}
-.benchmark-detail button:disabled {opacity:.55;cursor:not-allowed;}
+:is(.benchmark-detail,.bw-reference-history) button:disabled {opacity:.55;cursor:not-allowed;}
 .benchmark-detail-body {padding:14px 20px 20px;}
 .benchmark-detail-body section+section {margin-top:18px;padding-top:16px;border-top:1px solid var(--theme-border,#e2e6ea);}
 .benchmark-detail-body h3 {font-size:14px;font-weight:600;margin:0 0 8px;}
@@ -40,9 +40,9 @@
 .benchmark-detail-chart-head {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;}
 .benchmark-detail-chart-head h3 {margin:0;}
 .benchmark-detail-ranges {display:flex;gap:2px;max-width:100%;overflow-x:auto;scrollbar-width:thin;margin:0 0 16px;border-bottom:1px solid var(--theme-border,#e2e6ea);}
-.benchmark-detail .benchmark-detail-ranges button {--button-bg:transparent;--button-border:transparent;--button-text:var(--theme-text-muted);--button-hover:var(--control-hover);--button-hover-border:transparent;--button-selected-bg:transparent;--button-selected-text:var(--theme-accent);--button-selected-border:transparent;--button-selected-hover:transparent;flex:0 0 auto;min-width:38px;min-height:36px;padding:7px 10px;border:0;border-radius:0;background:transparent;color:var(--theme-text-muted,#59636f);position:relative;}
-.benchmark-detail .benchmark-detail-ranges button:hover {background:var(--theme-bg,#f7f9fc);color:var(--theme-text,#202124);}
-.benchmark-detail .benchmark-detail-ranges button[aria-pressed="true"] {color:var(--theme-accent,#1967d2);font-weight:650;}
+:is(.benchmark-detail,.bw-reference-history) .benchmark-detail-ranges button {--button-bg:transparent;--button-border:transparent;--button-text:var(--theme-text-muted);--button-hover:var(--control-hover);--button-hover-border:transparent;--button-selected-bg:transparent;--button-selected-text:var(--theme-accent);--button-selected-border:transparent;--button-selected-hover:transparent;flex:0 0 auto;min-width:38px;min-height:36px;padding:7px 10px;border:0;border-radius:0;background:transparent;color:var(--theme-text-muted,#59636f);position:relative;}
+:is(.benchmark-detail,.bw-reference-history) .benchmark-detail-ranges button:hover {background:var(--theme-bg,#f7f9fc);color:var(--theme-text,#202124);}
+:is(.benchmark-detail,.bw-reference-history) .benchmark-detail-ranges button[aria-pressed="true"] {color:var(--theme-accent,#1967d2);font-weight:650;}
 .benchmark-detail-ranges button[aria-pressed="true"]::after {content:"";position:absolute;bottom:0;left:10px;right:10px;height:2px;background:currentColor;border-radius:2px;}
 .benchmark-detail-ranges button:focus-visible {outline-offset:-3px;}
 .benchmark-detail-chart-surface {margin:8px 0 12px;padding:12px 14px 10px;border:1px solid var(--theme-border,#e2e6ea);border-radius:8px;background:var(--theme-bg,#f7f9fc);}
@@ -56,7 +56,7 @@
 .benchmark-detail-point output {font-size:13px;font-variant-numeric:tabular-nums;}
 .benchmark-detail-point input {grid-column:1/-1;width:100%;height:24px;accent-color:var(--theme-accent,#1967d2);margin:0;cursor:ew-resize;}
 .benchmark-detail-observations {margin-top:8px;}
-.benchmark-detail :is(.benchmark-detail-settings,.benchmark-detail-exact-dates,.benchmark-detail-observations)>summary {display:list-item;list-style-position:inside;width:100%;min-height:36px;padding:8px 0;color:var(--theme-text,#202124);font-size:14px;font-weight:500;line-height:20px;cursor:pointer;}
+:is(.benchmark-detail,.bw-reference-history) :is(.benchmark-detail-settings,.benchmark-detail-exact-dates,.benchmark-detail-observations)>summary {display:list-item;list-style-position:inside;width:100%;min-height:36px;padding:8px 0;color:var(--theme-text,#202124);font-size:14px;font-weight:500;line-height:20px;cursor:pointer;}
 .benchmark-detail-table-wrap {overflow-x:auto;max-width:100%;}
 .benchmark-detail-table {width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;}
 .benchmark-detail-table caption {text-align:left;color:var(--theme-text-muted,#59636f);padding:6px 0 10px;}
@@ -107,8 +107,8 @@
   .benchmark-detail-heading {padding:16px 16px 0;}
   .benchmark-detail-body {padding:14px 16px 20px;}
   .benchmark-detail-topbar {padding:8px 16px;}
-  .benchmark-detail :is(button,.benchmark-detail-link),.benchmark-detail-notice button {min-height:44px;font-size:16px;}
-  .benchmark-detail :is(.benchmark-detail-settings,.benchmark-detail-exact-dates,.benchmark-detail-observations)>summary {min-height:44px;}
+  :is(.benchmark-detail,.bw-reference-history) :is(button,.benchmark-detail-link),.benchmark-detail-notice button {min-height:44px;font-size:16px;}
+  :is(.benchmark-detail,.bw-reference-history) :is(.benchmark-detail-settings,.benchmark-detail-exact-dates,.benchmark-detail-observations)>summary {min-height:44px;}
   .benchmark-detail-source a {min-height:44px;font-size:16px;}
   .benchmark-detail .benchmark-detail-mode button {min-height:44px;font-size:16px;}
   .benchmark-detail-close {min-width:44px;}
@@ -130,15 +130,15 @@
 .benchmark-detail-range-handles{position:relative;height:44px;min-width:0}
 .benchmark-detail-range-track{position:absolute;left:22px;right:22px;top:20px;height:4px;border-radius:2px;background:var(--theme-border)}
 .benchmark-detail-range-track>span{position:absolute;left:var(--range-start);right:calc(100% - var(--range-end));height:100%;background:var(--theme-accent);border-radius:2px}
-#benchmark-detail .benchmark-detail-date-slider input{position:absolute;inset:0;width:100%;min-width:0;height:44px;min-height:44px;margin:0;padding:0;border:0;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;outline:0}
-#benchmark-detail .benchmark-detail-date-slider input:last-child{z-index:2}
-#benchmark-detail .benchmark-detail-date-slider input::-webkit-slider-runnable-track{height:44px;background:transparent;border:0}
-#benchmark-detail .benchmark-detail-date-slider input::-moz-range-track{height:4px;background:transparent;border:0}
-#benchmark-detail .benchmark-detail-date-slider input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:44px;height:44px;border:12px solid transparent;border-radius:50%;background:var(--theme-accent);background-clip:content-box;pointer-events:auto;cursor:ew-resize}
-#benchmark-detail .benchmark-detail-date-slider input::-moz-range-thumb{box-sizing:border-box;width:44px;height:44px;border:12px solid transparent;border-radius:50%;background:var(--theme-accent);background-clip:content-box;pointer-events:auto;cursor:ew-resize}
-#benchmark-detail .benchmark-detail-date-slider input:focus-visible::-webkit-slider-thumb{outline:2px solid var(--theme-accent);outline-offset:-9px}
-#benchmark-detail .benchmark-detail-date-slider input:focus-visible::-moz-range-thumb{outline:2px solid var(--theme-accent);outline-offset:-9px}
-#benchmark-detail .benchmark-detail-date-slider input:disabled{opacity:.45}
+.bw-reference-history .benchmark-detail-date-slider input{position:absolute;inset:0;width:100%;min-width:0;height:44px;min-height:44px;margin:0;padding:0;border:0;appearance:none;-webkit-appearance:none;background:transparent;pointer-events:none;outline:0}
+.bw-reference-history .benchmark-detail-date-slider input:last-child{z-index:2}
+.bw-reference-history .benchmark-detail-date-slider input::-webkit-slider-runnable-track{height:44px;background:transparent;border:0}
+.bw-reference-history .benchmark-detail-date-slider input::-moz-range-track{height:4px;background:transparent;border:0}
+.bw-reference-history .benchmark-detail-date-slider input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:44px;height:44px;border:12px solid transparent;border-radius:50%;background:var(--theme-accent);background-clip:content-box;pointer-events:auto;cursor:ew-resize}
+.bw-reference-history .benchmark-detail-date-slider input::-moz-range-thumb{box-sizing:border-box;width:44px;height:44px;border:12px solid transparent;border-radius:50%;background:var(--theme-accent);background-clip:content-box;pointer-events:auto;cursor:ew-resize}
+.bw-reference-history .benchmark-detail-date-slider input:focus-visible::-webkit-slider-thumb{outline:2px solid var(--theme-accent);outline-offset:-9px}
+.bw-reference-history .benchmark-detail-date-slider input:focus-visible::-moz-range-thumb{outline:2px solid var(--theme-accent);outline-offset:-9px}
+.bw-reference-history .benchmark-detail-date-slider input:disabled{opacity:.45}
 .benchmark-detail-exact-dates{margin:4px 0 8px}
 .benchmark-detail-date-form {display:grid;grid-template-columns:repeat(2,minmax(0,1fr)) auto;align-items:end;gap:8px;margin:10px 0 12px;}
 .benchmark-detail-date-form label {display:block;margin-bottom:5px;color:var(--theme-text-muted,#59636f);}
@@ -160,10 +160,10 @@
 @container benchmark-detail-pane (max-width:500px) {
   .benchmark-detail-style-control label {font-size:16px;}
   .benchmark-detail-body :is(button,.benchmark-detail-link),.benchmark-detail-date-form input,.benchmark-detail-presentation select {min-height:44px;font-size:16px;}
-  .benchmark-detail :is(.benchmark-detail-settings,.benchmark-detail-exact-dates,.benchmark-detail-observations)>summary {min-height:44px;}
+  :is(.benchmark-detail,.bw-reference-history) :is(.benchmark-detail-settings,.benchmark-detail-exact-dates,.benchmark-detail-observations)>summary {min-height:44px;}
   .benchmark-detail-source a,.benchmark-detail-dots {min-height:44px;font-size:16px;}
   .benchmark-detail .benchmark-detail-mode button {min-height:44px;font-size:16px;}
-  .benchmark-detail .benchmark-detail-ranges button {min-width:44px;min-height:44px;font-size:16px;}
+  :is(.benchmark-detail,.bw-reference-history) .benchmark-detail-ranges button {min-width:44px;min-height:44px;font-size:16px;}
   .benchmark-detail-date-form {grid-template-columns:repeat(2,minmax(0,1fr));}
   .benchmark-detail-date-form button {grid-column:1/-1;justify-self:start;}
 }
@@ -187,7 +187,7 @@
 .benchmark-detail-chart-extent {display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--theme-text-muted,#59636f);font-variant-numeric:tabular-nums;}
 #benchmark-detail-history>.benchmark-detail-chart-note {font-size:11px;line-height:1.6;margin:8px 0 12px;}
 @media(max-width:767px) {
-  .benchmark-detail .benchmark-detail-ranges button {min-width:44px;min-height:44px;padding:7px 8px;}
+  :is(.benchmark-detail,.bw-reference-history) .benchmark-detail-ranges button {min-width:44px;min-height:44px;padding:7px 8px;}
   .benchmark-detail-point input {height:36px;}
   .benchmark-detail-readout-value strong {font-size:24px;}
 }

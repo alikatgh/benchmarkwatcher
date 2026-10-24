@@ -7,6 +7,7 @@
     const PALETTE = ['#087e8b', '#d66a36', '#607995', '#936183', '#79752b', '#b64854'];
     const TYPES = [['line', 'Line'], ['area', 'Area'], ['bar', 'Vertical bars'], ['scatter', 'Dots'], ['horizontal', 'Ranked horizontal bars'], ['map', 'Geographic map']];
     let active = null, serial = 0;
+    const renderStates = new WeakMap();
     const text = value => value === undefined || value === null ? '' : String(value);
     const array = value => Array.isArray(value) ? value : [];
     const inheritedText = (record, key, fallback) => Object.prototype.hasOwnProperty.call(record, key) ? text(record[key]) : text(fallback);
@@ -251,51 +252,104 @@
                 const times = [...new Set(usable.map(position))].sort((a, b) => a - b);
                 const spacing = d.min(d.pairs(times), pair => x(pair[1]) - x(pair[0])) || 25;
                 const barWidth = Math.max(1, Math.min(28, spacing * .7 / Math.max(1, data.series.length)));
-                usable.forEach(point => svg.append('rect').attr('class', 'bw-vb-mark').attr('data-period', point.period)
-                    .attr('x', x(position(point)) - barWidth * data.series.length / 2 + index * barWidth).attr('width', barWidth)
-                    .attr('y', Math.min(y(0), y(point.value))).attr('height', Math.abs(y(0) - y(point.value)))
-                    .attr('fill', color).append('title').text(pointTitle(point, series)));
+                usable.forEach(point => {
+                    const left = x(position(point)) - barWidth * data.series.length / 2 + index * barWidth;
+                    const mark = svg.append('rect').attr('class', 'bw-vb-mark').attr('data-period', point.period)
+                        .attr('x', left).attr('width', barWidth).attr('y', Math.min(y(0), y(point.value))).attr('height', Math.abs(y(0) - y(point.value))).attr('fill', color);
+                    mark.append('title').text(pointTitle(point, series));
+                    box.inspection.push({ node: mark.node(), point, series, color,
+                        x: box.quick ? left + barWidth / 2 : x(position(point)), y: box.quick ? (y(0) + y(point.value)) / 2 : y(point.value) });
+                });
             } else {
                 const isolated = new Set(segments.filter(segment => segment.length === 1).flat());
                 const dense = usable.length > 24 && ['line', 'area'].includes(spec.type);
-                usable.forEach(point => svg.append('circle').attr('class', 'bw-vb-mark').attr('data-period', point.period)
-                    .attr('cx', x(position(point))).attr('cy', y(point.value))
-                    .attr('r', dense && !isolated.has(point) ? 6 : spec.type === 'scatter' || isolated.has(point) ? 4 : 2.3)
-                    .attr('fill', dense && !isolated.has(point) ? 'transparent' : statusLabel(point) ? PAPER : color)
-                    .attr('stroke', dense && !isolated.has(point) ? 'none' : color).attr('stroke-width', statusLabel(point) ? 2 : 1)
-                    .append('title').text(pointTitle(point, series)));
+                usable.forEach(point => {
+                    const px = x(position(point)), py = y(point.value);
+                    let mark = null;
+                    // Dense line/area points stay in the inspection model and metadata, without invisible SVG nodes.
+                    if (!dense || isolated.has(point)) {
+                        mark = svg.append('circle').attr('class', 'bw-vb-mark').attr('data-period', point.period)
+                            .attr('cx', px).attr('cy', py).attr('r', spec.type === 'scatter' || isolated.has(point) ? 4 : 2.3)
+                            .attr('fill', statusLabel(point) ? PAPER : color).attr('stroke', color).attr('stroke-width', statusLabel(point) ? 2 : 1);
+                        mark.append('title').text(pointTitle(point, series));
+                    }
+                    box.inspection.push({ node: mark?.node(), x: px, y: py, point, series, color });
+                });
             }
         });
-        if (!box.quick) timelineInspection(svg, spec, data, x, y, box, position);
+        if (!box.quick) box.lifecycle.setCleanup(timelineInspection(svg, box));
     }
-    function timelineInspection(svg, spec, data, x, y, box, position) {
-        const observations = data.series.flatMap((series, index) => series.points.filter(point => !point.invalidDate && point.value !== null)
-            .map(point => ({ point, series, color: colorFor(spec, index, series.id) }))).sort((a, b) => position(a.point) - position(b.point) || a.point.index - b.point.index);
+    function inspectionEvents(svg, box, observations, show, hide, quick = false) {
+        const d = window.d3;
+        let selected = quick ? -1 : observations.length - 1, visible = false, frame = null, pending = null, disposed = false;
+        observations.forEach((item, index) => { item.inspectionIndex = index; });
+        // Keep all coincident observations for keyboard traversal; the earliest one wins pointer ties.
+        const positions = new Map();
+        observations.forEach(item => { const key = item.x + ',' + item.y; if (!positions.has(key)) positions.set(key, item); });
+        const tree = d.quadtree([...positions.values()], item => item.x, item => item.y);
+        const indexes = new WeakMap(observations.filter(item => item.node).map(item => [item.node, item.inspectionIndex]));
+        const cancel = () => { if (frame !== null) window.cancelAnimationFrame(frame); frame = null; pending = null; };
+        function dismiss() { cancel(); if (!disposed) { visible = false; hide(); } }
+        function inspect(index) {
+            if (disposed) return;
+            const next = Math.max(0, Math.min(observations.length - 1, index));
+            if (visible && next === selected) return;
+            selected = next; visible = true;
+            const item = observations[selected]; item.text ??= pointTitle(item.point, item.series); show(item);
+        }
+        function nearest(x, y) {
+            let best = tree.find(x, y); if (!best) return;
+            const distance = (x - best.x) ** 2 + (y - best.y) ** 2;
+            // d3.find may choose any equidistant point; preserve source order for exact ties.
+            tree.visit((node, x0, y0, x1, y1) => {
+                const dx = Math.max(x0 - x, 0, x - x1), dy = Math.max(y0 - y, 0, y - y1);
+                if (dx * dx + dy * dy > distance) return true;
+                if (!node.length) {
+                    const item = node.data, next = (x - item.x) ** 2 + (y - item.y) ** 2;
+                    if (next === distance && item.inspectionIndex < best.inspectionIndex) best = item;
+                }
+                return false;
+            });
+            inspect(best.inspectionIndex);
+        }
+        svg.attr('tabindex', 0).attr('aria-label', svg.attr('aria-label') + ' Use left and right arrow keys to inspect exact source observations.');
+        svg.on('keydown.inspect', event => {
+            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                event.preventDefault(); event.stopPropagation(); cancel();
+                inspect(event.key === 'Home' ? 0 : event.key === 'End' ? observations.length - 1 : selected < 0 ? (event.key === 'ArrowLeft' ? observations.length - 1 : 0) : selected + (event.key === 'ArrowLeft' ? -1 : 1));
+            } else if (!quick && event.key === 'Escape' && visible) { event.preventDefault(); event.stopPropagation(); dismiss(); }
+        }).on('blur.inspect', dismiss).on('mouseleave.inspect pointerleave.inspect', dismiss).on('pointermove.inspect', event => {
+            pending = event;
+            if (frame === null) frame = window.requestAnimationFrame(() => {
+                frame = null; const event = pending; pending = null; if (disposed || !event) return;
+                const [x, y] = d.pointer(event, svg.node());
+                if (x < box.left || x > box.right || y < box.top || y > box.bottom) dismiss(); else nearest(x, y);
+            });
+        });
+        svg.selectAll('.bw-vb-mark,.bw-vb-geography').on('mouseenter.inspect', function () { cancel(); const index = indexes.get(this); if (index !== undefined) inspect(index); });
+        return () => {
+            if (disposed) return;
+            cancel(); visible = false; hide(); disposed = true;
+            svg.on('.inspect', null); svg.selectAll('.bw-vb-mark,.bw-vb-geography').on('.inspect', null);
+        };
+    }
+    function timelineInspection(svg, box) {
+        const observations = box.inspection.sort((a, b) => a.x - b.x || a.point.index - b.point.index);
         const inspection = svg.append('g').attr('class', 'bw-vb-inspection').attr('visibility', 'hidden').attr('pointer-events', 'none');
         const id = 'bw-vb-inspection-' + (++serial); inspection.attr('id', id).attr('role', 'tooltip');
         const ring = inspection.append('circle').attr('r', 5).attr('fill', PAPER).attr('stroke-width', 2.5);
         const card = inspection.append('g'), background = card.append('rect').attr('fill', '#fffaf6').attr('stroke', GRID).attr('rx', 3), content = card.append('g');
-        let selected = observations.length - 1;
         function hide() { inspection.attr('visibility', 'hidden'); svg.attr('aria-describedby', null); }
-        function inspect(index) {
-            selected = Math.max(0, Math.min(observations.length - 1, index));
-            const item = observations[selected]; if (!item) return;
-            const lines = splitLines(pointTitle(item.point, item.series), 44), width = 340, height = lines.length * 20 + 22;
-            const px = x(position(item.point)), py = y(item.point.value);
-            const left = Math.max(box.left, Math.min(box.right - width, px + 14));
-            const top = Math.max(box.top, Math.min(box.bottom - height, py - height - 12));
-            ring.attr('cx', px).attr('cy', py).attr('stroke', item.color);
+        function inspect(item) {
+            const lines = splitLines(item.text, 44), width = 340, height = lines.length * 20 + 22;
+            const left = Math.max(box.left, Math.min(box.right - width, item.x + 14));
+            const top = Math.max(box.top, Math.min(box.bottom - height, item.y - height - 12));
+            ring.attr('cx', item.x).attr('cy', item.y).attr('stroke', item.color);
             card.attr('transform', `translate(${left},${top})`); background.attr('width', width).attr('height', height);
             content.selectAll('*').remove(); lines.forEach((line, i) => svgText(content, line, 12, 23 + i * 20, 14));
             inspection.attr('visibility', 'visible'); svg.attr('aria-describedby', id);
         }
-        svg.attr('tabindex', 0).attr('aria-label', svg.attr('aria-label') + ' Use left and right arrow keys to inspect exact source observations.');
-        svg.on('keydown.vb', event => {
-            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
-                event.preventDefault(); event.stopPropagation();
-                inspect(event.key === 'Home' ? 0 : event.key === 'End' ? observations.length - 1 : selected + (event.key === 'ArrowLeft' ? -1 : 1));
-            } else if (event.key === 'Escape' && inspection.attr('visibility') === 'visible') { event.preventDefault(); event.stopPropagation(); hide(); }
-        }).on('blur.vb', hide);
+        return inspectionEvents(svg, box, observations, inspect, hide);
     }
     function drawRanking(svg, spec, rows, box) {
         const d = window.d3;
@@ -314,9 +368,11 @@
             const label = row.label.length > maxLabel ? row.label.slice(0, maxLabel - 2) + '…' : row.label;
             svgText(svg, label, left - (box.quick ? 8 : 13), center + 5, box.quick ? 12 : 16, { anchor: 'end' }).append('title').text(row.label);
             if (row.period && !box.quick) svgText(svg, row.period, left - 13, center + 20, 11, { anchor: 'end', fill: MUTED });
-            svg.append('rect').attr('class', 'bw-vb-mark').attr('data-period', row.period).attr('x', Math.min(x(0), x(row.value)))
+            const mark = svg.append('rect').attr('class', 'bw-vb-mark').attr('data-period', row.period).attr('x', Math.min(x(0), x(row.value)))
                 .attr('y', y(index)).attr('width', Math.abs(x(row.value) - x(0))).attr('height', y.bandwidth())
-                .attr('fill', colorFor(spec, 0, row.id || row.label)).append('title').text(pointTitle(row));
+                .attr('fill', colorFor(spec, 0, row.id || row.label));
+            mark.append('title').text(pointTitle(row));
+            if (box.quick) box.inspection.push({ node: mark.node(), x: (x(0) + x(row.value)) / 2, y: center, point: row });
             if (!box.quick) svgText(svg, pretty(row.value), x(row.value) + (row.value < 0 ? -8 : 8), center + 5, 15,
                 { anchor: row.value < 0 ? 'end' : 'start', bold: true });
         });
@@ -341,6 +397,7 @@
                 ? svg.append('rect').attr('x', x(index)).attr('width', x.bandwidth()).attr('y', Math.min(y(0), y(row.value))).attr('height', Math.abs(y(row.value) - y(0))).attr('fill', color)
                 : svg.append('circle').attr('cx', x(index) + x.bandwidth() / 2).attr('cy', y(row.value)).attr('r', 4).attr('fill', statusLabel(row) ? PAPER : color).attr('stroke', color).attr('stroke-width', 2);
             mark.attr('class', 'bw-vb-mark').attr('data-period', row.period).append('title').text(pointTitle(row));
+            if (box.quick) box.inspection.push({ node: mark.node(), x: x(index) + x.bandwidth() / 2, y: spec.type === 'bar' ? (y(0) + y(row.value)) / 2 : y(row.value), point: row });
         });
     }
     function validateGeoJSON(value) {
@@ -402,9 +459,12 @@
             const centroid = box.quick ? path.centroid(feature) : null;
             const center = centroid?.every(Number.isFinite) ? centroid : [(box.left + box.right) / 2, (box.top + box.bottom) / 2];
             if (row && row.value !== null) matched += 1;
-            svg.append('path').attr('class', 'bw-vb-geography').attr('d', path(feature)).attr('fill', row?.value !== undefined && row?.value !== null ? fill(row.value) : '#e6ded8')
+            const mark = svg.append('path').attr('class', 'bw-vb-geography').attr('d', path(feature)).attr('fill', row?.value !== undefined && row?.value !== null ? fill(row.value) : '#e6ded8')
                 .attr('data-inspect-x', box.quick ? center[0] : null).attr('data-inspect-y', box.quick ? center[1] : null)
-                .attr('stroke', PAPER).attr('stroke-width', 1).append('title').text(row ? pointTitle(row) : `${name || 'Geography'} · No matching observation`);
+                .attr('stroke', PAPER).attr('stroke-width', 1);
+            const label = row ? pointTitle(row) : `${name || 'Geography'} · No matching observation`;
+            mark.append('title').text(label);
+            if (box.quick) box.inspection.push({ node: mark.node(), x: center[0], y: center[1], text: label, point: row });
         });
         svgText(svg, `${matched} of ${features.length} geographic features have compatible observations`, box.left, box.bottom - 20, 14, { fill: MUTED });
         if (usable.length) {
@@ -416,33 +476,22 @@
         }
     }
     function quickInspection(svg, box, onInspect) {
-        const marks = svg.selectAll('.bw-vb-mark,.bw-vb-geography').nodes().map(node => ({ node,
-            x: node.hasAttribute('data-inspect-x') ? Number(node.getAttribute('data-inspect-x')) : node.hasAttribute('cx') ? Number(node.getAttribute('cx')) : Number(node.getAttribute('x')) + Number(node.getAttribute('width')) / 2,
-            y: node.hasAttribute('data-inspect-y') ? Number(node.getAttribute('data-inspect-y')) : node.hasAttribute('cy') ? Number(node.getAttribute('cy')) : Number(node.getAttribute('y')) + Number(node.getAttribute('height')) / 2,
-            text: node.querySelector('title')?.textContent || '' }));
-        if (box.timeline) marks.sort((a, b) => a.x - b.x);
-        if (!marks.length) return;
+        const observations = box.timeline ? box.inspection.sort((a, b) => a.x - b.x) : box.inspection;
+        if (!observations.length) return;
         const ring = svg.append('circle').attr('class', 'bw-qv-active-mark').attr('r', 5).attr('fill', 'none').attr('stroke-width', 2).attr('visibility', 'hidden').attr('pointer-events', 'none');
-        let selected = -1;
-        function hide() { ring.attr('visibility', 'hidden'); onInspect?.(null); }
-        function inspect(index) {
-            selected = Math.max(0, Math.min(marks.length - 1, index));
-            const item = marks[selected];
-            ring.attr('cx', item.x).attr('cy', item.y).attr('visibility', 'visible'); onInspect?.(item);
-        }
-        svg.attr('tabindex', 0).attr('aria-label', svg.attr('aria-label') + ' Use left and right arrow keys to inspect exact source observations.');
-        svg.on('keydown.quick', event => {
-            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-            event.preventDefault(); event.stopPropagation();
-            inspect(event.key === 'Home' ? 0 : event.key === 'End' ? marks.length - 1 : selected < 0 ? (event.key === 'ArrowLeft' ? marks.length - 1 : 0) : selected + (event.key === 'ArrowLeft' ? -1 : 1));
-        }).on('blur.quick', hide).on('mouseleave.quick', hide).on('pointermove.quick', event => {
-            const [x, y] = window.d3.pointer(event, svg.node());
-            if (x < box.left || x > box.right || y < box.top || y > box.bottom) { hide(); return; }
-            let nearest = 0, distance = Infinity;
-            marks.forEach((item, index) => { const next = (x - item.x) ** 2 + (y - item.y) ** 2; if (next < distance) { nearest = index; distance = next; } });
-            inspect(nearest);
-        });
-        svg.selectAll('.bw-vb-mark,.bw-vb-geography').on('mouseenter.quick', function () { inspect(marks.findIndex(item => item.node === this)); });
+        const hide = () => { ring.attr('visibility', 'hidden'); onInspect?.(null); };
+        const inspect = item => { ring.attr('cx', item.x).attr('cy', item.y).attr('visibility', 'visible'); onInspect?.(item); };
+        return inspectionEvents(svg, box, observations, inspect, hide, true);
+    }
+    function renderLifecycle(svg, isSvg) {
+        const node = svg.node(); renderStates.get(node)?.dispose();
+        let cleanup = null;
+        const state = {
+            setCleanup(callback) { cleanup = callback; },
+            dispose() { cleanup?.(); cleanup = null; },
+            destroy() { if (renderStates.get(node) !== state) return; state.dispose(); renderStates.delete(node); if (!isSvg) svg.remove(); }
+        };
+        renderStates.set(node, state); return state;
     }
     function renderQuick(target, input, options) {
         const d = window.d3, spec = normalize(input), data = compatible(spec), ranked = ranking(spec, data);
@@ -453,6 +502,7 @@
             timeline: spec.series.length > 0 && !['horizontal', 'map'].includes(spec.type) };
         const caption = captions(spec, data, ranked), isSvg = target?.tagName?.toLowerCase() === 'svg';
         const svg = target ? (isSvg ? d.select(target) : d.select(target).selectAll('svg.bw-builder-graphic').data([null]).join('svg')) : d.create('svg');
+        const lifecycle = renderLifecycle(svg, isSvg); box.lifecycle = lifecycle; box.inspection = [];
         svg.selectAll('*').remove();
         svg.attr('class', 'bw-builder-graphic bw-quick-graphic').attr('viewBox', `0 0 ${width} ${height}`).attr('xmlns', 'http://www.w3.org/2000/svg')
             .attr('role', 'img').attr('aria-label', `${spec.title}. ${spec.unit || 'Unit not specified'}. ${caption.notes.join(' ')}`)
@@ -467,8 +517,8 @@
         else drawTimeline(svg, spec, data, box);
         svg.selectAll('.bw-vb-bottom-axis .tick text').filter((value, index, nodes) => index === 0 || index === nodes.length - 1)
             .attr('text-anchor', (value, index, nodes) => index === 0 ? 'start' : 'end');
-        quickInspection(svg, box, options.onInspect);
-        return { svg: svg.node(), spec, caption, legend: data.series.map((series, index) => ({ id: series.id, name: series.name, color: colorFor(spec, index, series.id) })), destroy() { if (!isSvg) svg.remove(); } };
+        lifecycle.setCleanup(quickInspection(svg, box, options.onInspect));
+        return { svg: svg.node(), spec, caption, legend: data.series.map((series, index) => ({ id: series.id, name: series.name, color: colorFor(spec, index, series.id) })), destroy: lifecycle.destroy };
     }
     function render(target, input = {}, options = {}) {
         if (!window.d3) throw new Error('D3 must load before the graphic builder.');
@@ -489,6 +539,7 @@
         const footerTop = box.bottom + 60, height = footerTop + captionLines.length * 21 + 40;
         const isSvg = target?.tagName?.toLowerCase() === 'svg';
         const svg = target ? (isSvg ? d.select(target) : d.select(target).selectAll('svg.bw-builder-graphic').data([null]).join('svg')) : d.create('svg');
+        const lifecycle = renderLifecycle(svg, isSvg); box.lifecycle = lifecycle; box.inspection = [];
         svg.selectAll('*').remove();
         svg.attr('class', 'bw-builder-graphic').attr('viewBox', `0 0 ${width} ${height}`).attr('xmlns', 'http://www.w3.org/2000/svg')
             .attr('role', 'img').attr('aria-label', `${spec.title}. ${spec.subtitle} ${spec.unit}. ${caption.notes.join(' ')}`)
@@ -514,7 +565,7 @@
         else drawTimeline(svg, spec, data, box);
         svg.append('line').attr('x1', inset).attr('x2', width - inset).attr('y1', footerTop - 22).attr('y2', footerTop - 22).attr('stroke', GRID);
         captionLines.forEach((row, index) => svgText(svg, row.line, inset, footerTop + index * 21, 13, { fill: MUTED, bold: row.source }));
-        return { svg: svg.node(), spec, destroy() { if (!isSvg) svg.remove(); } };
+        return { svg: svg.node(), spec, destroy: lifecycle.destroy };
     }
 
     function delimitedRows(input, delimiter) {
@@ -702,7 +753,9 @@
         function fillOptions(node, options) {
             node.replaceChildren(); options.forEach(([value, label]) => { const option = element('option', label); option.value = value; node.append(option); });
         }
+        let sourceRevision = 0, renderedSourceRevision = -1;
         function sourceTable() {
+            if (!dataDetails.open || renderedSourceRevision === sourceRevision) return;
             const rows = allRows(current), table = element('table'), thead = element('thead'), tr = element('tr');
             ['Series / label', 'Source period', 'Exact value', 'Unit', 'Status', 'Source', 'Notes'].forEach(label => { const th = element('th', label); th.scope = 'col'; tr.append(th); });
             thead.append(tr); table.append(thead); const tbody = element('tbody');
@@ -715,8 +768,10 @@
                     line.append(td);
                 }); tbody.append(line);
             });
+            renderedSourceRevision = sourceRevision;
             table.append(tbody); tableHost.replaceChildren(element('p', `${rows.length} source observation${rows.length === 1 ? '' : 's'}${rows.length > 500 ? '; first 500 shown here. All records are retained in the draft and SVG metadata.' : '.'}`, 'bw-vb-help'), table);
         }
+        dataDetails.addEventListener('toggle', () => { if (dataDetails.open) sourceTable(); else { tableHost.replaceChildren(); renderedSourceRevision = -1; } });
         function updateControls() {
             current = normalize(current);
             fillOptions(fields.unit, current.units.map(unit => [unit, unit || 'Unit not specified']));
@@ -735,10 +790,12 @@
             [...fields.type.options].forEach(option => { option.disabled = ['line', 'area'].includes(option.value) && !current.series.length && current.rows.length > 0; });
             fields.limit.closest('label').hidden = current.type !== 'horizontal'; geo.hidden = current.type !== 'map';
             try { restoreButton.disabled = !readDraft(current); } catch (_) { restoreButton.disabled = false; }
-            sourceTable();
+            sourceRevision += 1;
+            if (dataDetails.open) sourceTable(); else { tableHost.replaceChildren(); renderedSourceRevision = -1; }
         }
+        let chart = null;
         function redraw() {
-            try { render(stage, current); } catch (error) { announce(error.message, true); }
+            try { chart = render(stage, current); } catch (error) { announce(error.message, true); }
         }
         Object.entries(fields).forEach(([key, node]) => {
             if (key === 'dataset') {
@@ -799,7 +856,7 @@
         let closed = false;
         function close() {
             if (closed) return;
-            closed = true;
+            closed = true; chart?.destroy();
             if (dialog.isConnected) {
                 if (dialog.open && typeof dialog.close === 'function') dialog.close(); dialog.remove();
                 if (opener?.isConnected) opener.focus({ preventScroll: true });

@@ -127,3 +127,14 @@ check('multi-series timeline keys advance by displayed period with stable ties',
   svg.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));assert.ok(d.querySelector('.bw-qv-tooltip').textContent.includes('Oil · 2024'));
   svg.dispatchEvent(new w.KeyboardEvent('keydown',{key:'End',bubbles:true,cancelable:true}));assert.ok(d.querySelector('.bw-qv-tooltip').textContent.includes('Gas · 2024'));
 });
+
+check('view-only market quick visuals keep inspection and source details without an editor route',({B,d,w})=>{
+  const editor=jest.spyOn(B.VisualBuilder,'open');
+  const controller=B.QuickVisuals.open(input(),{trigger:d.getElementById('trigger'),allowCustomize:false});
+  assert.equal(controller.dialog.querySelector('[data-qv-action=customize]'),null);
+  assert.equal(controller.dialog.querySelector('.bw-qv-footer').hidden,true);
+  controller.dialog.querySelector('svg').dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true,cancelable:true}));
+  assert.ok(d.querySelector('.bw-qv-tooltip').textContent.includes('0 USD / barrel'));
+  const source=controller.dialog.querySelector('details');source.open=true;source.dispatchEvent(new w.Event('toggle'));
+  assert.equal(source.querySelectorAll('tbody tr').length,4);assert.equal(editor.mock.calls.length,0);
+});

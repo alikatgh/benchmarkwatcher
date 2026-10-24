@@ -91,7 +91,7 @@ function SelectContent({
         <SelectPrimitive.Viewport
           data-position={position}
           className={cn(
-            "cn-select-viewport data-[position=popper]:h-(--radix-select-trigger-height) data-[position=popper]:w-full data-[position=popper]:min-w-(--radix-select-trigger-width)",
+            "cn-select-viewport data-[position=popper]:w-full data-[position=popper]:min-w-(--radix-select-trigger-width)",
             position === "popper" && ""
           )}
         >
@@ -130,7 +130,8 @@ function SelectItem({
       )}
       {...props}
     >
-      <span className="cn-select-item-indicator">
+      <SelectPrimitive.ItemText data-slot="select-item-text">{children}</SelectPrimitive.ItemText>
+      <span className="cn-select-item-indicator" aria-hidden="true">
         <SelectPrimitive.ItemIndicator>
           <IconPlaceholder
             lucide="CheckIcon"
@@ -142,7 +143,6 @@ function SelectItem({
           />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   )
 }

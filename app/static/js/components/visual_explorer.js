@@ -4,7 +4,7 @@
     const V = BW.Visuals, d = window.d3;
     const types = [['line', 'Line history'], ['area', 'Area history'], ['step', 'Step history'], ['bar', 'Observation bars'], ['scatter', 'Observation dots'], ['change', 'Change between observations'], ['histogram', 'Value distribution'], ['cumulative', 'Cumulative distribution'], ['box', 'Range & quartiles'], ['monthly', 'Monthly averages'], ['heatmap', 'Year × month heatmap'], ['coverage', 'Observation coverage']];
     let seq = 0;
-    const redraws = new Map();
+    const redraws = new Map(), labs = new Map(), stageCharts = new WeakMap(), valueTables = new WeakMap();
     function el(tag, text, className) { const node = document.createElement(tag); if (text) node.textContent = text; if (className) node.className = className; return node; }
     function selector(parent, label, options) {
         const wrap = el('label', label), select = el('select');
@@ -88,24 +88,38 @@
             }
             if (event.key === 'Escape' || event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); close(true); }
         });
-        document.addEventListener('pointerdown', event => { if (fallbackOpen && !wrap.contains(event.target)) close(false); });
-        window.addEventListener('resize', () => { if (open()) position(); });
+        const onPointerDown = event => { if (fallbackOpen && !wrap.contains(event.target)) close(false); };
+        const onResize = () => { if (open()) position(); };
+        document.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('resize', onResize);
+        button.dispose = () => { close(false); document.removeEventListener('pointerdown', onPointerDown); window.removeEventListener('resize', onResize); };
         button.setOptions(options); return button;
     }
     function valuesTable(parent, headers, rows) {
-        parent.replaceChildren();
-        const details = el('details', '', 'bw-visual-data'), table = el('table'), head = el('thead'), tr = el('tr');
-        headers.forEach(label => { const th = el('th', label); th.scope = 'col'; tr.append(th); });
-        head.append(tr); table.append(head);
-        const body = el('tbody');
-        rows.forEach(row => { const tr = el('tr'); row.forEach(value => tr.append(el('td', String(value)))); body.append(tr); });
-        table.append(body); const wrap = el('div'); wrap.append(table);
-        details.append(el('summary', `View exact values · ${rows.length} rows`), wrap); parent.append(details);
+        let state = valueTables.get(parent);
+        if (!state || state.details.parentElement !== parent) {
+            const details = el('details', '', 'bw-visual-data'), summary = el('summary'), wrap = el('div');
+            state = { details, summary, wrap, revision: 0, rendered: -1, rows: [], headers: [] };
+            details.append(summary, wrap); parent.replaceChildren(details); valueTables.set(parent, state);
+            details.addEventListener('toggle', () => { if (details.open) populate(); else { wrap.replaceChildren(); state.rendered = -1; } });
+        }
+        function populate() {
+            if (state.rendered === state.revision) return;
+            const table = el('table'), head = el('thead'), tr = el('tr');
+            state.headers.forEach(label => { const th = el('th', label); th.scope = 'col'; tr.append(th); }); head.append(tr); table.append(head);
+            const body = el('tbody');
+            state.rows.forEach(row => { const tr = el('tr'); row.forEach(value => tr.append(el('td', String(value)))); body.append(tr); });
+            table.append(body); state.wrap.replaceChildren(table); state.rendered = state.revision;
+        }
+        state.headers = headers; state.rows = rows; state.revision += 1;
+        state.summary.textContent = `View exact values · ${rows.length} rows`;
+        if (state.details.open) populate(); else { state.wrap.replaceChildren(); state.rendered = -1; }
     }
+    function disposeStage(stage) { stageCharts.get(stage)?.destroy(); stageCharts.delete(stage); }
     function titleMarks(selection, text) { selection.append('title').text(text); }
     const catalogTypes = [['ranking', 'Ranked historical changes'], ['map', 'Benchmark change map'], ['categories', 'Category coverage'], ['dates', 'Latest observation dates']];
     function catalogView(lab, records, range) {
-        lab.stage.replaceChildren();
+        disposeStage(lab.stage); lab.stage.replaceChildren();
         const width = Math.max(320, lab.stage.clientWidth || 760), type = lab.select.value;
         const values = records.map(record => ({ ...record, change: V.numeric(record.change_percent) }));
         const available = values.filter(r => r.change !== null).sort((a,b) => b.change - a.change);
@@ -157,7 +171,7 @@
         valuesTable(lab.table,headers||['Benchmark','Change %','Observed','Unit'],tableRows||values.map(r=>[r.name,V.format(r.change),r.date||'Unknown',[r.currency,r.unit].filter(Boolean).join(' / ')]));
     }
     function render(stage, rows, type, unit, note, table) {
-        stage.replaceChildren();
+        disposeStage(stage); stage.replaceChildren();
         const points = V.history(rows), usable = points.filter(p => p.value !== null), values = usable.map(p => p.value);
         const width = Math.max(320, stage.clientWidth || 760), height = 320;
         let tableRows = points.map(p => [p.date, V.format(p.value)]), headers = ['Observation date', unit || 'Value'];
@@ -170,7 +184,8 @@
                 unit = '%'; tableRows = chartPoints.map(p => [p.date, V.format(p.value)]); headers = ['Observation date', 'Change %'];
                 note.textContent += 'Change from the preceding available observation; intervals vary. A positive preceding value is required.';
             } else note.textContent += 'Actual observation dates. Extended gaps remain open. Use arrow keys to inspect values.';
-            V.timeSeries(stage, [{ points: chartPoints, unit }], { type: type === 'change' ? 'bar' : type, height, zero: type === 'change', label: types.find(t => t[0] === type)[1] + '. Exact values below.' });
+            const chart = V.timeSeries(stage, [{ points: chartPoints, unit }], { type: type === 'change' ? 'bar' : type, height, zero: type === 'change', label: types.find(t => t[0] === type)[1] + '. Exact values below.' });
+            stageCharts.set(stage, chart);
         } else {
             const svg = V.root(stage, width, height, types.find(t => t[0] === type)[1] + '. Exact values below.');
             if (!usable.length) V.empty(svg, width, height);
@@ -238,13 +253,22 @@
         const exportButton = el('button', 'Download PNG'); exportButton.type = 'button'; controls.append(exportButton);
         const stage = el('div', '', 'bw-visual-stage'), note = el('p', '', 'bw-visual-note'), table = el('div'); note.setAttribute('aria-live', 'polite');
         section.append(controls, stage, note, table); parent.append(section);
-        const state = { rows: [], unit: '', section, controls, select, stage, note, table };
+        const state = { rows: [], unit: '', section, controls, select, stage, note, table, disposed: false, cleanup: [] };
+        let observer = null;
+        state.dispose = () => {
+            if (state.disposed) return; state.disposed = true;
+            observer?.disconnect(); select.dispose(); disposeStage(stage);
+            state.cleanup.forEach(cleanup => cleanup()); state.cleanup.length = 0;
+            redraws.delete(section); labs.delete(section); section.remove();
+            if (detailLab === state) detailLab = null;
+        };
+        labs.set(section, state);
         if (BW.VisualBuilderSources) state.builderButton = BW.VisualBuilderSources.attach(controls, () => state.graphicSpec || {
             title:state.name || 'Historical observations', unit:state.unit, type:'line',
             source:state.source || '', notes:note.textContent,
             series:[{name:state.name || 'Observations',unit:state.unit,points:state.rows}]
         });
-        state.draw = () => { select.sync(); render(stage, state.rows, select.value, state.unit, note, table); };
+        state.draw = () => { if (state.disposed) return; select.sync(); render(stage, state.rows, select.value, state.unit, note, table); };
         select.addEventListener('change', () => state.draw());
         exportButton.addEventListener('click', async () => {
             const svg = stage.querySelector('svg'); if (!svg) return;
@@ -255,7 +279,10 @@
         });
         if (typeof ResizeObserver !== 'undefined') {
             let width = 0;
-            new ResizeObserver(() => { if (stage.clientWidth > 0 && width !== stage.clientWidth) { width = stage.clientWidth; state.draw(); } }).observe(stage);
+            observer = new ResizeObserver(() => {
+                if (!section.isConnected) { state.dispose(); return; }
+                if (stage.clientWidth > 0 && width !== stage.clientWidth) { width = stage.clientWidth; state.draw(); }
+            }); observer.observe(stage);
         }
         redraws.set(section, () => state.draw());
         return state;
@@ -263,6 +290,7 @@
     let detailLab;
     function detail(rows, name, unit) {
         const chart = document.getElementById('priceChart'); if (!chart) return;
+        if (detailLab && (!detailLab.section.isConnected || detailLab.disposed)) { detailLab.dispose(); detailLab = null; }
         if (!detailLab) {
             const host = el('div'); (chart.closest('.commodity-overview') || chart.closest('.chart-panel')).after(host); detailLab = createLab(host, 'Visual explorer');
             const context = el('div', '', 'bw-visual-context'), heading = detailLab.section.querySelector('h2');
@@ -274,6 +302,7 @@
             const wide = window.matchMedia('(min-width:1024px)');
             const adaptContext = () => { if (wide.matches) context.append(detailLab.note); else detailLab.stage.after(detailLab.note); };
             adaptContext(); wide.addEventListener('change', adaptContext);
+            detailLab.cleanup.push(() => wide.removeEventListener('change', adaptContext));
             detailLab.select.value = 'histogram';
         }
         detailLab.rows = rows; detailLab.unit = unit; detailLab.draw();
@@ -335,7 +364,7 @@
             lab.select.setOptions(options);
             lab.select.value = options.some(option=>option[0]===selected) ? selected : options[0][0];
             lab.select.sync();
-            lab.draw = catalog ? () => { lab.select.sync(); catalogView(lab, records, range.value); } : seriesDraw;
+            lab.draw = catalog ? () => { if (lab.disposed) return; lab.select.sync(); catalogView(lab, records, range.value); } : seriesDraw;
             // Catalog percentage changes are precomputed by the API, which has no 5Y window.
             range.querySelector('option[value="5Y"]').disabled = catalog;
         }
@@ -349,7 +378,7 @@
                 if (catalog && range.value === '5Y') range.value = 'ALL';
                 const response = await fetch(catalog ? '/api/commodities?include_history=false&range=' + range.value : '/api/commodity/' + encodeURIComponent(benchmark.value));
                 if (!response.ok) throw new Error('Unavailable');
-                const payload = await response.json(); if (active !== request) return;
+                const payload = await response.json(); if (active !== request || lab.disposed) return;
                 current = payload.data || payload.commodity || payload;
                 if (catalog) {
                     const category = new URLSearchParams(location.search).get('category');
@@ -377,14 +406,17 @@
         try {
             const response = await fetch('/api/commodities?include_history=false'); if (!response.ok) throw new Error('Unavailable');
             const payload = await response.json(), records = Array.isArray(payload) ? payload : (payload.data || payload.commodities);
+            if (lab.disposed) return;
             const all = el('option','All benchmarks'); all.value='__catalog__'; benchmark.append(all);
             records.forEach(record => { const option = el('option', record.name); option.value = record.id; benchmark.append(option); });
             if (records.some(r => r.id === 'gold')) benchmark.value = 'gold';
             await load();
         } catch (_) { lab.note.textContent = 'The benchmark catalog could not be loaded. Reload the page to retry.'; }
     }
-    BW.VisualExplorer = { detail, workbooks, render, refresh() {
-        redraws.forEach((draw, node) => { if (node.isConnected) draw(); else redraws.delete(node); });
+    BW.VisualExplorer = { detail, workbooks, render, dispose(target) {
+        labs.forEach((lab, node) => { if (!target || target === node || target.contains(node)) lab.dispose(); });
+    }, refresh() {
+        redraws.forEach((draw, node) => { if (node.isConnected) draw(); else { labs.get(node)?.dispose(); redraws.delete(node); } });
     } };
     document.addEventListener('DOMContentLoaded', () => { workbooks(); dashboard(); });
 })();

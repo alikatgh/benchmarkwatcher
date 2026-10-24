@@ -144,14 +144,41 @@ def _library_results(query, tokens, unavailable):
             conn.create_function('workspace_measure_match', 4,
                 lambda name, identifier, unit, dataset: int(any(
                     _matches([token], name, identifier, unit, dataset) for token in tokens)))
-            companies = conn.execute('''
+            # This is only a query-plan choice, never a result cutoff. Small
+            # matches are cheap rowid lookups; broad matches must use the saved
+            # covering indexes before loading the much larger series records.
+            small_search = len(conn.execute(
+                'SELECT rowid FROM series_search WHERE series_search MATCH ? LIMIT ?',
+                (match, public_library.PAGE_SIZE + 1)).fetchall()) <= public_library.PAGE_SIZE
+            if small_search or cik:
+                company_index = 'NOT INDEXED' if small_search and not cik else 'INDEXED BY library_summary'
+                companies = conn.execute('''
                 SELECT s.entity_id, MIN(s.entity_name) AS entity_name
-                FROM series s INDEXED BY library_summary
+                FROM series s ''' + company_index + '''
                 WHERE s.source='sec' AND s.entity_type='company' AND s.observation_count>0
                   AND ''' + public_sql('s.') + '''
                   AND ''' + company_where + '''
                 GROUP BY s.entity_id ORDER BY entity_name,s.entity_id LIMIT ?
                 ''', [*company_args, PER_KIND]).fetchall()
+            else:
+                # Test company names once per saved alias, rather than once
+                # per financial measure. The EXISTS retains FTS and publication
+                # semantics for that exact alias without reading full records.
+                companies = conn.execute('''
+                WITH names AS MATERIALIZED (
+                    SELECT s.entity_id,s.entity_name FROM series s INDEXED BY library_summary
+                    WHERE s.source='sec' AND s.entity_type='company' AND s.observation_count>0
+                      AND ''' + public_sql('s.') + ''' GROUP BY s.entity_id,s.entity_name
+                )
+                SELECT n.entity_id,MIN(n.entity_name) AS entity_name FROM names n
+                WHERE workspace_company_match(n.entity_name,n.entity_id)
+                  AND EXISTS (SELECT 1 FROM series s INDEXED BY library_summary
+                    WHERE s.source='sec' AND s.entity_type='company' AND s.observation_count>0
+                      AND ''' + public_sql('s.') + '''
+                      AND s.entity_id=n.entity_id AND s.entity_name=n.entity_name
+                      AND s.rowid IN (SELECT rowid FROM series_search WHERE series_search MATCH ?))
+                GROUP BY n.entity_id ORDER BY entity_name,n.entity_id LIMIT ?
+                ''', (match, PER_KIND)).fetchall()
             for row in companies:
                 identifier = row['entity_id']
                 if not isinstance(identifier, str) or not re.fullmatch(r'[0-9]{1,10}', identifier):
@@ -159,16 +186,7 @@ def _library_results(query, tokens, unavailable):
                 results.append(dict(id=identifier, kind='company', name=_text(row['entity_name']),
                     description='SEC filings · CIK ' + identifier,
                     href=url_for('public_library.company', entity_id=identifier)))
-            records = conn.execute('''
-                SELECT s.id,s.source,s.dataset,s.entity_name,s.indicator_name,s.unit
-                FROM series s NOT INDEXED
-                WHERE s.rowid IN (SELECT rowid FROM series_search WHERE series_search MATCH ?)
-                  AND s.source IN ('worldbank','faostat','sec') AND s.observation_count>0
-                  AND ''' + public_sql('s.') + '''
-                  AND (s.entity_type='country' OR (s.source='sec' AND s.entity_type='company'
-                       AND workspace_measure_match(s.indicator_name,s.indicator_id,s.unit,s.dataset)))
-                ORDER BY s.entity_name,s.indicator_name,s.id LIMIT ?
-                ''', (match, PER_KIND)).fetchall()
+            records = _library_dataset_rows(conn, match, small_search)
             for row in records:
                 identifier = row['id']
                 if (not isinstance(identifier, str) or not SERIES_ID.fullmatch(identifier)
@@ -185,6 +203,33 @@ def _library_results(query, tokens, unavailable):
     except (sqlite3.Error, OSError, ValueError, TypeError):
         unavailable.extend(('company', 'dataset'))
     return results
+
+
+def _library_dataset_rows(conn, match, small_search):
+    fields = 's.id,s.source,s.dataset,s.entity_name,s.indicator_name,s.unit'
+    filters = '''s.rowid IN (SELECT rowid FROM series_search WHERE series_search MATCH ?)
+                 AND s.source IN ('worldbank','faostat','sec') AND s.observation_count>0
+                 AND ''' + public_sql('s.')
+    measure = 'workspace_measure_match(s.indicator_name,s.indicator_id,s.unit,s.dataset)'
+    order = 's.entity_name,s.indicator_name,s.id'
+    if small_search:
+        return conn.execute('SELECT ' + fields + ' FROM series s NOT INDEXED WHERE ' + filters + '''
+            AND (s.entity_type='country' OR (s.source='sec' AND s.entity_type='company' AND ''' + measure + '))'
+            + ' ORDER BY ' + order + ' LIMIT ?', (match, PER_KIND)).fetchall()
+    # Each disjoint group needs at most the final page size before the merge.
+    # In particular, country matches sort in a covering index and only those
+    # selected rows load unit/metadata from the multi-gigabyte series table.
+    def page(condition):
+        return ('SELECT s.rowid,s.entity_name,s.indicator_name,s.id '
+                'FROM series s INDEXED BY library_browse_saved WHERE ' + filters
+                + ' AND ' + condition + ' ORDER BY ' + order + ' LIMIT ?')
+
+    query = ('WITH countries AS (' + page("s.entity_type='country'") + '),companies AS ('
+             + page("s.entity_type='company' AND s.source='sec' AND " + measure) + ') '
+             'SELECT ' + fields + ' FROM (SELECT * FROM countries UNION ALL SELECT * FROM companies) page '
+             'JOIN series s ON s.rowid=page.rowid '
+             'ORDER BY page.entity_name,page.indicator_name,page.id LIMIT ?')
+    return conn.execute(query, (match, PER_KIND, match, PER_KIND, PER_KIND)).fetchall()
 
 
 def _reference_results(tokens, unavailable):

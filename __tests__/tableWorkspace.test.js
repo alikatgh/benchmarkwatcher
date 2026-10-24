@@ -275,3 +275,30 @@ test('closing a shared panel returns focus to the exact trigger that opened it',
     w.closePanels(true);
     expect(document.activeElement).toBe(trigger);
 });
+
+
+test('search and repeated apply preserve row/cell identity with no table child-list mutations', () => {
+    const w = setup(), body = document.getElementById('table-body');
+    const rows = w.getRows(), cells = rows.map(row => [...row.children]);
+    const watch = body.querySelector('tr[data-id="c"] .tw-watch'); watch.focus();
+    const observer = new MutationObserver(() => {}); observer.observe(body, {childList:true,subtree:true});
+    w.change({query:'copper'}); w.apply();
+    expect(observer.takeRecords()).toEqual([]);
+    expect(w.getRows()).toEqual(rows);
+    expect(rows.map(row => [...row.children])).toEqual(cells);
+    expect(document.activeElement).toBe(watch);
+    expect(w.getVisibleRows().map(row => row.dataset.id)).toEqual(['c']);
+    observer.disconnect();
+});
+
+test('column cache still applies changed widths, new rows and regenerated header controls', () => {
+    const w = setup(); w.resize('price', 222);
+    const next = document.createElement('tbody'); next.innerHTML = row({id:'new',name:'New benchmark',price:50});
+    document.getElementById('table-body').append(next.firstElementChild); w.refresh();
+    expect(document.querySelector('tr[data-id="new"] [data-col="price"]').style.width).toBe('222px');
+    w.renderHeaders(); w.applyColumns();
+    expect(document.querySelector('th[data-col="price"] .tw-resizer').getAttribute('aria-valuenow')).toBe('222');
+    w.change({order:['commodity','category','price'],visible:['commodity','category']});
+    expect(w.getRows().every(row => row.children[2].dataset.col === 'category')).toBe(true);
+    expect(w.getRows().every(row => row.querySelector('[data-col="price"]').hidden)).toBe(true);
+});

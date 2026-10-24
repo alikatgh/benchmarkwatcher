@@ -1,10 +1,12 @@
 """Optional public FX/identity metadata integrates without any provider calls."""
 
 import hashlib
+from html import unescape
 import json
 import re
 import sqlite3
 from datetime import date, datetime, timedelta, timezone
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -187,7 +189,8 @@ def test_full_7000_point_history_is_kept_with_50_row_observation_pages(open_clie
     first = date(1999, 1, 4)
     dates = [(first + timedelta(days=index)).isoformat() for index in range(7000)]
     seed_open(optional, dates=dates)
-    response = client.get('/exchange-rates/' + FX_ID + '?page=2')
+    response = client.get('/exchange-rates/' + FX_ID,
+                          query_string=dict(page=2, q='EUR', source='frankfurter_ecb', list_page=2))
     assert response.status_code == 200
     body = response.get_data(as_text=True)
     payload = re.search(r'<script id="gr-chart-data" type="application/json">(.*?)</script>', body).group(1)
@@ -198,6 +201,12 @@ def test_full_7000_point_history_is_kept_with_50_row_observation_pages(open_clie
     assert len(payload) < 1_000_000
     assert body.count('<th scope="row">') == 50
     assert '51–100 of 7000' in body and 'Page 2 / 140' in body
+    links = [urlsplit(unescape(value)) for value in re.findall(r'href="([^"]+)"', body)]
+    assert any(link.path == '/exchange-rates' and parse_qs(link.query) == dict(
+        q=['EUR'], source=['frankfurter_ecb'], page=['2']) for link in links)
+    for page in ('1', '3'):
+        assert any(link.path == '/exchange-rates/' + FX_ID and parse_qs(link.query) == dict(
+            q=['EUR'], source=['frankfurter_ecb'], list_page=['2'], page=[page]) for link in links)
 
 
 def test_stock_identity_is_attributed_escaped_and_keeps_prices_separate(open_client):
@@ -207,7 +216,7 @@ def test_stock_identity_is_attributed_escaped_and_keeps_prices_separate(open_cli
     row['name'] = 'APPLE <script>alert("identity")</script>'
     seed_open(optional, identities=[row])
     body = client.get('/stocks/' + STOCK_ID).get_data(as_text=True)
-    for label in ('Security identity · OpenFIGI', 'US composite FIGI', 'Share-class FIGI',
+    for label in ('Security identity', 'OpenFIGI', 'US composite FIGI', 'Share-class FIGI',
                   'Catalogue MIC', 'Security type', 'Retrieved', 'OpenFIGI by Bloomberg'):
         assert label in body
     assert 'BBG001S5N8V8' in body and 'XNAS' in body and 'Common Stock' in body
