@@ -13,6 +13,7 @@ from app import create_app
 from app import analysis_providers
 from tests.e2e.workbook_fixture import write_workbook, provider_response
 from tests.e2e.reference_fixture import seed_references
+from tests.e2e.market_search_fixture import seed_search
 
 
 def main(workbooks=False, companies=False, visual_builder=False):
@@ -38,12 +39,16 @@ def main(workbooks=False, companies=False, visual_builder=False):
         if visual_builder:
             from tests.e2e.visual_builder_fixture import seed_library
             seed_library(Path(directory) / 'public_library.sqlite3')
+            seed_search(Path(directory) / 'vendor-market-data.sqlite3',
+                        Path(directory) / 'public_library.sqlite3')
 
         class Config:
             SECRET_KEY = 'ci-only-fixture-server'
             JSON_DATA_DIR = directory
             GLOBAL_REFERENCE_DATA_DIR = os.getenv('PLAYWRIGHT_REFERENCE_DATA_DIR')
             PUBLIC_LIBRARY_DB = str(Path(directory) / 'public_library.sqlite3') if visual_builder else None
+            MARKET_DATA_ENABLED = visual_builder
+            MARKET_DATA_DB = str(Path(directory) / 'vendor-market-data.sqlite3')
             CACHE_TYPE = 'SimpleCache'
             RATELIMIT_ENABLED = False
             WORKSPACE_ENABLED = workbooks or companies

@@ -10,9 +10,9 @@ test('command search opens a benchmark by keyboard and restores focus after dism
   await expect(page.locator('html')).toHaveAttribute('data-reui', 'ready');
   await page.locator('#bw-search-trigger').focus();
   await page.keyboard.press('ControlOrMeta+k');
-  await expect(page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true })).toBeFocused();
-  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('gold');
-  await expect(page.getByRole('listbox').getByRole('option')).toHaveCount(1);
+  await expect(page.getByRole('combobox', { name: 'Search workspace', exact: true })).toBeFocused();
+  await page.getByRole('combobox', { name: 'Search workspace', exact: true }).fill('gold');
+  await expect(page.locator('#bw-search-dialog a[href="/commodity/gold"]')).toBeVisible();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await expect(page.locator('#benchmark-detail')).toBeVisible();
@@ -30,11 +30,11 @@ test('command search has useful empty, retry, and navigation states', async ({ p
   await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible();
   await page.unroute('**/api/commodities?include_history=false');
   await page.getByRole('button', { name: 'Retry', exact: true }).click();
-  await expect(page.locator('#bw-search-status')).toContainText('3 benchmarks');
-  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('no-such-measure-xyz');
-  await expect(page.getByText('No results found', { exact: true })).toBeVisible();
+  await expect(page.locator('#bw-search-status')).toContainText('6 results shown');
+  await page.getByRole('combobox', { name: 'Search workspace', exact: true }).fill('no-such-measure-xyz');
+  await expect(page.locator('[data-slot="empty"]').getByText('No results found', { exact: true })).toBeVisible();
   await page.locator('[data-slot="empty"]').getByRole('button', { name: 'Clear search', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('country data');
+  await page.getByRole('combobox', { name: 'Search workspace', exact: true }).fill('country data');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(/\/data$/);
 });
@@ -106,7 +106,7 @@ test('filter dropdown remains usable inside the native mobile sheet', async ({ p
   await expect(page.locator('[data-slot="select-content"]')).toHaveCount(0);
   await expect(page.locator('body')).not.toHaveCSS('pointer-events', 'none');
   await page.locator('#bw-search-trigger').click();
-  await expect(page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true })).toBeFocused();
+  await expect(page.getByRole('combobox', { name: 'Search workspace', exact: true })).toBeFocused();
 });
 
 test('searchable saved views can select the second of two identically named views', async ({ page }) => {
@@ -213,4 +213,42 @@ test('native forms and original settings remain usable if the component bundle i
   await expect(page).toHaveURL(/source=worldbank/);
   await page.locator('#settings-button').click();
   await expect(page.getByRole('button', { name: 'Close settings', exact: true })).toBeVisible();
+});
+
+
+test('workspace search finds stocks, companies, currency pairs and saved country data', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#bw-search-trigger').click();
+  const query = page.getByRole('combobox', { name: 'Search workspace', exact: true });
+  await query.fill('Apple');
+  await expect(page.locator('#bw-search-dialog a[href="/stocks/stock-XNAS-AAPL"]')).toBeVisible();
+  await expect(page.locator('#bw-search-dialog a[href="/companies/320193"]')).toBeVisible();
+  await query.fill('AAPL');
+  await expect(page.locator('#bw-search-dialog a[href="/stocks/stock-XNAS-AAPL"]')).toBeVisible();
+  await query.press('ArrowDown');
+  await query.press('Enter');
+  await expect(page).toHaveURL(/\/stocks\/stock-XNAS-AAPL$/);
+  await expect(page.getByRole('heading', { name: 'Apple', exact: true })).toBeVisible();
+  await page.locator('#bw-search-trigger').click();
+  await query.fill('USD/EUR');
+  await expect(page.locator('#bw-search-dialog a[href="/exchange-rates/fx-USD-EUR"]')).toBeVisible();
+  await query.fill('Sample North');
+  await expect(page.locator('#bw-search-dialog a[href^="/data/worldbank_"]')).toBeVisible();
+  await query.fill('Apple');
+  await expect(page.locator('#bw-search-dialog a[href="/stocks/stock-XNAS-AAPL"]')).toBeVisible();
+  const a11y = await new AxeBuilder({ page }).include('#bw-search-dialog').withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
+  expect(a11y.violations.map(item => item.id)).toEqual([]);
+});
+
+test('public search errors preserve local benchmark results and support retry', async ({ page }) => {
+  await page.route('**/api/workspace-search?*', route => route.fulfill({ status: 503, json: {} }));
+  await page.goto('/');
+  await page.locator('#bw-search-trigger').click();
+  const query = page.getByRole('combobox', { name: 'Search workspace', exact: true });
+  await query.fill('gold');
+  await expect(page.locator('#bw-search-dialog a[href="/commodity/gold"]')).toBeVisible();
+  await expect(page.locator('#bw-search-dialog').getByRole('button', { name: /retry/i })).toBeVisible();
+  await page.unroute('**/api/workspace-search?*');
+  await query.fill('AAPL');
+  await expect(page.locator('#bw-search-dialog a[href="/stocks/stock-XNAS-AAPL"]')).toBeVisible();
 });

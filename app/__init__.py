@@ -54,6 +54,9 @@ def create_app(config_class=Config):
     from app.market_data import bp as market_data_bp
     app.register_blueprint(market_data_bp)
 
+    from app.workspace_search import bp as workspace_search_bp
+    app.register_blueprint(workspace_search_bp)
+
     # Opt-in account workspace; public benchmark routes remain available.
     if app.config.get('WORKSPACE_ENABLED', os.getenv('WORKSPACE_ENABLED') == '1'):
         from app.workspace_store import init_workspace

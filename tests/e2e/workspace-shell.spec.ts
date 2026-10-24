@@ -126,12 +126,12 @@ test('workspace navigation preserves browser back and category links', async ({p
 test('command search opens reference details with keyboard and restores focus', async ({page}) => {
   await page.goto('/?view=compact');
   await page.locator('#bw-search-trigger').click();
-  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('gold');
+  await page.getByRole('combobox', { name: 'Search workspace', exact: true }).fill('gold');
   const result = page.getByRole('option', { name: /Gold Precious metals/ });
   await expect(result).toBeVisible();
-  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).press('ArrowDown');
+  await page.getByRole('combobox', { name: 'Search workspace', exact: true }).press('ArrowDown');
   await expect(result).toHaveAttribute('data-selected', 'true');
-  await expect(page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true })).toBeFocused();
+  await expect(page.getByRole('combobox', { name: 'Search workspace', exact: true })).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.locator('#bw-search-dialog')).toBeHidden();
   await expect(page.locator('#benchmark-detail')).toBeVisible();
@@ -147,7 +147,7 @@ test('command search finds local research and opens its editor', async ({page}) 
   await expect(page.locator('#rw-save-state')).toHaveText('Saved in this browser');
   await page.locator('[data-workspace="benchmarks"]').click();
   await page.locator('#bw-search-trigger').click();
-  await page.getByRole('combobox', { name: 'Search benchmarks and research', exact: true }).fill('Copper supply');
+  await page.getByRole('combobox', { name: 'Search workspace', exact: true }).fill('Copper supply');
   await page.getByRole('option', { name: /Copper supply context/ }).click();
   await expect(page.locator('#research-workspace')).toBeVisible();
   await expect(page.locator('#rw-editor [name="title"]')).toHaveValue('Copper supply context');

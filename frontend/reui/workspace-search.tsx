@@ -14,6 +14,14 @@ interface Benchmark {
   source?: string
 }
 
+interface PublicSearchResult {
+  id: string
+  kind: 'stock' | 'fx' | 'company' | 'dataset' | 'reference'
+  name: string
+  description: string
+  href: string
+}
+
 export interface SearchWorkspace {
   catalog: Benchmark[]
   loading: Promise<unknown> | null
@@ -21,6 +29,11 @@ export interface SearchWorkspace {
   loadCatalog(): Promise<void>
   searchTrigger?: Element | null
   renderSearch(): void
+  publicSearch: { query: string; results: PublicSearchResult[]; unavailable: string[]; status: 'idle' | 'loading' | 'ready' | 'error' }
+  beginSearch(): void
+  setSearchQuery(value: string): string
+  retryPublicSearch(): void
+  endSearch(): void
   isSearchOpen?: () => boolean
 }
 
@@ -45,6 +58,13 @@ const categoryNames: Record<string, string> = {
   energy: 'Energy', metal: 'Metals', precious: 'Precious metals',
   agricultural: 'Agriculture', index: 'Indices',
 }
+const publicSearchGroups: { kind: PublicSearchResult['kind']; title: string }[] = [
+  { kind: 'stock', title: 'Stock histories' },
+  { kind: 'fx', title: 'Exchange rates' },
+  { kind: 'company', title: 'Companies' },
+  { kind: 'dataset', title: 'Datasets' },
+  { kind: 'reference', title: 'Official references' },
+]
 const navigation = [
   { title: 'Country data', description: 'Browse country reference data', href: '/data', icon: Globe2 },
   { title: 'Companies', description: 'Explore company filings', href: '/companies', icon: Building2 },
@@ -63,7 +83,7 @@ function anotherModalOpen() {
       element.getClientRects().length > 0)
 }
 
-/** Mount once; retain the legacy catalog loader and its existing public endpoint. */
+/** Mount once; share local and bounded public search state with the legacy renderer. */
 export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
   if (installed.has(workspace)) return true
   const fallback = document.getElementById('bw-search-dialog')
@@ -77,7 +97,6 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
   installed.add(workspace)
 
   let open = false
-  let query = ''
   let revision = 0
   let afterClose: (() => void) | null = null
   const subscribers = new Set<() => void>()
@@ -97,6 +116,7 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
     if (!open) return
     afterClose = action || null
     open = false
+    workspace.endSearch()
     trigger.setAttribute('aria-expanded', 'false')
     notify()
   }
@@ -109,8 +129,8 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
   const show = () => {
     if (open || afterClose || anotherModalOpen()) return
     workspace.searchTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : trigger
-    query = ''
     open = true
+    workspace.beginSearch()
     trigger.setAttribute('aria-expanded', 'true')
     notify()
     load()
@@ -132,7 +152,7 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
       } else window.location.assign('/?workspace=research&entry=' + encodeURIComponent(entry.id))
     })
   }
-  const setQuery = (value: string) => { query = value; notify() }
+  const setQuery = (value: string) => { workspace.setSearchQuery(value) }
   workspace.renderSearch = notify
   workspace.isSearchOpen = () => open
   trigger.setAttribute('aria-expanded', 'false')
@@ -148,13 +168,21 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
   function SearchDialog() {
     React.useSyncExternalStore(subscribe, snapshot, snapshot)
     const input = React.useRef<HTMLInputElement>(null)
+    const query = workspace.publicSearch.query
     const normalized = query.trim().toLocaleLowerCase()
     const matches = (text: string) => text.toLocaleLowerCase().includes(normalized)
-    const benchmarks = workspace.catalog.filter(item => matches([item.name, item.category, item.id, item.source].join(' ')))
+    const benchmarks = workspace.catalog.filter(item => matches([item.name, item.category, item.id, item.source].join(' '))).slice(0, 30)
     const research = open ? (runtime()?.ResearchWorkspace?.getSearchItems() || []).filter(item =>
-      matches([item.title, item.status, ...item.tags, item.notes].join(' '))) : []
+      matches([item.title, item.status, ...item.tags, item.notes].join(' '))).slice(0, 20) : []
     const links = navigation.filter(item => matches([item.title, item.description].join(' ')))
-    const resultCount = benchmarks.length + research.length + links.length
+    const publicResults = workspace.publicSearch.results
+    const resultCount = benchmarks.length + research.length + links.length + publicResults.length
+    const publicLoading = workspace.publicSearch.status === 'loading'
+    const publicFailed = workspace.publicSearch.status === 'error' || workspace.publicSearch.unavailable.length > 0
+    const pending = Boolean(workspace.loading) || publicLoading
+    const status = resultCount ? `${resultCount} result${resultCount === 1 ? '' : 's'} shown`
+      : pending ? 'Searching workspace…' : publicFailed || workspace.loadFailed ? 'Some search sources are unavailable'
+      : normalized ? 'No results found' : 'Search by name, ticker, currency, or topic'
     const clearQuery = () => { setQuery(''); input.current?.focus() }
 
     return (
@@ -176,44 +204,62 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
           <div className="rui-search-heading">
             <DialogTitle className="rui-search-title">Search workspace</DialogTitle>
             <DialogDescription className="sr-only">
-              Search benchmarks, sources, and your private research. Use the arrow keys to choose a result and Enter to open it.
+              Search stocks, companies, currency and country data, benchmarks, official references, and your private research. Research notes stay in this browser. Use the arrow keys to choose a result and Enter to open it.
             </DialogDescription>
             <Button id="bw-search-close" type="button" variant="ghost" size="icon-sm" aria-label="Close search" onClick={() => close()}>
               <X aria-hidden="true" size={16} />
             </Button>
           </div>
-          <Command shouldFilter={false} loop label="Search benchmarks and research" className="rui-search-command">
+          <Command shouldFilter={false} loop label="Search workspace" className="rui-search-command">
             <div className="rui-search-input-row">
               <CommandInput
                 ref={input}
                 data-workspace-search-input=""
-                aria-label="Search benchmarks and research"
+                aria-label="Search workspace"
                 value={query}
                 onValueChange={setQuery}
-                placeholder="Search benchmarks, sources, or your notes…"
+                placeholder="A name, ticker, currency, or research note…"
+                maxLength={100}
                 autoComplete="off"
                 spellCheck={false}
               />
               {query && <Button type="button" variant="ghost" size="icon-sm" aria-label="Clear search" onClick={clearQuery}><X aria-hidden="true" size={14} /></Button>}
             </div>
             <p id="bw-search-status" className="rui-search-status" role="status" aria-live="polite" aria-atomic="true">
-              {benchmarks.length} benchmarks · {research.length} research {research.length === 1 ? 'entry' : 'entries'}
-              {workspace.loading && <span className="rui-search-loading"><LoaderCircle aria-hidden="true" size={12} className="animate-spin" /> Loading all benchmarks…</span>}
+              {status}
+              {publicLoading && resultCount > 0 && <span className="rui-search-loading"><LoaderCircle aria-hidden="true" size={12} className="animate-spin" /> Searching public data…</span>}
+              {workspace.loading && resultCount > 0 && <span className="rui-search-loading"><LoaderCircle aria-hidden="true" size={12} className="animate-spin" /> Loading benchmarks…</span>}
             </p>
             {workspace.loadFailed && <div className="rui-search-error" role="status"><span>Some benchmarks could not load.</span><Button type="button" variant="outline" size="sm" onClick={load} disabled={Boolean(workspace.loading)}>Retry</Button></div>}
+            {publicFailed && <div className="rui-search-error" role="status"><span>Some public sources are unavailable. Your local results are still available.</span><Button type="button" variant="outline" size="sm" onClick={() => workspace.retryPublicSearch()}>Retry public search</Button></div>}
             <CommandList data-workspace-search-results="" className="rui-search-results" style={{ maxHeight: 'min(70dvh, 480px)', overflowY: 'auto' }}>
-              {!workspace.loading && resultCount === 0 && <CommandEmpty className="rui-search-empty">
+              {!pending && !publicFailed && !workspace.loadFailed && resultCount === 0 && <CommandEmpty className="rui-search-empty">
                 <Empty>
                   <EmptyHeader>
                     <EmptyMedia variant="icon"><Search aria-hidden="true" size={20} /></EmptyMedia>
                     <EmptyTitle>No results found</EmptyTitle>
-                    <EmptyDescription>Try a benchmark name, source, or a word from your notes.</EmptyDescription>
+                    <EmptyDescription>Try a name, ticker, currency, or a word from your notes.</EmptyDescription>
                   </EmptyHeader>
                   <Button type="button" variant="outline" size="sm" onClick={clearQuery}>Clear search</Button>
                 </Empty>
               </CommandEmpty>}
+              {publicSearchGroups.map(group => {
+                const items = publicResults.filter(item => item.kind === group.kind)
+                return items.length > 0 && <CommandGroup key={group.kind} heading={group.title} className="rui-search-group">
+                  {items.map(item => <CommandItem
+                    asChild key={item.kind + ':' + item.id} value={item.kind + ':' + item.id} className="rui-search-item"
+                    onSelect={() => close(() => window.location.assign(item.href))}
+                    onClickCapture={event => { if (!ordinaryClick(event)) event.stopPropagation() }}
+                  >
+                    <a className="rui-search-link" href={item.href} tabIndex={-1} onClick={event => { if (ordinaryClick(event)) event.preventDefault() }}>
+                      <span className="rui-search-result-copy"><span className="rui-search-result-name">{item.name}</span><span className="rui-search-result-meta">{item.description}</span></span>
+                      <ArrowUpRight aria-hidden="true" size={14} />
+                    </a>
+                  </CommandItem>)}
+                </CommandGroup>
+              })}
               {benchmarks.length > 0 && <CommandGroup heading="Benchmarks" className="rui-search-group">
-                {benchmarks.slice(0, 30).map(item => <CommandItem
+                {benchmarks.map(item => <CommandItem
                   asChild
                   key={'benchmark:' + item.id}
                   value={'benchmark:' + item.id}
@@ -228,7 +274,7 @@ export function installWorkspaceSearch(workspace: SearchWorkspace): boolean {
                 </CommandItem>)}
               </CommandGroup>}
               {research.length > 0 && <CommandGroup heading="Your research" className="rui-search-group">
-                {research.slice(0, 20).map(item => <CommandItem key={'research:' + item.id} value={'research:' + item.id} className="rui-search-item" onSelect={() => openResearch(item)}>
+                {research.map(item => <CommandItem key={'research:' + item.id} value={'research:' + item.id} className="rui-search-item" onSelect={() => openResearch(item)}>
                   <FileText aria-hidden="true" size={15} />
                   <span className="rui-search-result-copy"><span className="rui-search-result-name">{item.title || 'Untitled entry'}</span><span className="rui-search-result-meta">{item.status || 'Research entry'}</span></span>
                   <Badge variant="outline">Private</Badge>

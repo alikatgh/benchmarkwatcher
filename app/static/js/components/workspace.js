@@ -6,7 +6,23 @@
     const el = (tag, value, className) => { const node = document.createElement(tag); if (value !== undefined) node.textContent = value; if (className) node.className = className; return node; };
     const normalClick = event => event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
     const names = { energy: 'Energy', metal: 'Metals', precious: 'Precious metals', agricultural: 'Agriculture', index: 'Indices' };
+    const publicSearchGroups = { stock: 'Stock histories', fx: 'Exchange rates', company: 'Companies', dataset: 'Datasets', reference: 'Official references' };
+    const searchNavigation = [
+        { title: 'Country data', description: 'Browse country reference data', href: '/data' },
+        { title: 'Companies', description: 'Explore company filings', href: '/companies' },
+        { title: 'Sources', description: 'Review benchmark data sources', href: '/sources' }
+    ];
+    const publicSearchLinks = {
+        stock: { id: /^stock-[A-Z0-9]{2,12}-[A-Z0-9][A-Z0-9.-]{0,31}$/, prefix: '/stocks/' },
+        fx: { id: /^fx-[A-Z]{3}-[A-Z]{3}$/, prefix: '/exchange-rates/' },
+        company: { id: /^\d{1,10}$/, prefix: '/companies/' },
+        dataset: { id: /^(worldbank|faostat|sec)_[a-f0-9]{32}$/, prefix: '/data/' },
+        reference: { id: /^[a-z][a-z0-9_]{1,100}$/, prefix: '/reference/' }
+    };
+    const cleanSearchQuery = value => Array.from(String(value || '').replace(/[\u0000-\u001f\u007f-\u009f]/g, '').replace(/[\uD800-\uDFFF]/gu, '')).slice(0, 100).join('');
     const Workspace = {
+        publicSearch: { query: '', results: [], unavailable: [], status: 'idle' }, searchActive: false, searchSequence: 0,
+        searchTimer: null, searchDeadline: null, searchController: null,
         catalog: [], catalogLoaded: false, loading: null, loadFailed: false, current: 'benchmarks', searchTrigger: null,
         init() {
             this.initSidebar();
@@ -183,39 +199,115 @@
                 const value = el('div',undefined,'bw-observation-value'); value.append(el('strong', typeof c.price === 'number' && Number.isFinite(c.price) ? new Intl.NumberFormat('en-US',{ maximumFractionDigits:2, minimumFractionDigits:2 }).format(c.price) : '—'), el('span', [c.currency,c.unit].filter(Boolean).join(' / '))); card.append(value,el('div', c.date ? 'Observed ' + c.date : 'Observation unavailable','bw-observation-date')); root.append(card);
             });
         },
+        cancelPublicSearch() {
+            this.searchSequence += 1;
+            clearTimeout(this.searchTimer); clearTimeout(this.searchDeadline);
+            this.searchTimer = null; this.searchDeadline = null;
+            this.searchController?.abort(); this.searchController = null;
+        },
+        beginSearch() { this.searchActive = true; this.setSearchQuery(''); },
+        endSearch() {
+            this.searchActive = false; this.cancelPublicSearch();
+            this.publicSearch = { query: '', results: [], unavailable: [], status: 'idle' };
+            this.renderSearch();
+        },
+        setSearchQuery(value, immediate = false) {
+            const query = cleanSearchQuery(value);
+            this.cancelPublicSearch();
+            this.publicSearch = { query, results: [], unavailable: [], status: query.trim() && this.searchActive ? 'loading' : 'idle' };
+            this.renderSearch();
+            if (!query.trim() || !this.searchActive) return query;
+            const sequence = this.searchSequence;
+            const run = () => {
+                this.searchTimer = null;
+                const controller = new AbortController(); this.searchController = controller;
+                this.searchDeadline = setTimeout(() => {
+                    if (sequence !== this.searchSequence) return;
+                    this.cancelPublicSearch();
+                    this.publicSearch = { query, results: [], unavailable: [], status: 'error' }; this.renderSearch();
+                }, 5000);
+                fetch('/api/workspace-search?q=' + encodeURIComponent(query.trim()), {
+                    headers: { Accept: 'application/json' }, signal: controller.signal
+                }).then(response => {
+                    if (!response.ok) throw new Error('Unavailable');
+                    return response.json();
+                }).then(payload => {
+                    if (sequence !== this.searchSequence || !this.searchActive) return;
+                    if (!payload || !Array.isArray(payload.results)) throw new Error('Invalid response');
+                    const counts = {}, seen = new Set(), results = [];
+                    for (const item of payload.results.slice(0, 200)) {
+                        if (results.length >= 40) break;
+                        if (!item || typeof item !== 'object' || typeof item.kind !== 'string' || !Object.hasOwn(publicSearchLinks, item.kind)) continue;
+                        const rule = publicSearchLinks[item.kind];
+                        if (typeof item.id !== 'string' || !rule.id.test(item.id) || item.href !== rule.prefix + item.id ||
+                            typeof item.name !== 'string' || !item.name.trim() || item.name.length > 200 ||
+                            typeof item.description !== 'string' || item.description.length > 500 ||
+                            (counts[item.kind] || 0) >= 8 || seen.has(item.kind + ':' + item.id)) continue;
+                        results.push({ id: item.id, kind: item.kind, name: item.name, description: item.description, href: item.href });
+                        counts[item.kind] = (counts[item.kind] || 0) + 1; seen.add(item.kind + ':' + item.id);
+                    }
+                    const unavailable = Array.isArray(payload.unavailable) ? [...new Set(payload.unavailable.filter(kind => typeof kind === 'string' && Object.hasOwn(publicSearchLinks, kind)))] : [];
+                    this.publicSearch = { query, results, unavailable, status: 'ready' }; this.renderSearch();
+                }).catch(() => {
+                    if (sequence !== this.searchSequence || !this.searchActive) return;
+                    this.publicSearch = { query, results: [], unavailable: [], status: 'error' }; this.renderSearch();
+                }).finally(() => {
+                    if (sequence !== this.searchSequence) return;
+                    clearTimeout(this.searchDeadline); this.searchDeadline = null; this.searchController = null;
+                });
+            };
+            if (immediate) run(); else this.searchTimer = setTimeout(run, 225);
+            return query;
+        },
+        retryPublicSearch() { if (this.searchActive) this.setSearchQuery(this.publicSearch.query, true); },
         initSearch() {
             if (BW.ReUI?.installWorkspaceSearch(this)) return;
             const dialog = $('bw-search-dialog'); if (!dialog) return;
             if (!/Mac|iPhone|iPad/.test(navigator.platform)) $('bw-search-shortcut').textContent = 'Ctrl K';
-            const open = () => { if (document.querySelector('dialog[open]') || document.body.classList.contains('bw-detail-open')) return; this.searchTrigger = document.activeElement; dialog.showModal(); $('bw-global-query').focus(); this.renderSearch(); this.loadCatalog(); };
-            $('bw-search-trigger').addEventListener('click',open);
-            $('bw-search-close').addEventListener('click',()=>dialog.close());
-            dialog.addEventListener('close',()=>{ if (this.searchTrigger?.isConnected && !document.querySelector('dialog[open]') && !document.body.classList.contains('bw-detail-open')) this.searchTrigger.focus(); });
-            dialog.addEventListener('click', event => { if (event.target === dialog) { const rect=dialog.getBoundingClientRect(); if(event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom) dialog.close(); } });
-            $('bw-global-query').addEventListener('input',()=>this.renderSearch());
-            document.addEventListener('keydown', event => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k' && !event.altKey) { event.preventDefault(); if (dialog.open) dialog.close(); else open(); } });
+            const close = () => { this.endSearch(); dialog.close(); };
+            const open = () => { if (document.querySelector('dialog[open]') || document.body.classList.contains('bw-detail-open')) return; this.searchTrigger = document.activeElement; this.beginSearch(); $('bw-global-query').value = ''; dialog.showModal(); $('bw-global-query').focus(); this.renderSearch(); this.loadCatalog(); };
+            $('bw-search-trigger').addEventListener('click', open);
+            $('bw-search-close').addEventListener('click', close);
+            dialog.addEventListener('cancel', () => this.endSearch());
+            dialog.addEventListener('close', () => { this.endSearch(); if (this.searchTrigger?.isConnected && !document.querySelector('dialog[open]') && !document.body.classList.contains('bw-detail-open')) this.searchTrigger.focus(); });
+            dialog.addEventListener('click', event => { if (event.target === dialog) { const rect = dialog.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) close(); } });
+            $('bw-global-query').addEventListener('input', event => { event.target.value = this.setSearchQuery(event.target.value); });
+            document.addEventListener('keydown', event => { if (!event.isComposing && !event.repeat && (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k' && !event.altKey) { event.preventDefault(); if (dialog.open) close(); else open(); } });
             dialog.addEventListener('keydown', event => {
-                if (!['ArrowDown','ArrowUp'].includes(event.key)) return;
+                if (!['ArrowDown', 'ArrowUp'].includes(event.key)) return;
                 const results = [...$('bw-search-results').querySelectorAll('a,button')]; if (!results.length) return;
                 const index = results.indexOf(document.activeElement); event.preventDefault(); results[(index + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length].focus();
             });
         },
         renderSearch() {
-            const root=$('bw-search-results'); if (!root) return;
-            const query = $('bw-global-query').value.trim().toLocaleLowerCase();
+            const root = $('bw-search-results'); if (!root) return;
+            const query = this.publicSearch.query.trim().toLocaleLowerCase();
             const matches = text => String(text || '').toLocaleLowerCase().includes(query);
-            const benchmarks = this.catalog.filter(c => matches([c.name,c.category,c.id,c.source].join(' ')));
-            const research = (BW.ResearchWorkspace?.getSearchItems() || []).filter(c => matches([c.title,c.status,...c.tags,c.notes].join(' ')));
+            const benchmarks = this.catalog.filter(c => matches([c.name, c.category, c.id, c.source].join(' '))).slice(0, 30);
+            const research = (BW.ResearchWorkspace?.getSearchItems() || []).filter(c => matches([c.title, c.status, ...c.tags, c.notes].join(' '))).slice(0, 20);
+            const navigation = searchNavigation.filter(c => matches(c.title + ' ' + c.description));
+            const publicResults = this.publicSearch.results;
+            const count = benchmarks.length + research.length + navigation.length + publicResults.length;
+            const pending = Boolean(this.loading) || this.publicSearch.status === 'loading';
+            const publicFailed = this.publicSearch.status === 'error' || this.publicSearch.unavailable.length > 0;
             root.replaceChildren();
-            $('bw-search-status').textContent = `${benchmarks.length} benchmarks · ${research.length} research entries` + (this.loading ? ' · Loading all benchmarks…' : '');
-            if (this.loadFailed) { const retry=el('button','Some benchmarks could not load. Retry','bw-search-result'); retry.type='button'; retry.addEventListener('click',()=>this.loadCatalog()); root.append(retry); }
-            if (!benchmarks.length && !research.length) root.append(el('p','No matches. Try a benchmark name or a word from your notes.','bw-search-result'));
-            if (benchmarks.length) root.append(el('h3', query ? 'Benchmarks' : 'Explore benchmarks','bw-search-group'));
-            benchmarks.slice(0,30).forEach(c => { const link=el('a',undefined,'bw-search-result'); link.href='/commodity/'+encodeURIComponent(c.id); link.append(el('span',c.name),el('small', names[c.category] || c.category)); link.addEventListener('click',event=>{ if(!normalClick(event)||!BW.BenchmarkDetail)return; event.preventDefault(); $('bw-search-dialog').close(); BW.BenchmarkDetail.open(c.id,$('bw-search-trigger')); }); root.append(link); });
-            if (research.length) root.append(el('h3','Your research','bw-search-group'));
-            research.slice(0,20).forEach(c=>{ const button=el('button',undefined,'bw-search-result'); button.type='button'; button.append(el('span',c.title || 'Untitled entry'),el('small',c.status)); button.addEventListener('click',()=>{ $('bw-search-dialog').close(); if ($('research-workspace')) BW.ResearchWorkspace.focusEntry(c.id); else location.href='/?workspace=research&entry='+encodeURIComponent(c.id); }); root.append(button); });
+            $('bw-search-status').textContent = (count ? `${count} result${count === 1 ? '' : 's'} shown` : pending ? 'Searching workspace…' : publicFailed || this.loadFailed ? 'Some search sources are unavailable' : query ? 'No results found' : 'Search by name, ticker, currency, or topic') + (this.publicSearch.status === 'loading' && count ? ' · Searching public data…' : '') + (this.loading && count ? ' · Loading benchmarks…' : '');
+            if (this.loadFailed) { const retry = el('button', 'Some benchmarks could not load. Retry', 'bw-search-result'); retry.type = 'button'; retry.addEventListener('click', () => this.loadCatalog()); root.append(retry); }
+            if (publicFailed) { const retry = el('button', 'Some public sources are unavailable. Retry public search', 'bw-search-result'); retry.type = 'button'; retry.addEventListener('click', () => this.retryPublicSearch()); root.append(retry); }
+            if (!count && !pending && !publicFailed && !this.loadFailed) root.append(el('p', 'No matches. Try a name, ticker, currency, or a word from your notes.', 'bw-search-result'));
+            for (const [kind, title] of Object.entries(publicSearchGroups)) {
+                const items = publicResults.filter(c => c.kind === kind); if (!items.length) continue;
+                root.append(el('h3', title, 'bw-search-group'));
+                items.forEach(c => { const link = el('a', undefined, 'bw-search-result'); link.href = c.href; link.append(el('span', c.name), el('small', c.description)); root.append(link); });
+            }
+            if (benchmarks.length) root.append(el('h3', query ? 'Benchmarks' : 'Explore benchmarks', 'bw-search-group'));
+            benchmarks.forEach(c => { const link = el('a', undefined, 'bw-search-result'); link.href = '/commodity/' + encodeURIComponent(c.id); link.append(el('span', c.name), el('small', names[c.category] || c.category)); link.addEventListener('click', event => { if (!normalClick(event) || !BW.BenchmarkDetail) return; event.preventDefault(); this.endSearch(); $('bw-search-dialog').close(); BW.BenchmarkDetail.open(c.id, $('bw-search-trigger')); }); root.append(link); });
+            if (research.length) root.append(el('h3', 'Your research', 'bw-search-group'));
+            research.forEach(c => { const button = el('button', undefined, 'bw-search-result'); button.type = 'button'; button.append(el('span', c.title || 'Untitled entry'), el('small', c.status)); button.addEventListener('click', () => { this.endSearch(); $('bw-search-dialog').close(); if ($('research-workspace')) BW.ResearchWorkspace.focusEntry(c.id); else location.href = '/?workspace=research&entry=' + encodeURIComponent(c.id); }); root.append(button); });
+            if (navigation.length) root.append(el('h3', 'Navigation', 'bw-search-group'));
+            navigation.forEach(c => { const link = el('a', undefined, 'bw-search-result'); link.href = c.href; link.append(el('span', c.title), el('small', c.description)); root.append(link); });
         }
     };
     BW.Workspace = Workspace;
-    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded',()=>Workspace.init(),{once:true}); else Workspace.init();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => Workspace.init(), { once: true }); else Workspace.init();
 })();
