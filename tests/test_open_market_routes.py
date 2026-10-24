@@ -340,3 +340,50 @@ def test_optional_search_reads_metadata_only(open_client, monkeypatch):
     assert search(client, 'EUR')['results']
     assert search(client, 'BBG000B9XRY4')['results']
     assert {'fx', 'identities'}.issubset(reads)
+
+
+
+def test_stock_full_and_fragment_keep_readonly_identity_and_export_restrictions(open_client):
+    client, vendor, optional = open_client
+    seed_vendor(vendor)
+    seed_open(optional, identities=[identity()])
+    before = {path: (hashlib.sha256(path.read_bytes()).hexdigest(), path.stat().st_mtime_ns)
+              for path in (vendor, optional)}
+    full = client.get('/stocks/' + STOCK_ID)
+    fragment = client.get('/stocks/' + STOCK_ID, headers={'X-BW-Fragment': 'stock-detail'})
+    for response in (full, fragment):
+        assert response.status_code == 200
+        assert response.headers['Cache-Control'] == 'no-store'
+        assert 'X-BW-Fragment' in response.vary
+        body = response.get_data(as_text=True)
+        assert 'id="market-detail-panel"' in body
+        assert 'data-instrument-id="' + STOCK_ID + '"' in body
+        assert 'data-page-title=' in body
+        assert 'BBG000B9XRY4' in body and 'OpenFIGI by Bloomberg' in body
+        payload = re.search(r'<script id="gr-chart-data" type="application/json">(.*?)</script>', body).group(1)
+        chart = json.loads(payload)
+        assert chart['allowExport'] is False
+        assert chart['history'] == [dict(date='2026-10-22', period='2026-10-22', price=245.12345678)]
+        assert 'https://marketstack.com/' in body and 'https://www.openfigi.com/' in body
+    fragment_body = fragment.get_data(as_text=True).lower()
+    assert '<!doctype' not in fragment_body and '<html' not in fragment_body and '<body' not in fragment_body
+    assert all((hashlib.sha256(path.read_bytes()).hexdigest(), path.stat().st_mtime_ns) == expected
+               for path, expected in before.items())
+    assert not list(optional.parent.glob('*-journal'))
+
+
+def test_fx_detail_ignores_stock_fragment_header_and_preserves_existing_page(open_client):
+    client, vendor, optional = open_client
+    seed_vendor(vendor)
+    seed_open(optional)
+    for identifier in ('fx-USD-EUR', FX_ID):
+        path = '/exchange-rates/' + identifier
+        full = client.get(path)
+        fragment_header = client.get(path, headers={'X-BW-Fragment': 'stock-detail'})
+        assert full.status_code == fragment_header.status_code == 200
+        assert full.get_data() == fragment_header.get_data()
+        assert b'<!DOCTYPE html>' in full.get_data() or b'<!doctype html>' in full.get_data()
+        payload = re.search(r'<script id="gr-chart-data" type="application/json">(.*?)</script>',
+                            full.get_data(as_text=True)).group(1)
+        assert json.loads(payload)['allowExport'] is False
+        assert 'X-BW-Fragment' not in full.vary

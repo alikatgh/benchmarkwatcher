@@ -12,7 +12,7 @@ from flask import Blueprint, abort, current_app, render_template, request, url_f
 from app.extensions import limiter
 from app.global_reference import exact_value, preview_value
 from scripts import open_market_store
-from scripts.vendor_data_store import StoreError, list_instruments, read_instrument
+from scripts.vendor_data_store import CACHE_KIND_LIMITS, StoreError, list_instruments, read_instrument
 
 bp = Blueprint('market_data', __name__)
 PAGE_SIZE = 30
@@ -97,7 +97,8 @@ def _refresh_time(value):
 
 def _record(raw, kind, include_history=False):
     if (not isinstance(raw, dict) or raw.get('kind') != kind or
-            not isinstance(raw.get('id'), str) or not IDENTIFIER.fullmatch(raw['id'])):
+            not isinstance(raw.get('id'), str) or not IDENTIFIER.fullmatch(raw['id']) or
+            not raw['id'].startswith('stock-' if kind == 'stock' else 'fx-')):
         return None
     record = {key: _text(raw.get(key)) for key in
               ('id', 'name', 'symbol', 'currency', 'base_currency', 'quote_currency')}
@@ -189,10 +190,10 @@ def _page(name='page'):
     return int(value)
 
 
-def _pagination(rows, size, endpoint, **values):
+def _pagination(rows, size, endpoint, *, selected_page=None, **values):
     total = len(rows)
     pages = max(1, (total + size - 1) // size)
-    page = min(_page(), pages)
+    page = min(_page() if selected_page is None else selected_page, pages)
     offset = (page - 1) * size
     return dict(items=rows[offset:offset + size], total=total, page=page, pages=pages,
                 start=offset + 1 if total else 0, end=min(offset + size, total),
@@ -215,24 +216,37 @@ def _filters(kind):
     return q, source
 
 
-def _listing(kind):
-    q, source = _filters(kind)
+def _catalog(kind):
     try:
         rows = [_record(row, kind) for row in list_instruments(database_path(), kind)]
     except (StoreError, sqlite3.Error, OSError, ValueError):
         _unavailable()
     rows = [row for row in rows if row is not None]
-    open_unavailable = False
-    if kind == 'fx':
-        extra, open_unavailable = _open_data(open_market_store.list_fx)
-        rows.extend(record for raw in extra or [] if (record := _open_fx_record(raw)) is not None)
-    total = len(rows)
+    if kind == 'stock' and len(rows) > CACHE_KIND_LIMITS['stock']:
+        # Match the cache's enforced capacity without silently omitting stocks.
+        _unavailable()
+    return rows
+
+
+def _filtered_rows(rows, q, source):
     if source:
         rows = [row for row in rows if row['provider_id'] == source]
     if q:
         query = q.casefold()
         rows = [row for row in rows if query in ' '.join(row[key] for key in
                 ('name', 'symbol', 'provider', 'currency', 'base_currency', 'quote_currency')).casefold()]
+    return rows
+
+
+def _listing(kind):
+    q, source = _filters(kind)
+    rows = _catalog(kind)
+    open_unavailable = False
+    if kind == 'fx':
+        extra, open_unavailable = _open_data(open_market_store.list_fx)
+        rows.extend(record for raw in extra or [] if (record := _open_fx_record(raw)) is not None)
+    total = len(rows)
+    rows = _filtered_rows(rows, q, source)
     title = 'Stocks' if kind == 'stock' else 'Exchange rates'
     endpoint = 'market_data.stocks' if kind == 'stock' else 'market_data.exchange_rates'
     pagination = _pagination(rows, PAGE_SIZE, endpoint, q=q, source=source)
@@ -246,11 +260,12 @@ def _listing(kind):
                                             ' histories with source credits and observation dates.')
 
 
-def _detail(identifier, kind):
+def _detail_context(identifier, kind, *, history_page=None, list_page=None):
     if not IDENTIFIER.fullmatch(identifier) or not identifier.startswith('stock-' if kind == 'stock' else 'fx-'):
         abort(404)
     q, source = _filters(kind)
-    list_page = _page('list_page')
+    list_page = _page('list_page') if list_page is None else list_page
+    history_page = _page() if history_page is None else history_page
     open_unavailable = False
     identity = None
     if kind == 'fx' and OPEN_FX_IDENTIFIER.fullmatch(identifier):
@@ -271,28 +286,74 @@ def _detail(identifier, kind):
         identity = _identity(raw_identity)
     endpoint = 'market_data.stock_detail' if kind == 'stock' else 'market_data.exchange_rate_detail'
     history = _pagination(list(reversed(record['history'])), HISTORY_PAGE_SIZE, endpoint,
-                          instrument_id=identifier, q=q, source=source, list_page=list_page)
+                          selected_page=history_page, instrument_id=identifier,
+                          q=q, source=source, list_page=list_page)
     list_endpoint = 'market_data.stocks' if kind == 'stock' else 'market_data.exchange_rates'
     list_url = url_for(list_endpoint, q=q, source=source, page=list_page)
-    return render_template('market_data/detail.html', record=record, kind=kind, history=history,
-                           identity=identity, open_unavailable=OPEN_UNAVAILABLE if open_unavailable else None,
-                           list_url=list_url,
-                           exact_value=exact_value,
-                           meta_title=record['name'] + ' history · BenchmarkWatcher',
-                           meta_description='Saved daily observations for ' + record['name'] +
-                                            ', with historical charts, source credits and observation dates.')
+    return dict(record=record, kind=kind, history=history, q=q, source=source,
+                list_page=list_page, identity=identity,
+                open_unavailable=OPEN_UNAVAILABLE if open_unavailable else None,
+                list_url=list_url, exact_value=exact_value, preview_value=preview_value,
+                meta_title=record['name'] + ' history · BenchmarkWatcher',
+                meta_description='Saved daily observations for ' + record['name'] +
+                                 ', with historical charts, source credits and observation dates.')
+
+
+def _detail(identifier, kind):
+    return render_template('market_data/detail.html', **_detail_context(identifier, kind))
+
+
+def _stock_workspace(identifier=None):
+    if identifier is not None:
+        context = _detail_context(identifier, 'stock')
+        if request.headers.get('X-BW-Fragment') == 'stock-detail':
+            return render_template('market_data/_detail_panel.html', **context)
+        q, source = context['q'], context['source']
+    else:
+        q, source = _filters('stock')
+        # Old listing URLs remain valid, but no longer hide rows behind pages.
+        list_page = _page()
+        _page('list_page')
+        context = None
+
+    stocks = _catalog('stock')
+    filtered = _filtered_rows(stocks, q, source)
+    if context is None:
+        if filtered:
+            context = _detail_context(filtered[0]['id'], 'stock', history_page=1,
+                                      list_page=list_page)
+        else:
+            context = dict(record=None, kind='stock', history=None, identity=None,
+                           q=q, source=source, list_page=list_page, open_unavailable=None,
+                           list_url=url_for('market_data.stocks', q=q, source=source, page=list_page),
+                           exact_value=exact_value, preview_value=preview_value,
+                           meta_title='Stocks · BenchmarkWatcher',
+                           meta_description='Browse saved daily share-price histories with source credits '
+                                            'and observation dates.')
+    context.update(stocks=stocks, filtered_stock_ids=[row['id'] for row in filtered],
+                   total=len(stocks), title='Stocks', reset_url=url_for('market_data.stocks'))
+    return render_template('market_data/workspace.html', **context)
+
+
+@bp.after_request
+def _stock_response_headers(response):
+    if request.endpoint in {'market_data.stocks', 'market_data.stock_detail'}:
+        # Full pages and detail fragments share URLs; never cache either variant.
+        response.headers['Cache-Control'] = 'no-store'
+        response.vary.add('X-BW-Fragment')
+    return response
 
 
 @bp.get('/stocks')
 @limiter.limit('60 per minute')
 def stocks():
-    return _listing('stock')
+    return _stock_workspace()
 
 
 @bp.get('/stocks/<instrument_id>')
 @limiter.limit('60 per minute')
 def stock_detail(instrument_id):
-    return _detail(instrument_id, 'stock')
+    return _stock_workspace(instrument_id)
 
 
 @bp.get('/exchange-rates')

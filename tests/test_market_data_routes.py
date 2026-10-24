@@ -291,3 +291,169 @@ def test_cached_market_histories_do_not_add_download_routes_or_expose_private_fi
     assert 'private-debug-sentinel' not in body
     assert client.get('/stocks/stock-XNAS-AAPL.csv').status_code == 404
     assert client.get('/exchange-rates/fx-USD-EUR.csv').status_code == 404
+
+
+
+def workspace_stock_rows(count=65):
+    return [dict(id='stock-XNAS-FIX' + str(index).zfill(2), kind='stock',
+                 name='Saved company ' + str(index).zfill(2), symbol='FIX' + str(index).zfill(2),
+                 provider='marketstack', currency='USD', frequency='daily', refresh_days=1,
+                 latest_value=100 + index, latest_date='2026-10-22',
+                 last_success=NOW.isoformat(), source_url='https://marketstack.com/',
+                 observations=[dict(date='2026-10-22', value=100 + index)],
+                 api_key='private-catalog-sentinel') for index in range(count)]
+
+
+def test_stock_workspace_keeps_complete_metadata_and_reads_only_selected_history(market_client, monkeypatch):
+    client, _, _ = market_client
+    rows = workspace_stock_rows()
+    reads, renders = [], []
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: rows + [
+        {'id': 'stock-../bad', 'kind': 'stock'}, {'id': 'fx-USD-EUR', 'kind': 'fx'},
+        {'id': 'fx-USD-EUR', 'kind': 'stock'}])
+
+    def read(path, identifier):
+        reads.append(identifier)
+        return next(row for row in rows if row['id'] == identifier)
+
+    monkeypatch.setattr(market_data, 'read_instrument', read)
+    monkeypatch.setattr(market_data, 'render_template', lambda template, **context:
+                        renders.append((template, context)) or 'workspace')
+    assert client.get('/stocks?page=3').status_code == 200
+    template, context = renders[-1]
+    assert template == 'market_data/workspace.html'
+    assert len(context['stocks']) == context['total'] == 65
+    assert context['filtered_stock_ids'] == [row['id'] for row in rows]
+    assert context['record']['id'] == rows[0]['id']
+    assert reads == [rows[0]['id']]
+    assert context['history']['page'] == 1 and context['list_page'] == 3
+    assert all('history' not in row and 'observations' not in row and 'api_key' not in row
+               for row in context['stocks'])
+    assert client.get('/stocks?q=FIX64&source=marketstack').status_code == 200
+    context = renders[-1][1]
+    assert len(context['stocks']) == 65 and context['filtered_stock_ids'] == [rows[64]['id']]
+    assert context['record']['id'] == rows[64]['id']
+    assert reads == [rows[0]['id'], rows[64]['id']]
+
+
+@pytest.mark.parametrize('rows,query', [([], ''), (workspace_stock_rows(), 'no saved match')])
+def test_stock_workspace_empty_selection_does_not_read_any_history(market_client, monkeypatch, rows, query):
+    client, _, _ = market_client
+    captured = {}
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: rows)
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: pytest.fail('Empty selection read history'))
+    monkeypatch.setattr(market_data, 'render_template', lambda template, **context:
+                        captured.update(context) or 'workspace')
+    response = client.get('/stocks', query_string={'q': query})
+    assert response.status_code == 200
+    assert captured['record'] is captured['identity'] is captured['history'] is None
+    assert captured['filtered_stock_ids'] == []
+    assert len(captured['stocks']) == captured['total'] == len(rows)
+
+
+@pytest.mark.parametrize('header,template', [(None, 'market_data/workspace.html'),
+    ('stock-detail', 'market_data/_detail_panel.html'), ('other', 'market_data/workspace.html')])
+def test_stock_detail_fragment_is_explicit_and_uses_shared_validated_context(
+        market_client, monkeypatch, header, template):
+    client, _, _ = market_client
+    rows = workspace_stock_rows()
+    reads, lists, renders = [], [], []
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: lists.append(True) or rows)
+    monkeypatch.setattr(market_data, 'read_instrument', lambda path, identifier:
+                        reads.append(identifier) or rows[-1])
+    monkeypatch.setattr(market_data, 'render_template', lambda name, **context:
+                        renders.append((name, context)) or name)
+    headers = {'X-BW-Fragment': header} if header is not None else {}
+    response = client.get('/stocks/' + rows[-1]['id'], headers=headers,
+                          query_string=dict(q='FIX00', source='marketstack', list_page=3))
+    assert response.status_code == 200 and response.get_data(as_text=True) == template
+    assert response.headers['Cache-Control'] == 'no-store'
+    assert 'X-BW-Fragment' in response.vary
+    assert reads == [rows[-1]['id']]
+    assert lists == ([] if header == 'stock-detail' else [True])
+    context = renders[-1][1]
+    assert context['record']['id'] == rows[-1]['id']
+    assert context['q'] == 'FIX00' and context['source'] == 'marketstack'
+    assert context['list_page'] == 3 and context['history']['total'] == 1
+    if header != 'stock-detail':
+        assert len(context['stocks']) == 65
+        assert context['filtered_stock_ids'] == [rows[0]['id']]
+
+
+@pytest.mark.parametrize('headers', [{}, {'X-BW-Fragment': 'stock-detail'}])
+@pytest.mark.parametrize('args', [{'q': 'a' * 101}, {'q': 'bad\nquery'},
+    {'source': 'frankfurter_ecb'}, {'list_page': '//outside'}, {'page': '0'}])
+def test_stock_full_and_fragment_reject_invalid_context_before_reads(market_client, monkeypatch, headers, args):
+    client, _, _ = market_client
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: pytest.fail('Invalid context read history'))
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: pytest.fail('Invalid context read catalog'))
+    response = client.get('/stocks/stock-XNAS-AAPL', headers=headers, query_string=args)
+    assert response.status_code == 400
+    assert response.headers['Cache-Control'] == 'no-store'
+    assert 'X-BW-Fragment' in response.vary
+
+
+@pytest.mark.parametrize('headers', [{}, {'X-BW-Fragment': 'stock-detail'}])
+@pytest.mark.parametrize('identifier', ['fx-USD-EUR', 'secret.json', 'stock-XNAS-AAPL.csv', 'stock-' + 'x' * 121])
+def test_stock_full_and_fragment_reject_invalid_identifiers_before_reads(
+        market_client, monkeypatch, headers, identifier):
+    client, _, _ = market_client
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: pytest.fail('Invalid ID read history'))
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: pytest.fail('Invalid ID read catalog'))
+    assert client.get('/stocks/' + identifier, headers=headers).status_code == 404
+
+
+@pytest.mark.parametrize('headers', [{}, {'X-BW-Fragment': 'stock-detail'}])
+def test_missing_stock_selection_returns_404_without_reading_catalog(market_client, monkeypatch, headers):
+    client, _, _ = market_client
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: None)
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: pytest.fail('Missing selection read catalog'))
+    assert client.get('/stocks/stock-XNAS-AAPL', headers=headers).status_code == 404
+
+
+def test_stock_fragment_stays_available_if_the_workspace_catalog_fails(market_client, monkeypatch):
+    client, _, _ = market_client
+    row = workspace_stock_rows(1)[0]
+
+    def unavailable(*args):
+        raise store.StoreError('private-catalog-error')
+
+    monkeypatch.setattr(market_data, 'list_instruments', unavailable)
+    monkeypatch.setattr(market_data, 'read_instrument', lambda *args: row)
+    monkeypatch.setattr(market_data, 'render_template', lambda name, **context: name)
+    for path in ('/stocks', '/stocks/' + row['id']):
+        response = client.get(path)
+        assert response.status_code == 503
+        assert 'private-catalog-error' not in response.get_data(as_text=True)
+    fragment = client.get('/stocks/' + row['id'], headers={'X-BW-Fragment': 'stock-detail'})
+    assert fragment.status_code == 200
+    assert fragment.get_data(as_text=True) == 'market_data/_detail_panel.html'
+
+
+def test_stock_listing_variant_is_always_full_and_noncacheable(market_client, monkeypatch):
+    client, _, _ = market_client
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: [])
+    monkeypatch.setattr(market_data, 'render_template', lambda name, **context: name)
+    response = client.get('/stocks', headers={'X-BW-Fragment': 'stock-detail'})
+    assert response.get_data(as_text=True) == 'market_data/workspace.html'
+    assert response.headers['Cache-Control'] == 'no-store'
+    assert 'X-BW-Fragment' in response.vary
+
+
+
+@pytest.mark.parametrize('count,status', [(100, 200), (101, 503)])
+def test_stock_workspace_matches_cache_capacity_without_truncating(market_client, monkeypatch, count, status):
+    client, _, _ = market_client
+    rows = workspace_stock_rows(count)
+    captured, reads = {}, []
+    monkeypatch.setattr(market_data, 'list_instruments', lambda *args: rows)
+    monkeypatch.setattr(market_data, 'read_instrument', lambda path, identifier:
+                        reads.append(identifier) or rows[0])
+    monkeypatch.setattr(market_data, 'render_template', lambda template, **context:
+                        captured.update(context) or 'workspace')
+    assert client.get('/stocks').status_code == status
+    if status == 200:
+        assert len(captured['stocks']) == captured['total'] == 100
+        assert reads == [rows[0]['id']]
+    else:
+        assert reads == []
