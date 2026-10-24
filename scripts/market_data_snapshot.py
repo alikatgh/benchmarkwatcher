@@ -30,11 +30,13 @@ from scripts.vendor_data_store import (
     APPLICATION_ID, CACHE_SCHEMA, LEDGER_SCHEMA_VERSION, MAX_OBSERVATIONS, SCHEMA_VERSION,
 )
 
-MAX_SNAPSHOT_BYTES = 8 * 1024 * 1024
+MAX_SNAPSHOT_BYTES = 32 * 1024 * 1024
 MAX_SOURCE_BYTES = 64 * 1024 * 1024
 MAX_SECONDS = 15
 MAX_NUMBER = 1e18
-MAX_INSTRUMENTS = 35
+MAX_INSTRUMENTS = 300
+MAX_STOCK_INSTRUMENTS = 100
+MAX_FX_INSTRUMENTS = 200
 STAMP = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})\Z')
 
 
@@ -106,9 +108,18 @@ def _read_public(conn, now, check):
                                (MAX_INSTRUMENTS + 1,)).fetchall()
     if not 1 <= len(instruments) <= MAX_INSTRUMENTS:
         raise SnapshotError('invalid_instruments')
+    counts_by_kind = {'stock': 0, 'fx': 0}
+    for identifier, _, _ in instruments:
+        item = CATALOG.get(identifier)
+        if item is None or item.kind not in counts_by_kind:
+            raise SnapshotError('invalid_instruments')
+        counts_by_kind[item.kind] += 1
+    if (counts_by_kind['stock'] > MAX_STOCK_INSTRUMENTS or
+            counts_by_kind['fx'] > MAX_FX_INSTRUMENTS):
+        raise SnapshotError('invalid_instruments')
     identifiers, stamps = set(), {}
     for identifier, stamp, cadence in instruments:
-        if identifier not in CATALOG or type(cadence) is not int or not 1 <= cadence <= 7:
+        if identifier not in CATALOG or type(cadence) is not int or not 1 <= cadence <= 32:
             raise SnapshotError('invalid_instruments')
         if not isinstance(stamp, str) or not STAMP.fullmatch(stamp):
             raise SnapshotError('invalid_timestamp')
@@ -295,7 +306,7 @@ def export_snapshot(source, output, *, now=None):
             conn.execute('BEGIN')
             if (conn.execute('PRAGMA application_id').fetchone()[0] != APPLICATION_ID or
                     conn.execute('PRAGMA user_version').fetchone()[0] not in
-                    (SCHEMA_VERSION, LEDGER_SCHEMA_VERSION)):
+                    (SCHEMA_VERSION, 2, LEDGER_SCHEMA_VERSION)):
                 raise SnapshotError('invalid_source_schema')
             public = _read_public(conn, now, check)
         finally:

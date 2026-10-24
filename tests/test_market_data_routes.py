@@ -180,8 +180,8 @@ def test_catalog_content_is_escaped_and_unsafe_source_links_are_omitted(market_c
     client, database, _ = market_client
     seed_cache(database)
     original = store.CATALOG['stock-XNAS-AAPL']
-    monkeypatch.setitem(store.CATALOG, original.id, replace(original,
-        name='Apple <script>alert("catalog")</script>', source_url='javascript:alert(1)'))
+    monkeypatch.setattr(store, 'CATALOG', {**store.CATALOG, original.id: replace(original,
+        name='Apple <script>alert("catalog")</script>', source_url='javascript:alert(1)')})
     for path in ('/stocks', '/stocks/stock-XNAS-AAPL'):
         body = client.get(path).get_data(as_text=True)
         assert '<script>alert(' not in body

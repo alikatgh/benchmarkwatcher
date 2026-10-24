@@ -14,7 +14,7 @@ import pytest
 from scripts import market_data_snapshot as snapshot
 from scripts.market_data_catalog import FX, STOCKS
 from scripts.vendor_data_store import (
-    APPLICATION_ID, CACHE_SCHEMA, LEDGER_SCHEMA_VERSION, SCHEMA_VERSION, begin_job, enroll_provider,
+    APPLICATION_ID, CACHE_SCHEMA, LEDGER_SCHEMA_VERSION, LEGACY_LEDGER_SCHEMA_VERSION, SCHEMA_VERSION, begin_job, enroll_provider,
     list_instruments, read_instrument, reserve_call, save_observations,
 )
 
@@ -66,7 +66,7 @@ def test_export_rebuilds_only_public_tables_without_private_bytes_or_source_chan
     source, target = ledger(tmp_path / 'ledger.db'), tmp_path / 'public.db'
     before = source.read_bytes()
     with sqlite3.connect(source) as conn:
-        assert conn.execute('PRAGMA user_version').fetchone()[0] == LEDGER_SCHEMA_VERSION
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == LEGACY_LEDGER_SCHEMA_VERSION
     assert SENTINEL.encode() in before
     result = snapshot.export_snapshot(source, target, now=NOW)
     assert source.read_bytes() == before
@@ -579,3 +579,77 @@ def test_operator_destination_replacement_after_recovery_commit_is_preserved(tmp
     assert destination.read_bytes() == private
     assert Path(str(destination) + '.previous').read_bytes() == old.read_bytes()
     assert not list(tmp_path.glob('.*.tmp'))
+
+
+def _expanded_fx_ids(count):
+    import itertools
+    return ['fx-USD-' + ''.join(parts)
+            for parts in list(itertools.product('ABCDEFGHIJKLMNOPQRSTUVWXYZ', repeat=3))[:count]]
+
+
+def test_expanded_catalog_roundtrip_preserves_all_series(tmp_path):
+    identifiers = tuple(item.id for item in STOCKS) + tuple(_expanded_fx_ids(200))
+    assert len(STOCKS) == 100
+    source = fixture(tmp_path / 'expanded-source.db', identifiers=identifiers)
+    with sqlite3.connect(source) as conn:
+        conn.execute("UPDATE instruments SET refresh_days=32 WHERE id LIKE 'stock-%'")
+    before = source.read_bytes()
+    incoming, destination = tmp_path / 'expanded.db', tmp_path / 'installed.db'
+    report = snapshot.export_snapshot(source, incoming, now=NOW)
+    assert source.read_bytes() == before
+    assert report['instruments'] == 300 and report['observations'] == 300
+    assert install(incoming, destination, report['sha256'])['instruments'] == 300
+    assert len(list_instruments(destination, 'stock', now=NOW)) == 100
+    assert len(list_instruments(destination, 'fx', now=NOW)) == 200
+    assert read_instrument(destination, STOCKS[-1].id, now=NOW)['refresh_days'] == 32
+    assert read_instrument(destination, identifiers[-1], now=NOW)['latest_value'] == 12.5
+
+
+def test_expanded_snapshot_rejects_oversized_fx_subset_even_below_total_bound(tmp_path):
+    source = fixture(tmp_path / 'too-many-fx.db', identifiers=tuple(_expanded_fx_ids(201)))
+    with pytest.raises(snapshot.SnapshotError, match='invalid_instruments'):
+        snapshot.export_snapshot(source, tmp_path / 'rejected.db', now=NOW)
+
+
+def test_monthly_cadence_has_explicit_upper_bound(tmp_path):
+    source = fixture(tmp_path / 'cadence.db')
+    with sqlite3.connect(source) as conn:
+        conn.execute('UPDATE instruments SET refresh_days=33')
+    with pytest.raises(snapshot.SnapshotError, match='invalid_instruments'):
+        snapshot.export_snapshot(source, tmp_path / 'rejected.db', now=NOW)
+
+
+def test_original_private_v2_export_does_not_migrate_source(tmp_path):
+    source = ledger(tmp_path / 'original-v2.db')
+    with sqlite3.connect(source) as conn:
+        conn.execute('DROP TABLE IF EXISTS rolling_authorizations')
+        conn.execute('PRAGMA user_version=2')
+    before = source.read_bytes()
+    result = snapshot.export_snapshot(source, tmp_path / 'public-v1.db', now=NOW)
+    assert result['instruments'] == 1
+    assert source.read_bytes() == before
+    with sqlite3.connect(tmp_path / 'public-v1.db') as conn:
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == 1
+        assert conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall() == [
+            ('instruments',), ('observations',)]
+
+
+def test_rolling_authorization_is_never_in_public_snapshot(tmp_path):
+    from scripts.vendor_data_store import authorize_rolling_budget, finish_job
+    source = ledger(tmp_path / 'rolling-private.db')
+    with sqlite3.connect(source) as conn:
+        token = conn.execute('SELECT token FROM jobs').fetchone()[0]
+    finish_job(source, token, now=NOW)
+    authorize_rolling_budget(source, 'marketstack', NOW, NOW + timedelta(days=32),
+                             expected_used=5, now=NOW)
+    before = source.read_bytes()
+    assert b'rolling_authorizations' in before
+    output = tmp_path / 'rolling-public.db'
+    assert snapshot.export_snapshot(source, output, now=NOW)['instruments'] == 1
+    assert source.read_bytes() == before
+    assert b'rolling_authorizations' not in output.read_bytes()
+    assert SENTINEL.encode() not in output.read_bytes()
+    with sqlite3.connect(output) as conn:
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == 1
+        assert conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").fetchall() == [
+            ('instruments',), ('observations',)]

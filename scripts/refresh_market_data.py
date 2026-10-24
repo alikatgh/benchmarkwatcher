@@ -38,9 +38,11 @@ if __name__ == '__main__' and sys.argv[1:] == ['--transport-worker']:
 import argparse
 import json
 import math
+import re
 import sqlite3
 import subprocess
 import time
+import uuid
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -50,10 +52,10 @@ from requests.adapters import HTTPAdapter
 if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from scripts.market_data_catalog import FX, PROFILES
+from scripts.market_data_catalog import FX, PROFILES, fx_instrument
 from scripts.vendor_data_store import (
     StoreError, begin_job, enroll_initial_provider, enroll_provider, finish_job, last_attempt, mark_failure,
-    read_instrument, read_status, reserve_call, save_observations, utc,
+    read_instrument, read_status, reserve_batch, reserve_call, save_observations, utc,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -159,7 +161,7 @@ def _transport_worker():
             raise FetchError('invalid_response')
         provider, params = job.get('provider'), job.get('params')
         allowed = ({'access_key', 'symbols', 'exchange', 'date_from', 'date_to', 'limit', 'offset', 'sort'}
-                   if provider == 'marketstack' else {'access_key', 'date', 'currencies'})
+                   if provider == 'marketstack' else {'access_key', 'date'})
         if (provider not in URLS or not isinstance(params, dict) or
                 not set(params) <= allowed or not isinstance(params.get('access_key'), str) or
                 not 1 <= len(params['access_key']) <= 512 or
@@ -324,13 +326,83 @@ def parse_fx(payload, target):
                 timestamp < datetime.combine(target + timedelta(days=1), datetime.min.time(), tzinfo=timezone.utc).timestamp()):
         raise FetchError('invalid_response')
     quotes = payload.get('quotes')
-    if not isinstance(quotes, dict) or len(quotes) > 200:
+    if not isinstance(quotes, dict) or not quotes or len(quotes) > 200:
         raise FetchError('invalid_response')
     result = {}
-    for instrument in FX:
-        value = _number(quotes.get(instrument.base_currency + instrument.quote_currency), positive=True)
+    for key, raw_value in quotes.items():
+        if not isinstance(key, str) or re.fullmatch(r'USD[A-Z]{3}', key, flags=re.ASCII) is None:
+            raise FetchError('identity_mismatch')
+        value = _number(raw_value, positive=True)
+        quote = key[3:]
+        if quote == 'USD':
+            if value != 1:
+                raise FetchError('identity_mismatch')
+            continue
+        instrument = fx_instrument(quote)
         result[instrument.id] = [{'date': target.isoformat(), 'value': value}]
+    if not result:
+        raise FetchError('no_observations')
     return result
+
+
+def parse_stock_batch(payload, instruments, start, end):
+    """Reject an incomplete/foreign response; isolate invalid requested members.
+
+    Every returned row belongs to one exact requested symbol/exchange. A bad
+    price/date invalidates its entire ticker, while unrelated valid tickers can
+    still be saved against their separate charged reservations.
+    """
+    if not isinstance(payload, dict) or 'error' in payload:
+        raise FetchError('invalid_response')
+    pagination, rows = payload.get('pagination'), payload.get('data')
+    if not isinstance(pagination, dict) or not isinstance(rows, list) or len(rows) > 1000:
+        raise FetchError('invalid_response')
+    total, count, offset = (pagination.get(k) for k in ('total', 'count', 'offset'))
+    if any(type(value) is not int or value < 0 for value in (total, count, offset)) or count != len(rows):
+        raise FetchError('invalid_response')
+    if offset != 0 or total != count:
+        raise FetchError('pagination_truncated')
+    identities = {(item.symbol, item.exchange): item for item in instruments}
+    if not instruments or len(identities) != len(instruments):
+        raise FetchError('invalid_response')
+    partitioned = {item.id: [] for item in instruments}
+    for row in rows:
+        if not isinstance(row, dict):
+            raise FetchError('invalid_response')
+        symbol, exchange = row.get('symbol'), row.get('exchange')
+        if not isinstance(symbol, str) or not isinstance(exchange, str) or (symbol, exchange) not in identities:
+            raise FetchError('identity_mismatch')
+        partitioned[identities[(symbol, exchange)].id].append(row)
+    observations, failures = {}, {}
+    for item in instruments:
+        subset = partitioned[item.id]
+        member = {'pagination': {'total': len(subset), 'count': len(subset), 'offset': 0}, 'data': subset}
+        try:
+            observations[item.id] = parse_stocks(member, item, start, end)
+        except FetchError as exc:
+            failures[item.id] = str(exc)
+    return observations, failures
+
+
+def _stock_batches(database, instruments, target, now):
+    """Calendar-day worst cases guarantee at most 1000 rows without pagination."""
+    groups = {}
+    planned = []
+    for index, item in enumerate(instruments):
+        existing = read_instrument(database, item.id, now=now)
+        latest = existing['latest_date'] if existing else None
+        start = target - timedelta(days=364)
+        if latest:
+            start = max(start, date.fromisoformat(latest) - timedelta(days=7))
+        planned.append((bool(latest), latest or '', index, item, start))
+    # New coverage first, followed by the oldest cached observations. No static
+    # alphabetical catalog slice can starve instruments beyond the first batch.
+    for _, _, _, item, start in sorted(planned, key=lambda row: row[:3]):
+        groups.setdefault((item.exchange, start), []).append(item)
+    for (_, start), members in groups.items():
+        size = max(1, 1000 // ((target - start).days + 1))
+        for offset in range(0, len(members), size):
+            yield members[offset:offset + size], start
 
 
 def _report(status, requests_count=0, **extra):
@@ -341,7 +413,7 @@ def _safe_code(exc):
     return str(exc) if isinstance(exc, FetchError) and str(exc) in FAILURES else 'network_error'
 
 
-def _refresh_provider(database, provider, config, now, transport, clock):
+def _refresh_provider(database, provider, config, now, transport, clock, coverage_limit):
     enabled_key, credential_key = ENV_KEYS[provider]
     if config.get(enabled_key) != '1':
         return _report('disabled')
@@ -362,75 +434,105 @@ def _refresh_provider(database, provider, config, now, transport, clock):
                (now.date() - attempt.date()).days >= interval]
         if not due:
             return _report('current')
-        # This bucket is only duplicate suppression. It never resets billing.
+        # Slots only suppress duplicate calls; they never reset billing. A new
+        # bounded job can resume unattempted members after a previous deadline.
         slot = int(now.timestamp()) // (interval * 86400)
-        job_key = f'{profile_name if profile else "daily-fx"}:{slot}'
-        token = begin_job(database, provider, job_key, now=now)
+        call_prefix = f'{profile_name if profile else "daily-fx"}:{slot}'
+        token = begin_job(database, provider, f'{call_prefix}:{uuid.uuid4().hex}', now=now)
+        status = read_status(database, now=now)['providers'][provider]
+        available = min(status['remaining'], (profile['period_units'] if profile else 90) - status['used'])
+        if profile and coverage_limit is not None:
+            available = min(available, coverage_limit)
     except StoreError as exc:
         return _report(str(exc))
-    requests_count, updated, failures = 0, 0, []
+    requests_count, updated, failures, outcomes, units = 0, 0, [], [], 0
     started = clock()
     try:
-        for instrument in due[:15 if profile else 1]:
+        work = _stock_batches(database, due, target, now) if profile else [([FX[0]], target)]
+        for members, start in work:
             elapsed = clock() - started
             if elapsed > RUN_SECONDS:
                 failures.append('deadline')
                 break
+            if available <= 0:
+                if not (profile and coverage_limit is not None and units >= coverage_limit):
+                    failures.append('quota_exhausted')
+                break
+            # An odd remaining quota unit still buys one complete ticker.
+            members = members[:available]
             call_now = now + timedelta(seconds=elapsed)
-            target = now.date() - timedelta(days=1)
-            start = target - timedelta(days=364)
-            if profile:
-                existing = read_instrument(database, instrument.id, now=now)
-                if existing and existing['latest_date']:
-                    start = max(start, date.fromisoformat(existing['latest_date']) - timedelta(days=7))
             try:
-                reservation = reserve_call(database, token, f'{job_key}:{instrument.id}', instrument.id,
-                                           now=call_now, profile_limit=profile['period_units'] if profile else 90)
+                if profile:
+                    reservations = reserve_batch(database, token,
+                        {item.id: f'{call_prefix}:{item.id}' for item in members},
+                        now=call_now, profile_limit=profile['period_units'])
+                else:
+                    reservation = reserve_call(database, token, f'{call_prefix}:{FX[0].id}', FX[0].id,
+                                               now=call_now, profile_limit=90)
+                    reservations = {FX[0].id: reservation}
             except StoreError as exc:
                 failures.append(str(exc))
                 break
+            units += len(reservations)
+            available -= len(reservations)
             requests_count += 1
             params = {'access_key': credential}
             if profile:
-                params.update(symbols=instrument.symbol, exchange=instrument.exchange,
+                params.update(symbols=','.join(item.symbol for item in members), exchange=members[0].exchange,
                               date_from=start.isoformat(), date_to=target.isoformat(),
                               limit=1000, offset=0, sort='ASC')
             else:
-                params.update(date=target.isoformat(),
-                              currencies=','.join(item.quote_currency for item in FX))
+                params.update(date=target.isoformat())
             try:
                 payload = transport.get_json(provider, params)
-                observations = ({instrument.id: parse_stocks(payload, instrument, start, target)}
-                                if profile else parse_fx(payload, target))
-                save_observations(database, token, reservation, observations,
-                                  now=now + timedelta(seconds=clock() - started), refresh_days=interval)
-                updated += len(observations)
-            except StoreError as exc:
-                failures.append(str(exc))
-                break
+                observations, member_failures = (parse_stock_batch(payload, members, start, target)
+                                                if profile else (parse_fx(payload, target), {}))
             except Exception as exc:
                 code = _safe_code(exc)
-                failures.append(code)
+                observations, member_failures = {}, {item.id: code for item in members}
+            action_now = now + timedelta(seconds=clock() - started)
+            stop = False
+            for item in members:
+                reservation = reservations[item.id]
                 try:
-                    mark_failure(database, token, reservation, code,
-                                 now=now + timedelta(seconds=clock() - started))
-                except StoreError:
-                    pass  # The committed uncertain reservation remains charged.
+                    if item.id in member_failures:
+                        code = member_failures[item.id]
+                        failures.append(code)
+                        mark_failure(database, token, reservation, code, now=action_now)
+                        outcomes.append(dict(instrument_id=item.id, status=code, observations=0))
+                    else:
+                        saved = {item.id: observations[item.id]} if profile else observations
+                        save_observations(database, token, reservation, saved, now=action_now, refresh_days=interval)
+                        updated += len(saved)
+                        outcomes.extend(dict(instrument_id=identifier, status='success', observations=len(points))
+                                        for identifier, points in saved.items())
+                except StoreError as exc:
+                    failures.append(str(exc))
+                    outcomes.append(dict(instrument_id=item.id, status=str(exc), observations=0))
+                    stop = True
+                    break
+            if stop:
+                break
     finally:
         try:
             finish_job(database, token, now=now + timedelta(seconds=clock() - started))
         except StoreError:
             failures.append('ledger_unavailable')
     return _report('partial' if failures and updated else 'failed' if failures else 'refreshed',
-                   requests_count, updated=updated, failures=failures)
+                   requests_count, updated=updated, failures=failures, quota_units=units, outcomes=outcomes,
+                   remaining_due=max(0, len(due) - units))
 
 
-def refresh_due(database, environ=None, now=None, transport=None, *, clock=time.monotonic):
+def refresh_due(database, environ=None, now=None, transport=None, *, clock=time.monotonic, coverage_limit=None):
     """The existing scheduled fetch may call this; defaults perform zero calls.
 
     Passing a fake transport and UTC clock allows all failure paths to be tested
     without credentials or vendor requests. No database is created implicitly.
+    coverage_limit optionally bounds stock quota units in this invocation (1-100),
+    enabling finite coverage chunks without retrying any charged member.
     """
+    if coverage_limit is not None and (type(coverage_limit) is not int or not 1 <= coverage_limit <= 100):
+        raise ValueError('coverage_limit must be an integer between 1 and 100')
     config, now = os.environ if environ is None else environ, utc(now)
     own_transport = None
     reports = {}
@@ -441,7 +543,7 @@ def refresh_due(database, environ=None, now=None, transport=None, *, clock=time.
         active_transport = transport or own_transport
         for provider in ENV_KEYS:
             try:
-                reports[provider] = _refresh_provider(database, provider, config, now, active_transport, clock)
+                reports[provider] = _refresh_provider(database, provider, config, now, active_transport, clock, coverage_limit)
             except (StoreError, sqlite3.Error, OSError, ValueError):
                 reports[provider] = _report('ledger_unavailable')
     finally:

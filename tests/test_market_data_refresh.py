@@ -12,11 +12,11 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from scripts.market_data_catalog import FX, PROFILES, STOCKS
+from scripts.market_data_catalog import CATALOG, FX, PROFILES, STOCKS
 from scripts.refresh_market_data import (
-    FetchError, VendorTransport, _WorkerTransfer, _decode_payload, configured_database, main, parse_fx, parse_stocks, refresh_due,
+    FetchError, VendorTransport, _WorkerTransfer, _decode_payload, configured_database, main, parse_fx, parse_stock_batch, parse_stocks, refresh_due,
 )
-from scripts.vendor_data_store import StoreError, enroll_initial_provider, enroll_provider, list_instruments, read_instrument, read_status
+from scripts.vendor_data_store import StoreError, authorize_rolling_budget, enroll_initial_provider, enroll_provider, list_instruments, read_instrument, read_status
 
 NOW = datetime(2026, 10, 23, 12, tzinfo=timezone.utc)
 SECRET = 'synthetic-test-key-do-not-echo'
@@ -51,7 +51,13 @@ class FakeTransport:
             raise self.failure
         if self.payload is not None:
             return copy.deepcopy(self.payload)
-        return stock_payload(params['symbols'], params['exchange'], params['date_to']) if provider == 'marketstack' else fx_payload(params['date'])
+        if provider != 'marketstack':
+            return fx_payload(params['date'])
+        payload = stock_payload()
+        payload['data'] = [stock_payload(symbol, params['exchange'], params['date_to'])['data'][0]
+                           for symbol in params['symbols'].split(',')]
+        payload['pagination'].update(total=len(payload['data']), count=len(payload['data']))
+        return payload
 
 
 def test_default_disabled_has_no_database_writes_or_client_creation(tmp_path):
@@ -73,24 +79,25 @@ def test_missing_ledger_credential_and_unenrolled_provider_never_call(tmp_path):
     assert not transport.calls
 
 
-def test_weekly_profile_is_15_single_symbol_billed_calls_then_skips_not_due(tmp_path):
+def test_weekly_profile_batches_15_billed_tickers_then_skips_not_due(tmp_path):
     path = tmp_path / 'market.sqlite3'
     enrolled(path)
     config = {k: v for k, v in STOCK_CONFIG.items() if k != 'MARKETSTACK_PROFILE'}
     transport = FakeTransport()
     report = refresh_due(path, config, NOW, transport)
-    assert report['network_requests'] == 15
+    assert report['network_requests'] == 8
     assert report['providers']['marketstack']['updated'] == 15
     for _, params in transport.calls:
-        assert ',' not in params['symbols']
+        assert len(params['symbols'].split(',')) <= 2
         assert params['limit'] == 1000 and params['offset'] == 0 and params['sort'] == 'ASC'
         assert (date.fromisoformat(params['date_to']) - date.fromisoformat(params['date_from'])).days == 364
     assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 15
     assert len(list_instruments(path, 'stock', now=NOW)) == 15
     again = refresh_due(path, config, NOW + timedelta(days=1), transport)
-    assert again['network_requests'] == 0 and len(transport.calls) == 15
+    assert again['network_requests'] == 0 and len(transport.calls) == 8
     next_week = refresh_due(path, config, NOW + timedelta(days=7), transport)
-    assert next_week['network_requests'] == 15
+    assert next_week['network_requests'] == 2
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 30
     assert transport.calls[-1][1]['date_from'] == '2026-10-15'
 
 
@@ -112,12 +119,12 @@ def test_timeout_is_charged_no_retry_and_secret_exception_is_redacted(tmp_path, 
     enrolled(path)
     transport = FakeTransport(requests.Timeout('https://api.marketstack.com/?access_key=' + SECRET))
     report = refresh_due(path, STOCK_CONFIG, NOW, transport)
-    assert report['network_requests'] == 3 and len(transport.calls) == 3
+    assert report['network_requests'] == 2 and len(transport.calls) == 2
     assert report['providers']['marketstack']['failures'] == ['network_error'] * 3
     assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 3
     assert SECRET not in json.dumps(report) + capsys.readouterr().out
     again = refresh_due(path, STOCK_CONFIG, NOW + timedelta(hours=1), transport)
-    assert again['network_requests'] == 0 and len(transport.calls) == 3
+    assert again['network_requests'] == 0 and len(transport.calls) == 2
     assert list_instruments(path, 'stock', now=NOW) == []
 
 
@@ -212,24 +219,219 @@ def test_fx_one_historical_call_populates_all_named_pairs_without_backfill(tmp_p
     assert len(list_instruments(path, 'fx', now=NOW)) == 20
     _, params = transport.calls[0]
     assert params['date'] == '2026-10-22' and 'source' not in params
-    assert len(params['currencies'].split(',')) == 20
+    assert 'currencies' not in params
     assert refresh_due(path, FX_CONFIG, NOW + timedelta(hours=1), transport)['network_requests'] == 0
     assert refresh_due(path, FX_CONFIG, NOW + timedelta(days=3), transport)['network_requests'] == 1
     assert [call[1]['date'] for call in transport.calls] == ['2026-10-22', '2026-10-25']
     assert [p['date'] for p in read_instrument(path, FX[0].id)['observations']] == ['2026-10-22', '2026-10-25']
 
 
-@pytest.mark.parametrize('change', ['date', 'source', 'historical', 'missing_quote', 'nonfinite', 'success'])
+@pytest.mark.parametrize('change', ['date', 'source', 'historical', 'nonfinite', 'success'])
 def test_fx_wrong_identity_or_incomplete_snapshot_is_rejected(change):
     payload = fx_payload()
-    if change == 'missing_quote':
-        payload['quotes'].pop('USDEUR')
-    elif change == 'nonfinite':
+    if change == 'nonfinite':
         payload['quotes']['USDEUR'] = float('inf')
     else:
         payload[change] = {'date': '2026-10-21', 'source': 'EUR', 'historical': False, 'success': False}[change]
     with pytest.raises(FetchError):
         parse_fx(payload, date(2026, 10, 22))
+
+
+@pytest.mark.parametrize('key,value', [('EURGBP', 1.1), ('USDeur', 1), ('USDEURO', 1),
+                                       ('USDＸＡＵ', 1), ('USDAAA', 0), ('USDAAA', -1),
+                                       ('USDAAA', True), ('USDAAA', float('nan')), ('USDUSD', 0.9)])
+def test_fx_every_returned_key_and_value_is_validated(key, value):
+    payload = fx_payload()
+    payload['quotes'][key] = value
+    with pytest.raises(FetchError):
+        parse_fx(payload, date(2026, 10, 22))
+
+
+def test_fx_dynamic_quotes_preserve_metal_crypto_units_and_optional_self_rate():
+    payload = fx_payload()
+    payload['quotes'] = {'USDXAU': 0.0003, 'USDXAG': 0.03, 'USDBTC': 0.00001, 'USDUSD': 1}
+    assert set(parse_fx(payload, date(2026, 10, 22))) == {'fx-USD-XAU', 'fx-USD-XAG', 'fx-USD-BTC'}
+    assert CATALOG['fx-USD-XAU'].quote_currency == 'XAU'
+    assert 'troy ounce' in CATALOG['fx-USD-XAU'].name
+    assert 'Bitcoin' in CATALOG['fx-USD-BTC'].name
+    assert CATALOG.get('fx-USD-xau') is None
+    assert 'fx-USD-XAU-extra' not in CATALOG
+    assert 'fx-USD-USD' not in CATALOG
+
+
+def test_fx_one_unfiltered_request_saves_every_available_quote_up_to_200(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enrolled(path, 'exchangerate_host')
+    payload = fx_payload()
+    codes = [a + b + c for a in 'AB' for b in 'ABCDEFGHIJ' for c in 'ABCDEFGHIJ']
+    payload['quotes'] = {'USD' + code: index + 0.5 for index, code in enumerate(codes)}
+    transport = FakeTransport(payload=payload)
+    report = refresh_due(path, FX_CONFIG, NOW, transport)
+    result = report['providers']['exchangerate_host']
+    assert result['network_requests'] == result['quota_units'] == 1
+    assert result['updated'] == len(result['outcomes']) == 200
+    assert len(list_instruments(path, 'fx', now=NOW)) == 200
+    assert set(transport.calls[0][1]) == {'access_key', 'date'}
+    payload['quotes']['USDZZZ'] = 1
+    with pytest.raises(FetchError, match='invalid_response'):
+        parse_fx(payload, date(2026, 10, 22))
+
+
+def test_stock_batch_bad_member_isolated_without_dropping_its_bad_row(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enrolled(path)
+    payload = stock_payload()
+    payload['data'].append(stock_payload('MSFT')['data'][0])
+    invalid_aapl = copy.deepcopy(payload['data'][0])
+    invalid_aapl.update(date='2026-10-21', close=-1)
+    payload['data'].append(invalid_aapl)
+    payload['pagination'].update(total=3, count=3)
+    transport = FakeTransport(payload=payload)
+    report = refresh_due(path, STOCK_CONFIG, NOW, transport, coverage_limit=2)
+    result = report['providers']['marketstack']
+    assert result['network_requests'] == 1 and result['quota_units'] == 2
+    assert result['updated'] == 1 and result['failures'] == ['invalid_response']
+    assert read_instrument(path, STOCKS[0].id, now=NOW) is None
+    assert read_instrument(path, STOCKS[1].id, now=NOW)['latest_date'] == '2026-10-22'
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 2
+
+
+@pytest.mark.parametrize('mode,reason', [('foreign_symbol', 'identity_mismatch'),
+                                       ('wrong_exchange', 'identity_mismatch'),
+                                       ('truncated', 'pagination_truncated'),
+                                       ('malformed', 'invalid_response')])
+def test_stock_batch_global_identity_or_completeness_error_rejects_all(mode, reason):
+    payload = stock_payload()
+    payload['data'].append(stock_payload('MSFT')['data'][0])
+    payload['pagination'].update(total=2, count=2)
+    if mode == 'foreign_symbol':
+        payload['data'][1]['symbol'] = 'UNREQUESTED'
+    elif mode == 'wrong_exchange':
+        payload['data'][1]['exchange'] = 'XNYS'
+    elif mode == 'truncated':
+        payload['pagination']['total'] = 3
+    else:
+        payload['data'][1] = None
+    with pytest.raises(FetchError, match=reason):
+        parse_stock_batch(payload, STOCKS[:2], date(2025, 10, 23), date(2026, 10, 22))
+
+
+def test_stock_batch_missing_requested_member_does_not_invent_observations():
+    observations, failures = parse_stock_batch(stock_payload(), STOCKS[:2], date(2025, 10, 23), date(2026, 10, 22))
+    assert set(observations) == {STOCKS[0].id}
+    assert failures == {STOCKS[1].id: 'no_observations'}
+
+
+MONTHLY_CONFIG = STOCK_CONFIG | {'MARKETSTACK_PROFILE': 'monthly-100'}
+
+
+def rolling_enrolled(path, used=0):
+    enrolled(path, used=used)
+    authorize_rolling_budget(path, 'marketstack', NOW, NOW + timedelta(days=32),
+                             expected_used=used, now=NOW)
+
+
+def test_monthly_profile_full_year_batches_charge_100_tickers_once_and_obey_32_day_cadence(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    rolling_enrolled(path)
+
+    class FullHistoryTransport(FakeTransport):
+        def get_json(self, provider, params):
+            payload = super().get_json(provider, params)
+            start, end = date.fromisoformat(params['date_from']), date.fromisoformat(params['date_to'])
+            payload['data'] = [stock_payload(symbol, params['exchange'], (start + timedelta(days=index)).isoformat())['data'][0]
+                               for symbol in params['symbols'].split(',') for index in range((end - start).days + 1)]
+            payload['pagination'].update(total=len(payload['data']), count=len(payload['data']))
+            assert len(payload['data']) <= 1000
+            return payload
+
+    transport = FullHistoryTransport()
+    report = refresh_due(path, MONTHLY_CONFIG, NOW, transport, clock=lambda: 0)
+    result = report['providers']['marketstack']
+    assert result['status'] == 'refreshed' and result['updated'] == result['quota_units'] == 100
+    assert result['network_requests'] <= 51 and result['remaining_due'] == 0
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 100
+    for instrument in STOCKS:
+        cached = read_instrument(path, instrument.id, now=NOW)
+        assert cached['refresh_days'] == 32 and len(cached['observations']) == 365
+        assert cached['observations'][0]['date'] == '2025-10-23'
+        assert cached['observations'][-1]['date'] == '2026-10-22'
+    calls = len(transport.calls)
+    for day in (0, 1, 7, 31):
+        assert refresh_due(path, MONTHLY_CONFIG, NOW + timedelta(days=day), transport)['network_requests'] == 0
+    assert len(transport.calls) == calls
+    later = NOW + timedelta(days=32, seconds=1)
+    authorize_rolling_budget(path, 'marketstack', later, later + timedelta(days=32), expected_used=0, now=later)
+    update = refresh_due(path, MONTHLY_CONFIG, later, transport, clock=lambda: 0)
+    assert update['providers']['marketstack']['updated'] == 100
+    assert update['network_requests'] <= 6
+
+
+@pytest.mark.parametrize('used,remaining', [(29, 71), (99, 1)])
+def test_monthly_odd_remaining_units_are_spent_per_ticker_and_replay_never_retries(tmp_path, used, remaining):
+    path = tmp_path / 'market.sqlite3'
+    if used <= 90:
+        rolling_enrolled(path, used=used)
+    else:
+        rolling_enrolled(path, used=90)
+        refresh_due(path, MONTHLY_CONFIG, NOW, FakeTransport(), coverage_limit=used - 90)
+    transport = FakeTransport()
+    report = refresh_due(path, MONTHLY_CONFIG, NOW, transport)
+    result = report['providers']['marketstack']
+    assert result['quota_units'] == result['updated'] == remaining
+    assert result['remaining_due'] == (29 if used == 29 else 90)
+    assert result['failures'] == ['quota_exhausted']
+    assert sum(len(params['symbols'].split(',')) for _, params in transport.calls) == remaining
+    assert any(len(params['symbols'].split(',')) == 1 for _, params in transport.calls)
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 100
+    assert refresh_due(path, MONTHLY_CONFIG, NOW, transport)['network_requests'] == 0
+
+
+def test_monthly_coverage_chunks_resume_unattempted_instruments_with_same_clock(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    rolling_enrolled(path)
+    transport = FakeTransport()
+    for index in range(3):
+        result = refresh_due(path, MONTHLY_CONFIG, NOW, transport, clock=lambda: 0, coverage_limit=1)['providers']['marketstack']
+        assert result['status'] == 'refreshed' and result['quota_units'] == result['updated'] == 1
+        assert result['remaining_due'] == 99 - index and result['failures'] == []
+    assert [call[1]['symbols'] for call in transport.calls] == ['AAPL', 'MSFT', 'NVDA']
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 3
+
+
+def test_monthly_deadline_preserves_progress_and_next_job_only_resumes_untouched_members(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    rolling_enrolled(path)
+    transport = FakeTransport()
+    clock = Mock(side_effect=[0, 0, 481, 481, 481])
+    first = refresh_due(path, MONTHLY_CONFIG, NOW, transport, clock=clock)['providers']['marketstack']
+    assert first['quota_units'] == first['updated'] == 2 and first['failures'] == ['deadline']
+    assert transport.calls[0][1]['symbols'] == 'AAPL,MSFT'
+    second = refresh_due(path, MONTHLY_CONFIG, NOW + timedelta(seconds=482), transport,
+                         clock=lambda: 0, coverage_limit=2)['providers']['marketstack']
+    assert second['quota_units'] == second['updated'] == 2 and second['failures'] == []
+    assert transport.calls[1][1]['symbols'] == 'NVDA,AMZN'
+    assert read_status(path, now=NOW + timedelta(seconds=482))['providers']['marketstack']['used'] == 4
+
+
+@pytest.mark.parametrize('limit', [0, 101, -1, True, 1.5, '10'])
+def test_invalid_coverage_limit_fails_before_any_network_or_ledger_work(tmp_path, limit):
+    path = tmp_path / 'missing.sqlite3'
+    transport = FakeTransport()
+    with pytest.raises(ValueError):
+        refresh_due(path, MONTHLY_CONFIG, NOW, transport, coverage_limit=limit)
+    assert not transport.calls and not path.exists()
+
+
+def test_monthly_prioritizes_missing_catalog_members_over_existing_not_due_cache(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enrolled(path)
+    refresh_due(path, STOCK_CONFIG | {'MARKETSTACK_PROFILE': 'weekly-15'}, NOW, FakeTransport(), clock=lambda: 0)
+    authorize_rolling_budget(path, 'marketstack', NOW, NOW + timedelta(days=32), expected_used=15, now=NOW)
+    transport = FakeTransport()
+    result = refresh_due(path, MONTHLY_CONFIG, NOW, transport, coverage_limit=2)['providers']['marketstack']
+    assert result['quota_units'] == 2
+    assert set(transport.calls[0][1]['symbols'].split(',')) <= {item.symbol for item in STOCKS[15:]}
 
 
 def test_expired_period_does_not_roll_over_or_make_requests(tmp_path):
@@ -331,7 +533,7 @@ def test_network_completion_after_lease_expiry_cannot_commit_and_is_charged(tmp_
     assert report['network_requests'] == 1 and len(transport.calls) == 1
     assert report['providers']['marketstack']['failures'] == ['lease_lost']
     assert list_instruments(path, 'stock', now=NOW) == []
-    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 1
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 2
 
 
 def test_run_deadline_stops_before_network_reservation(tmp_path):
@@ -345,7 +547,7 @@ def test_run_deadline_stops_before_network_reservation(tmp_path):
     assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 0
 
 
-def test_fx_partial_response_keeps_every_prior_pair(tmp_path):
+def test_fx_available_snapshot_preserves_unreturned_prior_quote_history(tmp_path):
     path = tmp_path / 'market.sqlite3'
     enrolled(path, 'exchangerate_host')
     refresh_due(path, FX_CONFIG, NOW, FakeTransport())
@@ -353,8 +555,10 @@ def test_fx_partial_response_keeps_every_prior_pair(tmp_path):
     payload = fx_payload('2026-10-23')
     payload['quotes'].pop('USDMNT')
     report = refresh_due(path, FX_CONFIG, NOW + timedelta(days=1), FakeTransport(payload=payload))
-    assert report['providers']['exchangerate_host']['status'] == 'failed'
-    assert list_instruments(path, 'fx', now=NOW) == before
+    assert report['providers']['exchangerate_host']['status'] == 'refreshed'
+    assert report['providers']['exchangerate_host']['updated'] == 19
+    assert len(list_instruments(path, 'fx', now=NOW)) == len(before)
+    assert read_instrument(path, 'fx-USD-MNT', now=NOW)['latest_date'] == '2026-10-22'
     assert read_status(path, now=NOW)['providers']['exchangerate_host']['used'] == 2
 
 
@@ -491,7 +695,7 @@ def test_hard_timeout_keeps_reservations_charged_and_does_not_retry(tmp_path, mo
     enrolled(path)
     _, children = _spawn_blocking_worker(tmp_path, 'body', monkeypatch)
     report = refresh_due(path, STOCK_CONFIG, NOW, VendorTransport())
-    assert report['network_requests'] == len(children) == 3
+    assert report['network_requests'] == len(children) == 2
     assert report['providers']['marketstack']['failures'] == ['deadline'] * 3
     assert all(child.returncode < 0 for child in children)
     assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 3
@@ -517,7 +721,7 @@ def test_daily_stocks_fit_31_day_period_without_spending_weekend_units(tmp_path)
     start = datetime(2026, 10, 1, 6, 30, tzinfo=timezone.utc)
     reports = [refresh_due(path, STOCK_CONFIG, start + timedelta(days=day), transport) for day in range(31)]
     eligible = sum((start.date() + timedelta(days=day - 1)).weekday() < 5 for day in range(31))
-    assert len(transport.calls) == eligible * 3 == 69
+    assert len(transport.calls) == eligible + 1 == 24
     assert all(date.fromisoformat(call[1]['date_to']).weekday() < 5 for call in transport.calls)
     assert all('quota_exhausted' not in report['providers']['marketstack'].get('failures', []) for report in reports)
     assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 69
@@ -610,7 +814,7 @@ refresh.refresh_due(job['database'], job['config'], job['now'], refresh.VendorTr
             time.sleep(0.02)
         assert _process_has_exited(child_pid)
         assert time.monotonic() - killed_at < 2
-        assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 1
+        assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 2
         assert list_instruments(path, 'stock', now=NOW) == []
     finally:
         if parent.poll() is None:
@@ -650,7 +854,7 @@ def test_one_time_initial_grants_fetch_only_fifteen_stocks_and_one_fx_then_stop(
     config = STOCK_CONFIG | FX_CONFIG | {'MARKETSTACK_PROFILE': 'weekly-15'}
     transport = FakeTransport()
     report = refresh_due(path, config, NOW, transport)
-    assert report['network_requests'] == 16 and len(transport.calls) == 16
+    assert report['network_requests'] == 9 and len(transport.calls) == 9
     assert report['providers']['marketstack']['updated'] == 15
     assert report['providers']['exchangerate_host']['updated'] == 20
     assert len(list_instruments(path, 'stock', now=NOW)) == 15
@@ -660,7 +864,7 @@ def test_one_time_initial_grants_fetch_only_fifteen_stocks_and_one_fx_then_stop(
     assert status['exchangerate_host']['used'] == status['exchangerate_host']['limit'] == 1
     for offset in (timedelta(minutes=1), timedelta(hours=24), timedelta(days=7), timedelta(days=60)):
         assert refresh_due(path, config, NOW + offset, transport)['network_requests'] == 0
-    assert len(transport.calls) == 16
+    assert len(transport.calls) == 9
     for provider in ('marketstack', 'exchangerate_host'):
         expired = read_status(path, now=NOW + timedelta(days=60))['providers'][provider]
         assert expired['status'] == 'application_grant_expired' and expired['remaining'] == 0
@@ -673,7 +877,7 @@ def test_initial_failed_calls_consume_fifteen_and_one_units_without_retry_or_ren
     transport = FakeTransport(failure=requests.Timeout('synthetic failure'))
     config = STOCK_CONFIG | FX_CONFIG | {'MARKETSTACK_PROFILE': 'weekly-15'}
     report = refresh_due(path, config, NOW, transport)
-    assert report['network_requests'] == 16
+    assert report['network_requests'] == 9
     assert report['providers']['marketstack']['failures'] == ['network_error'] * 15
     assert report['providers']['exchangerate_host']['failures'] == ['network_error']
     assert refresh_due(path, config, NOW + timedelta(days=7), transport)['network_requests'] == 0
@@ -682,7 +886,7 @@ def test_initial_failed_calls_consume_fifteen_and_one_units_without_retry_or_ren
         with pytest.raises(StoreError, match='initial_grant_not_renewable'):
             enroll_provider(path, provider, NOW + timedelta(days=7), NOW + timedelta(days=8), 90, 0,
                             now=NOW + timedelta(days=7))
-    assert len(transport.calls) == 16
+    assert len(transport.calls) == 9
     assert list_instruments(path, 'stock', now=NOW) == list_instruments(path, 'fx', now=NOW) == []
 
 

@@ -10,7 +10,8 @@ import pytest
 
 from scripts.market_data_catalog import STOCKS
 from scripts.vendor_data_store import (
-    APPLICATION_ID, INITIAL_STOCK_RECOVERY_KEY, SCHEMA_VERSION, StoreError,
+    APPLICATION_ID, INITIAL_STOCK_RECOVERY_KEY, LEDGER_SCHEMA_VERSION, SCHEMA_VERSION, StoreError,
+    authorize_rolling_budget, reserve_batch,
     begin_initial_stock_recovery, begin_job, enroll_initial_provider, enroll_provider, finish_job, last_attempt,
     list_instruments, mark_failure, read_instrument, read_status,
     reserve_call, save_observations,
@@ -409,10 +410,10 @@ def recovery_ready(path, *, expires=None):
     enroll_initial_provider(path, 'marketstack', NOW, expires or NOW + timedelta(hours=24), 15, 0, now=NOW)
     token = begin_job(path, 'marketstack', 'original-first-fetch', now=NOW)
     originals = []
-    for index, stock in enumerate(STOCKS):
+    for index, stock in enumerate(STOCKS[:15]):
         reservation = reserve_call(path, token, 'original:' + stock.id, stock.id, now=NOW)
         originals.append(reservation)
-        if index == len(STOCKS) - 1:
+        if index == 14:
             save_observations(path, token, reservation, {stock.id: [{'date': '2026-10-22', 'value': 10}]},
                               now=NOW, refresh_days=7)
         else:
@@ -457,7 +458,7 @@ def test_initial_stock_recovery_scope_and_duplicate_attempts_are_fenced(tmp_path
     token, candidates = begin_initial_stock_recovery(path, now=NOW)
     item = candidates[0]
     for key, subject, units in [('arbitrary', item['subject'], 1),
-                                (item['call_key'], STOCKS[-1].id, 1),
+                                (item['call_key'], STOCKS[14].id, 1),
                                 (item['call_key'], item['subject'], 2)]:
         with pytest.raises(StoreError, match='invalid_recovery_reservation'):
             reserve_call(path, token, key, subject, units=units, now=NOW)
@@ -645,3 +646,385 @@ def test_recovery_missing_unenrolled_period_and_old_ledger_fail_closed(tmp_path)
     with pytest.raises(StoreError, match='ledger_uninitialized'):
         begin_initial_stock_recovery(old, now=NOW)
     assert old.read_bytes() == before
+
+
+
+def rolling(path, *, expected=0, now=NOW, expires=None):
+    authorize_rolling_budget(path, 'marketstack', now, expires or now + timedelta(days=32),
+                             expected_used=expected, now=now)
+
+
+def completed_recovery(path):
+    recovery_ready(path)
+    token, candidates = begin_initial_stock_recovery(path, now=NOW)
+    for item in candidates:
+        reservation = reserve_call(path, token, item['call_key'], item['subject'], now=NOW)
+        save_observations(path, token, reservation,
+                          {item['subject']: [{'date': '2026-10-22', 'value': 11}]}, now=NOW)
+    finish_job(path, token, now=NOW)
+
+
+def database_rows(path):
+    with sqlite3.connect(path) as conn:
+        return {table: conn.execute(f'SELECT * FROM {table} ORDER BY 1').fetchall()
+                for table in ('periods', 'jobs', 'locks', 'reservations', 'instruments', 'observations')}
+
+
+def test_explicit_rolling_migration_preserves_all_29_charges_and_original_baseline(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    completed_recovery(path)
+    before = database_rows(path)
+    with sqlite3.connect(path) as conn:
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == 2
+    # Ordinary reads cannot migrate or make a completed recovery grant renewable.
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 29
+    with pytest.raises(StoreError, match='initial_recovery_only'):
+        begin_job(path, 'marketstack', 'before-authorization', now=NOW)
+    rolling(path, expected=29)
+    assert database_rows(path) == before
+    with sqlite3.connect(path) as conn:
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == LEDGER_SCHEMA_VERSION == 3
+        assert conn.execute('SELECT already_used FROM periods').fetchone()[0] == 0
+    status = read_status(path, now=NOW)['providers']['marketstack']
+    assert status == dict(status='rolling_authorized', authorization_valid_from=NOW.isoformat(),
+                          authorization_expires_at=(NOW + timedelta(days=32)).isoformat(),
+                          rolling_window_days=32, window_start=(NOW - timedelta(days=32)).isoformat(),
+                          limit=100, used=29, remaining=71)
+    token = begin_job(path, 'marketstack', 'ordinary-after-authorization', now=NOW)
+    reserve_batch(path, token, {STOCKS[0].id: 'new-stock'}, now=NOW)
+    finish_job(path, token, now=NOW)
+    with pytest.raises(StoreError, match='initial_recovery_exists'):
+        begin_initial_stock_recovery(path, expected_used=30, now=NOW)
+    with pytest.raises(StoreError, match='invalid_job'):
+        begin_job(path, 'marketstack', INITIAL_STOCK_RECOVERY_KEY, now=NOW)
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 30
+
+
+def test_rolling_100_cap_includes_initial_29_across_batches_and_restart(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    completed_recovery(path)
+    rolling(path, expected=29)
+    for part, count in enumerate((15, 15, 15, 15, 10)):
+        token = begin_job(path, 'marketstack', f'fill-{part}', now=NOW)
+        reservations = reserve_batch(path, token,
+                                     {stock.id: f'fill-{part}:{stock.id}' for stock in STOCKS[:count]}, now=NOW)
+        assert len(reservations) == count
+        finish_job(path, token, now=NOW)
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 99
+    token = begin_job(path, 'marketstack', 'last-units', now=NOW)
+    before = database_rows(path)
+    with pytest.raises(StoreError, match='quota_exhausted'):
+        reserve_batch(path, token, {stock.id: f'over:{stock.id}' for stock in STOCKS[:2]}, now=NOW)
+    assert database_rows(path) == before
+    reserve_batch(path, token, {STOCKS[0].id: 'last-one'}, now=NOW)
+    finish_job(path, token, now=NOW)
+    token = begin_job(path, 'marketstack', 'restart-after-100', now=NOW)
+    with pytest.raises(StoreError, match='quota_exhausted'):
+        reserve_call(path, token, '101st', IDENTIFIER, now=NOW)
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 100
+
+
+def test_batch_duplicate_and_cross_subject_save_are_atomic_and_fenced(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    rolling(path)
+    token = begin_job(path, 'marketstack', 'batch', now=NOW)
+    first, second, third = (stock.id for stock in STOCKS[:3])
+    mapping = reserve_batch(path, token, {first: 'first', second: 'second'}, now=NOW)
+    assert set(mapping) == {first, second} and len(set(mapping.values())) == 2
+    before = database_rows(path)
+    with pytest.raises(StoreError, match='duplicate_call'):
+        reserve_batch(path, token, {third: 'new-third', first: 'first'}, now=NOW)
+    assert database_rows(path) == before
+    with pytest.raises(StoreError, match='duplicate_call'):
+        reserve_batch(path, token, {first: 'identical', second: 'identical'}, now=NOW)
+    with pytest.raises(StoreError, match='invalid_reservation'):
+        save_observations(path, token, mapping[first],
+                          {second: [{'date': '2026-10-22', 'value': 100}]}, now=NOW, refresh_days=32)
+    for subject, reservation in mapping.items():
+        save_observations(path, token, reservation,
+                          {subject: [{'date': '2026-10-22', 'value': 100}]}, now=NOW, refresh_days=32)
+        assert read_instrument(path, subject, now=NOW)['refresh_days'] == 32
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 2
+
+
+@pytest.mark.parametrize('calls', [None, [], {}, {'bad': 'key'}, {IDENTIFIER: ''},
+                                   {IDENTIFIER: True}, {IDENTIFIER: 'x' * 181}])
+def test_invalid_batch_cannot_create_missing_ledger(tmp_path, calls):
+    path = tmp_path / 'missing' / 'market.sqlite3'
+    with pytest.raises(StoreError, match='invalid_reservation'):
+        reserve_batch(path, 'token', calls, now=NOW)
+    assert not path.parent.exists()
+
+
+def test_batch_rejects_different_provider_before_any_reservation(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    rolling(path)
+    token = begin_job(path, 'marketstack', 'batch', now=NOW)
+    before = database_rows(path)
+    with pytest.raises(StoreError, match='invalid_reservation'):
+        reserve_batch(path, token, {IDENTIFIER: 'valid', 'fx-USD-EUR': 'invalid'}, now=NOW)
+    assert database_rows(path) == before
+
+
+def test_rolling_final_unit_is_atomic_across_processes(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path, used=89)
+    rolling(path, expected=89)
+    token = begin_job(path, 'marketstack', 'concurrent', now=NOW)
+    reserve_call(path, token, 'first-ten', IDENTIFIER, units=10, now=NOW)
+    code = """
+import sys
+from scripts.vendor_data_store import reserve_batch, StoreError
+try:
+ reserve_batch(sys.argv[1],sys.argv[2],{'stock-XNAS-AAPL':sys.argv[3]},now='2026-10-23T12:00:00Z')
+ print('reserved')
+except StoreError as exc:
+ print(str(exc))
+"""
+    workers = [subprocess.Popen([sys.executable, '-B', '-c', code, str(path), token, f'last-{i}'],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                env={'PATH': os.defpath, 'PYTHONDONTWRITEBYTECODE': '1'}) for i in range(2)]
+    try:
+        results = [worker.communicate(timeout=20) for worker in workers]
+        assert all(worker.returncode == 0 for worker in workers), results
+        assert sorted(out.strip() for out, _ in results) == ['quota_exhausted', 'reserved']
+        assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 100
+    finally:
+        for worker in workers:
+            if worker.poll() is None:
+                worker.kill()
+                worker.communicate(timeout=5)
+
+
+def test_rolling_boundary_and_renewal_never_reset_charged_history(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    token, _ = reserved(path)
+    finish_job(path, token, now=NOW)
+    rolling(path, expected=1)
+    boundary = NOW + timedelta(days=32)
+    before = database_rows(path)
+    with pytest.raises(StoreError, match='rolling_authorization_expired'):
+        begin_job(path, 'marketstack', 'expired-authorization', now=boundary)
+    # Calls exactly 32 days old remain charged; renewal cannot erase them.
+    rolling(path, expected=1, now=boundary)
+    assert database_rows(path) == before
+    status = read_status(path, now=boundary)['providers']['marketstack']
+    assert status['used'] == 1
+    later = boundary + timedelta(microseconds=1)
+    assert read_status(path, now=later)['providers']['marketstack']['used'] == 0
+    with sqlite3.connect(path) as conn:
+        assert conn.execute('SELECT COUNT(*) FROM reservations').fetchone()[0] == 1
+        assert conn.execute('SELECT COUNT(*) FROM rolling_authorizations').fetchone()[0] == 2
+    # A subsequent authorization also cannot reset reservations from its window.
+    token = begin_job(path, 'marketstack', 'new-window', now=later)
+    reserve_call(path, token, 'new-window-call', IDENTIFIER, now=later)
+    finish_job(path, token, now=later)
+    renewal = later + timedelta(days=1)
+    with pytest.raises(StoreError, match='rolling_usage_mismatch'):
+        rolling(path, expected=0, now=renewal)
+    rolling(path, expected=1, now=renewal)
+    assert read_status(path, now=renewal)['providers']['marketstack']['used'] == 1
+
+
+def test_nonzero_external_baseline_remains_charged_after_window_and_renewal(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path, used=27)
+    token, _ = reserved(path)
+    finish_job(path, token, now=NOW)
+    rolling(path, expected=28)
+    later = NOW + timedelta(days=32, seconds=1)
+    rolling(path, expected=27, now=later)
+    assert read_status(path, now=later)['providers']['marketstack']['used'] == 27
+    with sqlite3.connect(path) as conn:
+        assert conn.execute('SELECT already_used FROM periods').fetchone()[0] == 27
+        assert conn.execute('SELECT COUNT(*) FROM reservations').fetchone()[0] == 1
+
+
+@pytest.mark.parametrize('start,end,expected', [
+    (NOW, NOW + timedelta(days=32, microseconds=1), 0), (NOW, NOW, 0),
+    (NOW + timedelta(seconds=1), NOW + timedelta(days=1), 0),
+    (NOW - timedelta(days=1), NOW, 0), (NOW, NOW + timedelta(days=1), True),
+    (NOW, NOW + timedelta(days=1), -1), (NOW, NOW + timedelta(days=1), 101),
+    (None, NOW + timedelta(days=1), 0), (NOW, None, 0),
+])
+def test_rolling_authorization_requires_explicit_current_bounded_dates(tmp_path, start, end, expected):
+    path = tmp_path / 'missing' / 'market.sqlite3'
+    with pytest.raises(StoreError, match='invalid_rolling_authorization'):
+        authorize_rolling_budget(path, 'marketstack', start, end, expected_used=expected, now=NOW)
+    assert not path.parent.exists()
+
+
+def test_rolling_authorization_expiry_and_backdated_clock_fail_closed(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    rolling(path, expires=NOW + timedelta(minutes=2))
+    token = begin_job(path, 'marketstack', 'expiry', now=NOW)
+    for at in (NOW - timedelta(seconds=1), NOW + timedelta(minutes=2)):
+        with pytest.raises(StoreError, match='rolling_authorization_expired'):
+            begin_job(path, 'marketstack', 'outside-validity', now=at)
+        with pytest.raises(StoreError, match='rolling_authorization_expired'):
+            reserve_call(path, token, 'outside-call', IDENTIFIER, now=at)
+        assert read_status(path, now=at)['providers']['marketstack']['status'] == 'rolling_authorization_expired'
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 0
+
+
+def test_rolling_conversion_and_renewal_reject_active_lease_and_usage_mismatch(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    token, _ = reserved(path)
+    before = path.read_bytes()
+    with pytest.raises(StoreError, match='already_running'):
+        rolling(path, expected=1)
+    assert path.read_bytes() == before
+    finish_job(path, token, now=NOW)
+    before = path.read_bytes()
+    with pytest.raises(StoreError, match='rolling_usage_mismatch'):
+        rolling(path, expected=0)
+    assert path.read_bytes() == before
+    rolling(path, expected=1)
+    token = begin_job(path, 'marketstack', 'active-renewal', now=NOW)
+    before = path.read_bytes()
+    with pytest.raises(StoreError, match='already_running'):
+        rolling(path, expected=1, now=NOW + timedelta(seconds=1))
+    assert path.read_bytes() == before
+    finish_job(path, token, now=NOW)
+    with pytest.raises(StoreError, match='rolling_authorization_exists'):
+        rolling(path, expected=1)
+    with pytest.raises(StoreError, match='rolling_budget_requires_authorization'):
+        enroll_provider(path, 'marketstack', NOW, NOW + timedelta(days=1), 90, 0, now=NOW)
+
+
+def test_expired_legacy_grant_requires_explicit_conversion_and_no_new_enrollment(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll_initial_provider(path, 'marketstack', NOW, NOW + timedelta(hours=1), 15, 0, now=NOW)
+    token, _ = reserved(path)
+    finish_job(path, token, now=NOW)
+    later = NOW + timedelta(days=1)
+    with pytest.raises(StoreError, match='application_grant_expired'):
+        begin_job(path, 'marketstack', 'expired', now=later)
+    rolling(path, expected=1, now=later)
+    assert read_status(path, now=later)['providers']['marketstack']['used'] == 1
+    assert begin_job(path, 'marketstack', 'converted', now=later)
+
+
+def test_failed_migration_rolls_back_schema_version_and_original_bytes(tmp_path, monkeypatch):
+    from scripts import vendor_data_store as store
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    token, _ = reserved(path)
+    finish_job(path, token, now=NOW)
+    before = path.read_bytes()
+    monkeypatch.setattr(store, 'ROLLING_SCHEMA', store.ROLLING_SCHEMA + 'CREATE TABLE periods (broken TEXT);')
+    with pytest.raises(StoreError, match='ledger_unavailable'):
+        rolling(path, expected=1)
+    assert path.read_bytes() == before
+    with sqlite3.connect(path) as conn:
+        assert conn.execute('PRAGMA user_version').fetchone()[0] == 2
+        assert conn.execute("SELECT name FROM sqlite_master WHERE name='rolling_authorizations'").fetchone() is None
+
+
+@pytest.mark.parametrize('corruption', ['timestamp', 'subject', 'foreign_key', 'unknown_table'])
+def test_corrupt_source_cannot_migrate_or_change_source(tmp_path, corruption):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    token, reservation = reserved(path)
+    finish_job(path, token, now=NOW)
+    with sqlite3.connect(path) as conn:
+        if corruption == 'timestamp':
+            conn.execute("UPDATE reservations SET reserved_at='uncertain'")
+        elif corruption == 'subject':
+            conn.execute("UPDATE reservations SET subject='private-unreviewed'")
+        elif corruption == 'foreign_key':
+            conn.execute("UPDATE reservations SET job_token='missing'")
+        else:
+            conn.execute('CREATE TABLE unrelated (content TEXT)')
+    before = path.read_bytes()
+    with pytest.raises(StoreError):
+        rolling(path, expected=1)
+    assert path.read_bytes() == before
+
+
+def test_rolling_conversion_missing_and_unenrolled_provider_fail_closed(tmp_path):
+    missing = tmp_path / 'missing' / 'market.sqlite3'
+    with pytest.raises(StoreError, match='ledger_missing'):
+        rolling(missing)
+    assert not missing.parent.exists()
+    path = tmp_path / 'fx-only.sqlite3'
+    enroll(path, 'exchangerate_host')
+    before = path.read_bytes()
+    with pytest.raises(StoreError, match='provider_unenrolled'):
+        rolling(path)
+    assert path.read_bytes() == before
+
+
+def test_rolling_preserves_and_counts_all_legacy_periods_not_only_latest(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    first = datetime(2026, 10, 1, tzinfo=timezone.utc)
+    middle = first + timedelta(days=10)
+    later = middle + timedelta(days=10)
+    enroll_provider(path, 'marketstack', first, middle, 90, 2, now=first)
+    token, _ = reserved(path, now=first)
+    finish_job(path, token, now=first)
+    enroll_provider(path, 'marketstack', middle, later + timedelta(days=10), 90, 3, now=middle)
+    rolling(path, expected=6, now=later)
+    assert read_status(path, now=later)['providers']['marketstack']['used'] == 6
+    after = first + timedelta(days=33)
+    assert read_status(path, now=after)['providers']['marketstack']['used'] == 5
+
+
+def test_fx_200_validated_currencies_save_atomically_with_32_day_cadence(tmp_path, monkeypatch):
+    from dataclasses import replace
+    from scripts import vendor_data_store as store
+    from scripts.market_data_catalog import FX
+    # Explicit deterministic fixture currencies keep this store test independent
+    # of whether a live provider currently includes a particular ISO-like code.
+    identifiers = [f'fx-USD-A{chr(65 + i // 26)}{chr(65 + i % 26)}' for i in range(201)]
+    catalog = {identifier: replace(FX[0], id=identifier, quote_currency=identifier[-3:])
+               for identifier in identifiers}
+    catalog.update({item.id: item for item in STOCKS})
+    monkeypatch.setattr(store, 'CATALOG', catalog)
+    path = tmp_path / 'market.sqlite3'
+    enroll(path, 'exchangerate_host')
+    authorize_rolling_budget(path, 'exchangerate_host', NOW, NOW + timedelta(days=32), expected_used=0, now=NOW)
+    token = begin_job(path, 'exchangerate_host', 'all-currencies', now=NOW)
+    reservation = reserve_call(path, token, 'all-currencies', identifiers[0], now=NOW)
+    batches = {identifier: [{'date': '2026-10-22', 'value': index + 1}]
+               for index, identifier in enumerate(identifiers[:200])}
+    before = database_rows(path)
+    with pytest.raises(StoreError, match='invalid_observations'):
+        save_observations(path, token, reservation,
+                          dict(batches, **{identifiers[200]: [{'date': '2026-10-22', 'value': 1}]}),
+                          now=NOW, refresh_days=32)
+    assert database_rows(path) == before
+    save_observations(path, token, reservation, batches, now=NOW, refresh_days=32)
+    assert len(list_instruments(path, 'fx', now=NOW)) == 200
+    assert read_status(path, now=NOW)['providers']['exchangerate_host']['used'] == 1
+
+
+@pytest.mark.parametrize('refresh_days', [True, 0, 33, 1.5, '32'])
+def test_refresh_cadence_requires_integer_between_one_and_32(tmp_path, refresh_days):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    token, reservation = reserved(path)
+    with pytest.raises(StoreError, match='invalid_observations'):
+        save_observations(path, token, reservation, {IDENTIFIER: [{'date': '2026-10-22', 'value': 1}]},
+                          now=NOW, refresh_days=refresh_days)
+    assert read_instrument(path, IDENTIFIER, now=NOW) is None
+
+
+
+def test_corrupt_rolling_authorization_cannot_extend_32_day_permission(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    rolling(path)
+    with sqlite3.connect(path) as conn:
+        conn.execute('UPDATE rolling_authorizations SET expires_at=?',
+                     ((NOW + timedelta(days=32, seconds=1)).isoformat(),))
+    before = path.read_bytes()
+    with pytest.raises(StoreError, match='invalid_rolling_authorization'):
+        begin_job(path, 'marketstack', 'bad-authorization', now=NOW)
+    assert read_status(path, now=NOW)['providers']['marketstack']['status'] == 'invalid_rolling_authorization'
+    assert path.read_bytes() == before

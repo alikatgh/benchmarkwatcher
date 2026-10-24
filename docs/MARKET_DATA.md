@@ -7,29 +7,52 @@ through Varlock, with separate durable provider budgets kept locally. The server
 receives only a validated observation snapshot; it has no vendor credentials and
 its existing daily fetch job does not run these collectors.
 
-## Included coverage and request plan
+## Coverage and request accounting
 
-| Provider | Prepared coverage | Expected scheduled units |
+| Provider/profile | Coverage strategy | Quota accounting |
 | --- | --- | --- |
-| Marketstack `weekly-15` (default) | 15 US stocks; each refresh fetches daily bars | 60–75 in a typical month |
-| Marketstack `daily-3` | Apple, Microsoft and NVIDIA after weekday closes | At most 69 for 23 weekday closes |
-| exchangerate.host | 20 USD-based currency pairs, including MNT; previous UTC day's historical snapshot | At most 31 per month |
+| Marketstack `monthly-100` | Reviewed catalogue of 100 US stocks; new/oldest histories first; 32-day refresh cadence | One unit per requested ticker, regardless of HTTP batching |
+| Marketstack `weekly-15` (legacy default) | Original 15 companies, 7-day cadence | 15 units per complete refresh |
+| Marketstack `daily-3` | Original three companies after weekday closes | Three units per complete refresh |
+| exchangerate.host | Every available USD quote returned for the previous UTC date, up to 200; no currency selection filter | One HTTP request for all quotes on that date |
 
-Marketstack charges each ticker lookup separately, even in a batched HTTP
-request. The first stock fetch requests up to one year in one page per ticker;
-later fetches overlap recent history. No automatic pagination, retry, discovery,
-or extra historical backfill is performed. FX requests include all configured
-pairs in one response. Quote identity, currency, dates, pagination, finite values,
-and completeness are validated before an atomic cache update.
+The symbol catalogue is checked using Marketstack's public downloadable CSV and
+SEC's public company/exchange metadata, without authenticated discovery calls.
+Stock responses already contain identity/currency metadata. The first fetch asks
+for the full permitted year; later fetches request accumulated new days with a
+small overlap. Stocks with the same exchange and date range share an HTTP call.
+Batch size is bounded by `floor(1000 / inclusive_calendar_days)`, conservatively
+keeping the combined response inside the 1,000-row limit even before accounting
+for weekends. A batch of two stock symbols still consumes two quota units.
 
-For verified provider-period enrollment, the application limit is at most 90
-units per provider billing period, leaving 10 of the stated 100-request allowance
-outside routine ingestion. A separate initial application grant permits a single
-bounded launch when billing dates remain unknown; its validity window is never
-represented as a provider billing period. Failed or
-uncertain attempts remain charged locally. Other consumers of these account
-allowances must be included in the enrollment baseline and coordinated; a local
-counter cannot see calls made by unrelated tools or guarantee a provider invoice.
+The current Marketstack V2 schemas require `symbols` even on exchange-wide EOD
+routes. Their broad introductory descriptions do not establish an all-company,
+one-credit endpoint. No quota exemption is assumed. Automatic pagination and
+retries are disabled. Dates, pagination completeness, each requested identity,
+currency and finite values must validate. An invalid ticker's complete history
+is rejected; other valid requested tickers in that batch may be saved. Foreign
+symbols/exchanges or a truncated batch reject the entire response.
+
+FX uses one response for all returned quotes. The source, exact historical date,
+timestamp, three-letter quote identifiers and positive finite values are checked.
+A USD/USD self-quote must equal one and is omitted. Metals and other provider
+codes retain their precise labels; they are not relabeled as fiat currencies.
+No cross-rates or missing observations are fabricated.
+
+Each provider has a durable, independently enforced **100-unit maximum over any
+rolling 32-day window** after explicit authorization. This is deliberately
+conservative: a window of 32 days covers a monthly period of at most 31 days,
+without guessing the vendor's reset date. It is an application safeguard in
+addition to the verified account's free/no-overage controls. Historical rows
+inside a response do not each consume a ticker unit. Fetching a full year once
+and serving the cache is therefore more economical than repeated latest-only
+lookups.
+
+All previous reservations remain charged, including failed/uncertain attempts.
+Any original external-usage baseline is retained conservatively indefinitely.
+Other use of these accounts must be coordinated; a local counter cannot observe
+unrelated clients or establish a provider invoice ceiling. Do not reset the
+ledger or infer unused credits from a stale dashboard.
 
 ## Activation prerequisites
 
@@ -45,14 +68,18 @@ Verify the actual account's free allowance, remaining usage, and provider-enforc
 absence of billable overages before activation. Regular period enrollment also
 requires verified billing-period boundaries. An initial application grant can be
 used without those boundaries, under the nonrenewable restrictions below.
-A feature flag or application counter does not establish these facts. There is
+Rolling-window authorization needs no invented billing dates; it does require the
+verified account controls and current durable usage. A feature flag or application
+counter does not establish these facts. There is
 no automatic upgrade, paid fallback, subscription change, or remote activation in
 this change.
 
-Official references, checked 2026-10-23:
+Official references, checked 2026-10-24:
 
 - https://marketstack.com/pricing
 - https://marketstack.com/faq
+- https://marketstack.com/download/supported_tickers_2.csv
+- https://www.sec.gov/files/company_tickers_exchange.json
 - https://marketstack.com/billing-overages-documentation
 - https://docs.apilayer.com/marketstack/docs/marketstack-api-v2-v-2-0-0
 - https://exchangerate.host/pricing
@@ -73,7 +100,7 @@ copy either to the server or pass them to a transfer command.
 | `EXCHANGERATE_HOST_API_KEY` | exchangerate.host credential | Unset |
 | `MARKETSTACK_ENABLED` | Permit bounded background stock requests when `1` | Disabled |
 | `EXCHANGERATE_HOST_ENABLED` | Permit bounded background currency requests when `1` | Disabled |
-| `MARKETSTACK_PROFILE` | `weekly-15` or `daily-3` | `weekly-15` |
+| `MARKETSTACK_PROFILE` | `monthly-100`, `weekly-15` or `daily-3` | `weekly-15` |
 | `MARKET_DATA_ENABLED` | Expose cached stock/FX pages when `1` | Disabled |
 | `MARKET_DATA_DB` | Local collector ledger, or the server's separate observation snapshot | `data/vendor-market-data.sqlite3` |
 
@@ -97,7 +124,35 @@ the next verified period is enrolled; it does not silently reset on a calendar
 date or restart. This renewal route is unavailable to any provider that has ever
 received an initial application grant.
 
-### One-time initial application grant
+### Explicit rolling-window authorization
+
+After account verification, an operator can convert an existing enrolled ledger
+using `authorize_rolling_budget(path, provider, valid_from, expires_at,
+expected_used=current_used)`. The function makes no network request. Its validity
+window must include the current UTC time and last no more than 32 days. It rejects
+active jobs and a changed usage count. Authorization must be explicitly renewed;
+expiry stops new requests and never erases past reservations.
+
+The first conversion transaction adds `rolling_authorizations` and upgrades the
+private ledger from schema 2 to 3. Existing periods, jobs, locks, reservations and
+cached observations remain intact; failed conversion rolls back. Old schema-2
+reads retain their original restrictions until explicit authorization. The old
+stock-recovery marker cannot be replayed. Once rolling authorization is active,
+normal budgeted jobs can proceed under the new aggregate cap.
+
+`reserve_batch` atomically reserves one unit for every requested stock symbol
+before transport. Insufficient remaining quota or a duplicate call key rejects
+the whole reservation batch. Successful and failed members keep their own
+reservations and outcomes. Public pages cannot invoke authorization or fetching.
+The collector's optional `coverage_limit` bounds a single run; later chunks resume
+only untouched members, with durable date/profile keys preventing duplicate calls.
+
+Use the `monthly-100` profile to prioritize breadth. Previously spent credits may
+leave fewer than 100 histories available on the first run, and invalid provider
+responses remain excluded. The feature does not promise that a catalogue entry
+has saved observations. The UI lists actual validated cached histories only.
+
+### Legacy one-time initial application grant
 
 When the account allowance, usage baseline and absence of billable overages are
 verified but exact billing dates are unknown, an operator may explicitly enroll
@@ -130,11 +185,12 @@ process termination and restart. Expiry never resets the counter. Status reports
 `grant_expires_at`, retaining usage after expiry.
 
 An initial grant requires no prior enrollment of any kind. Once a provider has
-an initial grant, **all subsequent enrollment is refused**, including another
-grant or a regular verified billing period, even after expiry. Reconciliation
-into future provider periods is not implemented. Preserve the private ledger;
+an initial grant, subsequent legacy enrollment is refused, including another
+grant or a regular provider period. The explicit rolling-window conversion above
+is the supported continuation; it preserves all prior charges. Preserve the private ledger;
 removing or replacing it is not a renewal procedure. Private ledgers use schema
-version 2; incompatible older ledgers fail closed without automatic migration.
+2 before explicit rolling conversion and schema 3 afterward. Incompatible older
+ledgers fail closed without automatic migration.
 Public observation snapshots retain their version-1 format and contain no grant
 provenance or quota information.
 
@@ -214,8 +270,8 @@ observed destination/recovery/lock changes during installation. Install only in 
 trusted application-owned directory: POSIX replacement is not an absolute
 compare-and-swap guarantee against a malicious writer with the same permissions.
 
-Snapshots are capped at 8 MiB, 35 instruments and 1,100 observations per
-instrument. Older observations may be omitted only for a full-capacity rolling
+Snapshots are capped at 32 MiB, 100 stocks plus 200 FX instruments, and 1,100
+observations per instrument. Cadence metadata is bounded to 1–32 days. Older observations may be omitted only for a full-capacity rolling
 history. Source extraction is capped at 64 MiB; operations check a 15-second
 work deadline. Repeated identical snapshots are no-ops. A failed refresh or
 transfer leaves the last installed history available with its original dates.
