@@ -1,6 +1,7 @@
 """Workspace discovery reads bounded local public metadata, never providers."""
 
 from collections import Counter
+from contextlib import closing
 import hashlib
 import json
 import sqlite3
@@ -148,6 +149,52 @@ def test_company_grouping_country_datasets_and_explicit_financial_measures(works
     assert country[0]['name'] == 'Australia · Population'
     assert [row['id'] for row in find(client, 'Apple assets')['results']] == [assets]
     assert all(row['kind'] == 'dataset' for row in find(client, 'assets')['results'])
+
+
+@pytest.mark.parametrize('stored_cik', ['320193', '0000320193'])
+@pytest.mark.parametrize('query', ['320193', '0000320193', 'CIK 320193', 'CIK 0000320193'])
+def test_company_cik_matches_plain_and_padded_sec_metadata(workspace, stored_cik, query):
+    client, directory = workspace
+    series(directory / 'library.sqlite3', source='sec', dataset='frames', entity=stored_cik,
+           name='Apple Inc.', indicator='us-gaap:Assets', label='Total assets', kind='company', unit='USD')
+    rows = find(client, query)['results']
+    assert rows == [dict(id=stored_cik, kind='company', name='Apple Inc.',
+                        description='SEC filings · CIK ' + stored_cik, href='/companies/' + stored_cik)]
+
+
+def test_library_queries_use_proven_bounded_lookup_plans(workspace, monkeypatch):
+    client, directory = workspace
+    path = directory / 'library.sqlite3'
+    series(path, name='Apple country', label='Apple production')
+    series(path, source='sec', dataset='frames', entity='0000320193', name='Apple Inc.',
+           indicator='us-gaap:Assets', label='Total assets', kind='company', unit='USD')
+    statements = []
+
+    def traced_connection(database):
+        conn = read_connection(database)
+        conn.set_trace_callback(statements.append)
+        return conn
+
+    monkeypatch.setattr(search.public_library, 'read_connection', traced_connection)
+    assert find(client, 'Apple')['unavailable'] == []
+    assert find(client, '320193')['unavailable'] == []
+    queries = [sql for sql in statements if 'FROM series s ' in sql]
+    assert len(queries) == 4
+    with closing(read_connection(path)) as conn:
+        conn.create_function('workspace_company_match', 2, lambda *args: 1)
+        conn.create_function('workspace_measure_match', 4, lambda *args: 1)
+        for sql in queries:
+            plan = [row['detail'] for row in conn.execute('EXPLAIN QUERY PLAN ' + sql)]
+            if 'SELECT s.entity_id' in sql:
+                assert any('COVERING INDEX library_summary (entity_type=? AND source=?' in step
+                           for step in plan), plan
+                if 's.entity_id IN (' in sql:
+                    assert any('entity_id=?)' in step for step in plan), plan
+            else:
+                # The OR over country and SEC metadata otherwise makes SQLite
+                # scan large source indexes before testing FTS membership.
+                assert any('SEARCH s USING INTEGER PRIMARY KEY (rowid=?)' in step for step in plan), plan
+                assert not any('MULTI-INDEX OR' in step for step in plan), plan
 
 
 def test_held_unsaved_and_invalid_library_identifiers_are_never_published(workspace):

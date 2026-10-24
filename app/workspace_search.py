@@ -92,12 +92,18 @@ def _library_results(query, tokens, unavailable):
     match = public_library._search(query)
     if not match:
         return []
-    company_query = query
     cik = re.fullmatch(r'(?:CIK[\s:#-]*)?0*([0-9]{1,10})', query, re.IGNORECASE)
+    company_tokens = tokens
     if cik:
-        company_query = str(int(cik[1]))
-    company_tokens = _tokens(company_query)
-    company_match = public_library._search(company_query)
+        identifier = str(int(cik[1]))
+        # SEC imports use both plain and ten-digit CIKs. Prefix FTS cannot
+        # match an unpadded query against a zero-padded indexed token.
+        company_where = 's.entity_id IN (?,?)'
+        company_args = [identifier, identifier.zfill(10)]
+    else:
+        company_where = '''s.rowid IN (SELECT rowid FROM series_search WHERE series_search MATCH ?)
+                           AND workspace_company_match(s.entity_name,s.entity_id)'''
+        company_args = [match]
     results = []
     try:
         with public_library.connection() as conn:
@@ -114,13 +120,12 @@ def _library_results(query, tokens, unavailable):
                     _matches([token], name, identifier, unit, dataset) for token in tokens)))
             companies = conn.execute('''
                 SELECT s.entity_id, MIN(s.entity_name) AS entity_name
-                FROM series s
-                WHERE s.rowid IN (SELECT rowid FROM series_search WHERE series_search MATCH ?)
-                  AND s.source='sec' AND s.entity_type='company' AND s.observation_count>0
+                FROM series s INDEXED BY library_summary
+                WHERE s.source='sec' AND s.entity_type='company' AND s.observation_count>0
                   AND ''' + public_sql('s.') + '''
-                  AND workspace_company_match(s.entity_name,s.entity_id)
+                  AND ''' + company_where + '''
                 GROUP BY s.entity_id ORDER BY entity_name,s.entity_id LIMIT ?
-                ''', (company_match, PER_KIND)).fetchall()
+                ''', [*company_args, PER_KIND]).fetchall()
             for row in companies:
                 identifier = row['entity_id']
                 if not isinstance(identifier, str) or not re.fullmatch(r'[0-9]{1,10}', identifier):
@@ -130,7 +135,7 @@ def _library_results(query, tokens, unavailable):
                     href=url_for('public_library.company', entity_id=identifier)))
             records = conn.execute('''
                 SELECT s.id,s.source,s.dataset,s.entity_name,s.indicator_name,s.unit
-                FROM series s
+                FROM series s NOT INDEXED
                 WHERE s.rowid IN (SELECT rowid FROM series_search WHERE series_search MATCH ?)
                   AND s.source IN ('worldbank','faostat','sec') AND s.observation_count>0
                   AND ''' + public_sql('s.') + '''
