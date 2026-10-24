@@ -30,6 +30,9 @@
         chart = BW.Visuals.timeSeries(target, [{name: data.name, unit: data.unit, gapDays: gaps[data.frequency] || 40, points}], {
             width: Math.max(280, target.clientWidth), height: target.clientHeight,
             finance: true, yAxisPosition: 'right', type: type.value, dots: false,
+            // Short daily histories should label observed days, not repeated intraday ticks.
+            xValues: data.frequency === 'daily' && points.length <= 7
+                ? points.map(point => new Date(point.date + 'T00:00:00Z')) : undefined,
             externalReadout: true, yFormat: value => Number(value).toLocaleString('en', {
                 notation: Math.abs(value) >= 1e6 ? 'compact' : 'standard', maximumSignificantDigits: 5,
             }),
@@ -38,7 +41,7 @@
             animation: 160,
         });
         target.dataset.rendered = 'true';
-        if (BW.VisualBuilderSources) {
+        if (data.allowExport !== false && BW.VisualBuilderSources) {
             let metadata = {};
             try { metadata = JSON.parse(document.getElementById('bw-visual-source')?.textContent || '{}'); } catch (_) {}
             const spec = BW.VisualBuilderSources.reference({...data, history:points},metadata);

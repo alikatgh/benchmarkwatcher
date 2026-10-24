@@ -35,6 +35,7 @@
                 frequency, gapDays:gaps[frequency] || 62, points:points || record.history || []}], ...extra};
     }
     function reference(data, metadata = {}) {
+        if (data.allowExport === false) unavailable('These observations can be viewed on this page only. Export is unavailable.');
         return {id:metadata.id || location.pathname, title:metadata.title || data.name, unit:data.unit, type:'line',
             source:metadata.source || '', notes:metadata.notes || 'Original source periods. Missing observations remain gaps; source flags are retained.',
             series:[{name:data.name, unit:data.unit, frequency:data.frequency, gapDays:gaps[data.frequency] || 62,
@@ -123,7 +124,7 @@
                     const data = JSON.parse(doc.getElementById('gr-chart-data').textContent);
                     const meta = JSON.parse(doc.getElementById('bw-visual-source')?.textContent || '{}');
                     button.disabled = false; BW.QuickVisuals.open(reference(data,meta),{trigger:button});
-                } catch (_) { if (status?.matches('[role=status]')) status.textContent = 'History could not load. Try again.'; }
+                } catch (error) { if (status?.matches('[role=status]')) status.textContent = error.visualMessage || 'History could not load. Try again.'; }
                 finally { button.disabled = false; }
             });
         });

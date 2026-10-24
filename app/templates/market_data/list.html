@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/global-reference.css') }}">
+<div class="gr-workspace" data-market-data="{{ kind }}">
+  <nav class="gr-nav" aria-label="Market history workspace"><a href="{{ url_for('market_data.stocks') }}"{% if kind == 'stock' %} aria-current="page"{% endif %}>Stocks</a><a href="{{ url_for('market_data.exchange_rates') }}"{% if kind == 'fx' %} aria-current="page"{% endif %}>Exchange rates</a><a href="{{ url_for('global_reference.index', kind='exchange_reference') }}">Official currency references</a></nav>
+  <header class="gr-heading"><div><h1>{{ title }}</h1><p>{{ 'Daily share-price histories with their original observation dates.' if kind == 'stock' else 'Daily currency-pair histories with their original observation dates.' }}</p></div></header>
+  <div class="gr-context"><span>{{ total }} saved {{ 'stock histories' if kind == 'stock' else 'currency-pair histories' }}</span><span>Daily historical observations</span></div>
+  <section class="gr-surface" aria-label="{{ title }} histories">
+    <form class="gr-filter" method="get"><label class="gr-search"><span>{{ 'Find a company or symbol' if kind == 'stock' else 'Find a currency pair' }}</span><input type="search" name="q" maxlength="100" value="{{ q }}" placeholder="{{ 'Search saved stocks' if kind == 'stock' else 'Search saved exchange rates' }}"></label><button type="submit" class="primary">Search</button>{% if q %}<a class="gr-reset" href="{{ reset_url }}">Clear</a>{% endif %}</form>
+    <p class="gr-result-count" role="status">{{ pagination.total }} {{ 'matching' if q else 'saved' }} {{ 'stock histories' if kind == 'stock' else 'currency-pair histories' }}{% if q %} for “{{ q }}”{% endif %}</p>
+    {% if pagination.total %}<div class="gr-list-head" aria-hidden="true"><span>{{ 'Company / symbol' if kind == 'stock' else 'Currency pair' }}</span><span>Latest saved observation</span><span>Source / refresh</span></div>{% endif %}
+    <ul class="gr-reference-list">
+      {% for record in pagination['items'] %}<li class="gr-reference-row">
+        <div class="gr-reference-name"><a href="{{ url_for(detail_endpoint, instrument_id=record.id) }}">{{ record.name }} <span aria-hidden="true">↗</span></a><span>{{ record.symbol }}</span><small>{{ record.unit_label }}</small></div>
+        <div class="gr-reference-value">{% if record.available %}<strong title="Exact value: {{ exact_value(record.latest_value) }}">{{ preview_value(record.latest_value) }}</strong><span>{{ record.unit_label }}</span><small>Observation {{ record.latest_date }}</small>{% else %}<strong class="gr-unavailable">Unavailable</strong><small>No saved observations yet</small>{% endif %}</div>
+        <div class="gr-reference-source"><span>{{ record.provider }}</span><small>Manual updates · Last successful refresh: {{ record.last_success or 'Not yet available' }}</small>{% if record.stale %}<small class="gr-review-note">Refresh delayed · Showing saved history</small>{% endif %}</div>
+      </li>{% else %}<li class="gr-empty" role="status"><h2>{{ 'No matching histories' if q else ('No saved stock histories yet' if kind == 'stock' else 'No saved exchange-rate histories yet') }}</h2><p>{{ 'Try a different name, symbol or currency.' if q else 'Daily histories will appear here after the first successful refresh. Each history will show its source and observation date.' }}</p>{% if q %}<a class="gr-action no-underline" href="{{ reset_url }}">Show all histories</a>{% else %}<a class="gr-action no-underline" href="{{ url_for('global_reference.index', kind='exchange_reference') }}">Explore official currency references</a>{% endif %}</li>{% endfor %}
+    </ul>
+    {% if pagination.total %}<nav class="gr-pagination" aria-label="History pages"><span>{{ pagination.start }}–{{ pagination.end }} of {{ pagination.total }}</span><div>{% if pagination.previous %}<a class="gr-action no-underline" href="{{ pagination.previous }}">Previous</a>{% endif %}<span>Page {{ pagination.page }} / {{ pagination.pages }}</span>{% if pagination.next %}<a class="gr-action no-underline" href="{{ pagination.next }}">Next</a>{% endif %}</div></nav>{% endif %}
+  </section>
+  <p class="gr-footnote">{{ 'Share prices are historical daily observations.' if kind == 'stock' else 'Currency pairs are historical daily observations; official currency references remain available separately.' }} Source dates can differ. Missing days remain gaps. These histories are for reference and research.</p>
+</div>
+{% endblock %}

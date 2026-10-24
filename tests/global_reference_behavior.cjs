@@ -50,3 +50,56 @@ test('consecutive 53-week annual reports remain connected and source decimals su
     assert.equal(destroyed, 2); // Range redraw discarded the first chart.
     assert.equal(disconnected, 2);
 });
+
+
+test('reference-only daily charts retain rendering and controls without attaching exports', () => {
+    for (const allowExport of [false, undefined]) {
+        const value = {textContent: ''}, period = {textContent: ''};
+        const listeners = {}, exports = [];
+        const history = [
+            {date: '2026-10-21', period: '2026-10-21', price: 0.91},
+            {date: '2026-10-22', period: '2026-10-22', price: 0.92},
+        ];
+        const elements = {
+            'gr-chart': {clientWidth: 800, clientHeight: 320, dataset: {}},
+            'gr-chart-data': {textContent: JSON.stringify({name:'Currency',unit:'EUR per USD',frequency:'daily',history,allowExport})},
+            'gr-readout': {querySelector: key => key === 'strong' ? value : period},
+            'gr-range': {value: 'all', addEventListener: (event,callback) => {listeners.range=callback;}},
+            'gr-chart-type': {value: 'line', addEventListener: (event,callback) => {listeners.type=callback;}},
+            'gr-range-caption': {textContent: ''},
+        };
+        let options, renders=0;
+        const BW = {
+            Visuals: {timeSeries: (target, input, config) => {
+                options=config; renders++; return {destroy() {}};
+            }},
+            VisualBuilderSources: {
+                reference: () => {exports.push('reference'); return {};},
+                attach: () => {exports.push('attach');},
+                setPage: () => {exports.push('setPage');},
+            },
+        };
+        class Observer {observe() {} disconnect() {}}
+        vm.runInNewContext(code, {
+            window: {BW,addEventListener() {}}, BW,
+            document: {getElementById:id=>elements[id],querySelector:()=>({}),documentElement:{}},
+            ResizeObserver:Observer,MutationObserver:Observer,
+            requestAnimationFrame:callback=>{callback();return 1;},cancelAnimationFrame() {},
+        });
+        assert.equal(elements['gr-chart'].dataset.rendered,'true');
+        assert.equal(renders,1);
+        assert.deepEqual(Array.from(options.xValues,day=>day.toISOString().slice(0,10)),['2026-10-21','2026-10-22']);
+        options.onInspect({value:0.91,period:'2026-10-21'});
+        assert.equal(value.textContent,'0.91');
+        assert.equal(period.textContent,'EUR per USD · Period 2026-10-21');
+        elements['gr-chart-type'].value='bar';
+        listeners.type();
+        assert.equal(options.type,'bar');
+        elements['gr-range'].value='1';
+        listeners.range();
+        assert.equal(renders,3);
+        assert.deepEqual(exports,allowExport===false?[]:[
+            'reference','attach','setPage','reference','attach','setPage','reference','attach','setPage',
+        ]);
+    }
+});

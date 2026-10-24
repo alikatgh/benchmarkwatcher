@@ -77,3 +77,61 @@ test('explicit selections retain selected rows outside filters and separate unit
     expect(spec.series.map(series=>series.unit)).toEqual(['USD / barrel','USD / ounce']);
     expect(spec.datasets).toHaveLength(3);
 });
+
+
+test('reference-only observations cannot enter the adapter, default page export or action', async()=>{
+    const data={name:'Daily currency rate',unit:'EUR per USD',frequency:'daily',history:[{date:'2026-10-22',price:0.9}],allowExport:false};
+    const message='These observations can be viewed on this page only. Export is unavailable.';
+    document.body.innerHTML='<script id="gr-chart-data" type="application/json"></script><div id="export-action"></div>';
+    document.getElementById('gr-chart-data').textContent=JSON.stringify(data);
+    expect(()=>BW.VisualBuilderSources.reference(data)).toThrow(message);
+    await expect(BW.VisualBuilderSources.defaultSpec()).rejects.toMatchObject({visualMessage:message});
+    const host=document.getElementById('export-action');
+    BW.VisualBuilderSources.attach(host,()=>BW.VisualBuilderSources.defaultSpec());
+    host.querySelector('button').click();
+    await Promise.resolve();await Promise.resolve();await Promise.resolve();
+    expect(BW.QuickVisuals.open).not.toHaveBeenCalled();
+    expect(host.querySelector('[role=status]').textContent).toBe(message);
+    expect(host.querySelector('button').disabled).toBe(false);
+});
+
+test.each([undefined,true])('existing references retain their export action when allowExport is %s',async allowExport=>{
+    const data={name:'Official rate',unit:'USD per EUR',frequency:'daily',history:[{date:'2026-10-22',price:1.1}],allowExport};
+    document.body.innerHTML='<script id="gr-chart-data" type="application/json"></script><div id="export-action"></div>';
+    document.getElementById('gr-chart-data').textContent=JSON.stringify(data);
+    const spec=await BW.VisualBuilderSources.defaultSpec();
+    expect(spec.series[0].points).toEqual(data.history);
+    const host=document.getElementById('export-action');
+    BW.VisualBuilderSources.attach(host,()=>BW.VisualBuilderSources.defaultSpec());
+    host.querySelector('button').click();
+    await Promise.resolve();await Promise.resolve();await Promise.resolve();
+    expect(BW.QuickVisuals.open).toHaveBeenCalledWith(spec,{trigger:host.querySelector('button')});
+});
+
+test.each([false,undefined])('catalog history fetch respects allowExport=%s without changing existing references',async allowExport=>{
+    document.body.innerHTML='<script id="bw-visual-catalog" type="application/json">[]</script><button data-visual-history="/reference/test">Quick visual</button><span role="status"></span>';
+    const data={name:'Saved history',unit:'USD',frequency:'daily',history:[{date:'2026-10-22',price:1}],allowExport};
+    const markup='<script id="gr-chart-data" type="application/json">'+JSON.stringify(data)+'</script>';
+    window.fetch=jest.fn().mockResolvedValue({ok:true,text:async()=>markup});
+    // Invoke only this adapter instance's init callback. Other unit cases also
+    // install document listeners, which must not duplicate this simulated click.
+    const callbacks=[];
+    const listener=jest.spyOn(document,'addEventListener').mockImplementation((event,callback)=>{
+        if(event==='DOMContentLoaded') callbacks.push(callback);
+    });
+    window.eval(script);
+    listener.mockRestore();
+    callbacks[0]();
+    const button=document.querySelector('[data-visual-history]');
+    button.click();
+    await new Promise(resolve=>setTimeout(resolve,0));
+    expect(window.fetch).toHaveBeenCalledTimes(1);
+    expect(button.disabled).toBe(false);
+    if(allowExport===false){
+        expect(BW.QuickVisuals.open).not.toHaveBeenCalled();
+        expect(button.nextElementSibling.textContent).toBe('These observations can be viewed on this page only. Export is unavailable.');
+    }else{
+        expect(BW.QuickVisuals.open).toHaveBeenCalledWith(expect.objectContaining({title:'Saved history'}),{trigger:button});
+        expect(button.nextElementSibling.textContent).toBe('');
+    }
+});

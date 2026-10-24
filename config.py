@@ -22,6 +22,8 @@ class Config:
     BASE_DIR = _BASE_DIR
     JSON_DATA_DIR = os.path.join(_BASE_DIR, 'data')
     PUBLIC_LIBRARY_DB = os.environ.get('PUBLIC_LIBRARY_DB')
+    MARKET_DATA_DB = os.environ.get('MARKET_DATA_DB')
+    MARKET_DATA_ENABLED = os.environ.get('MARKET_DATA_ENABLED') == '1'
 
     # Cache Configuration — FileSystemCache (shared across ALL Passenger workers AND
     # persistent across restarts), NOT SimpleCache (per-process, wiped on every restart).
