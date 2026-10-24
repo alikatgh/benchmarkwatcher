@@ -60,6 +60,18 @@ class FakeTransport:
         return payload
 
 
+class CompleteDateRangeTransport(FakeTransport):
+    """Synthetic worst case: every requested calendar day has a valid row."""
+    def get_json(self, provider, params):
+        payload = super().get_json(provider, params)
+        start, end = date.fromisoformat(params['date_from']), date.fromisoformat(params['date_to'])
+        payload['data'] = [stock_payload(symbol, params['exchange'], (start + timedelta(days=index)).isoformat())['data'][0]
+                           for symbol in params['symbols'].split(',') for index in range((end - start).days + 1)]
+        payload['pagination'].update(total=len(payload['data']), count=len(payload['data']))
+        assert len(payload['data']) <= 1000
+        return payload
+
+
 def test_default_disabled_has_no_database_writes_or_client_creation(tmp_path):
     path = tmp_path / 'missing' / 'market.sqlite3'
     with patch('scripts.refresh_market_data.VendorTransport', side_effect=AssertionError('No client')):
@@ -335,17 +347,7 @@ def test_monthly_profile_full_year_batches_charge_100_tickers_once_and_obey_32_d
     path = tmp_path / 'market.sqlite3'
     rolling_enrolled(path)
 
-    class FullHistoryTransport(FakeTransport):
-        def get_json(self, provider, params):
-            payload = super().get_json(provider, params)
-            start, end = date.fromisoformat(params['date_from']), date.fromisoformat(params['date_to'])
-            payload['data'] = [stock_payload(symbol, params['exchange'], (start + timedelta(days=index)).isoformat())['data'][0]
-                               for symbol in params['symbols'].split(',') for index in range((end - start).days + 1)]
-            payload['pagination'].update(total=len(payload['data']), count=len(payload['data']))
-            assert len(payload['data']) <= 1000
-            return payload
-
-    transport = FullHistoryTransport()
+    transport = CompleteDateRangeTransport()
     report = refresh_due(path, MONTHLY_CONFIG, NOW, transport, clock=lambda: 0)
     result = report['providers']['marketstack']
     assert result['status'] == 'refreshed' and result['updated'] == result['quota_units'] == 100
@@ -365,6 +367,53 @@ def test_monthly_profile_full_year_batches_charge_100_tickers_once_and_obey_32_d
     update = refresh_due(path, MONTHLY_CONFIG, later, transport, clock=lambda: 0)
     assert update['providers']['marketstack']['updated'] == 100
     assert update['network_requests'] <= 6
+
+
+def test_recent_history_window_saves_one_hundred_stocks_in_two_requests_with_one_hundred_charges(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    rolling_enrolled(path)
+    transport = CompleteDateRangeTransport()
+    result = refresh_due(path, MONTHLY_CONFIG, NOW, transport, clock=lambda: 0,
+                         history_days=7)['providers']['marketstack']
+    assert result['status'] == 'refreshed' and result['failures'] == []
+    assert result['updated'] == result['quota_units'] == 100
+    assert result['history_days'] == 7 and result['network_requests'] == 2
+    assert {params['exchange'] for _, params in transport.calls} == {'XNYS', 'XNAS'}
+    for _, params in transport.calls:
+        assert params['date_from'] == '2026-10-16' and params['date_to'] == '2026-10-22'
+        assert len(params['symbols'].split(',')) * 7 <= 1000
+        assert params['limit'] == 1000 and params['offset'] == 0
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 100
+    for instrument in STOCKS:
+        observations = read_instrument(path, instrument.id, now=NOW)['observations']
+        assert len(observations) == 7
+        assert observations[0]['date'] == '2026-10-16' and observations[-1]['date'] == '2026-10-22'
+
+
+def test_shorter_history_window_keeps_all_previously_saved_dates(tmp_path):
+    path = tmp_path / 'market.sqlite3'
+    enrolled(path)
+    transport = CompleteDateRangeTransport()
+    initial = refresh_due(path, STOCK_CONFIG, NOW, transport, clock=lambda: 0)['providers']['marketstack']
+    assert initial['history_days'] == 365
+    before = read_instrument(path, STOCKS[0].id, now=NOW)['observations']
+    assert len(before) == 365
+    later = NOW + timedelta(days=1)
+    updated = refresh_due(path, STOCK_CONFIG, later, transport, clock=lambda: 0,
+                          history_days=7)['providers']['marketstack']
+    after = read_instrument(path, STOCKS[0].id, now=later)['observations']
+    assert updated['history_days'] == 7 and updated['updated'] == 3
+    assert len(after) == 366 and after[:-1] == before
+    assert after[-1]['date'] == '2026-10-23'
+
+
+@pytest.mark.parametrize('history_days', [0, 366, -1, True, False, 7.0, '7', None])
+def test_invalid_history_window_fails_before_transport_or_ledger_work(tmp_path, history_days):
+    path = tmp_path / 'missing.sqlite3'
+    with patch('scripts.refresh_market_data.VendorTransport', side_effect=AssertionError('No transport')):
+        with pytest.raises(ValueError):
+            refresh_due(path, MONTHLY_CONFIG, NOW, history_days=history_days)
+    assert not path.exists()
 
 
 @pytest.mark.parametrize('used,remaining', [(29, 71), (99, 1)])

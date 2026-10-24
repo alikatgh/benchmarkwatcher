@@ -1028,3 +1028,70 @@ def test_corrupt_rolling_authorization_cannot_extend_32_day_permission(tmp_path)
         begin_job(path, 'marketstack', 'bad-authorization', now=NOW)
     assert read_status(path, now=NOW)['providers']['marketstack']['status'] == 'invalid_rolling_authorization'
     assert path.read_bytes() == before
+
+
+
+@pytest.mark.parametrize('overlap', [1, 20])
+def test_fx_cache_union_limit_preserves_old_rows_and_charged_reservation(tmp_path, overlap):
+    from scripts.market_data_catalog import FX
+    path = tmp_path / 'market.sqlite3'
+    enroll(path, 'exchangerate_host')
+    token = begin_job(path, 'exchangerate_host', 'legacy-twenty', now=NOW)
+    original = reserve_call(path, token, 'legacy-twenty', FX[0].id, now=NOW)
+    old = {item.id: [{'date': '2026-10-22', 'value': 1}] for item in FX}
+    assert len(old) == 20
+    save_observations(path, token, original, old, now=NOW)
+    finish_job(path, token, now=NOW)
+    token = begin_job(path, 'exchangerate_host', 'all-quotes', now=NOW)
+    reservation = reserve_call(path, token, 'all-quotes', FX[0].id, now=NOW)
+    # 200 individually valid quotes can still exceed the aggregate cache bound
+    # when the provider omits historical subjects. No old subject may be evicted.
+    incoming = {item.id: [{'date': '2026-10-22', 'value': 2}] for item in FX[:overlap]}
+    incoming.update({f'fx-USD-A{chr(65 + i // 26)}{chr(65 + i % 26)}':
+                     [{'date': '2026-10-22', 'value': i + 1}]
+                     for i in range(200 - overlap)})
+    assert len(incoming) == 200 and len(set(old) | set(incoming)) == 220 - overlap
+    before = database_rows(path)
+    if overlap == 1:
+        with pytest.raises(StoreError, match='invalid_observations'):
+            save_observations(path, token, reservation, incoming, now=NOW)
+        assert database_rows(path) == before
+        assert len(list_instruments(path, 'fx', now=NOW)) == 20
+        with sqlite3.connect(path) as conn:
+            assert conn.execute('SELECT outcome FROM reservations WHERE id=?', (reservation,)).fetchone()[0] == 'uncertain'
+    else:
+        save_observations(path, token, reservation, incoming, now=NOW)
+        assert len(list_instruments(path, 'fx', now=NOW)) == 200
+        assert set(old) <= {item['id'] for item in list_instruments(path, 'fx', now=NOW)}
+        with sqlite3.connect(path) as conn:
+            assert conn.execute('SELECT outcome FROM reservations WHERE id=?', (reservation,)).fetchone()[0] == 'success'
+    assert read_status(path, now=NOW)['providers']['exchangerate_host']['used'] == 2
+
+
+def test_stock_cache_union_rejects_101st_subject_but_allows_overlap_at_100(tmp_path, monkeypatch):
+    from dataclasses import replace
+    from scripts import vendor_data_store as store
+    fixtures = [replace(STOCKS[0], id=f'stock-XNAS-FIX{i}', symbol=f'FIX{i}') for i in range(101)]
+    monkeypatch.setattr(store, 'CATALOG', {item.id: item for item in fixtures})
+    path = tmp_path / 'market.sqlite3'
+    enroll(path)
+    # Fixture-only cache seed isolates aggregate storage capacity from quota
+    # accounting; the actual attempted writes still require charged reservations.
+    with sqlite3.connect(path) as conn:
+        conn.executemany('INSERT INTO instruments VALUES (?,?,?)',
+                         [(item.id, NOW.isoformat(), 1) for item in fixtures[:100]])
+        conn.executemany('INSERT INTO observations (instrument_id,date,value) VALUES (?,?,?)',
+                         [(item.id, '2026-10-22', 1) for item in fixtures[:100]])
+    token = begin_job(path, 'marketstack', 'capacity-boundary', now=NOW)
+    reservation = reserve_call(path, token, 'new-101st', fixtures[100].id, now=NOW)
+    before = database_rows(path)
+    with pytest.raises(StoreError, match='invalid_observations'):
+        save_observations(path, token, reservation,
+                          {fixtures[100].id: [{'date': '2026-10-22', 'value': 2}]}, now=NOW)
+    assert database_rows(path) == before
+    overlap = reserve_call(path, token, 'existing-100th', fixtures[99].id, now=NOW)
+    save_observations(path, token, overlap,
+                      {fixtures[99].id: [{'date': '2026-10-22', 'value': 2}]}, now=NOW)
+    assert len(list_instruments(path, 'stock', now=NOW)) == 100
+    assert read_instrument(path, fixtures[99].id, now=NOW)['latest_value'] == 2
+    assert read_status(path, now=NOW)['providers']['marketstack']['used'] == 2

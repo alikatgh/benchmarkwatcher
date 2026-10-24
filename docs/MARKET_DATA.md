@@ -18,12 +18,30 @@ its existing daily fetch job does not run these collectors.
 
 The symbol catalogue is checked using Marketstack's public downloadable CSV and
 SEC's public company/exchange metadata, without authenticated discovery calls.
-Stock responses already contain identity/currency metadata. The first fetch asks
-for the full permitted year; later fetches request accumulated new days with a
-small overlap. Stocks with the same exchange and date range share an HTTP call.
+Stock responses already contain identity/currency metadata. By default the first
+fetch asks for a year; later fetches request accumulated new days with a small
+overlap. The explicit `refresh_due(..., history_days=7)` operator option instead
+requests only the most recent seven calendar days. `history_days` accepts integer
+values from 1 through 365 and defaults to 365. It changes the requested window,
+while preserving every previously saved observation. Stocks with the same
+exchange and date range share an HTTP call.
 Batch size is bounded by `floor(1000 / inclusive_calendar_days)`, conservatively
 keeping the combined response inside the 1,000-row limit even before accounting
 for weekends. A batch of two stock symbols still consumes two quota units.
+
+For initial breadth, a seven-day window can collect 100 new symbols across two
+exchanges in two HTTP requests while still charging 100 ticker units. The actual
+validated observation dates and counts define each displayed history; a recent
+window is not a full-year history. Combining a short window with a 32-day cadence
+can leave intervening dates absent, and no gap is filled with an inferred price.
+The default year-long window remains available when historical depth is wanted.
+
+On 2026-10-24, retained responses for some newly requested stocks contained
+inconsistent historical currency metadata despite matching symbol/exchange
+fields. A shorter explicit request window can avoid those older dates without
+discarding rows inside a response. Every returned row in the requested window
+must still validate; changing the window does not authorize retrying a charged
+failure or relabeling a foreign-currency observation as USD.
 
 The current Marketstack V2 schemas require `symbols` even on exchange-wide EOD
 routes. Their broad introductory descriptions do not establish an all-company,

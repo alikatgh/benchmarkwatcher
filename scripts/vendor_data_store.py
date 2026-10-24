@@ -29,6 +29,7 @@ MAX_INITIAL_GRANT_DURATION = timedelta(hours=24)
 LEASE_SECONDS = 600
 INITIAL_STOCK_RECOVERY_KEY = 'initial-stock-recovery-v1'
 MAX_OBSERVATIONS = 1100
+CACHE_KIND_LIMITS = {'stock': 100, 'fx': 200}
 
 
 class StoreError(Exception):
@@ -591,6 +592,18 @@ def save_observations(path, token, reservation, batches, *, now=None, refresh_da
         if (job['provider'] == 'marketstack' and set(batches) != {reserved['subject']} or
                 job['provider'] == 'exchangerate_host' and any(CATALOG[key].kind != 'fx' for key in batches)):
             raise StoreError('invalid_reservation')
+        # Bound the merged cache, including historical subjects absent from this
+        # response. The IMMEDIATE transaction serializes competing cache saves;
+        # rejection preserves every old row and the already charged reservation.
+        merged = set(batches) | {row['id'] for row in conn.execute('SELECT id FROM instruments')}
+        counts = dict.fromkeys(CACHE_KIND_LIMITS, 0)
+        for identifier in merged:
+            item = CATALOG.get(identifier)
+            if item is None or item.kind not in CACHE_KIND_LIMITS:
+                raise StoreError('invalid_observations')
+            counts[item.kind] += 1
+            if counts[item.kind] > CACHE_KIND_LIMITS[item.kind]:
+                raise StoreError('invalid_observations')
         for identifier in batches:
             prior = conn.execute('SELECT last_success FROM instruments WHERE id=?', (identifier,)).fetchone()
             if prior and utc(prior[0]) > now:

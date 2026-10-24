@@ -384,14 +384,14 @@ def parse_stock_batch(payload, instruments, start, end):
     return observations, failures
 
 
-def _stock_batches(database, instruments, target, now):
+def _stock_batches(database, instruments, target, now, *, history_days=365):
     """Calendar-day worst cases guarantee at most 1000 rows without pagination."""
     groups = {}
     planned = []
     for index, item in enumerate(instruments):
         existing = read_instrument(database, item.id, now=now)
         latest = existing['latest_date'] if existing else None
-        start = target - timedelta(days=364)
+        start = target - timedelta(days=history_days - 1)
         if latest:
             start = max(start, date.fromisoformat(latest) - timedelta(days=7))
         planned.append((bool(latest), latest or '', index, item, start))
@@ -413,7 +413,7 @@ def _safe_code(exc):
     return str(exc) if isinstance(exc, FetchError) and str(exc) in FAILURES else 'network_error'
 
 
-def _refresh_provider(database, provider, config, now, transport, clock, coverage_limit):
+def _refresh_provider(database, provider, config, now, transport, clock, coverage_limit, history_days):
     enabled_key, credential_key = ENV_KEYS[provider]
     if config.get(enabled_key) != '1':
         return _report('disabled')
@@ -448,7 +448,8 @@ def _refresh_provider(database, provider, config, now, transport, clock, coverag
     requests_count, updated, failures, outcomes, units = 0, 0, [], [], 0
     started = clock()
     try:
-        work = _stock_batches(database, due, target, now) if profile else [([FX[0]], target)]
+        work = (_stock_batches(database, due, target, now, history_days=history_days)
+                if profile else [([FX[0]], target)])
         for members, start in work:
             elapsed = clock() - started
             if elapsed > RUN_SECONDS:
@@ -520,19 +521,24 @@ def _refresh_provider(database, provider, config, now, transport, clock, coverag
             failures.append('ledger_unavailable')
     return _report('partial' if failures and updated else 'failed' if failures else 'refreshed',
                    requests_count, updated=updated, failures=failures, quota_units=units, outcomes=outcomes,
-                   remaining_due=max(0, len(due) - units))
+                   remaining_due=max(0, len(due) - units), history_days=history_days if profile else 1)
 
 
-def refresh_due(database, environ=None, now=None, transport=None, *, clock=time.monotonic, coverage_limit=None):
+def refresh_due(database, environ=None, now=None, transport=None, *, clock=time.monotonic,
+                coverage_limit=None, history_days=365):
     """The existing scheduled fetch may call this; defaults perform zero calls.
 
     Passing a fake transport and UTC clock allows all failure paths to be tested
     without credentials or vendor requests. No database is created implicitly.
     coverage_limit optionally bounds stock quota units in this invocation (1-100),
     enabling finite coverage chunks without retrying any charged member.
+    history_days bounds the requested stock date window (1-365). A recent window
+    favors breadth with fewer HTTP calls while retaining all previously saved dates.
     """
     if coverage_limit is not None and (type(coverage_limit) is not int or not 1 <= coverage_limit <= 100):
         raise ValueError('coverage_limit must be an integer between 1 and 100')
+    if type(history_days) is not int or not 1 <= history_days <= 365:
+        raise ValueError('history_days must be an integer between 1 and 365')
     config, now = os.environ if environ is None else environ, utc(now)
     own_transport = None
     reports = {}
@@ -543,7 +549,8 @@ def refresh_due(database, environ=None, now=None, transport=None, *, clock=time.
         active_transport = transport or own_transport
         for provider in ENV_KEYS:
             try:
-                reports[provider] = _refresh_provider(database, provider, config, now, active_transport, clock, coverage_limit)
+                reports[provider] = _refresh_provider(database, provider, config, now, active_transport,
+                                                     clock, coverage_limit, history_days)
             except (StoreError, sqlite3.Error, OSError, ValueError):
                 reports[provider] = _report('ledger_unavailable')
     finally:
