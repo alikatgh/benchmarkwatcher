@@ -186,7 +186,7 @@ def test_missing_saved_stocks_and_status_never_create_transport_or_network(tmp_p
 
 
 @pytest.mark.parametrize('payload', [None, {}, [dict(base='USD', quote='JPY', date='2025-01-01', rate=1)],
-    [dict(base='EUR', quote='USD', date='2024-12-31', rate=1)],
+    [dict(base='EUR', quote='USD', date='2024-12-17', rate=1)],
     [dict(base='EUR', quote='EUR', date='2025-01-01', rate=1)],
     [dict(base='EUR', quote='USD', date='2025-01-01', rate=float('inf'))]])
 def test_rate_response_identity_dates_and_numbers_strictly_validated(payload):
@@ -437,3 +437,59 @@ def test_worker_request_shape_is_explicit_us_composite_not_mic_substitution():
     for bad in (dict(job, exchCode='UW'), {**{key: value for key, value in job.items() if key != 'exchCode'}, 'micCode': 'XNAS'}):
         with pytest.raises(store.OpenDataError):
             fetch._request_shape('openfigi', {}, [bad])
+
+
+def test_year_boundary_leading_anchors_keep_exact_in_range_dates():
+    metadata = dict(META, start_date='1999-01-04', end_date='2000-12-31')
+    leading = [dict(base='EUR', quote='USD', date='1999-12-31', rate=1.005),
+               dict(base='EUR', quote='EUR', date='1999-12-31', rate=1)]
+    actual = [dict(base='EUR', quote='USD', date='2000-01-03', rate=1.015),
+              dict(base='EUR', quote='JPY', date='2000-01-03', rate=102.1),
+              dict(base='EUR', quote='USD', date='2000-12-29', rate=.93)]
+    assert fetch.parse_rates(leading + actual, '2000-01-01', '2000-12-31', metadata) == [
+        dict(quote='USD', date='2000-01-03', value=1.015),
+        dict(quote='JPY', date='2000-01-03', value=102.1),
+        dict(quote='USD', date='2000-12-29', value=.93)]
+
+
+@pytest.mark.parametrize('leading', [
+    dict(base='USD', quote='JPY', date='1999-12-31', rate=102),
+    dict(base='EUR', quote='CHF', date='1999-12-31', rate=1.1),
+    dict(base='EUR', quote='USD', date='1999-12-31', rate=-1),
+    dict(base='EUR', quote='USD', date='1999-12-31', rate=True),
+    dict(base='EUR', quote='EUR', date='1999-12-31', rate=1.01),
+    dict(base='EUR', quote='USD', date='1999-12-17', rate=1),
+    dict(base='EUR', quote='USD', date='2001-01-01', rate=1),
+])
+def test_leading_anchor_validation_cannot_be_bypassed_by_exclusion(leading):
+    metadata = dict(META, start_date='1999-01-04', end_date='2000-12-31')
+    actual = dict(base='EUR', quote='USD', date='2000-01-03', rate=1.015)
+    with pytest.raises(store.OpenDataError):
+        fetch.parse_rates([leading, actual], '2000-01-01', '2000-12-31', metadata)
+
+
+@pytest.mark.parametrize('quote', ['EUR', 'USD'])
+def test_duplicate_leading_anchors_are_rejected(quote):
+    metadata = dict(META, start_date='1999-01-04', end_date='2000-12-31')
+    leading = dict(base='EUR', quote=quote, date='1999-12-31', rate=1)
+    actual = dict(base='EUR', quote='USD', date='2000-01-03', rate=1.015)
+    with pytest.raises(store.OpenDataError):
+        fetch.parse_rates([leading, leading, actual], '2000-01-01', '2000-12-31', metadata)
+
+
+def test_leading_anchor_cannot_precede_provider_history_or_be_only_payload():
+    metadata = dict(META, start_date='1999-01-04', end_date='2000-12-31')
+    actual = dict(base='EUR', quote='USD', date='1999-01-05', rate=1.01)
+    with pytest.raises(store.OpenDataError):
+        fetch.parse_rates([dict(base='EUR', quote='USD', date='1999-01-03', rate=1), actual],
+                          '1999-01-04', '1999-12-31', metadata)
+    with pytest.raises(store.OpenDataError):
+        fetch.parse_rates([dict(base='EUR', quote='USD', date='1999-12-31', rate=1)],
+                          '2000-01-01', '2000-12-31', metadata)
+
+
+def test_leading_lookback_accepts_exact_fourteen_day_floor():
+    metadata = dict(META, start_date='1999-01-04', end_date='2000-12-31')
+    actual = dict(base='EUR', quote='USD', date='2000-01-03', rate=1.015)
+    assert fetch.parse_rates([dict(base='EUR', quote='USD', date='1999-12-18', rate=1), actual],
+                             '2000-01-01', '2000-12-31', metadata) == [dict(quote='USD', date='2000-01-03', value=1.015)]

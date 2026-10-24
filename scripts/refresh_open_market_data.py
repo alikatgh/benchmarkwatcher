@@ -267,14 +267,20 @@ def parse_metadata(payload, now=None):
 
 
 def parse_rates(payload, start, end, metadata):
-    if not isinstance(payload, list) or not 1 <= len(payload) <= MAX_CURRENCIES * 366:
+    # Upstream's daily range anchors a silent start using the provider's
+    # 14-day carry-forward window, while keeping the actual observation date.
+    # https://github.com/lineofflight/frankfurter/blob/main/lib/versions/v2/rate_query.rb
+    first, last = day(start), day(end)
+    floor = max(day(metadata['start_date']), first - timedelta(days=14))
+    if not isinstance(payload, list) or not 1 <= len(payload) <= MAX_CURRENCIES * (366 + 14):
         raise OpenDataError('invalid_response')
     points, seen = [], set()
     for row in payload:
         if not isinstance(row, dict) or row.get('base') != 'EUR':
             raise OpenDataError('identity_mismatch')
         quote, when = row.get('quote'), row.get('date')
-        if quote not in metadata['currencies'] or not day(start) <= day(when) <= day(end) or (quote, when) in seen:
+        observed = day(when)
+        if quote not in metadata['currencies'] or not floor <= observed <= last or (quote, when) in seen:
             raise OpenDataError('invalid_response')
         seen.add((quote, when))
         value = number(row.get('rate'))
@@ -284,7 +290,12 @@ def parse_rates(payload, start, end, metadata):
             if value != 1:
                 raise OpenDataError('identity_mismatch')
             continue
-        points.append(dict(quote=currency(quote), date=when, value=value))
+        quote = currency(quote)
+        if observed < first:
+            # Earlier chunks already contain these observations. Excluding the
+            # leading anchor never creates a fixing on a holiday/weekend.
+            continue
+        points.append(dict(quote=quote, date=when, value=value))
     if not points:
         raise OpenDataError('invalid_response')
     return points
