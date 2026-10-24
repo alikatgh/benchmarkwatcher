@@ -219,3 +219,18 @@ def test_readonly_sql_work_has_progress_deadline(tmp_path):
                          'WHERE x<100000000) SELECT sum(x) FROM counter').fetchone()
     finally:
         conn.close()
+
+
+def test_frankfurter_durable_reservation_requires_ten_second_spacing(tmp_path):
+    path = tmp_path / 'open.sqlite3'
+    store.initialize(path)
+    token = store.claim_job(path, NOW)
+    store.begin_provider(path, token, 'frankfurter_ecb', NOW)
+    store.reserve_request(path, token, 'frankfurter_ecb', NOW)
+    with pytest.raises(store.OpenDataError, match='request_pacing'):
+        store.reserve_request(path, token, 'frankfurter_ecb', NOW + timedelta(seconds=9))
+    assert store.status(path)['providers']['frankfurter_ecb']['requests'] == 1
+    store.reserve_request(path, token, 'frankfurter_ecb', NOW + timedelta(seconds=10))
+    state = store.status(path)['providers']['frankfurter_ecb']
+    assert state['requests'] == 2 and store.utc(state['last_request']) == NOW + timedelta(seconds=10)
+    store.release_job(path, token)

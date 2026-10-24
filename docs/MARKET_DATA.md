@@ -342,7 +342,7 @@ not an additional stock-price feed or evidence of historical ticker ownership.
 
 An explicit run is bounded to 40 HTTP requests, 600 seconds, 20 seconds per
 request, 4 MiB per response, 64 MiB of database pages and 512,000 observations.
-Requests are durably reserved and spaced by at least one second for Frankfurter
+Requests are durably reserved and spaced by at least ten seconds for Frankfurter
 and three seconds for OpenFIGI. There are no automatic retries. Complete results
 publish atomically; incomplete initial histories remain staged and can resume.
 Successful refreshes have 24-hour ECB and 30-day OpenFIGI cooldowns; failed runs

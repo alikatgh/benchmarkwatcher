@@ -23,6 +23,8 @@ MAX_CURRENCIES = 64
 MAX_OBSERVATIONS = 512_000
 MAX_HISTORY = 20_000
 PROVIDERS = ('frankfurter_ecb', 'openfigi')
+# Conservative local pacing; Frankfurter publishes no numeric request quota.
+REQUEST_SPACING_SECONDS = {'frankfurter_ecb': 10, 'openfigi': 3}
 ECB_SOURCE_URL = 'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.en.html'
 COLUMNS = {
     'fx': ('id', 'quote', 'latest_date', 'latest_value', 'coverage_start', 'coverage_end', 'observation_count', 'provider_start', 'provider_end', 'last_success'),
@@ -278,7 +280,7 @@ def reserve_request(path, token, provider, now=None):
         row = conn.execute('SELECT last_request,requests FROM providers WHERE provider=?', (provider,)).fetchone()
         if row is None or type(row['requests']) is not int or row['requests'] < 0:
             raise OpenDataError('invalid_provider_state')
-        spacing = 1 if provider == 'frankfurter_ecb' else 3
+        spacing = REQUEST_SPACING_SECONDS[provider]
         if row['last_request'] and now - utc(row['last_request']) < timedelta(seconds=spacing):
             raise OpenDataError('request_pacing')
         conn.execute('UPDATE providers SET last_request=?,requests=requests+1 WHERE provider=?', (now.isoformat(), provider))

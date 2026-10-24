@@ -51,7 +51,7 @@ if __package__ in (None, ''):
 
 from scripts.market_data_catalog import CATALOG
 from scripts.open_market_store import (
-    MAX_CURRENCIES, MAX_DATABASE_BYTES, OpenDataError, begin_provider, claim_job,
+    MAX_CURRENCIES, MAX_DATABASE_BYTES, REQUEST_SPACING_SECONDS, OpenDataError, begin_provider, claim_job,
     currency, day, fail_provider, initialize, number, prepare_fx, publish_fx, publish_identities,
     release_job, reserve_request, stage_fx_chunk, status, utc, validate_identity, year_chunks,
 )
@@ -375,7 +375,7 @@ class _Job:
     def request(self, provider, kind, params=None, payload=None):
         if self.count >= self.max_requests:
             raise OpenDataError('request_limit')
-        spacing = 3 if provider == 'openfigi' else 1
+        spacing = REQUEST_SPACING_SECONDS[provider]
         elapsed = self.monotonic()
         if provider in self.last_request:
             wait = spacing - (elapsed - self.last_request[provider])

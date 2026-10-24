@@ -78,7 +78,7 @@ def test_full_history_is_year_chunked_paced_and_source_pinned(tmp_path):
     assert [call[0] for call in transport.calls] == ['ecb_metadata', 'ecb_rates', 'ecb_rates']
     assert transport.calls[1][1] == {'base': 'EUR', 'from': '2025-01-01', 'to': '2025-12-31'}
     assert transport.calls[2][1] == {'base': 'EUR', 'from': '2026-01-01', 'to': '2026-10-23'}
-    assert clock.sleeps == [1, 1]
+    assert clock.sleeps == [10, 10]
     row = store.read_fx(path, 'fx-ECB-EUR-USD', NOW)
     assert row['observation_count'] == 4 and row['coverage_start'] == '2025-01-01'
     again = run(path, transport, provider='frankfurter')
@@ -493,3 +493,18 @@ def test_leading_lookback_accepts_exact_fourteen_day_floor():
     actual = dict(base='EUR', quote='USD', date='2000-01-03', rate=1.015)
     assert fetch.parse_rates([dict(base='EUR', quote='USD', date='1999-12-18', rate=1), actual],
                              '2000-01-01', '2000-12-31', metadata) == [dict(quote='USD', date='2000-01-03', value=1.015)]
+
+
+def test_frankfurter_pacing_waits_for_ten_seconds_between_request_starts(tmp_path):
+    path, clock, starts = tmp_path / 'open.sqlite3', Clock(), []
+    class Timed(FakeTransport):
+        def get_json(self, *args, **kwargs):
+            starts.append(clock.monotonic())
+            result = super().get_json(*args, **kwargs)
+            clock.value += 2
+            return result
+    report = run(path, Timed(), clock, provider='frankfurter')
+    assert report['status'] == 'complete' and report['network_requests'] == 3
+    assert starts == [0, 10, 20] and clock.sleeps == [8, 8]
+    state = store.status(path)['providers']['frankfurter_ecb']
+    assert state['requests'] == 3 and store.utc(state['last_request']) == NOW + timedelta(seconds=20)
