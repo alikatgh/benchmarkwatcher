@@ -138,7 +138,7 @@ class _WorkerTransfer:
         deadline = time.monotonic() + REQUEST_SECONDS
         try:
             method = self.session.post if kind == 'openfigi' else self.session.get
-            options = dict(timeout=(3, 5), allow_redirects=False, stream=True,
+            options = dict(timeout=(3, 17), allow_redirects=False, stream=True,
                            headers={'Accept': 'application/json', 'User-Agent': 'BenchmarkWatcher-OpenData/1.0'})
             if kind == 'openfigi':
                 options['json'] = payload
@@ -168,6 +168,8 @@ class _WorkerTransfer:
                 return bytes(body)
         except OpenDataError:
             raise
+        except requests.Timeout:
+            raise OpenDataError('deadline') from None
         except (requests.RequestException, OSError):
             raise OpenDataError('network_error') from None
         except (TypeError, ValueError, UnicodeError):

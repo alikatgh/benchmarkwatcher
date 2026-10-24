@@ -249,6 +249,8 @@ def test_transport_fixed_paths_no_redirect_proxy_retry_or_cookie_reuse():
         args, kwargs = session.get.call_args
         assert args == ('https://api.frankfurter.dev/v2/providers/ecb',)
         assert kwargs['allow_redirects'] is False and kwargs['stream'] is True
+        assert kwargs['timeout'] == (3, 17)
+        assert sum(kwargs['timeout']) <= fetch.REQUEST_SECONDS == 20
         assert session.mount.call_args.args[1].max_retries.total == 0
         with pytest.raises(store.OpenDataError):
             transfer.body('arbitrary-host', {}, None)
@@ -277,6 +279,8 @@ def test_worker_rejects_oversize_http_failure_and_timeout(variant, monkeypatch):
         assert 'untrusted upstream' not in str(error.value)
         if variant == 'http503':
             assert error.value.retry_after == 1000
+        if variant == 'timeout':
+            assert str(error.value) == 'deadline'
         transfer.close()
 
 
