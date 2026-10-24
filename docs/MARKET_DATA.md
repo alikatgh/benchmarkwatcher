@@ -310,3 +310,67 @@ lease fencing, duplicate suppression, data validation, retention, credential
 redaction, disabled behavior, and network-free repeated page browsing. Existing
 reference and public-library routes remain separate. Browser checks use a local
 synthetic preview; they do not establish provider acceptance or production access.
+
+
+## No-key reference integrations
+
+Frankfurter and OpenFIGI use `scripts/refresh_open_market_data.py` and a separate
+`data/open-market-data.sqlite3` cache. They never touch the paid providers' quota
+ledger or load credentials. Public routes remain read-only and make no upstream
+requests. Set `OPEN_MARKET_DATA_ENABLED=1` and `OPEN_MARKET_DATA_DB` to the validated
+cache path, alongside `MARKET_DATA_ENABLED=1`, to display the additional data.
+Both new settings are disabled/unset by default. Missing optional data preserves
+existing market pages; a corrupt optional cache is reported without hiding the
+healthy paid-provider histories.
+
+Frankfurter requests the ECB provider explicitly. Initial collection requests
+its complete available EUR-base daily history in yearly chunks; later runs merge
+a seven-day overlap with new dates. All source observations are preserved. Each
+currency retains its actual first/last observation; an old endpoint is not proof
+of retirement. No rates from other central banks are blended in, and no missing
+days, inverse rates or cross-rates are invented. Source coverage, retrieval range
+and refresh time remain distinct in the UI.
+
+OpenFIGI maps at most 100 saved, reviewed US stock listings, ten jobs per HTTP
+request. Ticker, US composite exchange code, USD and Equity constrain each mapping.
+Only a unique US composite common-stock result is accepted. Documented no-match
+warnings are reported and skipped; malformed or ambiguous results fail the run.
+The catalogue MIC remains separate from provider identity metadata: the API does
+not verify a specific listing venue. Composite and share-class FIGIs remain
+distinct. These are security identifiers,
+not an additional stock-price feed or evidence of historical ticker ownership.
+
+An explicit run is bounded to 40 HTTP requests, 600 seconds, 20 seconds per
+request, 4 MiB per response, 64 MiB of database pages and 512,000 observations.
+Requests are durably reserved and spaced by at least one second for Frankfurter
+and three seconds for OpenFIGI. There are no automatic retries. Complete results
+publish atomically; incomplete initial histories remain staged and can resume.
+Successful refreshes have 24-hour ECB and 30-day OpenFIGI cooldowns; failed runs
+wait at least five minutes or the larger upstream Retry-After. Existing complete
+data remains available after a failed refresh. No new scheduler is installed.
+
+```sh
+.venv/bin/python -m scripts.refresh_open_market_data --status
+.venv/bin/python -m scripts.refresh_open_market_data --provider all --max-requests 40
+```
+
+The collector needs outbound HTTPS only for an explicitly requested refresh.
+`--status`, imports, lists, details and search do not contact either provider.
+Keep the collector cache separate from any public dataset export. Deployment
+copies only the reviewed no-key cache after checking its exact schema, bounds,
+complete published histories and empty staging/lock state; it must never replace
+the paid-provider ledger or snapshot.
+
+Reuse and attribution, checked 2026-10-24:
+
+- ECB permits accurate reuse with attribution: https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html
+- Frankfurter is a delivery service; upstream data terms still apply: https://frankfurter.dev/license/
+- OpenFIGI describes the identifiers and associated metadata as MIT-licensed:
+  https://www.openfigi.com/ and https://www.openfigi.com/docs/faqs
+- FIGI identifiers also carry the public-domain dedication and no-endorsement
+  terms at https://www.openfigi.com/docs/terms-of-service
+- API batching and no-key limits: https://www.openfigi.com/api/documentation
+
+Source pages retain ECB/Frankfurter and OpenFIGI attribution. Neither provider's
+logo or name implies sponsorship. The optional integrations add no paid plan,
+API credential, advertising agreement or automatic background job.

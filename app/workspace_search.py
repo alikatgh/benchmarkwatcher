@@ -52,40 +52,66 @@ def _market_results(tokens, unavailable):
     if current_app.config.get('MARKET_DATA_ENABLED') is not True:
         return []
     conn = None
+    rows = []
     try:
         conn = read_connection(market_data.database_path())
-        if conn is None:
-            return []
-        _bounded_connection(conn)
-        # Names and quote orientation come from the reviewed catalog. Only
-        # saved instrument IDs are read: no histories, private quota tables or
-        # provider calls are needed to discover an instrument.
-        rows = conn.execute('SELECT id FROM instruments ORDER BY id LIMIT ?',
-                            (MARKET_ROWS + 1,)).fetchall()
-        if len(rows) > MARKET_ROWS:
-            unavailable.extend(('stock', 'fx'))
-            return []
-        groups = {'stock': [], 'fx': []}
-        for row in rows:
-            item = CATALOG.get(row['id'])
-            if item is None or item.kind not in groups or len(groups[item.kind]) >= PER_KIND:
-                continue
-            if not _matches(tokens, item.id, item.name, item.symbol, item.currency,
-                            item.base_currency, item.quote_currency, item.exchange):
-                continue
-            endpoint = 'market_data.stock_detail' if item.kind == 'stock' else 'market_data.exchange_rate_detail'
-            description = (item.quote_currency + ' per 1 ' + item.base_currency
-                           if item.kind == 'fx' else item.symbol + ' · ' + item.currency + ' per share')
-            groups[item.kind].append(dict(id=item.id, kind=item.kind,
-                name=item.symbol if item.kind == 'fx' else item.name,
-                description=description, href=url_for(endpoint, instrument_id=item.id)))
-        return groups['stock'] + groups['fx']
+        if conn is not None:
+            _bounded_connection(conn)
+            # Catalog metadata supplies names/orientation; only saved IDs are
+            # read from the vendor cache, never history or quota tables.
+            rows = conn.execute('SELECT id FROM instruments ORDER BY id LIMIT ?',
+                                (MARKET_ROWS + 1,)).fetchall()
+            if len(rows) > MARKET_ROWS:
+                unavailable.extend(('stock', 'fx'))
+                rows = []
     except (sqlite3.Error, OSError, ValueError, TypeError):
         unavailable.extend(('stock', 'fx'))
-        return []
     finally:
         if conn is not None:
             conn.close()
+    identities, identity_error = market_data._open_data(market_data.open_market_store.list_identities)
+    fx_rows, fx_error = market_data._open_data(market_data.open_market_store.list_fx)
+    if identity_error:
+        unavailable.append('stock')
+    if fx_error:
+        unavailable.append('fx')
+    identities = identities if isinstance(identities, dict) else {}
+    groups = {'stock': [], 'fx': []}
+    compact_query = ''.join(tokens)
+
+    def append(item, fields, exact_fields):
+        if not _matches(tokens, *fields):
+            return
+        exact = any(compact_query == ''.join(_tokens(value)) for value in exact_fields if value)
+        groups[item['kind']].append((not exact, item['id'], item))
+
+    for row in rows:
+        item = CATALOG.get(row['id'])
+        if item is None or item.kind not in groups:
+            continue
+        identity = market_data._identity(identities.get(item.id)) if item.kind == 'stock' else None
+        identity_fields = list(identity.values()) if identity else []
+        fields = [item.id, item.name, item.symbol, item.currency, item.base_currency,
+                  item.quote_currency, item.exchange, *identity_fields]
+        endpoint = 'market_data.stock_detail' if item.kind == 'stock' else 'market_data.exchange_rate_detail'
+        description = (item.quote_currency + ' per 1 ' + item.base_currency
+                       if item.kind == 'fx' else item.symbol + ' · ' + item.currency + ' per share')
+        result = dict(id=item.id, kind=item.kind, name=item.symbol if item.kind == 'fx' else item.name,
+                      description=description, href=url_for(endpoint, instrument_id=item.id))
+        exact_fields = [item.id, item.symbol]
+        if identity:
+            exact_fields.extend(identity.get(key) for key in ('figi', 'composite_figi', 'share_class_figi'))
+        append(result, fields, exact_fields)
+    for raw in fx_rows or []:
+        item = market_data._open_fx_record(raw)
+        if item is None or not item['available']:
+            continue
+        result = dict(id=item['id'], kind='fx', name=item['symbol'],
+                      description=item['unit_label'] + ' · ECB via Frankfurter',
+                      href=url_for('market_data.exchange_rate_detail', instrument_id=item['id']))
+        append(result, [item['id'], item['name'], item['symbol'], item['provider'],
+                       item['base_currency'], item['quote_currency']], [item['id'], item['symbol']])
+    return [item for kind in ('stock', 'fx') for _, _, item in sorted(groups[kind])[:PER_KIND]]
 
 
 def _library_results(query, tokens, unavailable):
@@ -223,4 +249,4 @@ def search():
                + _reference_results(tokens, unavailable))
     results = [dict(row, name=_text(row['name'], 200), description=_text(row['description'], 500))
                for row in results[:PER_KIND * 5]]
-    return jsonify(results=results, unavailable=unavailable)
+    return jsonify(results=results, unavailable=list(dict.fromkeys(unavailable)))

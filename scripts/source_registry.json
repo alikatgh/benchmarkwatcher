@@ -1177,6 +1177,81 @@
       "notes": [
         "Open Data API query export exists, but availability depends on portal configuration and access."
       ]
+    },
+    {
+      "id": "frankfurter",
+      "name": "Frankfurter · ECB histories",
+      "region": "Europe",
+      "countries": [
+        "EU",
+        "reference_currencies"
+      ],
+      "categories": [
+        "fx",
+        "historical_reference_rates"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.frankfurter.dev/",
+      "documentation_url": "https://frankfurter.dev/",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://frankfurter.dev/"
+      },
+      "reuse": {
+        "summary": "European Central Bank reference observations delivered by Frankfurter. Accurate reproduction and ECB attribution required; underlying provider terms remain. Only the reviewed ECB provider is enabled.",
+        "terms_url": "https://www.ecb.europa.eu/services/using-our-site/disclaimer/html/index.en.html",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": "No daily or monthly quota; abuse throttling applies.",
+        "policy": "Bounded, sequential operator refreshes; all public pages use saved data. No automatic retries."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-24",
+      "notes": [
+        "Dedicated market-data cache integration: complete available ECB EUR-base histories are shown under Exchange rates. This is separate from the selected global-reference reader.",
+        "Other Frankfurter providers and blended rates are not included; their reuse terms require separate review."
+      ]
+    },
+    {
+      "id": "openfigi",
+      "name": "OpenFIGI",
+      "region": "Global",
+      "countries": [
+        "global"
+      ],
+      "categories": [
+        "security_identifiers",
+        "equities"
+      ],
+      "protocol": "REST JSON",
+      "api_base_url": "https://api.openfigi.com/",
+      "documentation_url": "https://www.openfigi.com/api/documentation",
+      "access": {
+        "cost_status": "free_public",
+        "authentication": "none",
+        "billing_enabled": false,
+        "evidence_url": "https://www.openfigi.com/api/documentation"
+      },
+      "reuse": {
+        "summary": "FIGI identifiers are dedicated to the public domain. Open Symbology metadata is MIT-licensed; preserve attribution and the applicable notice. No Bloomberg endorsement is implied.",
+        "terms_url": "https://www.openfigi.com/docs/terms-of-service",
+        "review_required": false
+      },
+      "rate_limit": {
+        "documented": "No-key mapping: 25 requests per minute, up to 10 jobs per request.",
+        "policy": "Batch reviewed saved stock symbols, validate unambiguous mappings, and cache identities. Browsing makes no provider calls."
+      },
+      "status": "catalogued",
+      "adapter": null,
+      "checked_on": "2026-10-24",
+      "notes": [
+        "Dedicated market-data integration adds US composite and share-class FIGIs to saved stock pages and workspace search; no listing-venue match is inferred.",
+        "Identifiers describe securities; this provider supplies no prices or historical ticker ownership. Logos require separate permission."
+      ]
     }
   ]
 }

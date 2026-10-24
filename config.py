@@ -24,6 +24,8 @@ class Config:
     PUBLIC_LIBRARY_DB = os.environ.get('PUBLIC_LIBRARY_DB')
     MARKET_DATA_DB = os.environ.get('MARKET_DATA_DB')
     MARKET_DATA_ENABLED = os.environ.get('MARKET_DATA_ENABLED') == '1'
+    OPEN_MARKET_DATA_DB = os.environ.get('OPEN_MARKET_DATA_DB')
+    OPEN_MARKET_DATA_ENABLED = os.environ.get('OPEN_MARKET_DATA_ENABLED') == '1'
 
     # Cache Configuration — FileSystemCache (shared across ALL Passenger workers AND
     # persistent across restarts), NOT SimpleCache (per-process, wiped on every restart).
