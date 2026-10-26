@@ -386,6 +386,19 @@ test('a direct Recent entry includes its selected company even when local histor
     expect(fetch).not.toHaveBeenCalled();
 });
 
+test('the empty search recovery restores all companies and focus without fetching a report', () => {
+    boot();
+    input('No matching company');
+    expect(visible()).toEqual([]);
+    expect($('#stock-empty').hidden).toBe(false);
+    $('#stock-empty [data-stock-clear]').click();
+    expect(visible()).toEqual(stocks.map(stock => stock.id));
+    expect($('#stock-search').value).toBe('');
+    expect($('#stock-empty').hidden).toBe(true);
+    expect(document.activeElement).toBe($('#stock-search'));
+    expect(fetch).not.toHaveBeenCalled();
+});
+
 test.each(['not json', '{"unexpected":true}', '[null,5,"unknown","stock-XNAS-BBB","stock-XNAS-BBB"]'])('corrupt or untrusted stored lists are normalized (%s)', stored => {
     localStorage.setItem('bw.stock.watchlist.v1', stored);
     localStorage.setItem('bw.stock.recent.v1', stored);

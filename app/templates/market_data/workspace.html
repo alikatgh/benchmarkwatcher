@@ -43,7 +43,7 @@
           <div id="stock-empty" class="stock-list-empty" role="status"{% if filtered_stock_ids %} hidden{% endif %}>
             <h2 id="stock-empty-title">{{ 'No matching companies' if q or source else 'No saved companies yet' }}</h2>
             <p id="stock-empty-description">{{ 'Try another company name or symbol.' if q or source else 'Companies will appear after the first successful refresh.' }}</p>
-            {% if q or source %}<a href="{{ reset_url }}" data-stock-clear>Show all companies</a>{% endif %}
+            <a href="{{ reset_url }}" data-stock-clear>Show all companies</a>
           </div>
         </div>
         <p class="stock-list-note">Saved daily closes · Source dates can differ.</p>
