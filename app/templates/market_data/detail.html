@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/global-reference.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/market-data.css') }}">
+<div class="gr-workspace" data-market-data="{{ kind }}" data-reference-detail>
+  <nav class="gr-nav market-nav" aria-label="Market history workspace">
+    <a href="{{ list_url|default(url_for('market_data.stocks' if kind == 'stock' else 'market_data.exchange_rates'), true) }}">← {{ 'Stocks' if kind == 'stock' else 'Exchange rates' }}</a>
+    <span aria-current="page">{{ record.symbol }}</span>
+    <a class="market-nav-switch" href="{{ url_for('market_data.exchange_rates' if kind == 'stock' else 'market_data.stocks') }}">{{ 'Exchange rates' if kind == 'stock' else 'Stocks' }}</a>
+  </nav>
+  {% include 'market_data/_detail_panel.html' %}
+</div>
+{% if record.available %}<script defer src="{{ url_for('static', filename='js/components/global-reference.js') }}"></script>{% endif %}
+{% endblock %}

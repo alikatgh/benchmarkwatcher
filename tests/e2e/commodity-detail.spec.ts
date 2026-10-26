@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // Smoke coverage for the commodity detail page — the app's most complex view
-// (Chart.js + the Chart Settings modal). It had ZERO e2e coverage while its
+// (D3 + the Chart Settings modal). It had ZERO e2e coverage while its
 // settings tabs were being restructured, so a JS error or a broken tab would
 // ship invisibly. This guards the load path, the chart render, freedom from
 // uncaught exceptions, and that the restructured tabs switch panels.
@@ -19,7 +19,7 @@ test.describe('Commodity detail page', () => {
         const response = await page.goto(href!);
         expect(response?.ok()).toBeTruthy();
 
-        // The Chart.js canvas renders.
+        // The D3 SVG renders.
         await expect(page.locator('#priceChart')).toBeVisible();
 
         // Chart Settings modal opens and the restructured tabs swap panels.

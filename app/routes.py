@@ -228,7 +228,23 @@ def internal_api_commodities():
 @bp.route('/')
 @cache.cached(timeout=600, query_string=True)
 def index():
-    """Main index page with commodity grid."""
+    """Discover the public library and browse benchmark observations."""
+    from app.homepage import homepage_coverage
+    from app.global_reference import country_summary, listing_context
+    from werkzeug.exceptions import HTTPException
+
+    if request.args.get('dataset') == 'countries':
+        context = listing_context(endpoint='main.index', countries_only=True)
+        return render_template('global_reference/home.html', **context,
+                               country_summary={'histories': context['available'], 'economies': context['country_count']},
+                               commodity_count=len(get_all_commodities(include_history=False)),
+                               active_dataset='countries', active_view='compact', date_range='1Y')
+
+    try:
+        countries = country_summary()
+    except HTTPException:
+        # A damaged reference index must not block the independent commodity view.
+        countries = None
     date_range = validate_range(request.args.get('range', '1Y'))
     category = request.args.get('category', None)
     active_view = (
@@ -242,13 +258,20 @@ def index():
         include_history=False
     )
 
+    show_home_overview = not any(key in request.args for key in ('view', 'workspace', 'category', 'range', 'dataset'))
     return render_template(
         'index.html',
+        show_home_overview=show_home_overview,
+        coverage=homepage_coverage() if show_home_overview else None,
+        meta_title='Public data, benchmarks & company research | BenchmarkWatcher' if show_home_overview else None,
+        meta_description='Explore commodity benchmarks, country and agricultural data, company disclosures, charts, CSV exports and research tools.' if show_home_overview else None,
         commodities=commodities,
         market_summary=build_market_summary(commodities),
         date_range=date_range,
         selected_category=category,
-        active_view=active_view
+        active_view=active_view,
+        active_dataset='commodities', country_summary=countries,
+        commodity_count=len(get_all_commodities(include_history=False))
     )
 
 
@@ -344,12 +367,64 @@ def d3_visuals_story():
                            meta_description='Explore D3 histories, distributions, monthly heatmaps and coverage views, with exact values, publication gaps and source dates kept visible.')
 
 
+@bp.route('/blog/a-clearer-research-workspace')
+def reui_workspace_story():
+    """Introduce search, display preferences and source filters in the workspace."""
+    return render_template('blog/reui_workspace.html',
+                           meta_title='A clearer research workspace | BenchmarkWatcher',
+                           meta_description='Find benchmarks and local research with keyboard search, preview all six themes, and explore saved public data with searchable filters.')
+
+
+@bp.route('/blog/pele-source-diagrams')
+def pele_source_diagrams_story():
+    """Explain the source paths beside saved histories and research results."""
+    return render_template('blog/pele_source_diagrams.html',
+                           meta_title='Follow the source with Pele diagrams | BenchmarkWatcher',
+                           meta_description='Trace published series, SEC filings and saved workbook cells to charts and research results with Pele source diagrams alongside the existing D3 visualizations.')
+
+
 @bp.route('/blog/a-new-mark-for-benchmarkwatcher')
 def new_icon_story():
     """Explain the shared brand symbol and its use across icon sizes."""
     return render_template('blog/new-icon.html',
                            meta_title='A new mark for BenchmarkWatcher | BenchmarkWatcher',
                            meta_description='Meet the new BenchmarkWatcher icon: a reference stem and three observation points, fitted for the website, browser tab and mobile app.')
+
+
+@bp.route('/blog/public-data-around-the-world')
+def global_sources_story():
+    return render_template('blog/global_sources.html',
+                           meta_title='Public data around the world | BenchmarkWatcher',
+                           meta_description='Explore official international reference series and a searchable public-source catalog, with units, periods and access conditions kept visible.')
+
+
+@bp.route('/blog/a-public-data-library-for-country-and-company-research')
+def public_data_library_story():
+    """A guide to the saved country and selected company observation library."""
+    return render_template('blog/public_data_library.html',
+                           meta_title='A public data library for country and company research | BenchmarkWatcher',
+                           meta_description='Search World Bank, FAOSTAT and SEC histories, inspect exact observations and source notes, and export country and company data with attribution.')
+
+
+@bp.route('/blog/explore-the-whole-library')
+def homepage_story():
+    return render_template('blog/homepage.html',
+                           meta_title='A homepage for the whole library | BenchmarkWatcher',
+                           meta_description='Find benchmark prices, country and agricultural histories, company disclosures and research tools from one homepage.')
+
+
+@bp.route('/blog/research-on-each-device')
+def native_research_story():
+    return render_template('blog/native_research.html',
+                           meta_title='Research that fits each device | BenchmarkWatcher',
+                           meta_description='A development update on the Swift Mac and iPhone apps and Kotlin Android app: historical filings, offline research and source-linked notes.')
+
+
+@bp.route('/blog/benchmarks-on-a-small-screen')
+def mobile_workspace_story():
+    return render_template('blog/mobile_workspace.html',
+                           meta_title='Benchmarks on a small screen | BenchmarkWatcher',
+                           meta_description='Search and filter historical benchmarks on a phone, with compact controls, readable observations and focused detail views.')
 
 
 @bp.route('/favicon.ico')
@@ -377,7 +452,12 @@ def sitemap():
              url_for('main.help_page'), url_for('main.support_page'), url_for('main.privacy_page'),
              url_for('main.jev_workbook_story'),
              url_for('main.company_research_story'), url_for('main.d3_visuals_story'),
-             url_for('main.new_icon_story')]
+             url_for('main.pele_source_diagrams_story'), url_for('main.reui_workspace_story'),
+             url_for('main.new_icon_story'), url_for('main.global_sources_story'),
+             url_for('main.public_data_library_story'), url_for('main.homepage_story'),
+             url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),
+             url_for('global_reference.sources'), url_for('public_library.index'),
+             url_for('public_library.companies')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):

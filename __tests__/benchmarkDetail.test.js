@@ -26,6 +26,7 @@ beforeEach(() => {
     global.fetch = jest.fn(async url => response(sample(url.split('/').pop())));
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/vendor/d3.v7.9.0.min.js'), 'utf8'));
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/core/visuals.js'), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/components/reference_history.js'), 'utf8'));
     window.eval(script);
     BW.BenchmarkDetail.init();
 });
@@ -194,28 +195,52 @@ test('comparison discloses different baselines, preserves actual dates, and disa
     expect(detail.querySelector('[data-detail-mode="absolute"]').disabled).toBe(true);
     const tables = detail.querySelectorAll('table');
     expect(tables).toHaveLength(2);
-    expect(tables[1].textContent).toContain('150.00');
+    expect(tables[1].textContent).toContain('50.00');
     expect(tables[1].textContent).not.toContain('2025-04-01');
-    expect(detail.querySelectorAll('svg circle')).toHaveLength(4);
+    expect([...detail.querySelectorAll('svg .bw-d3-line')].flatMap(line => line.__data__.flat())).toHaveLength(4);
+    expect(detail.querySelector('[data-detail-mode="percent"]').getAttribute('aria-pressed')).toBe('true');
+    expect(detail.querySelectorAll('.benchmark-comparison-keys>span')).toHaveLength(2);
+    click('Index 100');
+    expect(detail.querySelectorAll('table')[1].textContent).toContain('150.00');
 });
 
-test('compatible comparison can display absolute values and a zero baseline never becomes infinity', async () => {
-    fetch.mockImplementation(async url => response(sample(url.split('/').pop(), { history: [{ date: '2025-04-01', price: 0 }, { date: '2025-05-01', price: 1 }] })));
+test.each([0, -10])('compatible comparison retains raw values when a nonpositive baseline cannot be normalized (%s)', async baseline => {
+    fetch.mockImplementation(async url => response(sample(url.split('/').pop(), { history: [{ date: '2025-04-01', price: baseline }, { date: '2025-05-01', price: 1 }] })));
     await BW.BenchmarkDetail.compare(['gold', 'copper']);
     const detail = document.getElementById('benchmark-detail');
     expect(detail.textContent).toContain('a positive baseline is required');
     expect(detail.querySelector('svg.benchmark-detail-plot')).toBeNull();
     expect(detail.querySelector('[data-detail-mode="absolute"]').disabled).toBe(false);
-    click('Absolute values');
+    click('Value');
     expect(detail.querySelector('svg.benchmark-detail-plot')).toBeTruthy();
     expect(detail.innerHTML).not.toContain('Infinity');
 });
 
+test('three percentage lines start at zero, preserve gaps and correctly display gains and losses', async () => {
+    const observations = {
+        gold: [{date:'2025-04-01',price:100},{date:'2025-04-15',price:null},{date:'2025-05-01',price:90}],
+        copper: [{date:'2025-04-15',price:10},{date:'2025-05-01',price:20}],
+        oil: [{date:'2025-04-01',price:40},{date:'2025-05-01',price:30}]
+    };
+    fetch.mockImplementation(async url => { const id = url.split('/').pop(); return response(sample(id, {history:observations[id]})); });
+    await BW.BenchmarkDetail.compare(['gold','copper','oil']);
+    const values = index => document.querySelector('.line-' + index).__data__.flat().map(point => point.value);
+    expect(values(0)[0]).toBe(0); expect(values(0)[1]).toBeCloseTo(-10);
+    expect(values(1)).toEqual([0,100]); expect(values(2)).toEqual([0,-25]);
+    expect(document.querySelector('.benchmark-detail-table').textContent).toContain('Unavailable');
+    const strokes = Array.from(document.querySelectorAll('.bw-d3-line')).map(node => node.getAttribute('stroke'));
+    expect(new Set(strokes).size).toBe(3);
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(7);
+});
+
 test('comparison retains successful series when one request fails and enforces the four-series limit', async () => {
-    fetch.mockImplementation(async url => url.endsWith('copper') ? { ok: false } : response(sample('gold')));
+    fetch.mockImplementation(async url => url.endsWith('gold') ? { ok: false } : response(sample('copper')));
     await BW.BenchmarkDetail.compare(['gold', 'copper']);
     expect(document.querySelector('svg')).toBeTruthy();
     expect(document.getElementById('benchmark-detail-body').textContent).toContain('Retry unavailable series');
+    const plotDash = document.querySelector('.bw-d3-line').getAttribute('stroke-dasharray') || 'none';
+    expect(document.querySelector('.benchmark-comparison-keys line').getAttribute('stroke-dasharray')).toBe(plotDash);
+    expect(document.querySelectorAll('.benchmark-detail-legend-dot line')[1].getAttribute('stroke-dasharray')).toBe(plotDash);
     expect(await BW.BenchmarkDetail.compare(['a', 'b', 'c', 'd', 'e'])).toBe(false);
     expect(document.getElementById('benchmark-detail-notice-text').textContent).toContain('2 to 4');
 });
@@ -249,16 +274,19 @@ function rebootDetail() {
     document.body.innerHTML = '<main id="table-shell"></main>' + template;
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/vendor/d3.v7.9.0.min.js'), 'utf8'));
     window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/core/visuals.js'), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../app/static/js/components/reference_history.js'), 'utf8'));
     window.eval(script); BW.BenchmarkDetail.init();
 }
 function customDates(start, end) {
     click('Custom');
+    document.getElementById('benchmark-exact-dates').open = true;
     document.getElementById('benchmark-chart-start').value = start;
     document.getElementById('benchmark-chart-end').value = end;
     document.querySelector('.benchmark-detail-date-form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
 }
 
 test('left-edge drag widens the panel without rebuilding chart or losing the selected observation', async () => {
+    window.innerWidth = 1920;
     await BW.BenchmarkDetail.open('gold');
     expect(activeWidth()).toBe('560px');
     const chart = document.querySelector('.benchmark-detail-plot');
@@ -277,16 +305,17 @@ test('left-edge drag widens the panel without rebuilding chart or losing the sel
 });
 
 test('keyboard separator controls clamp, expose their value, and keep comparison width separate', async () => {
+    window.innerWidth = 1920;
     await BW.BenchmarkDetail.open('gold');
     const handle = resizeHandle();
     expect(handle.getAttribute('role')).toBe('separator');
     expect(handle.getAttribute('aria-orientation')).toBe('vertical');
     resizeKey('ArrowLeft'); expect(activeWidth()).toBe('584px');
     resizeKey('ArrowRight', true); expect(activeWidth()).toBe('520px');
-    resizeKey('End'); expect(activeWidth()).toBe('960px');
-    expect(handle.getAttribute('aria-valuenow')).toBe('960');
-    expect(handle.getAttribute('aria-valuemax')).toBe('960');
-    resizeKey('ArrowLeft'); expect(activeWidth()).toBe('960px');
+    resizeKey('End'); expect(activeWidth()).toBe('1068px');
+    expect(handle.getAttribute('aria-valuenow')).toBe('1068');
+    expect(handle.getAttribute('aria-valuemax')).toBe('1068');
+    resizeKey('ArrowLeft'); expect(activeWidth()).toBe('1068px');
     resizeKey('Home'); expect(activeWidth()).toBe('360px');
     await BW.BenchmarkDetail.compare(['gold', 'copper']); expect(activeWidth()).toBe('720px');
     resizeKey('ArrowLeft'); expect(activeWidth()).toBe('744px');
@@ -295,13 +324,28 @@ test('keyboard separator controls clamp, expose their value, and keep comparison
 
 test('viewport changes clamp the remembered desktop width and keep mobile fullscreen without a resize tab stop', async () => {
     window.innerWidth = 1920;
-    await BW.BenchmarkDetail.open('gold'); resizeKey('End'); expect(activeWidth()).toBe('1120px');
-    window.innerWidth = 1280; window.dispatchEvent(new Event('resize')); expect(activeWidth()).toBe('800px');
+    await BW.BenchmarkDetail.open('gold'); resizeKey('End'); expect(activeWidth()).toBe('1068px');
+    window.innerWidth = 1280; window.dispatchEvent(new Event('resize')); expect(activeWidth()).toBe('428px');
     window.innerWidth = 390; window.dispatchEvent(new Event('resize'));
     expect(activeWidth()).toBe('390px'); expect(resizeHandle().hidden).toBe(true); expect(resizeHandle().tabIndex).toBe(-1);
     resizeKey('End'); expect(activeWidth()).toBe('390px');
     window.innerWidth = 1920; window.dispatchEvent(new Event('resize'));
-    expect(activeWidth()).toBe('1120px'); expect(resizeHandle().hidden).toBe(false);
+    expect(activeWidth()).toBe('1068px'); expect(resizeHandle().hidden).toBe(false);
+});
+
+test('expanding navigation preserves list space without overwriting a preferred larger pane', async () => {
+    window.innerWidth = 1920;
+    await BW.BenchmarkDetail.open('gold'); resizeKey('End');
+    window.innerWidth = 1440; window.dispatchEvent(new Event('resize'));
+    expect(activeWidth()).toBe('588px');
+    document.body.classList.add('bw-sidebar-collapsed');
+    document.dispatchEvent(new CustomEvent('bw:sidebar-change'));
+    expect(activeWidth()).toBe('720px');
+    document.body.classList.remove('bw-sidebar-collapsed');
+    document.dispatchEvent(new CustomEvent('bw:sidebar-change'));
+    expect(activeWidth()).toBe('588px');
+    window.innerWidth = 1920; window.dispatchEvent(new Event('resize'));
+    expect(activeWidth()).toBe('1068px');
 });
 
 test('canceling a drag restores the width and closing mid-drag releases resizing state', async () => {
@@ -360,6 +404,10 @@ test('custom window includes both endpoints, handles a single observation, and c
     expect(document.querySelector('.benchmark-detail-empty').textContent).toContain('No usable observations');
     expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(0);
     expect(document.getElementById('benchmark-detail-observation')).toBeNull();
+    expect(document.querySelector('.benchmark-detail-range-dates').textContent).toContain('Apr 2, 2025');
+    expect(document.querySelector('.benchmark-detail-range-dates').textContent).toContain('Apr 30, 2025');
+    expect(document.querySelector('.benchmark-detail-range-handles').hidden).toBe(true);
+    expect(document.querySelector('.benchmark-detail-date-slider').textContent).toContain('No source dates in this interval');
 });
 
 test('area display preserves source gaps, table expansion and observation focus; hidden dots retain hover values', async () => {
@@ -377,8 +425,12 @@ test('area display preserves source gaps, table expansion and observation focus;
     expect(document.getElementById('benchmark-detail-observation').getAttribute('aria-valuetext')).toContain('2025-01-01');
     expect(document.activeElement.id).toBe('benchmark-chart-style');
     const dots = document.getElementById('benchmark-chart-dots'); dots.checked = false; dots.dispatchEvent(new Event('change'));
-    expect(document.querySelector('.benchmark-detail-observation-dot').getAttribute('fill')).toBe('transparent');
-    expect(document.querySelector('.benchmark-detail-observation-dot title').textContent).toContain('2025-01-01 · 100.00');
+    expect(document.querySelectorAll('.benchmark-detail-observation-dot')).toHaveLength(0);
+    const svg = document.querySelector('.benchmark-detail-plot');
+    svg.dispatchEvent(new MouseEvent('pointerdown', {clientX:8,clientY:100,bubbles:true}));
+    expect(document.getElementById('benchmark-detail-observation').getAttribute('aria-valuetext')).toContain('2025-01-01 · 100.00');
+    expect(svg.querySelector('.bw-d3-tooltip').getAttribute('visibility')).toBe('visible');
+    expect(svg.querySelectorAll('title')).toHaveLength(0);
     expect(JSON.parse(localStorage.getItem('bw.detail.chart.v1'))).toEqual({version:1,style:'area',dots:false});
     rebootDetail(); await BW.BenchmarkDetail.open('gold');
     expect(document.getElementById('benchmark-chart-style').value).toBe('area');
@@ -426,4 +478,42 @@ test.each([0,-10])('range readout keeps a nonpositive baseline absolute instead 
     await BW.BenchmarkDetail.open('gold');
     expect(document.querySelector('.benchmark-detail-range-change').textContent).not.toContain('%');
     expect(document.querySelector('.benchmark-detail-readout').textContent).not.toMatch(/NaN|Infinity/);
+});
+
+
+test('date handles preview without rebuilding, apply on release, preserve focus and cannot cross', async () => {
+    fetch.mockResolvedValue(response(sample('gold', { history: [
+        {date:'2025-01-01',price:100}, {date:'2025-02-01',price:110},
+        {date:'2025-03-01',price:null}, {date:'2025-04-01',price:120}
+    ] })));
+    await BW.BenchmarkDetail.open('gold'); click('Custom');
+    expect(document.getElementById('benchmark-exact-dates').open).toBe(false);
+    let start = document.getElementById('benchmark-range-start');
+    const plot = document.querySelector('.benchmark-detail-plot');
+    start.value = '1'; start.dispatchEvent(new Event('input'));
+    expect(start.getAttribute('aria-valuetext')).toBe('2025-02-01');
+    expect(document.querySelector('.benchmark-detail-plot')).toBe(plot);
+    start.dispatchEvent(new Event('change'));
+    expect(document.querySelector('[data-detail-range="CUSTOM"]').getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(3);
+    expect(document.activeElement.id).toBe('benchmark-range-start');
+    const end = document.getElementById('benchmark-range-end'); end.value='0'; end.dispatchEvent(new Event('input'));
+    expect(end.value).toBe('1'); end.dispatchEvent(new Event('change'));
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(1);
+    expect(document.getElementById('benchmark-range-end').getAttribute('aria-valuetext')).toBe('2025-02-01');
+    click('All');
+    expect(document.getElementById('benchmark-range-start').value).toBe('0');
+    expect(document.getElementById('benchmark-range-end').value).toBe('3');
+});
+
+test('date handles disable for one source date and do not fabricate dates or fetch data', async () => {
+    fetch.mockResolvedValue(response(sample('gold', {history:[{date:'2025-05-01',price:100}]})));
+    await BW.BenchmarkDetail.open('gold'); click('Custom');
+    expect(document.getElementById('benchmark-range-start').disabled).toBe(true);
+    expect(document.getElementById('benchmark-range-end').disabled).toBe(true);
+    expect(document.getElementById('benchmark-range-start').getAttribute('aria-valuetext')).toBe('2025-05-01');
+    const calls=fetch.mock.calls.length;
+    document.getElementById('benchmark-range-start').dispatchEvent(new Event('change'));
+    expect(fetch).toHaveBeenCalledTimes(calls);
+    expect(document.querySelectorAll('.benchmark-detail-table tbody tr')).toHaveLength(1);
 });

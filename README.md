@@ -1,126 +1,132 @@
-# BenchmarkWatcher
+<div align="center">
+  <img src="app/static/images/brand-icon-512.png" width="80" height="80" alt="BenchmarkWatcher logo">
+  <h1>BenchmarkWatcher</h1>
+  <p>Explore historical benchmarks, compare changes, and follow each number back to its source.</p>
+  <p>
+    <strong><a href="https://benchmarkwatcher.online">Open the app</a></strong> ·
+    <a href="https://benchmarkwatcher.online/?dataset=countries">Explore country data</a> ·
+    <a href="CONTRIBUTING.md">Contribute</a> ·
+    <a href="https://benchmarkwatcher.online/changelog">What's new</a>
+  </p>
+</div>
 
-**A dashboard for monitoring publicly available commodity benchmark prices.**
+[![The BenchmarkWatcher workspace: commodity observations, history previews, search, filters and saved views](docs/readme-media/workspace.png)](https://benchmarkwatcher.online/?view=compact&range=1Y)
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.10+-green.svg)
-![Flask](https://img.shields.io/badge/flask-3.0-lightgrey.svg)
+**A workspace for asking better questions of public data.** Browse energy, metals and agriculture; explore country indicators; or trace a company's reported figures to its filings. Dates, units and evidence stay close to the numbers.
 
----
+**PRs welcome.** Help fix a rough edge, improve accessibility, document a workflow, or connect an official public data source. [Read the contributor guide](CONTRIBUTING.md) or [start a discussion in an issue](https://github.com/alikatgh/benchmarkwatcher/issues/new).
 
-## What This Is
+## See it in action
 
-BenchmarkWatcher is a monitoring tool that displays end-of-day benchmark prices for 70+ commodities across energy, metals, agriculture, and livestock.
+### Compare histories, inspect the evidence
 
-**This project is intended for:**
-- Viewing historical benchmark price trends
-- Tracking daily price changes
-- Educational and informational purposes
+Choose a date window, add up to four benchmarks, and inspect any observation. Each line has its own name, colour and dash pattern; tooltips show the series, date and value.
 
-**This project is NOT:**
-- A trading platform
-- A source of real-time market data
-- Investment or financial advice
-- A signal generator or trading tool
+[![Comparison walkthrough: choose one year, add Silver and Copper to Gold, then inspect a dated percentage-change tooltip](docs/readme-media/comparison.gif)](https://benchmarkwatcher.online/commodity/gold)
 
----
+*Walkthrough: Gold → 1Y → Compare → Silver + Copper → inspect a point. [Try it yourself](https://benchmarkwatcher.online/commodity/gold).* A comparison starts each series at 0% on its first available date in the window. Baseline dates remain visible and can differ; missing observations are left open.
 
-## Design Philosophy
+### Explore country data
 
-BenchmarkWatcher is intentionally simple.
+Find an economy or measure, then open its history for exact observations and attribution. GDP, inflation, population and sector shares are available from the homepage.
 
-It prioritizes:
-- **Clarity over complexity** — No hidden logic, no black boxes
-- **Reference data over live feeds** — End-of-day benchmarks, not exchange prices
-- **Monitoring over prediction** — Historical context, not trading signals
+[![Country data filtered to consumer price inflation, showing economies, annual observations and World Bank attribution](docs/readme-media/country-data.png)](https://benchmarkwatcher.online/?dataset=countries&indicator=FP.CPI.TOTL.ZG)
 
-If you are looking for real-time prices, trading tools, or technical indicators, this project is not a fit.
+*Screenshots and walkthrough captured from the anonymous public app on 3 October 2026. Values are historical source observations, not live quotes.*
 
----
+### More ways to investigate
 
-## Data Sources
+- **Make the workspace yours:** search, filter, sort, choose columns, save views and keep a watchlist. Phones use compact rows with values visible.
+- **Explore distributions and patterns:** switch between history, distributions, quartiles, monthly averages, heatmaps and observation coverage. Exact values remain available.
+- **Export your work:** download reference data or a chart; choose line, area, step, bars or dots and preset or custom date windows.
+- **Research companies:** resolve a name or ticker to public SEC disclosures, review historical statements and save questions with filing evidence. Built-in metric answers need no AI key; optional provider commentary requires explicit sharing consent. [Coverage and calculation rules](docs/COMPANY_RESEARCH.md).
 
-The private **Company research** workspace also turns a company ticker into
-historical financial statements, D3 charts, source-linked calculations and saved
-questions using public SEC filings. Built-in analysis needs no AI key. Optional
-commentary uses the user's connected provider with explicit sharing consent.
-Coverage depends on SEC disclosures; it does not include every global company or
-live share prices. See [company research](docs/COMPANY_RESEARCH.md) for methods,
-coverage and a synthetic local preview.
+Public views and watchlists use browser-local storage. Signed-in company research is stored privately and separately.
 
-All data comes from freely accessible public sources:
+## Build with us
 
-| Category | Commodity | Source | Update Frequency |
-|----------|-----------|--------|------------------|
-| **Energy** | Brent Crude Oil, WTI Crude Oil | [EIA](https://www.eia.gov/opendata/) | Daily |
-| **Energy** | Natural Gas (Henry Hub) | [FRED](https://fred.stlouisfed.org/series/DHHNGSP) | Daily |
-| **Energy** | Heating Oil, Gasoline, Jet Fuel, Propane, Diesel | [EIA](https://www.eia.gov/opendata/) | Daily |
-| **Precious** | Gold, Silver, Platinum | [Yahoo Finance](https://finance.yahoo.com) (COMEX/NYMEX Futures) | Daily |
-| **Metal** | Copper, Iron Ore, Aluminum, Zinc, Nickel, Lead, Tin | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
-| **Agricultural** | Wheat, Corn, Soybeans, Rice, Sugar, Coffee, Cocoa, Cotton, Rubber, Palm Oil | [FRED](https://fred.stlouisfed.org) (World Bank/IMF) | Monthly |
-| **Agricultural** | Wheat (US Farm Price), Corn, Soybeans, Oats, Barley, Sorghum, Rice, Cotton (Upland) | [USDA NASS](https://quickstats.nass.usda.gov/) | Monthly |
-| **Livestock** | Cattle (All), Hogs, Milk (All), Chicken, Eggs, Turkeys, Wool, Lamb | [USDA NASS](https://quickstats.nass.usda.gov/) | Monthly |
+A focused bug fix, a clearer example or a better mobile interaction is a useful contribution. You can also help with source attribution, translations, and the native Swift and Kotlin apps.
 
-**Important:** This application displays benchmark/reference prices only. It does not show real-time exchange prices, intraday data, or proprietary trading data.
+1. [Browse issues](https://github.com/alikatgh/benchmarkwatcher/issues), or open one with the problem you want to solve.
+2. Fork the repository and run the isolated preview below.
+3. Make a focused change, run the relevant checks, and open a pull request with what changed and how you verified it.
 
----
+Small fixes can go straight to a PR. For larger features or new sources, discuss the approach first. The [contributor guide](CONTRIBUTING.md) covers setup, source requirements and the project's scope.
 
-## Operational Notes
+## Run locally
 
-* Data availability depends entirely on third-party public sources.
-* Some series update daily, others monthly or irregularly.
-* Missing or delayed data is expected behavior and not considered a defect.
-* Historical values may be revised by original publishers without notice.
+Use **Python 3.11+** and **Node.js 20+**. From the repository root:
 
-### Safe Defaults (No Extra Services)
-
-If you deploy publicly, use these defaults to reduce abuse risk without adding paid infrastructure:
-
-```dotenv
-RATELIMIT_STORAGE_URI=memory://
-PUBLIC_API_LIST_RATE_LIMIT=60 per minute
-PUBLIC_API_DETAIL_RATE_LIMIT=120 per minute
-INTERNAL_API_RATE_LIMIT=30 per minute
-INTERNAL_API_KEY=change_me
+```sh
+bash scripts/setup_local.sh
+PLAYWRIGHT_PORT=5784 .venv/bin/python -m tests.e2e.server --companies
 ```
 
-These values work with the current Flask + Flask-Limiter setup and keep the internal bot endpoint protected.
-For full hardening guidance, see `docs/API_HARDENING.md` and `SECURITY.md`.
+Open **http://127.0.0.1:5784**. This preview uses synthetic benchmark and company fixtures with temporary accounts. It needs no production credentials or paid provider. The complete public dataset is not bundled with the repository.
 
----
+For normal development, configuration and public-data fetching, follow [local development](docs/LOCAL_DEVELOPMENT.md). See [security guidance](SECURITY.md) and [API hardening](docs/API_HARDENING.md) before changing authentication or public endpoints.
 
-## Disclaimer
+<details>
+<summary><strong>Development checks</strong></summary>
 
-This project is provided for informational and educational purposes only.
+Run the checks relevant to your change:
 
-BenchmarkWatcher displays historical commodity price data obtained from publicly accessible third-party sources. The data presented may include both officially published benchmark series and publicly available market-derived reference prices, depending on availability.
+```sh
+.venv/bin/python -m pytest tests
+npm test
+npm run check:vocab
+npm run test:e2e
+npm run test:visuals
+npm run test:companies
+```
 
-In addition to raw historical prices, the application computes descriptive, backward-looking summary statistics (such as absolute and percentage changes over fixed historical observation windows). These calculations are mechanical summaries of past data only and do not constitute forecasts, predictions, trading signals, recommendations, or investment advice.
+Browser checks use isolated fixtures. `npm run build:css` rebuilds the Tailwind stylesheet when its inputs change. The [local development guide](docs/LOCAL_DEVELOPMENT.md) explains configuration and test commands.
 
-Derived values are calculated over fixed numbers of historical observations and may not correspond to exact calendar periods, particularly where source data is published at different frequencies (daily, monthly, or irregular).
+</details>
 
-All data is provided "as is." Data may be delayed, incomplete, revised retroactively by original publishers, or unavailable at times. Missing or inconsistent data is expected behavior and is not considered a defect.
+## Data coverage
 
-BenchmarkWatcher does not provide real-time market data, does not execute trades, and does not attempt to model, predict, or infer future price movements.
+Public snapshot on **3 October 2026**:
 
-**No financial decisions should be made based on the information produced by this software.**
+| Dataset | Histories | Coverage |
+| --- | ---: | --- |
+| Commodities and commodity indices | 93 | Energy, metals, precious metals, agriculture and indices |
+| World Bank country data | 1,248 | 217 economies, six measures, 31,088 observations across 2000–2025 |
+| Other global references | 8 | Selected exchange references, European consumer inflation and Malaysian administered retail fuel prices |
 
-The authors and contributors disclaim all liability for any use, misuse, or interpretation of the data or derived values presented.
+**1,248 country histories means country/indicator combinations, not 1,248 APIs.** The [source catalog](https://benchmarkwatcher.online/sources) records 31 publishers with their access and integration status. Coverage varies by measure and year.
 
----
+<details>
+<summary><strong>Providers, units and comparison rules</strong></summary>
 
+The six country measures are population, GDP in constant 2015 US dollars, GDP per capita, consumer inflation, agriculture/forestry/fishing share, and industry including construction share. Estimates and missing periods retain their source meaning.
 
+Global-source readers cover the Bank of Canada, European Central Bank, Eurostat, World Bank and Malaysia Ministry of Finance. Catalogued sources without a reader are labelled accordingly. Commodity references also use FRED, EIA, USDA NASS and public Yahoo Finance references where available.
 
-## License
+Every history identifies its provider, units and observation cadence. Public pages read cached data; browsing does not trigger upstream downloads. Readers use bounded request budgets. Free access does not remove publisher-specific reuse terms or rate limits. See [global source coverage](docs/GLOBAL_SOURCES.md) and the [data fetching guide](docs/DATA_FETCHING_GUIDE.md).
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+The [indexed public data library](docs/PUBLIC_DATA_LIBRARY.md) adds country-data
+search, an SEC company directory, source notes and CSV exports. The October 7
+collection contains 11.81 million observations across 700,178 histories from World
+Bank WDI, FAOSTAT production/land use/agricultural trade and 12,363 SEC reporting
+companies. The library includes source attribution, saved coverage, interactive histories and CSV downloads.
 
----
+Percentage-change and indexed comparisons require a positive baseline. The workspace also offers Index 100; raw Value comparisons require matching currency and units. Baseline dates use each series' first available observation in the selected window. Missing observations are not filled or treated as zero; normalized lines do not imply equal prices or causation.
 
-## Acknowledgments
+</details>
 
-- [FRED](https://fred.stlouisfed.org/) — Federal Reserve Economic Data
-- [EIA](https://www.eia.gov/) — U.S. Energy Information Administration
-- [USDA NASS](https://quickstats.nass.usda.gov/) — U.S. Department of Agriculture, National Agricultural Statistics Service
-- [Tailwind CSS](https://tailwindcss.com/) — Styling
-- [D3.js](https://d3js.org/) — Data visualizations
+## Native apps and other clients
+
+[`native/`](native/README.md) contains developing **Swift/SwiftUI apps for iPhone and macOS** and a **Kotlin/Jetpack Compose app for Android**, with platform-specific navigation and layouts. These are development targets, **not published App Store or Google Play releases**.
+
+[`mobile/`](mobile/) contains the older Expo/React Native implementation, separate from the Swift and Kotlin targets. [`bots/`](bots/) contains Telegram and Discord readers.
+
+## Data limits and license
+
+BenchmarkWatcher provides historical reference data and descriptive, backward-looking calculations for informational and educational use. It provides no real-time market feed, trade execution, forecasts, trading signals or financial advice.
+
+Data may be delayed, incomplete, unavailable or revised. Record-based windows may differ from calendar periods. All data is provided as is; do not make financial decisions based on this software. The authors and contributors disclaim liability for its use or interpretation.
+
+Application code is [MIT licensed](LICENSE). Upstream datasets retain their own licenses and attribution requirements.
+
+[Support](https://benchmarkwatcher.online/support) · [Privacy](https://benchmarkwatcher.online/privacy) · [Report an issue](https://github.com/alikatgh/benchmarkwatcher/issues) · [Contribute](CONTRIBUTING.md)

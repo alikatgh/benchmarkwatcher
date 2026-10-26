@@ -13,6 +13,134 @@
         </p>
     </header>
 
+    <article class="release-entry" id="reui-workspace">
+        <time datetime="2026-10-19">October 19, 2026</time>
+        <h2>Clearer search, filters and display settings</h2>
+        <ul>
+            <li>Search benchmarks and local research notes from the shared header, with links to Country data, Companies and Sources. Ctrl/⌘+K opens search; arrow keys, Enter and Escape support navigation. Loading, Retry and empty-result states explain what to do next, and benchmark and navigation links support the browser's modified clicks.</li>
+            <li>Updated selected table, saved-view, library, source and chart selectors with ReUI controls. Lists with more than twelve options include search. Existing filter URLs, saved views and chart controls keep their behavior; Escape closes a dropdown while keeping its mobile sheet open; browser Back closes the sheet and dropdown together.</li>
+            <li>Display settings previews six appearances and three historical-change palettes, with preferences saved in this browser.</li>
+            <li>Uses selected free, MIT-licensed ReUI components within the existing Flask application. D3 charts, exact values, sources and units remain available. The controls add no calls to data or AI providers.</li>
+        </ul>
+        <p><a href="{{ url_for('main.reui_workspace_story') }}">Explore the workspace update →</a></p>
+    </article>
+
+    <article class="release-entry" id="pele-source-diagrams">
+        <time datetime="2026-10-18">October 18, 2026</time>
+        <h2>Source diagrams with Pele</h2>
+        <ul>
+            <li>Added source paths beside saved country and company histories, populated Global reference histories, company-report methodology and saved workbook results. Follow the publisher or filing through the saved observations to the chart, or the workbook cells to the saved result.</li>
+            <li>Source periods, units, flags, gaps, filing links and exact workbook cells remain available beside the diagrams. Workbook results read saved cell values; formulas are not executed here, and a workbook may contain assumptions.</li>
+            <li>Pele 1.6.0 is served with the app and loads when a source or methodology section opens. Opening a diagram makes no request to a data or AI provider. Ordered source steps remain readable without JavaScript or if diagram rendering is unavailable.</li>
+            <li>D3 continues to draw numerical charts, comparisons, sparklines, maps and quick visuals, with the existing customization and exports. Aligned the compact Range, Chart and Quick visuals controls for consistent sizing and spacing.</li>
+        </ul>
+        <p><a href="{{ url_for('main.pele_source_diagrams_story') }}">Read the source-diagram guide →</a></p>
+    </article>
+
+    <article class="release-entry" id="homepage-library">
+        <time datetime="2026-10-08">October 8, 2026</time>
+        <h2>A homepage for the full data library</h2>
+        <ul>
+            <li>Introduced a collection overview for commodity benchmarks, country and agricultural histories, and SEC company disclosures. Counts come from saved, published data and identify what they measure.</li>
+            <li>Every published dataset has a direct browse link. Held or unpopulated datasets are excluded from the homepage inventory and totals.</li>
+            <li>Added entry points for comparisons, charts, CSV exports, local notes and watchlists, account-based research and global references. The benchmark workspace remains available directly.</li>
+            <li>Renamed the small country selection to Country highlights, distinguishing it from the full country and agriculture library.</li>
+        </ul>
+        <p><a href="{{ url_for('main.homepage_story') }}">Read the homepage guide →</a></p>
+    </article>
+    <article class="release-entry" id="historical-data-expansion">
+        <time datetime="2026-10-08">October 8, 2026</time>
+        <h2>Nine more FAOSTAT datasets and source-rights controls</h2>
+        <ul>
+            <li>Added 51,246 histories and 916,719 observations across land cover, agricultural credit, foreign investment, non-food balances, forest and drained-soil emissions, government expenditure and machinery. Current public coverage is 431,584 histories and 7,222,096 observations across thirteen datasets.</li>
+            <li>New FAOSTAT imports preserve available annual country history within 1900–2025, with durable source-vintage and import-window evidence. Existing WDI, production and land-use backfills remain pending.</li>
+            <li>Sources now distinguishes all 69 discovered FAOSTAT domains, 39 supported readers, saved observations and verified historical import scope. Unsupported domains state the remaining schema or reuse work.</li>
+            <li>Held twelve domains for source-rights or provenance review, including the previously published agricultural-trade dataset. Free access does not establish redistribution rights. Imported data is preserved locally; held data is excluded from public searches, totals, details and CSV exports. Sources explains the applicable terms and remaining checks.</li>
+            <li>Catalogued 7,868 US-GAAP financial concepts and selected 98 for a resumable SEC expansion. Saved company data remains eight measures; catalogued concepts are not counted as observations. Future batches preserve exact decimals, units, official notices and committed checkpoints.</li>
+            <li>Added bounded, atomic merging of new datasets, with collision checks, rollback, elapsed-time limits and disk reserves. Scheduled SEC maintenance rotates up to 400 frames per batch; larger imports still defer when storage is insufficient.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.public_data_library_story') }}#library-expansion">Read the expanded data-library guide</a> · <a href="{{ url_for('global_reference.sources') }}#gr-expansion-heading">Inspect coverage and gaps</a></p>
+    </article>
+    <article class="release-entry" id="public-data-library">
+        <time datetime="2026-10-07">October 7, 2026</time>
+        <h2>A searchable public data library</h2>
+        <p>Archived release totals below include agricultural trade, which was subsequently held for source-rights review on October 8. See the current published coverage above.</p>
+        <ul>
+            <li>Added 700,178 saved histories containing 11,813,386 observations: World Bank WDI, FAOSTAT production, land use and agricultural trade, and selected SEC company disclosures.</li>
+            <li>World Bank coverage includes 243,741 histories, 4,385,363 observations, 217 economies and 1,488 populated eligible indicators. Restricted indicators are excluded.</li>
+            <li>FAOSTAT production adds 57,756 histories and 1,314,190 observations across 204 economies and territories. Land use adds 8,873 histories and 191,972 observations across 241; agricultural trade adds 319,840 histories and 5,508,009 observations across 204, with 2,416 populated item-and-element measures.</li>
+            <li>Country imports preserve available observations within 2000–2025; the saved agricultural-trade release currently ends in 2024. Missing years remain gaps and reported zeroes remain zeroes.</li>
+            <li>Country data supports searches by country, crop or measure, publisher and dataset filters, entity and indicator links, and 40-result pagination. Dataset coverage and latest refresh dates are visible alongside the results.</li>
+            <li>Companies groups 69,968 histories and 413,852 observations by SEC CIK across 12,363 reporting companies. Company pages expose eight selected USD US-GAAP concepts from 2015–2025 calendar frames, preserving actual reporting periods and filing accessions. Revenue concepts remain separate; this is selected disclosure coverage rather than a global company census.</li>
+            <li>History pages offer Line, Step, Bars and Dots, saved-history ranges, pointer, touch and keyboard inspection, and latest-first exact-observation tables. Country tables and CSV exports retain original decimal text.</li>
+            <li>Source notes preserve World Bank footnotes, FAOSTAT flags and definitions, SEC filing evidence, units, attribution and reuse terms. CSV exports carry these details with the values. Sources distinguishes saved observations from catalog metadata.</li>
+            <li>Integrated bounded maintenance into the regular data-fetch job: at most one due saved dataset per run, eligible after seven days for SEC, fourteen for World Bank and thirty for FAOSTAT. Complete dataset updates commit together; failed imports preserve saved history and revised values retain their earlier evidence.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.public_data_library_story') }}">Read the data-library guide</a> · <a href="{{ url_for('public_library.index') }}">Browse country data</a> · <a href="{{ url_for('public_library.companies') }}">Browse companies</a> · <a href="{{ url_for('global_reference.sources') }}">Inspect sources</a></p>
+    </article>
+    <article class="release-entry" id="charts-and-country-home">
+        <time datetime="2026-10-03">October 3, 2026</time>
+        <h2>Country data at home, charts in focus</h2>
+        <ul>
+            <li>The homepage separates Commodities and Country data with saved-history counts. Country and measure filters open the downloaded histories directly from home.</li>
+            <li>Full benchmark pages place the observation summary beside the chart on desktop. Phones put the chart first, with source details below.</li>
+            <li>Plot style and value display use animated, keyboard-accessible switches. The visual explorer groups its twelve views into history, distribution and calendar options.</li>
+            <li>Chart settings use a scrollable dialog with separate tabs and working D3 options. Motion respects the device's reduced-motion preference.</li>
+            <li>Table tools label Columns and Export explicitly, highlight applied filters and describe the current sort.</li>
+            <li>Missing observation-change metrics remain unavailable instead of appearing as a zero change. Reported zero values are retained.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.mobile_workspace_story') }}">Read the workspace update</a> · <a href="{{ url_for('main.index', dataset='countries') }}">Browse country data</a></p>
+    </article>
+    <article class="release-entry" id="country-histories">
+        <time datetime="2026-10-03">October 3, 2026</time>
+        <h2>Open 1,248 downloaded country histories</h2>
+        <ul>
+            <li>Added World Bank observations across 217 economies for population, constant-price GDP, GDP per person, consumer inflation, agriculture and industry. The first download contains 31,088 observations from 2000–2025.</li>
+            <li>Global reference now contains 1,256 saved histories. Search by country or measure, browse 30 results per page, and open a D3 chart with exact values and original annual periods.</li>
+            <li>Six bounded public API requests replace the original six country-specific requests. Existing links, older observations, custom metadata and revision archives are preserved.</li>
+            <li>Source-directory links open downloaded histories. Other discovered indicators retain their catalogued status; country histories are not counted as separate APIs or publishers.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.global_sources_story') }}">Read the country-data update</a></p>
+    </article>
+    <article class="release-entry" id="mobile-first-workspace">
+        <time datetime="2026-10-03">October 3, 2026</time>
+        <h2>Browse benchmarks first on small screens</h2>
+        <ul>
+            <li>Compact browsing keeps search, Filter and observation range visible. Saved-view tools, sorting, properties and exports move into More and focused sheets.</li>
+            <li>Phone results use readable observation rows with reported units and dates. Sheets support keyboard focus, Escape and browser Back while keeping view preferences.</li>
+            <li>Desktop details reserve 600 pixels for the benchmark list. Pane widths adapt when navigation or the window changes, and compact windows show a focused detail view.</li>
+            <li>Detail summaries keep the value, observation date and cadence together. Timeline tooltips anchor the date and value to the inspected line; hover, tap and keyboard controls work across the shared D3 charts.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.mobile_workspace_story') }}">Read the workspace update</a></p>
+    </article>
+    <article class="release-entry" id="global-reference">
+        <time datetime="2026-10-03">October 3, 2026</time>
+        <h2>International references and a public-source catalog</h2>
+        <ul>
+            <li>Added 21 configured histories from Bank of Canada, ECB, Eurostat, World Bank and Malaysia's Ministry of Finance. Commodity indices stay with benchmarks; exchange references, national statistics and administered fuel prices have a separate Global reference section.</li>
+            <li>Browse 31 source entries with access and reader status, plus searchable metadata for 1,498 World Bank indicators and 217 economies. Discovered metadata is clearly distinguished from connected observations.</li>
+            <li>Shared request budgets bound the scheduled refresh. Original periods, source flags, older observations and superseded revisions are retained; no automatic retries or paid-source accounts are added.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.global_sources_story') }}">Read the source guide</a></p>
+    </article>
+    <article class="release-entry" id="narrow-workspace">
+        <time datetime="2026-10-03">October 3, 2026</time>
+        <h2>A readable workspace beside wide details</h2>
+        <ul>
+            <li>Summary values and table actions adapt to the available dashboard width, including when a desktop details panel leaves only a narrow column.</li>
+            <li>Long reference names and values remain readable. Saved tabs scroll, action controls stay separate, and observation ranges wrap with touch-sized targets.</li>
+        </ul>
+    </article>
+    <article class="release-entry" id="native-development">
+        <time datetime="2026-10-03">October 3, 2026</time>
+        <h2>Native research targets in development</h2>
+        <ul>
+            <li>Added Swift Mac/iPhone and Kotlin Android source targets for company search, historical financials, filing sources, following and local research notes.</li>
+            <li>The public historical-report API has shared caching, issuer leases, capacity limits and ETags. It exposes no private workbooks or account data and invokes no paid AI.</li>
+            <li>These are development targets. Store releases and full phone-device validation remain pending.</li>
+        </ul>
+        <p class="mt-4"><a href="{{ url_for('main.native_research_story') }}">Read the native development update</a></p>
+    </article>
     <article class="release-entry" id="new-icon">
         <time datetime="2026-10-02">October 2, 2026</time>
         <h2>A new BenchmarkWatcher icon</h2>

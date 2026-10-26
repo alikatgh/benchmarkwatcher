@@ -1,0 +1,7 @@
+{% for item in taxonomy_notices|default([]) %}
+<section class="gr-evidence gr-surface gr-footnote" aria-labelledby="gr-taxonomy-notice-heading{{ '' if loop.first else '-' ~ loop.index }}" style="overflow-wrap:anywhere">
+  <h2 id="gr-taxonomy-notice-heading{{ '' if loop.first else '-' ~ loop.index }}">Taxonomy Authorized Uses</h2>
+  {% for paragraph in item.notice.split('\n') %}<p>{{ paragraph }}</p>{% endfor %}
+  {% if item.url %}<p><a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">Original Authorized Uses notice ↗</a></p>{% endif %}
+</section>
+{% endfor %}

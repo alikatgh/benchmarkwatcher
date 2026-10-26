@@ -4,7 +4,7 @@
     const V = BW.Visuals, d = window.d3;
     const types = [['line', 'Line history'], ['area', 'Area history'], ['step', 'Step history'], ['bar', 'Observation bars'], ['scatter', 'Observation dots'], ['change', 'Change between observations'], ['histogram', 'Value distribution'], ['cumulative', 'Cumulative distribution'], ['box', 'Range & quartiles'], ['monthly', 'Monthly averages'], ['heatmap', 'Year × month heatmap'], ['coverage', 'Observation coverage']];
     let seq = 0;
-    const redraws = new Map();
+    const redraws = new Map(), labs = new Map(), stageCharts = new WeakMap(), valueTables = new WeakMap();
     function el(tag, text, className) { const node = document.createElement(tag); if (text) node.textContent = text; if (className) node.className = className; return node; }
     function selector(parent, label, options) {
         const wrap = el('label', label), select = el('select');
@@ -12,20 +12,114 @@
         options.forEach(([value, text]) => { const option = el('option', text); option.value = value; select.append(option); });
         wrap.append(select); parent.append(wrap); return select;
     }
-    function valuesTable(parent, headers, rows) {
-        parent.replaceChildren();
-        const details = el('details', '', 'bw-visual-data'), table = el('table'), head = el('thead'), tr = el('tr');
-        headers.forEach(label => { const th = el('th', label); th.scope = 'col'; tr.append(th); });
-        head.append(tr); table.append(head);
-        const body = el('tbody');
-        rows.forEach(row => { const tr = el('tr'); row.forEach(value => tr.append(el('td', String(value)))); body.append(tr); });
-        table.append(body); const wrap = el('div'); wrap.append(table);
-        details.append(el('summary', `View exact values · ${rows.length} rows`), wrap); parent.append(details);
+    function visualizationChooser(parent, options) {
+        const wrap = el('div', '', 'bw-visual-chooser'), button = el('button', '', 'bw-visual-choice');
+        const panel = el('div', '', 'bw-visual-options'), caption = el('span'), arrow = el('span', '⌄');
+        const id = 'bw-visual-choice-' + (++seq), radioName = id + '-option';
+        button.type = 'button'; button.value = options[0][0]; button.append(caption, arrow);
+        arrow.setAttribute('aria-hidden', 'true'); panel.id = id;
+        panel.setAttribute('popover', 'auto'); panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-label', 'Choose visualization');
+        button.setAttribute('aria-controls', id); button.setAttribute('aria-haspopup', 'dialog');
+        button.setAttribute('aria-expanded', 'false');
+        wrap.append(el('span', 'Visualization', 'bw-visual-choice-label'), button, panel); parent.append(wrap);
+        let choices = options, fallbackOpen = false;
+        const open = () => typeof panel.showPopover === 'function' ? panel.matches(':popover-open') : fallbackOpen;
+        function position() {
+            const bounds = button.getBoundingClientRect(), width = Math.min(410, window.innerWidth - 24);
+            panel.style.width = width + 'px';
+            panel.style.left = Math.max(12, Math.min(bounds.left, window.innerWidth - width - 12)) + 'px';
+            panel.style.top = Math.max(12, Math.min(bounds.bottom + 6, window.innerHeight - Math.min(panel.scrollHeight, 420) - 12)) + 'px';
+        }
+        function close(restore) {
+            if (typeof panel.hidePopover === 'function' && open()) panel.hidePopover();
+            fallbackOpen = false; panel.classList.remove('is-open'); button.setAttribute('aria-expanded', 'false');
+            if (restore) button.focus();
+        }
+        button.sync = () => {
+            const selected = choices.find(choice => choice[0] === button.value);
+            caption.textContent = selected?.[1] || choices[0][1];
+            button.setAttribute('aria-label', 'Visualization: ' + caption.textContent);
+            panel.querySelectorAll('input').forEach(input => { input.checked = input.value === button.value; });
+        };
+        button.setOptions = options => {
+            choices = options;
+            if (!choices.some(choice => choice[0] === button.value)) button.value = choices[0][0];
+            panel.replaceChildren();
+            const groups = [
+                ['History', ['line','area','step','bar','scatter','change']],
+                ['Distribution', ['histogram','cumulative','box']],
+                ['Timing', ['monthly','heatmap','coverage']],
+                ['Overview', ['ranking','map','categories','dates']]
+            ];
+            const fieldset = el('fieldset'), legend = el('legend', 'Choose a view'); fieldset.append(legend);
+            for (const [title, keys] of groups) {
+                const rows = choices.filter(choice => keys.includes(choice[0])); if (!rows.length) continue;
+                const section = el('div', '', 'bw-visual-choice-group'); section.append(el('h3', title));
+                for (const [value, label] of rows) {
+                    const item = el('label'), input = el('input'); input.type = 'radio'; input.name = radioName; input.value = value;
+                    item.append(input, el('span', label)); section.append(item);
+                    // Arrow navigation selects without closing the chooser; an
+                    // explicit click or Enter commits and returns to the chart.
+                    input.addEventListener('change', () => { button.value = value; button.sync(); button.dispatchEvent(new Event('change')); });
+                    input.addEventListener('click', () => close(true));
+                }
+                fieldset.append(section);
+            }
+            panel.append(fieldset); button.sync();
+        };
+        button.addEventListener('click', () => {
+            if (open()) { close(false); return; }
+            if (typeof panel.showPopover === 'function') panel.showPopover();
+            else { fallbackOpen = true; panel.classList.add('is-open'); }
+            position(); button.setAttribute('aria-expanded', 'true');
+            panel.querySelector('input:checked')?.focus();
+        });
+        panel.addEventListener('toggle', event => { button.setAttribute('aria-expanded', String(event.newState === 'open')); });
+        panel.addEventListener('keydown', event => {
+            // Browsers synthesize radio clicks for arrow navigation. Handle the
+            // group here so browsing choices does not commit and close it.
+            if (['ArrowLeft','ArrowUp','ArrowRight','ArrowDown','Home','End'].includes(event.key) && event.target.matches('input[type="radio"]')) {
+                event.preventDefault(); event.stopPropagation();
+                const inputs = [...panel.querySelectorAll('input[type="radio"]')], index = inputs.indexOf(event.target);
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? inputs.length - 1 : (index + (['ArrowLeft','ArrowUp'].includes(event.key) ? -1 : 1) + inputs.length) % inputs.length;
+                const input = inputs[next]; input.checked = true; input.focus();
+                input.dispatchEvent(new Event('change', { bubbles: true })); return;
+            }
+            if (event.key === 'Escape' || event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); close(true); }
+        });
+        const onPointerDown = event => { if (fallbackOpen && !wrap.contains(event.target)) close(false); };
+        const onResize = () => { if (open()) position(); };
+        document.addEventListener('pointerdown', onPointerDown);
+        window.addEventListener('resize', onResize);
+        button.dispose = () => { close(false); document.removeEventListener('pointerdown', onPointerDown); window.removeEventListener('resize', onResize); };
+        button.setOptions(options); return button;
     }
+    function valuesTable(parent, headers, rows) {
+        let state = valueTables.get(parent);
+        if (!state || state.details.parentElement !== parent) {
+            const details = el('details', '', 'bw-visual-data'), summary = el('summary'), wrap = el('div');
+            state = { details, summary, wrap, revision: 0, rendered: -1, rows: [], headers: [] };
+            details.append(summary, wrap); parent.replaceChildren(details); valueTables.set(parent, state);
+            details.addEventListener('toggle', () => { if (details.open) populate(); else { wrap.replaceChildren(); state.rendered = -1; } });
+        }
+        function populate() {
+            if (state.rendered === state.revision) return;
+            const table = el('table'), head = el('thead'), tr = el('tr');
+            state.headers.forEach(label => { const th = el('th', label); th.scope = 'col'; tr.append(th); }); head.append(tr); table.append(head);
+            const body = el('tbody');
+            state.rows.forEach(row => { const tr = el('tr'); row.forEach(value => tr.append(el('td', String(value)))); body.append(tr); });
+            table.append(body); state.wrap.replaceChildren(table); state.rendered = state.revision;
+        }
+        state.headers = headers; state.rows = rows; state.revision += 1;
+        state.summary.textContent = `View exact values · ${rows.length} rows`;
+        if (state.details.open) populate(); else { state.wrap.replaceChildren(); state.rendered = -1; }
+    }
+    function disposeStage(stage) { stageCharts.get(stage)?.destroy(); stageCharts.delete(stage); }
     function titleMarks(selection, text) { selection.append('title').text(text); }
     const catalogTypes = [['ranking', 'Ranked historical changes'], ['map', 'Benchmark change map'], ['categories', 'Category coverage'], ['dates', 'Latest observation dates']];
     function catalogView(lab, records, range) {
-        lab.stage.replaceChildren();
+        disposeStage(lab.stage); lab.stage.replaceChildren();
         const width = Math.max(320, lab.stage.clientWidth || 760), type = lab.select.value;
         const values = records.map(record => ({ ...record, change: V.numeric(record.change_percent) }));
         const available = values.filter(r => r.change !== null).sort((a,b) => b.change - a.change);
@@ -77,7 +171,7 @@
         valuesTable(lab.table,headers||['Benchmark','Change %','Observed','Unit'],tableRows||values.map(r=>[r.name,V.format(r.change),r.date||'Unknown',[r.currency,r.unit].filter(Boolean).join(' / ')]));
     }
     function render(stage, rows, type, unit, note, table) {
-        stage.replaceChildren();
+        disposeStage(stage); stage.replaceChildren();
         const points = V.history(rows), usable = points.filter(p => p.value !== null), values = usable.map(p => p.value);
         const width = Math.max(320, stage.clientWidth || 760), height = 320;
         let tableRows = points.map(p => [p.date, V.format(p.value)]), headers = ['Observation date', unit || 'Value'];
@@ -90,7 +184,8 @@
                 unit = '%'; tableRows = chartPoints.map(p => [p.date, V.format(p.value)]); headers = ['Observation date', 'Change %'];
                 note.textContent += 'Change from the preceding available observation; intervals vary. A positive preceding value is required.';
             } else note.textContent += 'Actual observation dates. Extended gaps remain open. Use arrow keys to inspect values.';
-            V.timeSeries(stage, [{ points: chartPoints, unit }], { type: type === 'change' ? 'bar' : type, height, zero: type === 'change', label: types.find(t => t[0] === type)[1] + '. Exact values below.' });
+            const chart = V.timeSeries(stage, [{ points: chartPoints, unit }], { type: type === 'change' ? 'bar' : type, height, zero: type === 'change', label: types.find(t => t[0] === type)[1] + '. Exact values below.' });
+            stageCharts.set(stage, chart);
         } else {
             const svg = V.root(stage, width, height, types.find(t => t[0] === type)[1] + '. Exact values below.');
             if (!usable.length) V.empty(svg, width, height);
@@ -154,12 +249,26 @@
         const section = el('section', '', 'bw-visual-lab'), id = 'bw-lab-' + (++seq);
         const heading = el('h2', title); heading.id = id; section.setAttribute('aria-labelledby', id);
         section.append(heading, el('p', 'Explore historical observations from different angles. Every view includes its exact values.'));
-        const controls = el('div', '', 'bw-visual-controls'), select = selector(controls, 'Visualization', types);
+        const controls = el('div', '', 'bw-visual-controls'), select = visualizationChooser(controls, types);
         const exportButton = el('button', 'Download PNG'); exportButton.type = 'button'; controls.append(exportButton);
         const stage = el('div', '', 'bw-visual-stage'), note = el('p', '', 'bw-visual-note'), table = el('div'); note.setAttribute('aria-live', 'polite');
         section.append(controls, stage, note, table); parent.append(section);
-        const state = { rows: [], unit: '', section, controls, select, stage, note, table };
-        state.draw = () => render(stage, state.rows, select.value, state.unit, note, table);
+        const state = { rows: [], unit: '', section, controls, select, stage, note, table, disposed: false, cleanup: [] };
+        let observer = null;
+        state.dispose = () => {
+            if (state.disposed) return; state.disposed = true;
+            observer?.disconnect(); select.dispose(); disposeStage(stage);
+            state.cleanup.forEach(cleanup => cleanup()); state.cleanup.length = 0;
+            redraws.delete(section); labs.delete(section); section.remove();
+            if (detailLab === state) detailLab = null;
+        };
+        labs.set(section, state);
+        if (BW.VisualBuilderSources) state.builderButton = BW.VisualBuilderSources.attach(controls, () => state.graphicSpec || {
+            title:state.name || 'Historical observations', unit:state.unit, type:'line',
+            source:state.source || '', notes:note.textContent,
+            series:[{name:state.name || 'Observations',unit:state.unit,points:state.rows}]
+        });
+        state.draw = () => { if (state.disposed) return; select.sync(); render(stage, state.rows, select.value, state.unit, note, table); };
         select.addEventListener('change', () => state.draw());
         exportButton.addEventListener('click', async () => {
             const svg = stage.querySelector('svg'); if (!svg) return;
@@ -170,7 +279,10 @@
         });
         if (typeof ResizeObserver !== 'undefined') {
             let width = 0;
-            new ResizeObserver(() => { if (stage.clientWidth > 0 && width !== stage.clientWidth) { width = stage.clientWidth; state.draw(); } }).observe(stage);
+            observer = new ResizeObserver(() => {
+                if (!section.isConnected) { state.dispose(); return; }
+                if (stage.clientWidth > 0 && width !== stage.clientWidth) { width = stage.clientWidth; state.draw(); }
+            }); observer.observe(stage);
         }
         redraws.set(section, () => state.draw());
         return state;
@@ -178,11 +290,25 @@
     let detailLab;
     function detail(rows, name, unit) {
         const chart = document.getElementById('priceChart'); if (!chart) return;
+        if (detailLab && (!detailLab.section.isConnected || detailLab.disposed)) { detailLab.dispose(); detailLab = null; }
         if (!detailLab) {
-            const host = el('div'); chart.closest('.chart-panel').after(host); detailLab = createLab(host, 'Visual explorer');
+            const host = el('div'); (chart.closest('.commodity-overview') || chart.closest('.chart-panel')).after(host); detailLab = createLab(host, 'Visual explorer');
+            const context = el('div', '', 'bw-visual-context'), heading = detailLab.section.querySelector('h2');
+            const introduction = heading.nextElementSibling;
+            context.append(heading, introduction);
+            context.append(detailLab.controls, detailLab.note);
+            detailLab.section.prepend(context); detailLab.section.classList.add('bw-visual-detail');
+            detailLab.table.classList.add('bw-visual-values');
+            const wide = window.matchMedia('(min-width:1024px)');
+            const adaptContext = () => { if (wide.matches) context.append(detailLab.note); else detailLab.stage.after(detailLab.note); };
+            adaptContext(); wide.addEventListener('change', adaptContext);
+            detailLab.cleanup.push(() => wide.removeEventListener('change', adaptContext));
             detailLab.select.value = 'histogram';
         }
         detailLab.rows = rows; detailLab.unit = unit; detailLab.draw();
+        detailLab.name = name;
+        const metadata = document.getElementById('bw-visual-source');
+        if (metadata) { try { detailLab.source = JSON.parse(metadata.textContent).source; } catch (_) {} }
     }
     function workbooks() {
         document.querySelectorAll('[data-workbook-chart]').forEach(target => {
@@ -192,6 +318,14 @@
             const select = selector(controls, 'Chart type', [['line', 'Line'], ['area', 'Area'], ['bar', 'Bars'], ['scatter', 'Dots']]);
             const caption = target.closest('figure')?.querySelector('figcaption');
             if (caption) caption.append(controls); else target.before(controls);
+            if (BW.VisualBuilderSources) BW.VisualBuilderSources.attach(controls, {
+                id:['workbook',target.dataset.workbookVersion || location.pathname,target.dataset.workbookName,
+                    target.closest('[data-analysis-id]')?.dataset.analysisId || '',target.dataset.label].join(':'),
+                title:target.dataset.label, type:'bar', unit:target.dataset.unit, ordinal:true,
+                source:'Saved workbook values' + (target.dataset.workbookName ? ' · ' + target.dataset.workbookName : '') + ' · source cells retained with each observation',
+                notes:'Workbook periods are shown in source order. Values may include model assumptions; dates alone do not establish historical observations.',
+                series:[{name:target.dataset.label,unit:target.dataset.unit,points:points.map(point=>({...point, value:V.numeric(point.value) === null ? null : V.numeric(point.value) * (point.percent ? 100 : 1)}))}]
+            });
             function draw() {
                 const width = Math.max(260, target.clientWidth || 760), height = 230, svg = V.root(target, width, height, target.dataset.label + '. Exact values in Source data.');
                 const rows = points.map((p, index) => ({...p, index, value: p.value === null ? null : V.numeric(p.value) * (p.percent ? 100 : 1)}));
@@ -218,6 +352,7 @@
     async function dashboard() {
         const parent = document.getElementById('bw-visual-explorer'); if (!parent) return;
         const lab = createLab(parent, 'Visual explorer');
+        if (lab.builderButton) lab.builderButton.disabled = true;
         const benchmark = selector(lab.controls, 'Benchmark', []), range = selector(lab.controls, 'Observation range', [['1Y', 'Last available year'], ['5Y', 'Last available 5 years'], ['ALL', 'All available observations']]);
         lab.controls.prepend(benchmark.parentElement, range.parentElement);
         lab.select.value = 'heatmap';
@@ -226,24 +361,37 @@
         function configure(catalog) {
             const options = catalog ? catalogTypes : types;
             const selected = lab.select.value;
-            lab.select.replaceChildren();
-            options.forEach(([value,label]) => {const option=el('option',label);option.value=value;lab.select.append(option);});
+            lab.select.setOptions(options);
             lab.select.value = options.some(option=>option[0]===selected) ? selected : options[0][0];
-            lab.draw = catalog ? () => catalogView(lab, records, range.value) : seriesDraw;
+            lab.select.sync();
+            lab.draw = catalog ? () => { if (lab.disposed) return; lab.select.sync(); catalogView(lab, records, range.value); } : seriesDraw;
+            // Catalog percentage changes are precomputed by the API, which has no 5Y window.
+            range.querySelector('option[value="5Y"]').disabled = catalog;
         }
         lab.select.addEventListener('change', () => { if (!current) { lab.stage.replaceChildren(); lab.table.replaceChildren(); lab.note.textContent = 'Select a benchmark to load observations.'; } });
         async function load() {
             const active = ++request; lab.note.textContent = 'Loading observations…'; lab.stage.setAttribute('aria-busy', 'true');
+            current = null; lab.graphicSpec = null; lab.rows = []; lab.name = ''; lab.unit = '';
+            if (lab.builderButton) lab.builderButton.disabled = true;
             try {
                 const catalog = benchmark.value === '__catalog__';
+                if (catalog && range.value === '5Y') range.value = 'ALL';
                 const response = await fetch(catalog ? '/api/commodities?include_history=false&range=' + range.value : '/api/commodity/' + encodeURIComponent(benchmark.value));
                 if (!response.ok) throw new Error('Unavailable');
-                const payload = await response.json(); if (active !== request) return;
+                const payload = await response.json(); if (active !== request || lab.disposed) return;
                 current = payload.data || payload.commodity || payload;
-                if (catalog) { records = current; configure(true); lab.draw(); }
+                if (catalog) {
+                    const category = new URLSearchParams(location.search).get('category');
+                    records = category ? current.filter(record=>record.category === category) : current;
+                    lab.graphicSpec = {id:'catalog-changes',title:'Historical benchmark changes',type:'ranking',unit:'%',
+                        source:[...new Set(records.map(record=>record.source_name || record.source).filter(Boolean))].join('; '),
+                        notes:'Changes over ' + (range.value === 'ALL' ? 'all saved history' : range.value) + '. Each series uses its own available endpoints; periods differ.',
+                        rows:records.map(record=>({label:record.name,value:record.change_percent,period:record.date,unit:'%',source:[record.source_name || record.source,record.source_url].filter(Boolean).join(' · ')}))};
+                    configure(true); lab.draw();
+                }
                 else { configure(false); drawRange(); }
             } catch (_) { if (active === request) { current = null; lab.rows = []; lab.stage.replaceChildren(); lab.table.replaceChildren(); lab.note.textContent = 'Could not load observations. Select a benchmark to retry.'; } }
-            finally { if (active === request) lab.stage.removeAttribute('aria-busy'); }
+            finally { if (active === request) { lab.stage.removeAttribute('aria-busy'); if (lab.builderButton) lab.builderButton.disabled = !current; } }
         }
         function drawRange() {
             if (!current) return;
@@ -251,19 +399,24 @@
             if (range.value !== 'ALL') cutoff.setUTCFullYear(cutoff.getUTCFullYear() - (range.value === '5Y' ? 5 : 1));
             lab.rows = range.value === 'ALL' ? points : points.filter(p => p.time >= +cutoff);
             lab.unit = [current.currency, current.unit].filter(Boolean).join(' / '); lab.draw();
+            lab.name = current.name;
+            lab.graphicSpec = BW.VisualBuilderSources?.benchmark(current,lab.rows);
         }
         benchmark.addEventListener('change', load); range.addEventListener('change', () => benchmark.value === '__catalog__' ? load() : drawRange());
         try {
             const response = await fetch('/api/commodities?include_history=false'); if (!response.ok) throw new Error('Unavailable');
             const payload = await response.json(), records = Array.isArray(payload) ? payload : (payload.data || payload.commodities);
+            if (lab.disposed) return;
             const all = el('option','All benchmarks'); all.value='__catalog__'; benchmark.append(all);
             records.forEach(record => { const option = el('option', record.name); option.value = record.id; benchmark.append(option); });
             if (records.some(r => r.id === 'gold')) benchmark.value = 'gold';
             await load();
         } catch (_) { lab.note.textContent = 'The benchmark catalog could not be loaded. Reload the page to retry.'; }
     }
-    BW.VisualExplorer = { detail, workbooks, render, refresh() {
-        redraws.forEach((draw, node) => { if (node.isConnected) draw(); else redraws.delete(node); });
+    BW.VisualExplorer = { detail, workbooks, render, dispose(target) {
+        labs.forEach((lab, node) => { if (!target || target === node || target.contains(node)) lab.dispose(); });
+    }, refresh() {
+        redraws.forEach((draw, node) => { if (node.isConnected) draw(); else { labs.get(node)?.dispose(); redraws.delete(node); } });
     } };
     document.addEventListener('DOMContentLoaded', () => { workbooks(); dashboard(); });
 })();

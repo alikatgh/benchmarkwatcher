@@ -1,13 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
+const benchmarkLinks = (page: Page) => page.locator('#table-body a[data-benchmark-id]:visible, #tw-mobile-list a[data-benchmark-id]:visible');
+
 async function browse(page: Page) {
     await page.goto('/?range=ALL');
-    await expect(page.locator('#table-body a[data-benchmark-id]').first()).toBeVisible();
+    await expect(benchmarkLinks(page).first()).toBeVisible();
 }
 
 async function openFirst(page: Page) {
-    const link = page.locator('#table-body a[data-benchmark-id]').first();
+    const link = benchmarkLinks(page).first();
     const name = (await link.textContent())!.trim();
     const id = await link.getAttribute('data-benchmark-id');
     await link.click();
@@ -51,7 +53,8 @@ test('detail keeps history close to the quote and chart controls usable', async 
     }
     await expect(detail.getByRole('heading',{name:'Reference history'})).toBeInViewport();
     await detail.locator('#benchmark-chart-settings > summary').click();
-    await expect(detail.locator('#benchmark-chart-start')).toBeVisible();
+    await expect(detail.locator('#benchmark-range-start')).toBeVisible();
+    await expect(detail.locator('#benchmark-chart-start')).toBeHidden();
     await detail.locator('#benchmark-chart-style').selectOption('area');
     await expect(detail.locator('#benchmark-chart-settings')).toHaveAttribute('open','');
     await detail.locator('#benchmark-chart-dots').check();
@@ -133,8 +136,18 @@ test('320px dark details retain readable controls and a contained chart', async 
     await page.screenshot({ path: testInfo.outputPath('benchmark-detail-narrow-dark.png'), fullPage: false });
 });
 
+test('watching inside a phone detail returns focus to the refreshed observation row', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await browse(page);
+    const { id } = await openFirst(page);
+    await page.locator('#benchmark-detail [data-watch-id]').click();
+    await expect(page.locator(`#tw-mobile-list [data-benchmark-id="${id}"]`)).toBeAttached();
+    await page.keyboard.press('Escape');
+    await expect(page.locator(`#tw-mobile-list [data-benchmark-id="${id}"]`)).toBeFocused();
+});
+
 test('detail pane resizes by dragging and keyboard, keeps its chart state, and restores width after reload', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.setViewportSize({ width: 1920, height: 1000 });
     await browse(page); await openFirst(page);
     const detail = page.locator('#benchmark-detail');
     const handle = page.getByRole('separator', { name: 'Resize benchmark details' });
@@ -157,12 +170,41 @@ test('detail pane resizes by dragging and keyboard, keeps its chart state, and r
     expect(await detail.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
 });
 
+test('split detail reserves a readable list and adapts to sidebar and viewport changes', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await browse(page); await openFirst(page);
+    const handle = page.getByRole('separator', { name: 'Resize benchmark details' });
+    const table = page.locator('#table-workspace');
+    await handle.focus(); await handle.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', '588');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.locator('#bw-sidebar-toggle').click();
+    await expect(handle).toHaveAttribute('aria-valuemax', '720');
+    await handle.focus(); await handle.press('End');
+    await expect(handle).toHaveAttribute('aria-valuenow', '720');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.locator('#bw-sidebar-toggle').click();
+    await expect(handle).toHaveAttribute('aria-valuenow', '588');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect(handle).toHaveAttribute('aria-valuenow', '428');
+    await expect.poll(async () => (await table.boundingBox())!.width).toBeGreaterThanOrEqual(598);
+    await page.setViewportSize({ width: 1279, height: 900 });
+    await expect(page.locator('#benchmark-detail')).toHaveAttribute('aria-modal', 'true');
+    expect(await page.locator('#benchmark-workspace').evaluate(node => Boolean(node.closest('[inert]')))).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#benchmark-detail')).toBeHidden();
+    expect(await page.locator('#benchmark-workspace').evaluate(node => Boolean(node.closest('[inert]')))).toBe(false);
+});
+
 test('detail chart custom dates and presentation settings remain usable at 320px', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 900 });
     await browse(page); await openFirst(page);
     const detail = page.locator('#benchmark-detail');
     const latest = (await detail.locator('.benchmark-detail-table tbody tr td').first().textContent())!.trim();
     await detail.getByRole('button', { name: 'Custom', exact: true }).click();
+    await expect(detail.getByLabel('From', { exact: true })).toBeHidden();
+    await detail.locator('#benchmark-exact-dates > summary').click();
     await detail.getByLabel('From', { exact: true }).fill(latest);
     await detail.getByLabel('To', { exact: true }).fill(latest);
     await detail.getByRole('button', { name: 'Apply dates', exact: true }).click();
@@ -178,4 +220,52 @@ test('detail chart custom dates and presentation settings remain usable at 320px
     await expect(detail.locator('#benchmark-chart-date-error')).toContainText('on or before');
     expect(await detail.evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});
+
+
+test('date range handles work by touch-sized drag and keyboard without an apply button', async ({ page }, testInfo) => {
+    await page.setViewportSize({width:390,height:844});
+    await browse(page); await openFirst(page);
+    const detail=page.locator('#benchmark-detail');
+    await detail.getByRole('button',{name:'All',exact:true}).click();
+    await detail.getByRole('button',{name:'Custom',exact:true}).click();
+    const start=detail.getByRole('slider',{name:'Range start',exact:true});
+    const end=detail.getByRole('slider',{name:'Range end',exact:true});
+    await expect(detail.getByLabel('From',{exact:true})).toBeHidden();
+    await expect(detail.getByRole('button',{name:'Apply dates',exact:true})).toBeHidden();
+    const observationCount=async()=>Number((await detail.locator('.benchmark-detail-observations > summary').innerText()).match(/(\d+) records/)![1]);
+    const before=await observationCount();
+    const bounds=await start.boundingBox();
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+    await page.mouse.move(bounds!.x+22,bounds!.y+bounds!.height/2);
+    await page.mouse.down();
+    await page.mouse.move(bounds!.x+22+(bounds!.width-44)*.35,bounds!.y+bounds!.height/2,{steps:6});
+    await page.mouse.up();
+    await expect(detail.locator('[data-detail-range="CUSTOM"]')).toHaveAttribute('aria-pressed','true');
+    expect(await observationCount()).toBeLessThan(before);
+    await expect(start).toBeFocused();
+    await start.press('Home');
+    await expect(start).toHaveValue('0');
+    await end.press('Home');
+    await expect(end).toHaveValue('0');
+    await expect(detail.locator('.benchmark-detail-table tbody tr')).toHaveCount(1);
+    // A collapsed middle thumb must expand directly toward earlier dates.
+    await end.press('ArrowRight'); await end.press('ArrowRight'); await end.press('ArrowRight');
+    await start.press('End');
+    const collapsed=Number(await end.inputValue());
+    expect(collapsed).toBeGreaterThan(0);
+    const maximum=Number(await end.getAttribute('max'));
+    const middle=await end.boundingBox();
+    await page.mouse.move(middle!.x+22+(middle!.width-44)*collapsed/maximum,middle!.y+22);
+    await page.mouse.down(); await page.mouse.move(middle!.x+22,middle!.y+22,{steps:5}); await page.mouse.up();
+    await expect(start).toHaveValue('0');
+    await expect(end).toHaveValue(String(collapsed));
+    expect(await observationCount()).toBe(collapsed+1);
+    await expect(start).toBeFocused();
+    await end.press('End');
+    expect(await observationCount()).toBe(before);
+    expect(await detail.evaluate(el=>el.scrollWidth-el.clientWidth)).toBeLessThanOrEqual(1);
+    const axe = await new AxeBuilder({page}).include('#benchmark-chart-settings').withTags(['wcag2a','wcag2aa']).analyze();
+    expect(axe.violations).toEqual([]);
+    await detail.locator('#benchmark-chart-settings').screenshot({path:testInfo.outputPath('date-range-handles.png')});
 });

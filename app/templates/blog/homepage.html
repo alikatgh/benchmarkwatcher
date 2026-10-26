@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8">
+    <header class="mb-6">
+        <p><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">A homepage for the whole library</h1>
+        <p class="leading-relaxed mb-4">Commodity benchmarks are one part of BenchmarkWatcher. The homepage now brings country statistics, agricultural histories, company disclosures and research tools into view alongside them.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-08">October 8, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+    <section class="release-entry">
+        <h2>Choose the collection that answers your question</h2>
+        <p>The <a href="{{ url_for('main.index', view='compact') }}">commodity workspace</a> covers reference prices for energy, metals, agriculture and indices. The <a href="{{ url_for('public_library.index') }}">country and agriculture library</a> brings together saved World Bank and FAOSTAT histories. The <a href="{{ url_for('public_library.companies') }}">company directory</a> opens selected financial measures reported to the SEC.</p>
+        <p>The homepage lists every currently published dataset with its own browse link. Land cover, agricultural credit, machinery and emissions no longer have to be discovered through a general source page.</p>
+    </section>
+    <section class="release-entry">
+        <h2>Know what the numbers count</h2>
+        <p>A history represents one measure for one entity; observations are the saved values across its reporting periods. Company counts describe entities, while commodity counts describe reference series. The country and company library total does not include the separate commodity collection.</p>
+        <p>Homepage counts are read from the saved dataset summaries and follow the same publication rules as the library. Unpopulated or held datasets are excluded. If the library cannot be read, the page explains that counts are unavailable.</p>
+        <p>Coverage is still expanding. Available dates and measures vary by source and entity. The <a href="{{ url_for('global_reference.sources') }}">source catalog</a> keeps discovered sources, saved data, import scope and reuse conditions distinct.</p>
+    </section>
+    <section class="release-entry">
+        <h2>Move from browsing to research</h2>
+        <p>Compare benchmark histories, inspect distributions and monthly patterns, or export observations as CSV. Keep watchlists, table views and research notes in your browser. Account-based company research adds filing evidence and saved reports; optional AI commentary uses a connected provider and may incur provider charges.</p>
+        <p>The homepage also links to selected global references, help and the native-app development update. Native store releases are still pending. The benchmark table remains below the overview, and its direct link opens the focused workspace.</p>
+    </section>
+    <p><a href="{{ url_for('main.index') }}">Explore the homepage →</a> · <a href="{{ url_for('main.changelog') }}#homepage-library">Release notes</a></p>
+</article>
+{% endblock %}

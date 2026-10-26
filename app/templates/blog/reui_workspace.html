@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}A clearer research workspace | BenchmarkWatcher{% endblock %}
+{% block content %}
+<article class="release-notes max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-12">
+    <header class="mb-6 sm:mb-8">
+        <p class="text-sm mb-4"><a href="{{ url_for('main.blog') }}">BenchmarkWatcher blog</a></p>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4">A clearer research workspace</h1>
+        <p class="text-lg leading-relaxed mb-4">Find a benchmark or a note, narrow a long list of filters, and choose an appearance that is comfortable to read. This web update brings clearer search, selection and display controls to the existing research workspace.</p>
+        <p class="text-sm theme-text-muted"><time datetime="2026-10-19">October 19, 2026</time> · By BenchmarkWatcher</p>
+    </header>
+
+    <section class="release-entry" aria-labelledby="workspace-search">
+        <h2 id="workspace-search">Search from wherever you are</h2>
+        <p class="mb-4 leading-relaxed">Open <strong>Search workspace</strong> in the header, or press <kbd>Ctrl</kbd> + <kbd>K</kbd> on Windows and Linux or <kbd>⌘</kbd> + <kbd>K</kbd> on a Mac. Search benchmark names and sources alongside the titles, tags and text of your local research notes. The same dialog offers links to Country data, Companies and Sources.</p>
+        <p class="mb-4 leading-relaxed">Use the arrow keys to choose a result, Enter to open it and Escape to close search. Benchmark and navigation results are links, so you can also use your browser's usual modified click to open them in another tab.</p>
+        <p class="leading-relaxed">Search shows when the benchmark list is loading. If it cannot finish loading, Retry lets you try again. An empty result explains what to search for and offers Clear search, keeping the next action close to the result.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="workspace-filters">
+        <h2 id="workspace-filters">Choose a filter without losing your place</h2>
+        <p class="mb-4 leading-relaxed">Updated selectors cover benchmark table filters, saved views and row density, country and company library filters, the source catalog, and history chart type and range. Lists with more than twelve options include search, so a country, dataset or measure is easier to find.</p>
+        <p class="leading-relaxed">Your selected filters still travel with submitted library URLs, and saved views retain their settings. On a phone, Escape closes an open dropdown while keeping the surrounding filter sheet open. Browser Back closes the sheet and its dropdown together.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="workspace-appearance">
+        <h2 id="workspace-appearance">Preview your display settings</h2>
+        <p class="mb-4 leading-relaxed">Display settings puts all six appearances together: Light, Dark, Mono light, Mono dark, Terminal and Paper. Each has a small preview and a clear selected state.</p>
+        <p class="leading-relaxed">Three historical-change palettes let you choose Green up, Red up or Neutral. Their labels show how increases and decreases are represented. Appearance and color preferences are saved in this browser.</p>
+    </section>
+
+    <section class="release-entry" aria-labelledby="workspace-observations">
+        <h2 id="workspace-observations">The observations and their evidence stay together</h2>
+        <p class="mb-4 leading-relaxed">D3 continues to draw the numerical charts. Exact values, units, observation dates and source details remain available with the historical benchmark and reference data. Using the new controls adds no calls to data or AI providers.</p>
+        <p class="leading-relaxed">The search, display dialog and selected filters use free, MIT-licensed components from <a href="https://github.com/keenthemes/reui" target="_blank" rel="noopener noreferrer">ReUI</a>. These focused React components work within the existing Flask application and its data controllers.</p>
+    </section>
+
+    <nav aria-label="Explore the research workspace" class="pt-8 border-t border-brand-black-60/20 dark:border-white/10">
+        <a href="{{ url_for('main.index', view='compact') }}">Benchmarks</a> · <a href="{{ url_for('public_library.index') }}">Country data</a> · <a href="{{ url_for('public_library.companies') }}">Companies</a> · <a href="{{ url_for('global_reference.sources') }}">Sources</a> · <a href="{{ url_for('main.changelog') }}#reui-workspace">Release notes</a>
+    </nav>
+</article>
+{% endblock %}

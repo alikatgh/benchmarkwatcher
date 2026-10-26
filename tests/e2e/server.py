@@ -12,12 +12,15 @@ import secrets
 from app import create_app
 from app import analysis_providers
 from tests.e2e.workbook_fixture import write_workbook, provider_response
+from tests.e2e.reference_fixture import seed_references
+from tests.e2e.market_search_fixture import seed_search
 
 
-def main(workbooks=False, companies=False):
+def main(workbooks=False, companies=False, visual_builder=False):
     with TemporaryDirectory(prefix='benchmarkwatcher-e2e-') as directory:
         library = Path(directory) / 'models'
         library.mkdir()
+        seed_references(Path(directory) / 'global-reference')
         write_workbook(library / 'Sample Company.xlsx')
         if workbooks:
             for name in ['005930 Samsung', 'Samsung SDI', 'ZZZ Samsung Research', 'AT&T <Labs>'] + [f'Workbook example {i:03}' for i in range(64)]:
@@ -33,9 +36,19 @@ def main(workbooks=False, companies=False):
                     'source_type': 'FIXTURE', 'history': history}
             (Path(directory) / f'{item["id"]}.json').write_text(json.dumps(item))
 
+        if visual_builder:
+            from tests.e2e.visual_builder_fixture import seed_library
+            seed_library(Path(directory) / 'public_library.sqlite3')
+            seed_search(Path(directory) / 'vendor-market-data.sqlite3',
+                        Path(directory) / 'public_library.sqlite3')
+
         class Config:
             SECRET_KEY = 'ci-only-fixture-server'
             JSON_DATA_DIR = directory
+            GLOBAL_REFERENCE_DATA_DIR = os.getenv('PLAYWRIGHT_REFERENCE_DATA_DIR')
+            PUBLIC_LIBRARY_DB = str(Path(directory) / 'public_library.sqlite3') if visual_builder else None
+            MARKET_DATA_ENABLED = visual_builder
+            MARKET_DATA_DB = str(Path(directory) / 'vendor-market-data.sqlite3')
             CACHE_TYPE = 'SimpleCache'
             RATELIMIT_ENABLED = False
             WORKSPACE_ENABLED = workbooks or companies
@@ -60,7 +73,7 @@ def main(workbooks=False, companies=False):
                     context = json.loads(payload['messages'][-1]['content'])
                     if 'evidence' in context:
                         return {'usage': {'prompt_tokens': 1400, 'completion_tokens': 70, 'prompt_cache_hit_tokens': 400}, 'choices':[{'finish_reason':'stop','message':{'content':'This synthetic company reports revenue and operating cash flow in the linked filing. The figures are historical; the supplied evidence does not explain their causes. [S1]'}}]}
-                if provider == 'typesafe' and payload and isinstance(payload.get('state'),dict):
+                if provider == 'typesafe' and payload and isinstance(payload.get('state'),dict) and 'workbook' not in payload['state']:
                     return {'model':'jev-1.13.0','usage':{'input_tokens':1500,'output_tokens':40},'answers':{k:{'type':'choice','choice':v,'confidence':1} for k,v in {'metric':'revenue','operation':'series','start':'unspecified','end':'unspecified'}.items()}}
                 return provider_response(provider,key,payload)
             analysis_providers._send = company_provider
@@ -75,5 +88,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--workbooks', action='store_true', help='Enable temporary workbook accounts and simulated providers.')
     parser.add_argument('--companies', action='store_true', help='Enable synthetic SEC filings, accounts and simulated providers.')
+    parser.add_argument('--visual-builder', action='store_true', help='Add synthetic country data for graphic-authoring checks.')
     args=parser.parse_args()
-    main(workbooks=args.workbooks,companies=args.companies)
+    main(workbooks=args.workbooks,companies=args.companies,visual_builder=args.visual_builder)

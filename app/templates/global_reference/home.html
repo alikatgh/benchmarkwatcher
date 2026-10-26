@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/global-reference.css') }}">
+<div class="bw-workspace" id="home-country-page">
+  {% include 'components/workspace_sidebar.html' %}
+  <div class="bw-main-content">
+    {% include 'components/home_datasets.html' %}
+    <div class="gr-workspace gr-home" data-global-reference>
+      <header class="gr-heading"><div><h1>Country data</h1><p>GDP, inflation, population and sector shares from World Development Indicators.</p></div></header>
+      <div class="gr-context"><span>{{ "{:,}".format(available) }} saved histories · {{ country_count }} economies</span><a href="{{ url_for('global_reference.index') }}">Currencies &amp; other references →</a></div>
+      {% include 'global_reference/list.html' %}
+      <p class="gr-footnote">Annual source observations · World Bank, CC BY 4.0. Regions are excluded. List values use M for million, B for billion and T for trillion. Open a history for exact values, original periods and source attribution. Browsing reads saved data and makes no provider calls.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

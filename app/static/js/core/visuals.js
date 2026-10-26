@@ -4,7 +4,9 @@
     window.BW = window.BW || {};
     const d = window.d3;
     const DAY = 86400000;
-    let sequence = 0;
+    let sequence = 0, fontGeneration = 0;
+    // One listener tracks font changes without retaining individual chart instances.
+    document.fonts?.addEventListener?.('loadingdone', () => { fontGeneration++; });
     const numeric = value => ['number', 'string'].includes(typeof value) && String(value).trim() !== '' && Number.isFinite(Number(value)) ? Number(value) : null;
     const color = () => getComputedStyle(document.documentElement).getPropertyValue('--theme-accent').trim() || '#1967d2';
     const format = value => value === null ? 'Unavailable' : Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
@@ -76,6 +78,7 @@
         const series = input.map((series, index) => ({ ...series, color: series.color || color(), index, points: history(series.points || []) }));
         const values = series.flatMap(s => s.points.filter(p => p.value !== null));
         const svg = root(target, width, height, options.label || 'Historical observations. Exact values available in the observation table.');
+        if (options.interactive !== false) svg.select('title').remove();
         if (!values.length) { empty(svg, width, height); return { svg: svg.node(), destroy() {}, resetZoom() {} }; }
         let [first, last] = d.extent(values, p => p.time);
         if (first === last) { first -= DAY; last += DAY; }
@@ -110,68 +113,190 @@
                 if (options.type === 'bar') {
                     const spacing = d.min(d.pairs(points), pair => x(pair[1].time) - x(pair[0].time)) || 16;
                     const barWidth = Math.max(.5, Math.min(22, spacing * .8 / series.length));
-                    marks.selectAll(`.bar-${s.index}`).data(points).join('rect').attr('class', `bar-${s.index} bw-d3-bar`)
+                    const bars = marks.selectAll(`.bar-${s.index}`).data(points).join('rect').attr('class', `bar-${s.index} bw-d3-bar`)
                         .attr('x', p => x(p.time) - barWidth * series.length / 2 + s.index * barWidth).attr('width', barWidth)
-                        .attr('y', p => Math.min(y(0), y(p.value))).attr('height', p => Math.abs(y(p.value) - y(0))).attr('fill', s.color)
-                        .append('title').text(p => `${s.name || ''} · ${p.date}: ${format(p.value)} ${s.unit || ''}`);
+                        .attr('y', p => Math.min(y(0), y(p.value))).attr('height', p => Math.abs(y(p.value) - y(0))).attr('fill', s.color);
+                    if (options.interactive === false) bars.append('title').text(p => `${s.name || ''} · ${p.date}: ${format(p.value)} ${s.unit || ''}`);
                 } else {
-                    marks.selectAll(`.point-${s.index}`).data(points).join('circle').attr('class', `point-${s.index} benchmark-detail-observation-dot bw-d3-point`)
-                        .attr('cx', p => x(p.time)).attr('cy', p => y(p.value)).attr('r', p => points.length === 1 || isolated.has(p) ? 3 : options.type === 'scatter' ? 3 : (options.dots === false ? (points.length === 1 ? 3 : 5) : (options.pointRadius ?? 2)))
-                        .attr('fill', p => options.dots === false && points.length > 1 && !isolated.has(p) ? 'transparent' : s.color).append('title').text(p => `${s.name || ''}: ${p.date} · ${Number(p.value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${s.unit || ''}`);
+                    // Inspection is handled by the SVG; disabled line dots need no invisible hit targets.
+                    const visiblePoints = options.dots === false && options.type !== 'scatter' ? points.filter(p => isolated.has(p)) : points;
+                    const dots = marks.selectAll(`.point-${s.index}`).data(visiblePoints).join('circle').attr('class', `point-${s.index} benchmark-detail-observation-dot bw-d3-point`)
+                        .attr('cx', p => x(p.time)).attr('cy', p => y(p.value)).attr('r', p => points.length === 1 || isolated.has(p) || options.type === 'scatter' ? 3 : (options.pointRadius ?? 2))
+                        .attr('fill', s.color);
+                    if (options.interactive === false) dots.append('title').text(p => `${s.name || ''}: ${p.date} · ${Number(p.value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} ${s.unit || ''}`);
                 }
             });
             if (options.zero && y.domain()[0] <= 0 && y.domain()[1] >= 0) marks.append('line').attr('x1', left).attr('x2', right).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', 'currentColor').attr('opacity', .4);
         }
         draw();
-        let selected = values.length - 1;
-        const ordered = [...values].sort((a, b) => a.time - b.time);
-        const tooltipBg = svg.append('rect').attr('display', options.externalReadout ? 'none' : null).attr('x', left - 4).attr('y', 0).attr('height', 23).attr('rx', options.tooltipRadius || 0).attr('fill', options.tooltipBg || 'transparent');
-        const readout = svg.append('text').attr('display', options.externalReadout ? 'none' : null).attr('class', 'bw-d3-readout').attr('x', left).attr('y', 15).attr('fill', options.tooltipText || 'currentColor');
-        const focus = options.finance ? svg.append('g').attr('class', 'bw-d3-focus').attr('pointer-events', 'none') : null;
+        const ordered = [...new Map([...values].sort((a, b) => a.time - b.time).map(point => [point.time, point])).values()];
+        const byTime = d.group(series.flatMap(s => s.points.filter(p => p.value !== null).map(point => ({series:s, point}))), item => item.point.time);
+        const nearestDate = d.bisector(p => p.time).center;
+        let selected = ordered.length - 1, activeSeries = 0, inspectionFrame = null, pendingPointer = null;
+        const focus = svg.append('g').attr('class', 'bw-d3-focus').attr('pointer-events', 'none');
+        const tooltipId = 'bw-d3-tooltip-' + sequence;
+        const tooltip = svg.append('g').attr('id', tooltipId).attr('class', 'bw-d3-tooltip').attr('role', 'tooltip').attr('visibility', 'hidden').attr('pointer-events', 'none');
+        const tip = tooltip.append('path').attr('class', 'bw-d3-tooltip-surface');
+        const box = tooltip.append('rect').attr('class', 'bw-d3-tooltip-surface').attr('rx', options.tooltipRadius ?? 4);
+        const content = tooltip.append('g');
+        const ruler = svg.append('text').attr('visibility', 'hidden').attr('aria-hidden', 'true').attr('class', 'bw-d3-tooltip-text');
+        if (options.tooltipBg) tooltip.selectAll('.bw-d3-tooltip-surface').style('fill', options.tooltipBg);
+        if (options.tooltipText) tooltip.style('color', options.tooltipText);
+        const textWidths = new Map();
+        let measuredFontGeneration = fontGeneration;
+        function textWidth(text, bold = false) {
+            if (measuredFontGeneration !== fontGeneration) { textWidths.clear(); measuredFontGeneration = fontGeneration; }
+            const key = (bold ? 'bold:' : 'normal:') + text;
+            if (!textWidths.has(key)) {
+                ruler.text(text).attr('font-weight', bold ? 600 : 400);
+                textWidths.set(key, ruler.node().getComputedTextLength?.() || text.length * 7);
+            }
+            return textWidths.get(key);
+        }
+        function popup(point, matches, active) {
+            if (!active || options.interactive === false || options.tooltip === false || x(point.time) < left || x(point.time) > right) {
+                tooltip.attr('visibility', 'hidden'); svg.attr('aria-describedby', null); return;
+            }
+            const limit = Math.max(80, Math.min(320, width - 16)), padding = Math.max(6, Math.min(20, Number(options.tooltipPadding) || 10));
+            const rows = [], date = options.tooltipDate?.(point) || d.utcFormat('%b %-d, %Y')(new Date(point.time));
+            const value = item => {
+                const n = Number(item.point.value);
+                const formatted = options.tooltipFormat ? options.tooltipFormat(n, item.series) : n !== 0 && (Math.abs(n) < 1e-8 || Math.abs(n) >= 1e18) ? String(n) : n.toLocaleString(undefined, {minimumFractionDigits:item.series.unit === '%' ? 3 : 0, maximumFractionDigits:17});
+                return formatted + (item.series.unit === '%' ? '%' : '');
+            };
+            function label(text, maxLines = 2) {
+                text = String(text);
+                if (textWidth(text) <= limit - padding * 2) { rows.push([{text}]); return; }
+                const lines = []; let line = '';
+                // Split long tokens as well as words; the full original label is
+                // retained in the tooltip's accessible description.
+                for (const char of String(text)) {
+                    if (line && textWidth(line + char) > limit - padding * 2) { lines.push(line.trimEnd()); line = ''; }
+                    line += char;
+                }
+                if (line.trim()) lines.push(line.trim());
+                const shown = lines.slice(0, maxLines);
+                if (lines.length > maxLines) {
+                    let last = shown[maxLines - 1];
+                    while (last && textWidth(last + '…') > limit - padding * 2) last = last.slice(0, -1);
+                    shown[maxLines - 1] = last + '…';
+                }
+                shown.forEach(text => rows.push([{text}]));
+            }
+            if (matches.length === 1) {
+                const item = matches[0], number = value(item);
+                if (series.length > 1) label(item.series.name || 'Series ' + (item.series.index + 1), 1);
+                if (textWidth(date) + 8 + textWidth(number, true) <= limit - padding * 2) rows.push([{text:date},{text:number,bold:true,gap:8}]);
+                else { label(date); rows.push([{text:number,bold:true}]); }
+                if (item.series.unit && item.series.unit !== '%') label(item.series.unit);
+                if (point.period && point.period !== date) label('Period: ' + point.period, 1);
+            } else {
+                label(date);
+                matches.forEach(item => {
+                    label(item.series.name || 'Series ' + (item.series.index + 1));
+                    rows.push([{text:value(item),bold:true}]);
+                    if (item.series.unit && item.series.unit !== '%') label(item.series.unit);
+                });
+            }
+            const fullLabel = date + (point.period && point.period !== date ? ' · Period: ' + point.period : '') + ' · ' + matches.map(item => (item.series.name ? item.series.name + ': ' : '') + value(item) + (item.series.unit !== '%' ? ' ' + (item.series.unit || '') : '')).join('; ');
+            tooltip.attr('aria-label', fullLabel);
+            content.selectAll('*').remove();
+            rows.forEach((parts, index) => {
+                const line = content.append('text').attr('class', 'bw-d3-tooltip-text').attr('x', padding).attr('y', padding + 13 + index * 18);
+                parts.forEach(part => line.append('tspan').attr('dx', part.gap || null).attr('font-weight', part.bold ? 600 : 400).text(part.text));
+            });
+            const boxWidth = Math.min(limit, Math.max(100, ...rows.map(parts => parts.reduce((sum, part) => sum + textWidth(part.text, part.bold) + (part.gap || 0), 0) + padding * 2)));
+            const boxHeight = padding * 2 + rows.length * 18;
+            const pointX = x(point.time), pointY = y(matches[0]?.point.value ?? point.value);
+            const originX = Math.max(8, Math.min(width - boxWidth - 8, pointX - boxWidth / 2));
+            const below = pointY - boxHeight - 16 < 8;
+            const originY = Math.max(8, Math.min(height - boxHeight - 8, below ? pointY + 16 : pointY - boxHeight - 16));
+            const anchorX = Math.max(10, Math.min(boxWidth - 10, pointX - originX));
+            box.attr('width', boxWidth).attr('height', boxHeight);
+            tip.attr('d', below ? `M${anchorX-6},0L${anchorX},-8L${anchorX+6},0Z` : `M${anchorX-6},${boxHeight}L${anchorX},${boxHeight+8}L${anchorX+6},${boxHeight}Z`);
+            tooltip.attr('transform', `translate(${originX},${originY})`).attr('visibility', 'visible');
+            svg.attr('aria-describedby', tooltipId);
+        }
         function inspect(point, active = true) {
             if (!point) return;
-            crosshair.attr('x1', x(point.time)).attr('x2', x(point.time)).attr('visibility', active ? 'visible' : 'hidden');
-            const matches = series.map(s => ({ series: s, point: s.points.find(p => p.time === point.time && p.value !== null) })).filter(item => item.point);
-            readout.text(point.date + ' · ' + matches.map(item => format(item.point.value) + (item.series.unit ? ' ' + item.series.unit : '')).join(' / '));
-            tooltipBg.attr('width', Math.min(right-left, readout.text().length * 6 + (options.tooltipPadding || 0)));
-            focus?.selectAll('circle').data(matches).join('circle')
+            crosshair.attr('x1', x(point.time)).attr('x2', x(point.time)).attr('visibility', active && x(point.time) >= left && x(point.time) <= right ? 'visible' : 'hidden');
+            const matches = byTime.get(point.time) || [];
+            const chosen = matches.find(item => item.series.index === activeSeries) || matches[0];
+            if (chosen) activeSeries = chosen.series.index;
+            popup(chosen?.point || point, chosen ? [chosen] : [], active);
+            focus.selectAll('circle').data(matches).join('circle')
                 .attr('cx', item => x(item.point.time)).attr('cy', item => y(item.point.value)).attr('r', active ? 5 : 3.5)
-                .attr('fill', item => item.series.color).attr('stroke', 'var(--theme-surface,#fff)').attr('stroke-width', 2);
-            options.onInspect?.(matches[0]?.point, matches[0]?.series, {active});
+                .attr('visibility', item => x(item.point.time) >= left && x(item.point.time) <= right && (active || options.finance) ? 'visible' : 'hidden').attr('fill', item => item.series.color).attr('stroke', 'var(--theme-surface,#fff)').attr('stroke-width', 2);
+            options.onInspect?.(chosen?.point, chosen?.series, {active});
+        }
+        function cancelPointer() {
+            if (inspectionFrame !== null) window.cancelAnimationFrame(inspectionFrame);
+            inspectionFrame = null; pendingPointer = null;
+        }
+        function inspectPointer(event) {
+            const position = d.pointer(event, svg.node()), time = +x.invert(position[0]);
+            selected = nearestDate(ordered, time);
+            const nearest = d.least(byTime.get(ordered[selected].time) || [], item => Math.abs(y(item.point.value) - position[1]));
+            if (nearest) activeSeries = nearest.series.index;
+            inspect(ordered[selected]);
         }
         function inspectDate(date) {
+            cancelPointer();
             const index = ordered.findIndex(point => point.date === date);
             if (index >= 0) { selected = index; inspect(ordered[selected]); }
         }
-        function resetInspection() { selected = ordered.length - 1; inspect(ordered[selected], false); }
+        function resetInspection() { cancelPointer(); selected = ordered.length - 1; inspect(ordered[selected], false); }
         svg.attr('tabindex', options.interactive === false ? null : 0);
+        svg.attr('aria-keyshortcuts', options.interactive === false ? null : 'ArrowLeft ArrowRight Home End Escape' + (series.length > 1 ? ' ArrowUp ArrowDown' : ''));
         if (options.interactive !== false) {
-            svg.on('pointermove.inspect pointerdown.inspect', event => {
-                const time = +x.invert(d.pointer(event, svg.node())[0]);
-                selected = d.bisector(p => p.time).center(ordered, time); inspect(ordered[selected]);
+            svg.on('pointermove.inspect', event => {
+                pendingPointer = event;
+                if (inspectionFrame !== null) return;
+                inspectionFrame = window.requestAnimationFrame(() => {
+                    const latest = pendingPointer;
+                    inspectionFrame = null; pendingPointer = null;
+                    inspectPointer(latest);
+                });
+            }).on('pointerdown.inspect', event => {
+                cancelPointer(); inspectPointer(event);
             }).on('pointerleave.inspect pointercancel.inspect', event => {
-                if (options.finance && (event.type === 'pointercancel' || event.pointerType !== 'touch')) resetInspection();
+                if (event.type === 'pointercancel' || event.pointerType !== 'touch') resetInspection();
             }).on('keydown.inspect', event => {
+                cancelPointer();
+                if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); resetInspection(); return; }
+                if (['ArrowUp', 'ArrowDown'].includes(event.key) && series.length > 1) {
+                    event.preventDefault();
+                    const available = (byTime.get(ordered[selected].time) || []).map(item => item.series);
+                    const index = available.findIndex(s => s.index === activeSeries);
+                    activeSeries = available[(index + (event.key === 'ArrowDown' ? 1 : available.length - 1)) % available.length].index;
+                    inspect(ordered[selected]); return;
+                }
                 if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
                 event.preventDefault();
                 selected = event.key === 'Home' ? 0 : event.key === 'End' ? ordered.length - 1 : Math.max(0, Math.min(ordered.length - 1, selected + (event.key === 'ArrowLeft' ? -1 : 1)));
                 inspect(ordered[selected]);
+            }).on('blur.inspect', () => {
+                cancelPointer();
+                // Moving focus to the observation slider must keep its selected
+                // date; hide only the transient popup as focus leaves the plot.
+                tooltip.attr('visibility', 'hidden'); svg.attr('aria-describedby', null);
             });
         }
         let zoom;
         if (options.zoom || options.pan) {
             zoom = d.zoom().extent([[left, top], [right, bottom]]).translateExtent([[left, top], [right, bottom]]).scaleExtent([1, 64])
                 .filter(event => {
-                    if (event.type === 'wheel') return options.zoom && (!options.modifier || options.modifier === 'none' || event[options.modifier + 'Key']);
+                    if (event.type === 'wheel') return options.zoom && (!options.modifier || options.modifier === 'none' ||
+                        (options.modifier === 'ctrl' ? event.ctrlKey || event.metaKey : event[options.modifier + 'Key']));
                     if (event.touches?.length > 1) return options.zoom;
                     return !event.button && options.pan;
                 }).on('zoom', event => { x = event.transform.rescaleX(originalX); draw(); inspect(ordered[selected]); });
             svg.call(zoom).on('dblclick.zoom', null);
         }
         if (options.initialDate && ordered.some(point => point.date === options.initialDate)) inspectDate(options.initialDate);
-        else inspect(ordered[selected], !options.finance);
+        else inspect(ordered[selected], false);
         if (options.animation && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) marks.attr('opacity', 0).transition().duration(Math.min(1000, options.animation)).attr('opacity', 1);
-        return { svg: svg.node(), inspectDate, resetZoom() { if (zoom) svg.call(zoom.transform, d.zoomIdentity); }, destroy() { marks.interrupt(); svg.on('.zoom', null).on('.inspect', null); }, toBase64Image() { return png(svg.node()); } };
+        return { svg: svg.node(), inspectDate, resetZoom() { if (zoom) svg.call(zoom.transform, d.zoomIdentity); }, destroy() { cancelPointer(); tooltip.attr('visibility','hidden'); svg.attr('aria-describedby',null); marks.interrupt(); svg.on('.zoom', null).on('.inspect', null); }, toBase64Image() { return png(svg.node()); } };
     }
     function sparkline(target, input, options = {}) {
         let points = input.map((p, i) => typeof p === 'object' && p !== null ? { ...p, value: numeric(p.price ?? p.value), x: Date.parse(p.date) || i } : { value: numeric(p), x: i });

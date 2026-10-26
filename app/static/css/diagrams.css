@@ -1,0 +1,83 @@
+/* Source explanations complement the existing data charts. */
+.bw-source-flow { margin-block: 10px; min-width: 0; }
+.bw-source-flow > summary {
+    width: fit-content;
+    max-width: 100%;
+    padding-block: 6px;
+    color: var(--theme-text, #202124);
+    font-size: 12px;
+    font-weight: 550;
+    cursor: pointer;
+}
+.bw-source-flow > summary:focus-visible {
+    outline: 2px solid var(--theme-accent, #1967d2);
+    outline-offset: 3px;
+}
+[data-bw-diagram] { position: relative; min-width: 0; margin: 8px 0 12px; }
+[data-bw-diagram] > figcaption {
+    margin-bottom: 6px;
+    color: var(--theme-text-muted, #66717e);
+    font-size: 11px;
+    line-height: 1.5;
+}
+.bw-diagram-stage {
+    --pele-bg: var(--theme-bg, #fff);
+    --pele-fg: var(--theme-text, #202124);
+    --pele-muted: var(--theme-text-muted, #66717e);
+    --pele-line: var(--theme-text-muted, #66717e);
+    --pele-surface: var(--theme-surface, #f7f8fa);
+    --pele-surface-alt: var(--theme-bg, #fff);
+    --pele-border: var(--theme-border, #dce1e6);
+    --pele-accent: var(--theme-accent, #1967d2);
+    --pele-error: var(--theme-text-muted, #66717e);
+    --pele-font: Inter, system-ui, sans-serif;
+    --pele-radius: 3px;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    color: var(--theme-text, #202124);
+    font: 12px Inter, system-ui, sans-serif;
+}
+.bw-diagram-stage[hidden], .bw-diagram-status[hidden] { display: none; }
+.bw-diagram-stage > svg { display: block; max-width: 100%; height: auto; margin-inline: auto; }
+.bw-diagram-steps {
+    margin: 6px 0;
+    padding-inline-start: 22px;
+    color: var(--theme-text-muted, #66717e);
+    font-size: 12px;
+    line-height: 1.65;
+    overflow-wrap: anywhere;
+}
+.bw-diagram-steps li + li { margin-top: 4px; }
+/* Keep the equivalent ordered explanation available to assistive technology. */
+[data-diagram-state="ready"] .bw-diagram-steps {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+.bw-diagram-status {
+    margin: 6px 0;
+    color: var(--theme-text-muted, #66717e);
+    font-size: 11px;
+    line-height: 1.5;
+}
+@media print {
+    [data-bw-diagram] .bw-diagram-stage { display: none; }
+    [data-bw-diagram][data-diagram-state="ready"] .bw-diagram-steps {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 6px 0;
+        padding-inline-start: 22px;
+        overflow: visible;
+        clip: auto;
+        clip-path: none;
+        white-space: normal;
+    }
+}

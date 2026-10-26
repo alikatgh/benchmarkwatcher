@@ -80,8 +80,8 @@ def _hydrate_change_fields(item: Dict[str, Any]) -> Dict[str, Any]:
     derived = item.get('derived', {}).get('descriptive_stats', {})
     metrics = item.get('metrics', {})
 
-    item['change'] = derived.get('abs_change_1_obs', metrics.get('change_1d', 0.0))
-    item['change_percent'] = derived.get('pct_change_1_obs', metrics.get('pct_1d', 0.0))
+    item['change'] = derived.get('abs_change_1_obs', metrics.get('change_1d'))
+    item['change_percent'] = derived.get('pct_change_1_obs', metrics.get('pct_1d'))
     item['daily_change'] = item['change']
     item['daily_change_percent'] = item['change_percent']
     item['derived_stats'] = derived

@@ -1,0 +1,10 @@
+.build/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+.gradle/
+.kotlin/
+local.properties
+*.apk
+*.aab

@@ -3,6 +3,15 @@ import os
 from datetime import datetime
 import pytest
 
+
+def test_missing_observation_changes_remain_unavailable_while_reported_zero_is_retained():
+    from app.data_handler import _hydrate_change_fields
+    missing = _hydrate_change_fields({'id': 'missing', 'history': [{'date': '2026-01-01', 'price': 10}]})
+    assert missing['change'] is None and missing['change_percent'] is None
+    assert missing['daily_change'] is None and missing['daily_change_percent'] is None
+    reported = _hydrate_change_fields({'metrics': {'change_1d': 0.0, 'pct_1d': 0.0}})
+    assert reported['change'] == 0.0 and reported['change_percent'] == 0.0
+
 # Import functions under test
 from app.data_handler import (
     build_market_summary,
@@ -262,23 +271,21 @@ def test_templates_do_not_contain_forbidden_strings():
             for word in forbidden:
                 if word in content:
                     # Check it's not in a comment or aria-label explaining what we DON'T do
-                    violations.append(f"{os.path.basename(template_path)}: contains '{word}'")
+                    violations.append((template_path, word))
     
     # Allow certain exceptions (negation phrases near the forbidden word)
     allowed_contexts = ['does not', 'not for', 'should not', 'no ', 'disclaimer', 'generate', 'changelog', 'window']
     filtered_violations = []
-    for v in violations:
-        # Re-check with context
-        template_name = v.split(':')[0]
-        word = v.split("'")[1]
-        template_path = [t for t in templates if os.path.basename(t) == template_name][0]
+    for template_path, word in violations:
+        # Keep the exact path: different template folders can share a filename.
         with open(template_path, 'r') as f:
             content = f.read().lower()
             # Widen context window to 200 chars to catch negations further before the word
             idx = content.find(word)
             context = content[max(0, idx-200):idx+len(word)+200]
             if not any(allowed in context for allowed in allowed_contexts):
-                filtered_violations.append(v)
+                template_name = os.path.relpath(template_path, template_dir)
+                filtered_violations.append(f"{template_name}: contains '{word}'")
     
     assert len(filtered_violations) == 0, f"Forbidden strings found: {filtered_violations}"
 

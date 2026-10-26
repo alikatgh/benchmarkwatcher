@@ -28,6 +28,11 @@ jobs:
       - run: npm ci
       - name: Run unit tests
         run: npm test
+      - name: Verify ReUI types and production assets
+        run: |
+          npm run check:ui
+          npm run build:ui
+          git diff --exit-code -- app/static/css/reui.css app/static/js/components/reui.js
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -51,6 +56,10 @@ jobs:
           PLAYWRIGHT_FLASK_COMMAND: .venv/bin/python -m tests.e2e.server
       - name: Verify D3 visualizations
         run: npm run test:visuals
+        env:
+          CI: 'true'
+      - name: Verify ReUI workflows
+        run: npm run test:ui
         env:
           CI: 'true'
       - name: Verify workbook chat journey

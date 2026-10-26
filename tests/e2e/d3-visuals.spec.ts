@@ -1,5 +1,9 @@
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+async function chooseVisualization(lab, value) {
+  await lab.getByRole('button',{name:/^Visualization:/}).click();
+  await lab.locator('.bw-visual-options input[value="' + value + '"]').click();
+}
 test('all D3 explorer views, keyboard inspection, range, export and responsive layout', async({page}, testInfo) => {
   const errors:string[]=[]; page.on('pageerror',e=>errors.push(e.message));
   const scripts:string[]=[];page.on('request',r=>{if(r.resourceType()==='script') scripts.push(r.url());});
@@ -11,8 +15,11 @@ test('all D3 explorer views, keyboard inspection, range, export and responsive l
   await page.getByRole('button',{name:'1M',exact:true}).click();
   await expect(page.locator('#stat-points')).not.toHaveText('120');
   const lab=page.getByRole('region',{name:'Visual explorer'});
+  await expect(lab.locator('table')).toHaveCount(0);
+  await lab.locator('.bw-visual-data > summary').click();
+  await expect(lab.locator('table')).toHaveCount(1);
   for(const type of ['line','area','step','bar','scatter','change','histogram','cumulative','box','monthly','heatmap','coverage']) {
-    await lab.getByLabel('Visualization',{exact:true}).selectOption(type);
+    await chooseVisualization(lab,type);
     await expect(lab.locator('svg')).toBeVisible();
     expect(await lab.locator('svg').innerHTML()).not.toMatch(/NaN|Infinity/);
     await expect(lab.locator('table')).toHaveCount(1);
@@ -37,19 +44,19 @@ test('dashboard D3 sparklines, explorer fetch, comparison and themes',async({pag
   await expect(lab.locator('.bw-visual-note')).toContainText('120 usable');
   await lab.getByLabel('Benchmark',{exact:true}).selectOption('oil');
   await expect(lab.locator('.bw-visual-note')).toContainText('USD / test unit');
-  await lab.getByLabel('Visualization',{exact:true}).selectOption('monthly');
+  await chooseVisualization(lab,'monthly');
   await expect(lab.locator('.bw-d3-bar')).toHaveCount(5);
   await lab.getByLabel('Benchmark',{exact:true}).selectOption('__catalog__');
   await expect(lab.locator('.bw-visual-note')).toContainText('3 benchmarks');
   for (const type of ['ranking','map','categories','dates']) {
-    await lab.getByLabel('Visualization',{exact:true}).selectOption(type);
+    await chooseVisualization(lab,type);
     await expect(lab.locator('svg')).toBeVisible();
     expect(await lab.locator('svg').innerHTML()).not.toMatch(/NaN|Infinity/);
   }
   await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
   await expect(lab.locator('svg')).toBeVisible();
   await page.screenshot({path:testInfo.outputPath('d3-dashboard-dark.png'),fullPage:true});
-  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   await expect(page.locator('.benchmark-detail-plot')).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -60,7 +67,7 @@ test('reference history keeps consistent sizing and synchronized inspection on d
   const history=values.map((price,i)=>({date:new Date(Date.UTC(2025,7+i,1)).toISOString().slice(0,10),price}));
   await page.route('**/api/commodity/gold',route=>route.fulfill({json:{data:{id:'gold',name:'Monthly sample',category:'Agriculture',currency:'USD',unit:'bushel',frequency:'monthly',is_daily:false,price:5.86,date:'2026-08-01',history,source_name:'Synthetic review data'}}}));
   await page.goto('/?view=compact');
-  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   const panel=page.locator('#benchmark-detail'), chart=panel.locator('.benchmark-detail-plot');
   const readout=panel.locator('.benchmark-detail-readout'), slider=panel.getByLabel('Explore an observation');
   await expect(readout).toContainText('Latest');
@@ -82,6 +89,8 @@ test('reference history keeps consistent sizing and synchronized inspection on d
   await panel.locator('#benchmark-detail-history').screenshot({path:testInfo.outputPath('reference-history.png')});
   expect(await panel.evaluate(node=>node.scrollWidth-node.clientWidth)).toBeLessThanOrEqual(1);
   await panel.getByRole('button',{name:'Custom',exact:true}).click();
+  await panel.locator('#benchmark-exact-dates > summary').click();
+  await expect(panel.getByLabel('From',{exact:true})).toBeVisible();
   await panel.getByLabel('From',{exact:true}).fill('2026-01-01');
   await panel.getByLabel('To',{exact:true}).fill('2026-08-01');
   await panel.getByRole('button',{name:'Apply dates'}).click();
@@ -94,7 +103,7 @@ test('reference history keeps consistent sizing and synchronized inspection on d
   const axe=await new AxeBuilder({page}).include('#benchmark-detail-history').analyze();expect(axe.violations).toEqual([]);
   await panel.getByRole('button',{name:'Close benchmark details'}).click();
   await page.getByRole('button',{name:'Toggle light and dark mode'}).click();
-  await page.locator('#table-body').getByRole('link',{name:'Gold',exact:true}).click();
+  await page.locator('#table-body a[data-benchmark-id="gold"]:visible, #tw-mobile-list a[data-benchmark-id="gold"]:visible').click();
   await panel.locator('#benchmark-detail-history').screenshot({path:testInfo.outputPath('reference-history-dark.png')});
   expect(errors).toEqual([]);
 });

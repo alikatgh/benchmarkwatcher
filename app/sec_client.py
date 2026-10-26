@@ -19,8 +19,10 @@ class SECError(ValueError):
 
 @contextmanager
 def connection():
+    workspace_path = current_app.config.get('WORKSPACE_DB')
     path = Path(current_app.config.get('SEC_CACHE_DB') or
-                Path(current_app.config['WORKSPACE_DB']).with_name('sec-cache.sqlite3'))
+                (Path(workspace_path).with_name('sec-cache.sqlite3') if workspace_path else
+                 Path(current_app.instance_path) / 'sec-cache.sqlite3'))
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
     os.close(fd)

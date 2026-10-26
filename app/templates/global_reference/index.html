@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/global-reference.css') }}">
+<div class="gr-workspace" data-global-reference>
+  <nav class="gr-nav" aria-label="Reference workspace"><a href="{{ url_for('main.index') }}">Benchmarks</a><a href="{{ url_for('global_reference.index') }}" aria-current="page">Global references</a><a href="{{ url_for('global_reference.sources') }}">Source directory</a></nav>
+  <header class="gr-heading"><div><h1>Global references</h1><p>Currencies, inflation, country statistics and administered fuel prices.</p></div><a class="gr-action no-underline" href="{{ url_for('global_reference.sources') }}">Explore sources <span aria-hidden="true">→</span></a></header>
+  <div class="gr-context"><span>{{ "{:,}".format(available) }} saved histories · {{ country_count }} World Bank economies · {{ publishers }} publishers</span><span>Cached observations · No live provider calls on this page</span></div>
+  {% include 'global_reference/list.html' %}
+  <p class="gr-footnote">World Bank coverage includes {{ "{:,}".format(worldbank_count) }} nonempty country histories; aggregate regions are excluded. List values use up to six significant digits (M = million, B = billion, T = trillion); each history page retains exact source values. Reporting periods and publication schedules differ. These are source observations, not share prices. Canadian commodity indices are available in <a href="{{ url_for('main.index', category='index') }}">Benchmarks</a>.</p>
+</div>
+{% endblock %}
