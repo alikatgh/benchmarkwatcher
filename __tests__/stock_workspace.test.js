@@ -399,6 +399,33 @@ test('the empty search recovery restores all companies and focus without fetchin
     expect(fetch).not.toHaveBeenCalled();
 });
 
+test('removing a focused watchlist row moves focus to a remaining star, then to search when empty', () => {
+    localStorage.setItem('bw.stock.watchlist.v1', JSON.stringify(stocks.map(stock => stock.id)));
+    boot();
+    chooseView('watchlist');
+    const star = id => $(`[data-stock-id="${id}"] [data-stock-star]`);
+    star(stocks[1].id).focus();
+    star(stocks[1].id).click();
+    expect(document.activeElement).toBe(star(stocks[2].id));
+    star(stocks[2].id).click();
+    expect(document.activeElement).toBe(star(stocks[0].id));
+    star(stocks[0].id).click();
+    expect(visible()).toEqual([]);
+    expect(document.activeElement).toBe($('#stock-search'));
+    expect(fetch).not.toHaveBeenCalled();
+});
+
+test('removing the current company from the toolbar does not move focus into the list', () => {
+    localStorage.setItem('bw.stock.watchlist.v1', JSON.stringify([stocks[0].id]));
+    boot();
+    chooseView('watchlist');
+    const button = $('#stock-current-star');
+    button.focus();
+    button.click();
+    expect(visible()).toEqual([]);
+    expect(document.activeElement).toBe(button);
+});
+
 test.each(['not json', '{"unexpected":true}', '[null,5,"unknown","stock-XNAS-BBB","stock-XNAS-BBB"]'])('corrupt or untrusted stored lists are normalized (%s)', stored => {
     localStorage.setItem('bw.stock.watchlist.v1', stored);
     localStorage.setItem('bw.stock.recent.v1', stored);

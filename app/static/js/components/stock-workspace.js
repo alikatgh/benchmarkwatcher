@@ -117,8 +117,14 @@
     }
     function toggleStar(id) {
         if (!rows.has(id)) return;
+        const focusedRow = document.activeElement?.closest('[data-stock-id]');
+        const focusedIndex = focusedRow ? visible.indexOf(focusedRow.dataset.stockId) : -1;
         if (favorites.has(id)) favorites.delete(id); else if (favorites.size < 100) favorites.add(id);
         saveLocal('bw.stock.watchlist.v1', [...favorites]); render();
+        if (focusedRow?.hidden) {
+            const neighbor = rows.get(visible[Math.min(focusedIndex, visible.length - 1)]);
+            (neighbor?.querySelector('[data-stock-star]') || search).focus();
+        }
     }
     function cacheKey(url) { const key = new URL(url); key.hash = ''; return key.href; }
     function putCache(url, html) {
