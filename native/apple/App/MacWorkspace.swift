@@ -88,6 +88,7 @@ struct MacCompany: View {
     private var metric: Metric { report.metrics.first(where: { $0.id == metricID }) ?? report.metrics[0] }
     private var points: [ChartPoint] { report.chart(metric: metric, frequency: frequency) }
     private var point: ChartPoint? { selected == nil ? points.last : points.first { $0.id == selected } }
+    private var isFollowed: Bool { store.library.followed.contains { $0.cik == report.cik } }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -140,7 +141,7 @@ struct MacCompany: View {
             }.padding(28)
         }.background(Color(nsColor: .windowBackgroundColor))
         .toolbar {
-            ToolbarItem { Button { store.follow(report) } label: { Label("Follow", systemImage: store.library.followed.contains { $0.cik == report.cik } ? "star.fill" : "star") }.help("Follow or unfollow company") }
+            ToolbarItem { Button { store.follow(report) } label: { Label(isFollowed ? "Unfollow company" : "Follow company", systemImage: isFollowed ? "star.fill" : "star") }.help(isFollowed ? "Unfollow company" : "Follow company") }
             ToolbarItem { Button { Task { await store.load(report.identity, force: true) } } label: { Label("Refresh report", systemImage: "arrow.clockwise") }.disabled(store.loading.contains(report.cik) || store.isDemo).keyboardShortcut("r") }
             ToolbarItem { Button { notePresented = true } label: { Label("New note", systemImage: "square.and.pencil") }.keyboardShortcut("n") }
             ToolbarItem { Button { openWindow(id: "compare", value: report.cik) } label: { Label("Compare", systemImage: "rectangle.split.2x1") } }
