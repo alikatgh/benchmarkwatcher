@@ -87,7 +87,11 @@ struct MacCompany: View {
     @State private var notePresented = false
     private var metric: Metric { report.metrics.first(where: { $0.id == metricID }) ?? report.metrics[0] }
     private var points: [ChartPoint] { report.chart(metric: metric, frequency: frequency) }
-    private var point: ChartPoint? { points.first { $0.id == selected } ?? points.last }
+    private var point: ChartPoint? {
+        guard let selected else { return points.last }
+        return points.first { $0.id == selected }
+    }
+    private var isFollowed: Bool { store.library.followed.contains { $0.cik == report.cik } }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -117,7 +121,7 @@ struct MacCompany: View {
                         Text(point.map { FinancialFormat.compact($0.value.value, unit: metric.unit) } ?? "—").font(.title.weight(.semibold)).monospacedDigit()
                         Text(metric.unit).foregroundStyle(.secondary)
                         Spacer()
-                        Text(point?.period.label ?? "No reported values").font(.callout).foregroundStyle(.secondary)
+                        Text(point?.period.label ?? report.periods.first(where: { $0.id == selected }).map { $0.label + " · Unavailable" } ?? "No reported values").font(.callout).foregroundStyle(.secondary)
                     }
                     FinancialHistory(report: report, metric: metric, frequency: frequency, selected: $selected).frame(height: 235)
                     Text("Select a period below or scrub the chart to inspect its source. Missing periods remain gaps.").font(.caption).foregroundStyle(.secondary)
@@ -140,14 +144,17 @@ struct MacCompany: View {
             }.padding(28)
         }.background(Color(nsColor: .windowBackgroundColor))
         .toolbar {
-            ToolbarItem { Button { store.follow(report) } label: { Label("Follow", systemImage: store.library.followed.contains { $0.cik == report.cik } ? "star.fill" : "star") }.help("Follow or unfollow company") }
+            ToolbarItem { Button { store.follow(report) } label: { Label(isFollowed ? "Unfollow company" : "Follow company", systemImage: isFollowed ? "star.fill" : "star") }.help(isFollowed ? "Unfollow company" : "Follow company") }
             ToolbarItem { Button { Task { await store.load(report.identity, force: true) } } label: { Label("Refresh report", systemImage: "arrow.clockwise") }.disabled(store.loading.contains(report.cik) || store.isDemo).keyboardShortcut("r") }
             ToolbarItem { Button { notePresented = true } label: { Label("New note", systemImage: "square.and.pencil") }.keyboardShortcut("n") }
             ToolbarItem { Button { openWindow(id: "compare", value: report.cik) } label: { Label("Compare", systemImage: "rectangle.split.2x1") } }
             ToolbarItem { Button { inspector.toggle() } label: { Label("Source inspector", systemImage: "sidebar.right") } }
         }
         .inspector(isPresented: $inspector) {
-            ScrollView { if let point { SourceDetail(metric: metric, point: point, demo: store.isDemo) } }
+            ScrollView {
+                if let point { SourceDetail(metric: metric, point: point, demo: store.isDemo) }
+                else { ContentUnavailableView("No reported value", systemImage: "doc", description: Text("Choose a reporting period with a value to inspect its filing source.")) }
+            }
                 .inspectorColumnWidth(min: 250, ideal: 280, max: 360)
         }
         .sheet(isPresented: $notePresented) { NoteComposer(report: report, metric: metric, point: point) }

@@ -43,17 +43,30 @@
     });
     const search = $('#company-search');
     if (search) {
-        const input = $('#company-query'), results = $('#company-results'), status = $('#company-search-status');
+        const input = $('#company-query'), results = $('#company-results'), status = $('#company-search-status'), recovery = $('#company-search-recovery');
+        const idleStatus = 'SEC-reporting companies · No API key needed';
         let timer, controller, sequence = 0;
+        function cancelLookup() { clearTimeout(timer); controller?.abort(); ++sequence; }
+        $('[data-company-clear]').addEventListener('click', event => {
+            event.preventDefault();
+            cancelLookup();
+            input.value = '';
+            results.replaceChildren();
+            status.textContent = idleStatus;
+            recovery.hidden = true;
+            input.focus();
+        });
         async function lookup() {
             controller?.abort(); controller = new AbortController();
             const current = ++sequence, query = input.value.trim();
             results.replaceChildren();
-            if (!query) { status.textContent = 'SEC-reporting companies · No API key needed'; return; }
+            recovery.hidden = !query;
+            if (!query) { status.textContent = idleStatus; return; }
             status.textContent = 'Searching SEC company listings…';
             try {
                 const data = await jsonFetch(search.dataset.searchUrl + '?q=' + encodeURIComponent(query), { signal: controller.signal });
                 if (current !== sequence) return;
+                recovery.hidden = data.companies.length > 0;
                 status.textContent = (data.companies.length ? 'Choose a company to open its financial report.' : 'No matching SEC-listed company. Try its full name or a different ticker.') + (data.stale ? ' Using the last cached company directory.' : '');
                 data.companies.forEach(company => {
                     const form = node('form', undefined, { method: 'post', action: search.dataset.openUrl, class: 'company-open' });
@@ -66,7 +79,7 @@
             } catch (error) { if (error.name !== 'AbortError' && current === sequence) status.textContent = error.message; }
         }
         search.addEventListener('submit', event => { event.preventDefault(); clearTimeout(timer); lookup(); });
-        input.addEventListener('input', () => { controller?.abort(); ++sequence; clearTimeout(timer); results.replaceChildren(); timer = setTimeout(lookup, 250); });
+        input.addEventListener('input', () => { cancelLookup(); results.replaceChildren(); recovery.hidden = !input.value.trim(); timer = setTimeout(lookup, 250); });
         input.addEventListener('keydown', event => { if (event.key === 'ArrowDown' && results.querySelector('button')) { event.preventDefault(); results.querySelector('button').focus(); } });
         results.addEventListener('keydown', event => {
             const buttons = [...results.querySelectorAll('button')], index = buttons.indexOf(document.activeElement);

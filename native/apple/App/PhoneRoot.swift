@@ -72,7 +72,8 @@ struct PhoneCompany: View {
     private func brief(_ report: CompanyReport) -> some View {
         let metric = report.metrics.first(where: { $0.id == metricID }) ?? report.metrics[0]
         let points = report.chart(metric: metric, frequency: frequency)
-        let point = points.first(where: { $0.id == selected }) ?? points.last
+        let point = selected == nil ? points.last : points.first(where: { $0.id == selected })
+        let isFollowed = store.library.followed.contains { $0.cik == report.cik }
         return List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
@@ -86,7 +87,7 @@ struct PhoneCompany: View {
                 Picker("Frequency", selection: $frequency) { Text("Annual").tag("annual"); Text("Quarterly").tag("quarterly"); Text("Trailing year").tag("ttm") }.pickerStyle(.segmented)
                 VStack(alignment: .leading, spacing: 12) {
                     Text(point.map { FinancialFormat.compact($0.value.value, unit: metric.unit) } ?? "—").font(.largeTitle.weight(.semibold)).monospacedDigit()
-                    Text(metric.unit + " · " + (point?.period.label ?? "Unavailable")).font(.caption).foregroundStyle(.secondary)
+                    Text(metric.unit + " · " + (point?.period.label ?? report.periods.first(where: { $0.id == selected }).map { $0.label + " · Unavailable" } ?? "Unavailable")).font(.caption).foregroundStyle(.secondary)
                     FinancialHistory(report: report, metric: metric, frequency: frequency, selected: $selected).frame(height: 200)
                     if point != nil { Button { sourcePresented = true } label: { Label("Inspect filing source", systemImage: "doc.text.magnifyingglass") } }
                 }.padding(.vertical, 10)
@@ -106,7 +107,7 @@ struct PhoneCompany: View {
         .refreshable { await store.load(company, force: true) }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button { store.follow(report) } label: { Image(systemName: store.library.followed.contains { $0.cik == report.cik } ? "star.fill" : "star") }.accessibilityLabel("Follow or unfollow company")
+                Button { store.follow(report) } label: { Image(systemName: isFollowed ? "star.fill" : "star") }.accessibilityLabel(isFollowed ? "Unfollow company" : "Follow company")
                 Button { notePresented = true } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New research note")
             }
         }

@@ -33,7 +33,7 @@ class ResearchViewModel(application: Application) : AndroidViewModel(application
     }
     fun search(query: String) {
         searchJob?.cancel()
-        mutable.update { it.copy(query = query, matches = emptyList(), searchError = null, searching = query.trim().length >= 2) }
+        mutable.update { it.copy(query = query, matches = emptyList(), searchStale = false, searchError = null, searching = query.trim().length >= 2) }
         if (query.trim().length < 2) return
         searchJob = viewModelScope.launch {
             try {

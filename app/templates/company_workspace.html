@@ -23,6 +23,7 @@
         <div><input id="company-query" name="q" type="search" value="{{ query }}" placeholder="AAPL, Microsoft, JPM…" maxlength="100" autocomplete="off" spellcheck="false"><button class="primary" type="submit">Search</button></div>
       </form>
       <p id="company-search-status" class="muted small" role="status">{% if error %}{{ error }}{% elif query and not matches %}No matching SEC-listed company. Try its full name or a different ticker.{% elif query %}Choose a company to open its financial report.{% else %}SEC-reporting companies · No API key needed{% endif %}</p>
+      <p id="company-search-recovery" class="muted small"{% if not query or matches %} hidden{% endif %}><a href="{{ url_for('workspace.home') }}" data-company-clear>Clear search</a></p>
       <div id="company-results" class="company-results">
       {% for company in matches %}<form method="post" action="{{ url_for('workspace.company_open') }}" class="company-open">{{ token() }}<input type="hidden" name="cik" value="{{ company.cik }}"><button type="submit"><span class="company-symbol">{{ company.ticker }}</span><span><strong>{{ company.name }}</strong><small>{{ company.exchange }}{% if company.suggested %} · Similar ticker{% endif %}</small></span><span aria-hidden="true">↗</span></button></form>{% endfor %}
       </div>
@@ -76,5 +77,5 @@
   <script type="application/json" id="company-report-data">{{ report|tojson }}</script>
   {% endif %}
 </div>
-<script defer src="{{ url_for('static', filename='js/components/company_research.js', v='3ae1b26') }}"></script>
+<script defer src="{{ url_for('static', filename='js/components/company_research.js', v='6995d43') }}"></script>
 {% endblock %}
