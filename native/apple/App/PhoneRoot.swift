@@ -73,6 +73,7 @@ struct PhoneCompany: View {
         let metric = report.metrics.first(where: { $0.id == metricID }) ?? report.metrics[0]
         let points = report.chart(metric: metric, frequency: frequency)
         let point = selected == nil ? points.last : points.first(where: { $0.id == selected })
+        let isFollowed = store.library.followed.contains { $0.cik == report.cik }
         return List {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
@@ -106,7 +107,7 @@ struct PhoneCompany: View {
         .refreshable { await store.load(company, force: true) }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
-                Button { store.follow(report) } label: { Image(systemName: store.library.followed.contains { $0.cik == report.cik } ? "star.fill" : "star") }.accessibilityLabel("Follow or unfollow company")
+                Button { store.follow(report) } label: { Image(systemName: isFollowed ? "star.fill" : "star") }.accessibilityLabel(isFollowed ? "Unfollow company" : "Follow company")
                 Button { notePresented = true } label: { Image(systemName: "square.and.pencil") }.accessibilityLabel("New research note")
             }
         }
