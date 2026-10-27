@@ -87,7 +87,10 @@ struct MacCompany: View {
     @State private var notePresented = false
     private var metric: Metric { report.metrics.first(where: { $0.id == metricID }) ?? report.metrics[0] }
     private var points: [ChartPoint] { report.chart(metric: metric, frequency: frequency) }
-    private var point: ChartPoint? { points.first { $0.id == selected } ?? points.last }
+    private var point: ChartPoint? {
+        guard let selected else { return points.last }
+        return points.first { $0.id == selected }
+    }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -117,7 +120,7 @@ struct MacCompany: View {
                         Text(point.map { FinancialFormat.compact($0.value.value, unit: metric.unit) } ?? "—").font(.title.weight(.semibold)).monospacedDigit()
                         Text(metric.unit).foregroundStyle(.secondary)
                         Spacer()
-                        Text(point?.period.label ?? "No reported values").font(.callout).foregroundStyle(.secondary)
+                        Text(point?.period.label ?? report.periods.first(where: { $0.id == selected }).map { $0.label + " · Unavailable" } ?? "No reported values").font(.callout).foregroundStyle(.secondary)
                     }
                     FinancialHistory(report: report, metric: metric, frequency: frequency, selected: $selected).frame(height: 235)
                     Text("Select a period below or scrub the chart to inspect its source. Missing periods remain gaps.").font(.caption).foregroundStyle(.secondary)
@@ -147,7 +150,10 @@ struct MacCompany: View {
             ToolbarItem { Button { inspector.toggle() } label: { Label("Source inspector", systemImage: "sidebar.right") } }
         }
         .inspector(isPresented: $inspector) {
-            ScrollView { if let point { SourceDetail(metric: metric, point: point, demo: store.isDemo) } }
+            ScrollView {
+                if let point { SourceDetail(metric: metric, point: point, demo: store.isDemo) }
+                else { ContentUnavailableView("No reported value", systemImage: "doc", description: Text("Choose a reporting period with a value to inspect its filing source.")) }
+            }
                 .inspectorColumnWidth(min: 250, ideal: 280, max: 360)
         }
         .sheet(isPresented: $notePresented) { NoteComposer(report: report, metric: metric, point: point) }
