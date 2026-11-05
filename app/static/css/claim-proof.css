@@ -142,3 +142,11 @@
 .cp-controls{box-shadow:0 1px 2px rgba(16,24,40,.04)}
 .cp #cp-company-filter{height:44px;border-radius:8px}
 .cp #cp-company-filter:focus{border-color:var(--theme-accent,#0f5499);box-shadow:0 0 0 3px color-mix(in srgb,var(--theme-accent,#0f5499) 16%,transparent);outline:none}
+.cp-side{max-height:calc(100vh - 92px);overflow-y:auto;overscroll-behavior:contain}
+.cp-side .cp-companies label{display:grid;grid-template-columns:16px 56px minmax(0,1fr);grid-template-rows:auto auto;column-gap:10px;align-items:center;min-height:46px;padding:7px 10px}
+.cp-side .cp-companies label>span{display:contents}
+.cp-side .cp-companies label>input{grid-column:1;grid-row:1/span 2;align-self:center}
+.cp-side .cp-companies strong{grid-column:2;grid-row:1/span 2;font-size:12px;letter-spacing:.02em}
+.cp-side .cp-companies small{grid-column:3;grid-row:1;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cp-side .cp-companies .cp-fiscal{grid-column:3;grid-row:2;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cp-side .cp-companies{max-height:230px;overflow-y:auto;border:1px solid var(--theme-border,#ddd);border-radius:8px;padding:2px}
