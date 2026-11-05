@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "ticker": "BKNG",
+  "cik": 1075531,
+  "company": "Booking Holdings Inc.",
+  "source": {
+    "kind": "sec_companyfacts",
+    "endpoint": "https://data.sec.gov/api/xbrl/companyfacts/CIK0001075531.json",
+    "fetched_at": "2026-11-01T09:15:32+00:00",
+    "raw_sha256": "e4f4e13340718de01f6c966cc4c4ab09f037826023b7f20b9e969eb3ef7cb76c",
+    "raw_bytes": 3354279,
+    "scope": "entire_filing_entity",
+    "records_sha256": "1b499a0f8999f0847fe7bbb376ed68fc4854ef975cef278593f99a5628c0c1d5"
+  },
+  "records": [
+    {
+      "period": "FY2024",
+      "metric": "revenue",
+      "taxonomy": "us-gaap",
+      "tag": "Revenues",
+      "label": "Revenues",
+      "unit": "USD",
+      "record": {
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "val": 23739000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2024"
+      }
+    },
+    {
+      "period": "FY2024",
+      "metric": "operating_income",
+      "taxonomy": "us-gaap",
+      "tag": "OperatingIncomeLoss",
+      "label": "Operating Income (Loss)",
+      "unit": "USD",
+      "record": {
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "val": 7555000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2024"
+      }
+    },
+    {
+      "period": "FY2024",
+      "metric": "operating_cash_flow",
+      "taxonomy": "us-gaap",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "label": "Net Cash Provided by (Used in) Operating Activities",
+      "unit": "USD",
+      "record": {
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "val": 8323000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2024"
+      }
+    },
+    {
+      "period": "FY2024",
+      "metric": "cash_ppe_signed",
+      "taxonomy": "us-gaap",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "label": "Payments to Acquire Property, Plant, and Equipment",
+      "unit": "USD",
+      "record": {
+        "start": "2024-01-01",
+        "end": "2024-12-31",
+        "val": 429000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2024"
+      }
+    },
+    {
+      "period": "FY2025",
+      "metric": "revenue",
+      "taxonomy": "us-gaap",
+      "tag": "Revenues",
+      "label": "Revenues",
+      "unit": "USD",
+      "record": {
+        "start": "2025-01-01",
+        "end": "2025-12-31",
+        "val": 26917000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2025"
+      }
+    },
+    {
+      "period": "FY2025",
+      "metric": "operating_income",
+      "taxonomy": "us-gaap",
+      "tag": "OperatingIncomeLoss",
+      "label": "Operating Income (Loss)",
+      "unit": "USD",
+      "record": {
+        "start": "2025-01-01",
+        "end": "2025-12-31",
+        "val": 8825000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2025"
+      }
+    },
+    {
+      "period": "FY2025",
+      "metric": "operating_cash_flow",
+      "taxonomy": "us-gaap",
+      "tag": "NetCashProvidedByUsedInOperatingActivities",
+      "label": "Net Cash Provided by (Used in) Operating Activities",
+      "unit": "USD",
+      "record": {
+        "start": "2025-01-01",
+        "end": "2025-12-31",
+        "val": 9409000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2025"
+      }
+    },
+    {
+      "period": "FY2025",
+      "metric": "cash_ppe_signed",
+      "taxonomy": "us-gaap",
+      "tag": "PaymentsToAcquirePropertyPlantAndEquipment",
+      "label": "Payments to Acquire Property, Plant, and Equipment",
+      "unit": "USD",
+      "record": {
+        "start": "2025-01-01",
+        "end": "2025-12-31",
+        "val": 322000000,
+        "accn": "0001075531-26-000009",
+        "fy": 2025,
+        "fp": "FY",
+        "form": "10-K",
+        "filed": "2026-02-18",
+        "frame": "CY2025"
+      }
+    }
+  ]
+}

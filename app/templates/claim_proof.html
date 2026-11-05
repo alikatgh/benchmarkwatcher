@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Claim proof | BenchmarkWatcher{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/claim-proof.css') }}">
+<main class="cp" id="claim-proof" data-endpoint="{{ url_for('claim_proof.proof') }}" data-recheck-endpoint="{{ url_for('claim_proof.recheck') }}" data-research-endpoint="{{ url_for('claim_proof.investigate') }}" data-research-status="{{ url_for('claim_proof.meta_status') }}" data-csrf="{{ csrf_token }}" data-frontend="{{ frontend_rev }}">
+  <nav class="cp-nav" aria-label="Research navigation"><a href="{{ url_for('main.index') }}">BenchmarkWatcher</a><span aria-hidden="true">/</span><span>Claim proof</span></nav>
+  <header class="cp-heading"><div><h1>Does the claim hold up?</h1><p>Test a financial claim against the filings. Find the counterexample. Inspect the arithmetic.</p></div><span class="cp-period">Annual filings<br><strong>FY2024–FY2025</strong></span></header>
+  <div class="cp-layout">
+    <div class="cp-main">
+      <p id="cp-status" class="cp-status" role="status" aria-live="polite"></p>
+      <section id="cp-results" aria-label="Claim results" aria-busy="false"></section>
+      <footer class="cp-notes"><h2>Know what you are comparing</h2><p>Each company is tested against its own fiscal years. Fiscal dates differ, so these are within-company tests, not a calendar-aligned ranking. Calculated free cash flow means operating cash flow less the retained cash PP&amp;E payments line; issuer definitions can differ.</p><p>These are retained historical SEC extracts, not the latest filings. Verdicts and sensitivities are calculated from source facts. Ask Meta sends your question and selected evidence context to Meta. Testing claims and downloading proofs do not use the model.</p></footer>
+    </div>
+    <aside class="cp-side" aria-label="Investigation controls">
+      <form id="cp-form" class="cp-controls">
+        <p class="cp-step" aria-hidden="true">Step 1 · Test</p>
+        <fieldset><legend>Compare up to fourteen companies</legend><div><input id="cp-company-filter" type="search" maxlength="60" placeholder="Filter companies…" aria-label="Filter companies"></div><div class="cp-companies">{% for company in companies %}<label title="{{ company.fiscal_calendar_label }}"><input type="checkbox" name="company" value="{{ company.ticker }}"{% if company.ticker in default_companies %} checked{% endif %}><span><strong>{{ company.ticker }}</strong><small>{{ company.company }}</small>{% if company.fiscal_calendar != 'calendar_year' %}<small class="cp-fiscal">{{ company.fiscal_calendar_label }}</small>{% endif %}</span></label>{% endfor %}</div></fieldset>
+        <div class="cp-question"><label for="cp-claim">The claim</label><select id="cp-claim" name="claim_id">{% for key, label in claims.items() %}<option value="{{ key }}">{{ label }}</option>{% endfor %}</select></div>
+        <div class="cp-scenario"><label for="cp-adjustment">Hypothetical change to FY2025 cash PP&amp;E payments (%)</label><div><input id="cp-adjustment" name="adjustment" type="number" min="-50" max="50" step="any" value="0"><button type="button" id="cp-reset">Reset to reported</button></div><p>Revenue and cash flow stay fixed; only the assumption changes.</p></div>
+        <button type="submit" class="cp-submit">Test claim</button>
+      </form>
+      <section class="cp-research" aria-label="Ask about the evidence">
+        <p class="cp-step" aria-hidden="true">Step 2 · Ask</p>
+        <form id="cp-research-form">
+          <label for="cp-research-question">Find the counterexample. Follow the filing evidence.</label>
+          <p>Meta investigates your selection. Numbers always come from retained filings.</p>
+          <textarea id="cp-research-question" maxlength="1200" required rows="2" placeholder="Which selected companies contradict this claim? Rank the largest shortfall and show the evidence."></textarea>
+          <div class="cp-research-examples"><span>Try:</span><button type="button" data-question="Which selected companies contradict this claim? Rank the largest shortfall and show the evidence.">Find counterexamples</button><button type="button" data-question="Compare the selected companies and show the cash flow and revenue evidence behind this claim.">Compare the evidence</button></div>
+          <div class="cp-research-toolbar"><label for="cp-research-basis">Investigate<select id="cp-research-basis"><option value="reported">Reported figures</option><option value="scenario">Hypothetical cash scenario</option><option value="break_even">Equal-growth cash adjustment</option></select></label><button type="submit" class="cp-submit" disabled>Ask Meta</button></div>
+        </form>
+        <p id="cp-research-status" class="cp-status" role="status" aria-live="polite">Checking the Meta connection…</p>
+        <section id="cp-research-results" aria-label="Meta investigation" aria-busy="false" hidden></section>
+      </section>
+      <section class="cp-saved" aria-label="Saved investigations">
+        <p class="cp-step" aria-hidden="true">Step 3 · Keep</p>
+        <h2>Save and recheck</h2>
+        <div class="cp-savebar">
+          <label for="cp-savename">Name</label>
+          <input id="cp-savename" maxlength="80" placeholder="e.g. Cash vs sales, reported">
+          <button type="button" id="cp-save">Save investigation</button>
+          <select id="cp-saved" aria-label="Saved investigations"></select>
+          <button type="button" id="cp-reopen">Reopen</button>
+          <button type="button" id="cp-recheck">Check evidence</button>
+        </div>
+        <p id="cp-saved-status" class="cp-status" role="status" aria-live="polite"></p>
+        <div id="cp-diff"></div>
+      </section>
+    </aside>
+  </div>
+  <noscript><p>Enable JavaScript to change the comparison and inspect the interactive proof.</p></noscript>
+</main>
+<script id="cp-initial" type="application/json">{{ initial_proof|tojson }}</script>
+<script defer src="{{ url_for('static', filename='js/vendor/react.18.3.1.min.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/vendor/react-dom.18.3.1.min.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/vendor/htm.3.1.1.min.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/components/claim-ranking.react.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/components/claim-proof.js') }}"></script>
+<script defer src="{{ url_for('static', filename='js/components/claim-research.js') }}"></script>
+{% endblock %}

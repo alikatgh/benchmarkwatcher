@@ -45,6 +45,9 @@ def create_app(config_class=Config):
     from app.native_research import bp as native_research_bp
     app.register_blueprint(native_research_bp)
 
+    from app.claim_proof import bp as claim_proof_bp
+    app.register_blueprint(claim_proof_bp)
+
     from app.global_reference import bp as global_reference_bp
     app.register_blueprint(global_reference_bp)
 
@@ -89,6 +92,12 @@ def create_app(config_class=Config):
         if _wants_json():
             return jsonify({'error': 'Internal server error'}), 500
         return render_template('errors/500.html'), 500
+
+    @app.errorhandler(503)
+    def service_unavailable(e):
+        if _wants_json():
+            return jsonify({'error': 'Service temporarily unavailable'}), 503
+        return render_template('errors/503.html'), 503
 
     # --- Security headers ----------------------------------------------
     @app.after_request
