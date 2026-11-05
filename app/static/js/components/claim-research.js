@@ -158,7 +158,7 @@ function createOverviewReturn(el){
   function render(result) {
     if (!Array.isArray(result.findings) || result.findings.length > 3 || !Array.isArray(result.limitations)) throw new Error('Invalid findings');
     const fragment = document.createDocumentFragment();
-    fragment.append(el('p', 'META INVESTIGATION · HISTORICAL FILINGS', 'cp-research-label'), el('h2', result.title), el('p', result.question, 'cp-research-question'), el('p', result.summary));
+    fragment.append(el('p', 'MUSE SPARK INVESTIGATION · HISTORICAL FILINGS', 'cp-research-label'), el('h2', result.title), el('p', result.question, 'cp-research-question'), el('p', result.summary));
     const overview = renderComparisonOverview(result, el);
     if (overview) fragment.append(overview);
     for (const [findingIndex, finding] of result.findings.entries()) {
@@ -196,9 +196,9 @@ function createOverviewReturn(el){
     results.replaceChildren(fragment); results.hidden = false;
   }
   const controller = createResearchController({endpoint:root.dataset.researchEndpoint, csrf:root.dataset.csrf,
-    onBusy:busy => { button.disabled = busy || !available; button.textContent = busy ? 'Investigating…' : 'Ask Meta'; results.setAttribute('aria-busy', String(busy)); },
+    onBusy:busy => { button.disabled = busy || !available; button.textContent = busy ? 'Investigating…' : 'Ask Muse Spark'; results.setAttribute('aria-busy', String(busy)); },
     onStatus:showAvailability,
-    onResult:result => { try { render(result); feedback('Meta selected the evidence. The answer was calculated from retained filing facts.'); } catch (_) { feedback('The evidence could not be displayed. No further request was made.', true); } },
+    onResult:result => { try { render(result); feedback('Muse Spark selected the evidence. The answer was calculated from retained filing facts.'); } catch (_) { feedback('The evidence could not be displayed. No further request was made.', true); } },
     onError:message => feedback(message, true)
   });
   function invalidate() {
