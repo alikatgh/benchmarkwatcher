@@ -140,7 +140,7 @@
             <h3>${card.company}</h3>
             <span className="cp-verdict">${(scenario ? 'Hypothetical: ' : '') + (VERDICTS[status] || VERDICTS.unavailable)}</span>
           </div>
-          <span className="cp-rank-gap">${gap === null ? 'Growth gap unavailable' : `${scenario ? 'Hypothetical shortfall' : 'Shortfall'} ${helpers.percent(String(gap))}`}</span>
+          <span className="cp-rank-gap">${gap === null ? 'Growth gap unavailable' : `${scenario ? 'Hypothetical gap' : 'Shortfall'} ${helpers.percent(String(gap))}`}</span>
         </div>
         <dl className="cp-metrics">
           <${Metric} label=${measureLabel} value=${card[growthKey]} helpers=${helpers} />
