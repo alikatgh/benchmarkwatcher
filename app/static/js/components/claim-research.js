@@ -37,7 +37,7 @@
       let timer, timedOut = false, publicError = failure;
       try {
         const controller = new AbortController();
-        timer = setTimer(() => { timedOut = true; controller.abort(); }, 25000);
+        timer = setTimer(() => { timedOut = true; controller.abort(); }, 60000);
         const response = await fetchImpl(o.endpoint, {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json', 'X-CSRF-Token':o.csrf}, body:JSON.stringify(body), signal:controller.signal});
         const text = await response.text();
         if (timedOut) throw new Error('timeout');
@@ -192,6 +192,7 @@ function createOverviewReturn(el){
       article.append(details, createOverviewReturn(el)); fragment.append(article);
     }
     for (const limitation of result.limitations) fragment.append(el('p', limitation, 'cp-research-limitation'));
+    if (!result.findings.length && !result.limitation) fragment.append(el('p', 'No selected company matches the requested filter. Ask again for all companies to see every verdict; the filing proof below is unchanged.', 'cp-note'));
     results.replaceChildren(fragment); results.hidden = false;
   }
   const controller = createResearchController({endpoint:root.dataset.researchEndpoint, csrf:root.dataset.csrf,
