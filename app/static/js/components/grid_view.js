@@ -507,6 +507,23 @@ BW.GridView = {
         this.updateRangeButtons(activeRange);
         this.updateDateRangeDisplay(activeRange);
         this.loadGridSettings();
+        const group = document.getElementById('grid-range-1W')?.parentElement;
+        if (group && !group.dataset.rangeKeyboard) {
+            group.dataset.rangeKeyboard = 'true';
+            group.setAttribute('role', 'radiogroup');
+            group.setAttribute('aria-label', 'Observation range');
+            group.addEventListener('keydown', event => {
+                if (!['ArrowLeft', 'ArrowUp', 'ArrowRight', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+                const buttons = [...group.querySelectorAll('[role="radio"]')].filter(button => !button.disabled);
+                const index = buttons.indexOf(event.target);
+                if (index < 0) return;
+                event.preventDefault();
+                const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1
+                    : (index + (['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 1) + buttons.length) % buttons.length;
+                buttons[next].focus();
+                buttons[next].click();
+            });
+        }
     },
 
     // Toggle settings panel visibility

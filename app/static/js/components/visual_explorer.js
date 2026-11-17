@@ -364,7 +364,7 @@
             lab.select.setOptions(options);
             lab.select.value = options.some(option=>option[0]===selected) ? selected : options[0][0];
             lab.select.sync();
-            lab.draw = catalog ? () => { if (lab.disposed) return; lab.select.sync(); catalogView(lab, records, range.value); } : seriesDraw;
+            lab.draw = catalog ? drawCatalog : seriesDraw;
             // Catalog percentage changes are precomputed by the API, which has no 5Y window.
             range.querySelector('option[value="5Y"]').disabled = catalog;
         }
@@ -381,18 +381,28 @@
                 const payload = await response.json(); if (active !== request || lab.disposed) return;
                 current = payload.data || payload.commodity || payload;
                 if (catalog) {
-                    const category = new URLSearchParams(location.search).get('category');
-                    records = category ? current.filter(record=>record.category === category) : current;
-                    lab.graphicSpec = {id:'catalog-changes',title:'Historical benchmark changes',type:'ranking',unit:'%',
-                        source:[...new Set(records.map(record=>record.source_name || record.source).filter(Boolean))].join('; '),
-                        notes:'Changes over ' + (range.value === 'ALL' ? 'all saved history' : range.value) + '. Each series uses its own available endpoints; periods differ.',
-                        rows:records.map(record=>({label:record.name,value:record.change_percent,period:record.date,unit:'%',source:[record.source_name || record.source,record.source_url].filter(Boolean).join(' · ')}))};
                     configure(true); lab.draw();
                 }
                 else { configure(false); drawRange(); }
             } catch (_) { if (active === request) { current = null; lab.rows = []; lab.stage.replaceChildren(); lab.table.replaceChildren(); lab.note.textContent = 'Could not load observations. Select a benchmark to retry.'; } }
             finally { if (active === request) { lab.stage.removeAttribute('aria-busy'); if (lab.builderButton) lab.builderButton.disabled = !current; } }
         }
+        function drawCatalog() {
+            if (lab.disposed || !current || benchmark.value !== '__catalog__') return;
+            const category = BW.TableWorkspace?.ready ? BW.TableWorkspace.current.filters.category : new URLSearchParams(location.search).get('category');
+            records = category ? current.filter(record=>record.category === category) : current;
+            lab.graphicSpec = {id:'catalog-changes',title:'Historical benchmark changes',type:'ranking',unit:'%',
+                source:[...new Set(records.map(record=>record.source_name || record.source).filter(Boolean))].join('; '),
+                notes:'Changes over ' + (range.value === 'ALL' ? 'all saved history' : range.value) + '. Each series uses its own available endpoints; periods differ.',
+                rows:records.map(record=>({label:record.name,value:record.change_percent,period:record.date,unit:'%',source:[record.source_name || record.source,record.source_url].filter(Boolean).join(' · ')}))};
+            lab.select.sync(); catalogView(lab, records, range.value);
+        }
+        document.addEventListener('bw:table-view-change', drawCatalog);
+        window.addEventListener('popstate', drawCatalog);
+        lab.cleanup.push(() => {
+            document.removeEventListener('bw:table-view-change', drawCatalog);
+            window.removeEventListener('popstate', drawCatalog);
+        });
         function drawRange() {
             if (!current) return;
             const points = V.history(current.history), last = points.at(-1)?.time, cutoff = new Date(last);

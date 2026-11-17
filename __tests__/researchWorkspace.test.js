@@ -139,7 +139,7 @@ test('validates imports before any write and previews merge conflicts', () => {
   const imported = backup(); imported.entries[0].title = 'Newer imported entry'; imported.entries[0].updatedAt = '2030-01-01T00:00:00.000Z';
   research.previewImport(JSON.stringify(imported));
   expect(research.state.entries[0].title).toBe('Local entry');
-  expect(document.getElementById('rw-import-summary').textContent).toContain('1 matching existing IDs');
+  expect(document.getElementById('rw-import-summary').textContent).toContain('1 matching existing ID)');
   expect(research.applyImport('merge')).toBe(true); expect(research.state.entries[0].title).toBe('Newer imported entry');
   research.undo(); expect(research.state.entries[0].title).toBe('Local entry');
   const broken = backup(); broken.entries[0].status = 'Unsupported';

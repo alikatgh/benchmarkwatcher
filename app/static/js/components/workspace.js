@@ -30,7 +30,11 @@
             const featured = $('bw-featured');
             if (featured) {
                 const phone = window.matchMedia('(max-width:540px)');
-                const adapt = () => { featured.open = !phone.matches; };
+                const homeVisible = () => $('home-overview') && !$('home-overview').hidden;
+                let homeOpen = false;
+                const adapt = () => { featured.open = !phone.matches && (!homeVisible() || homeOpen); };
+                featured.addEventListener('toggle', () => { if (homeVisible() && !phone.matches) homeOpen = featured.open; });
+                this.adaptFeatured = adapt;
                 adapt(); phone.addEventListener('change', adapt);
             }
             try { this.catalog = JSON.parse($('workspace-benchmarks')?.textContent || '[]'); } catch (_) { this.catalog = []; }
@@ -77,6 +81,10 @@
                 const category = event.detail?.state?.filters?.category || '';
                 const url = new URL(location.href); if (category) url.searchParams.set('category', category); else url.searchParams.delete('category');
                 history.replaceState(history.state, '', url); this.updateNavigation(category);
+            });
+            window.addEventListener('bw.settings.changed', event => {
+                const key = $('index-page-state')?.dataset.activeView === 'grid' ? BW.Settings?.KEYS.GRID : BW.Settings?.KEYS.TABLE;
+                if (key && event.detail?.key === key) this.updateLayoutLinks(event.detail.value?.dataRange);
             });
             window.addEventListener('popstate', event => {
                 if (BW.TableWorkspace?.consumeSheetPop?.(event)) return;
@@ -135,6 +143,7 @@
             const research = this.current === 'research';
             const homeOverview = $('home-overview');
             if (homeOverview) homeOverview.hidden = ['view', 'workspace', 'category', 'dataset'].some(key => params.has(key));
+            this.adaptFeatured?.();
             const title = $('bw-page-title');
             const titleTag = homeOverview && !homeOverview.hidden ? 'H2' : 'H1';
             if (title.tagName !== titleTag) {
@@ -163,6 +172,19 @@
         updateNavigation(category) {
             document.querySelectorAll('[data-workspace]').forEach(link => { if (link.dataset.workspace === this.current && !(this.current === 'benchmarks' && category)) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current'); });
             document.querySelectorAll('[data-workspace-category]').forEach(link => { if (this.current === 'benchmarks' && link.dataset.workspaceCategory === category) link.setAttribute('aria-current','page'); else link.removeAttribute('aria-current'); });
+            this.updateLayoutLinks(undefined, category);
+        },
+        updateLayoutLinks(range, category) {
+            const params = new URLSearchParams(location.search);
+            range = range || (BW.TableWorkspace?.ready ? BW.TableWorkspace.current.range : params.get('range')) || '1Y';
+            category = category ?? (BW.TableWorkspace?.ready ? BW.TableWorkspace.current.filters.category : params.get('category'));
+            document.querySelectorAll('.bw-layout-switch a').forEach(link => {
+                const url = new URL(link.href);
+                url.searchParams.set('range', range);
+                if (category) url.searchParams.set('category', category); else url.searchParams.delete('category');
+                if (params.get('workspace')) url.searchParams.set('workspace', params.get('workspace')); else url.searchParams.delete('workspace');
+                link.setAttribute('href', url.pathname + url.search + url.hash);
+            });
         },
         mergeCatalog(records) {
             const map = new Map(this.catalog.map(c => [c.id, c])); records.forEach(c => { if (c && typeof c.id === 'string') map.set(c.id, { ...map.get(c.id), ...c, source: c.source_name || c.source || '' }); });
@@ -295,6 +317,7 @@
             if (this.loadFailed) { const retry = el('button', 'Some benchmarks could not load. Retry', 'bw-search-result'); retry.type = 'button'; retry.addEventListener('click', () => this.loadCatalog()); root.append(retry); }
             if (publicFailed) { const retry = el('button', 'Some public sources are unavailable. Retry public search', 'bw-search-result'); retry.type = 'button'; retry.addEventListener('click', () => this.retryPublicSearch()); root.append(retry); }
             if (!count && !pending && !publicFailed && !this.loadFailed) root.append(el('p', 'No matches. Try a name, ticker, currency, or a word from your notes.', 'bw-search-result'));
+            if (!count && !pending && ['MSFT', 'AAPL', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NFLX', 'AMD', 'NOW', 'PLTR', 'AMGN', 'HON', 'UNP', 'BKNG'].includes(query.trim().toUpperCase())) { const hint = el('a', 'Test growth claims for this company against retained filings.', 'bw-search-result'); hint.href = '/research/claims?companies=' + encodeURIComponent(query.trim().toUpperCase()); root.append(hint); }
             for (const [kind, title] of Object.entries(publicSearchGroups)) {
                 const items = publicResults.filter(c => c.kind === kind); if (!items.length) continue;
                 root.append(el('h3', title, 'bw-search-group'));

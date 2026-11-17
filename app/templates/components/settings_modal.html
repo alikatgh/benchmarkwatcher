@@ -31,6 +31,11 @@
                         Theme
                     </span>
                 </label>
+                <button type="button" onclick="setTheme('system')" id="theme-system" aria-pressed="false"
+                    class="theme-btn w-full p-3 mb-3 rounded-xl border-2 transition font-ui text-left">
+                    <span class="text-sm font-semibold theme-text">Use device appearance</span>
+                    <span class="block text-2xs theme-text-muted">Follow light and dark settings on this device</span>
+                </button>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <!-- Light Theme -->
                     <button onclick="setTheme('light')" id="theme-light" aria-label="Light theme with warm cream colors"
@@ -223,4 +228,5 @@
 
 <!-- External JS for settings modal -->
 <script src="{{ url_for('static', filename='js/core/settings.js') }}"></script>
-<script src="{{ url_for('static', filename='js/components/settings_modal.js', v='20261019.2') }}"></script>
+<script src="{{ url_for('static', filename='js/theme.js', v='20261027.theme') }}"></script>
+<script src="{{ url_for('static', filename='js/components/settings_modal.js', v='20261027.theme') }}"></script>

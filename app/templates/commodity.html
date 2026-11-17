@@ -116,7 +116,7 @@
             class="px-4 sm:px-6 py-2.5 bg-brand-black-60/5 dark:bg-white/5 border-b border-brand-black-60/10 dark:border-white/5">
             <div class="text-2xs text-brand-black-60 font-ui mb-1.5 text-center">Reference values · selected observation window
             </div>
-            <div class="flex overflow-x-auto scrollbar-hide gap-3 sm:gap-4 sm:grid sm:grid-cols-5 font-ui text-center">
+            <div class="flex overflow-x-auto scrollbar-hide gap-3 sm:gap-4 sm:grid sm:grid-cols-5 font-ui text-center py-1">
                 <div class="shrink-0 min-w-[4.5rem] sm:min-w-0">
                     <div class="text-2xs font-semibold tracking-wider text-brand-black-60 dark:text-brand-black-60 mb-1">
                         High</div>
@@ -413,6 +413,7 @@
                             RETRIEVED</div>
                         <div class="text-sm font-medium text-brand-black-80 dark:text-white font-ui">{{
                             commodity.updated_at[:10] if commodity.updated_at else 'Not supplied' }}</div>
+                        <div class="text-2xs text-brand-black-60 font-ui">Saved snapshot · manual updates</div>
                     </div>
                 </div>
             </div>

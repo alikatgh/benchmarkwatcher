@@ -457,7 +457,7 @@ def sitemap():
              url_for('main.public_data_library_story'), url_for('main.homepage_story'),
              url_for('main.native_research_story'), url_for('main.mobile_workspace_story'), url_for('global_reference.index'),
              url_for('global_reference.sources'), url_for('public_library.index'),
-             url_for('public_library.companies')]
+             url_for('public_library.companies'), url_for('claim_proof.page')]
     paths.extend(url_for('main.commodity_detail', commodity_id=item['id'])
                  for item in get_all_commodities(include_history=False))
     for path in sorted(set(paths)):

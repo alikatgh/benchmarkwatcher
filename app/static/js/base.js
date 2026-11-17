@@ -19,6 +19,8 @@ window.BW = window.BW || {};
 (function (exports, doc) {
     const HTML = doc.documentElement;
     const MARKET_BTN_SELECTOR = '.market-btn';
+    let themePreference;
+    let systemQuery;
 
     // Safe localStorage access
     function safeGet(key) {
@@ -33,17 +35,38 @@ window.BW = window.BW || {};
         if (!t) return null;
         t = String(t).trim();
         // whitelist known themes
-        const allowed = ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'];
+        const allowed = ['system', 'light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'];
         return allowed.includes(t) ? t : null;
+    }
+
+    function getSystemQuery() {
+        if (systemQuery) return systemQuery;
+        try {
+            systemQuery = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+        } catch (e) { /* media preferences unavailable */ }
+        return systemQuery;
+    }
+
+    function normalizeMarket(market) {
+        return ['western', 'asian', 'monochrome'].includes(market) ? market : 'western';
     }
 
     // Apply theme to document root immediately
     function applyTheme(theme) {
         if (!theme) return;
+        const previousTheme = HTML.getAttribute('data-theme');
+        const previousPreference = HTML.getAttribute('data-theme-preference');
+        themePreference = theme;
+        if (theme === 'system') theme = getSystemQuery()?.matches ? 'dark' : 'light';
+        HTML.setAttribute('data-theme-preference', themePreference);
         HTML.setAttribute('data-theme', theme);
 
         const needDark = theme === 'dark' || theme === 'mono-dark' || theme === 'bloomberg';
         if (needDark) HTML.classList.add('dark'); else HTML.classList.remove('dark');
+        HTML.style.colorScheme = needDark ? 'dark' : 'light';
+        if (theme !== previousTheme || themePreference !== previousPreference) {
+            window.dispatchEvent(new CustomEvent('bw:theme-change', { detail: { theme, preference: themePreference } }));
+        }
     }
 
     // Apply market theme to document root
@@ -69,24 +92,17 @@ window.BW = window.BW || {};
     // 3) fallback 'light'
     function detectInitialTheme() {
         const stored = normalizeTheme(safeGet('theme'));
-        if (stored) return stored;
-
-        try {
-            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-            return prefersDark ? 'dark' : 'light';
-        } catch (e) {
-            return 'light';
-        }
+        return stored || 'system';
     }
 
     // Choose initial market theme (stored or 'western')
     function detectInitialMarket() {
-        return safeGet('market-theme') || 'western';
+        return normalizeMarket(safeGet('market-theme'));
     }
 
     // Public API: set market theme and persist
     function setMarketTheme(theme) {
-        if (!theme) return;
+        if (!['western', 'asian', 'monochrome'].includes(theme)) return;
         safeSet('market-theme', theme);
         applyMarketTheme(theme);
     }
@@ -95,13 +111,16 @@ window.BW = window.BW || {};
     function setTheme(theme) {
         const t = normalizeTheme(theme);
         if (!t) return;
-        safeSet('theme', t);
+        try {
+            if (exports.Settings && typeof exports.Settings.setTheme === 'function') exports.Settings.setTheme(t);
+            else safeSet('theme', t);
+        } catch (e) { /* a saved preference must not prevent appearance changes */ }
         applyTheme(t);
     }
 
     // initTheme runs synchronously to prevent flash (call this immediately)
     function initTheme() {
-        const initial = detectInitialTheme();
+        const initial = themePreference || detectInitialTheme();
         applyTheme(initial);
     }
 
@@ -113,7 +132,7 @@ window.BW = window.BW || {};
 
     // On DOM ready, ensure buttons reflect state and wire anything extra
     function initOnReady() {
-        applyMarketTheme(safeGet('market-theme') || 'western');
+        applyMarketTheme(detectInitialMarket());
 
         // If there are explicit market buttons, ensure an accessible role
         try {
@@ -179,10 +198,30 @@ window.BW = window.BW || {};
     exports.Base.initTheme = initTheme;
     exports.Base.initMarketTheme = initMarketTheme;
     exports.Base.initOnReady = initOnReady;
+    exports.Base.getThemePreference = () => themePreference;
+    exports.Base.refreshSystemTheme = () => {
+        if (themePreference === 'system') applyTheme('system');
+    };
+    exports.Base.syncStoredTheme = value => applyTheme(normalizeTheme(value) || 'system');
 
     // Run immediately to prevent flash
     initTheme();
     initMarketTheme();
+
+    // A resolved system color is never saved as a manual override.
+    if (!window.__bwBaseThemeListenersBound) {
+        window.__bwBaseThemeListenersBound = true;
+        const query = getSystemQuery();
+        const onSystemChange = () => window.BW.Base.refreshSystemTheme();
+        if (query && typeof query.addEventListener === 'function') query.addEventListener('change', onSystemChange);
+        else if (query && typeof query.addListener === 'function') query.addListener(onSystemChange);
+        window.addEventListener('storage', event => {
+            try {
+                if (event.storageArea && event.storageArea !== window.localStorage) return;
+            } catch (e) { return; }
+            if (event.key === 'theme' || event.key === null) window.BW.Base.syncStoredTheme(event.newValue);
+        });
+    }
 
     // Run DOM-ready initialization (bind once across duplicate script loads)
     if (!window.__bwBaseDomReadyBound) {

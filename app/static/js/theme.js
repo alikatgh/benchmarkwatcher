@@ -15,6 +15,7 @@ BW.Theme = (function () {
     const root = document.documentElement;
     const THEME_KEY = 'theme';
     const MARKET_THEME_KEY = 'market-theme';
+    const THEMES = ['system', 'light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'];
     let _initialized = false;
 
     function safeGet(key) {
@@ -25,14 +26,16 @@ BW.Theme = (function () {
     }
 
     function getStoredRaw(key, settingsKey) {
-        if (BW.Settings && typeof BW.Settings._getRaw === 'function') {
-            return BW.Settings._getRaw(settingsKey || key);
-        }
+        try {
+            if (BW.Settings && typeof BW.Settings._getRaw === 'function') return BW.Settings._getRaw(settingsKey || key);
+        } catch (e) { /* use safe storage fallback */ }
         return safeGet(key);
     }
 
-    function hasStoredPreference(key, settingsKey) {
-        return getStoredRaw(key, settingsKey) !== null;
+    function getPreference() {
+        if (BW.Base && typeof BW.Base.getThemePreference === 'function') return BW.Base.getThemePreference();
+        const stored = getStoredRaw(THEME_KEY, BW.Settings?.KEYS?.THEME);
+        return THEMES.includes(stored) ? stored : 'system';
     }
 
     function isDarkThemeName(name) {
@@ -40,38 +43,60 @@ BW.Theme = (function () {
     }
 
     // Apply theme to root: set data-theme and toggle .dark for Tailwind utilities
-    function applyTheme(theme) {
-        if (!theme) return;
+    function applyTheme(preference, persist = true) {
+        if (!THEMES.includes(preference)) return;
+        if (BW.Base && typeof BW.Base.setTheme === 'function') {
+            if (persist) BW.Base.setTheme(preference);
+            else BW.Base.initTheme();
+            updateThemeButtons(preference);
+            return;
+        }
+        let theme = preference;
+        if (theme === 'system') {
+            try { theme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
+            catch (e) { theme = 'light'; }
+        }
 
         // set attribute for CSS targeting
+        root.setAttribute('data-theme-preference', preference);
         root.setAttribute('data-theme', theme);
 
         // toggle 'dark' class for Tailwind's dark: utilities
         if (isDarkThemeName(theme)) root.classList.add('dark');
         else root.classList.remove('dark');
+        root.style.colorScheme = isDarkThemeName(theme) ? 'dark' : 'light';
 
         // persist (use BW.Settings if available)
-        if (BW.Settings && typeof BW.Settings.setTheme === 'function') {
-            BW.Settings.setTheme(theme);
-        } else {
-            safeSet('theme', theme);
+        if (persist) {
+            try {
+                if (BW.Settings && typeof BW.Settings.setTheme === 'function') BW.Settings.setTheme(preference);
+                else safeSet(THEME_KEY, preference);
+            } catch (e) { /* appearance still works without persistence */ }
         }
 
-        updateThemeButtons(theme);
+        updateThemeButtons(preference);
+        refreshVisuals();
+    }
+
+    function refreshVisuals(includeCommodity = true) {
         if (BW.VisualExplorer) requestAnimationFrame(() => BW.VisualExplorer.refresh());
 
         // Re-render sparklines with new theme colors
         if (window.BW && BW.Sparkline && typeof BW.Sparkline.refresh === 'function') {
             requestAnimationFrame(() => BW.Sparkline.refresh());
         }
+        if (includeCommodity && BW.Commodity && BW.Commodity.chartElement) {
+            BW.Commodity.setupColors();
+            BW.Commodity.applyChartTheme(root.getAttribute('data-theme'));
+        }
     }
 
     // Update theme buttons to be CSS-friendly and accessible
     function updateThemeButtons(activeTheme) {
-        const themeButtons = ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'];
-        themeButtons.forEach(t => {
+        THEMES.forEach(t => {
             const btn = document.getElementById(`theme-${t}`);
             if (!btn) return;
+            if (btn.getAttribute('role') === 'radio') return;
             const isActive = t === activeTheme;
             // Prefer data attribute + aria for styling
             if (isActive) {
@@ -85,17 +110,19 @@ BW.Theme = (function () {
     }
 
     // Apply market theme (western/asian/monochrome)
-    function applyMarketTheme(theme) {
-        if (!theme) return;
+    function applyMarketTheme(theme, persist = true) {
+        if (!['western', 'asian', 'monochrome'].includes(theme)) return;
         root.setAttribute('data-market', theme);
 
-        if (BW.Settings && typeof BW.Settings.setMarketTheme === 'function') {
-            BW.Settings.setMarketTheme(theme);
-        } else {
-            safeSet('market-theme', theme);
+        if (persist) {
+            try {
+                if (BW.Settings && typeof BW.Settings.setMarketTheme === 'function') BW.Settings.setMarketTheme(theme);
+                else safeSet(MARKET_THEME_KEY, theme);
+            } catch (e) { /* colors still work without persistence */ }
         }
 
         updateMarketButtons(theme);
+        refreshVisuals(false);
     }
 
     // Update market buttons in a CSS-friendly way
@@ -104,6 +131,7 @@ BW.Theme = (function () {
         markets.forEach(m => {
             const btn = document.getElementById(`market-${m}`);
             if (!btn) return;
+            if (btn.getAttribute('role') === 'radio') return;
             const isActive = m === activeMarket;
             if (isActive) {
                 btn.setAttribute('data-active', 'true');
@@ -124,8 +152,8 @@ BW.Theme = (function () {
         const gradientStart = cs.getPropertyValue('--sparkline-grad-start').trim();
         const gradientEnd = cs.getPropertyValue('--sparkline-grad-end').trim();
         const ma = cs.getPropertyValue('--sparkline-ma').trim();
-        const up = cs.getPropertyValue('--market-up').trim();
-        const down = cs.getPropertyValue('--market-down').trim();
+        const up = cs.getPropertyValue('--color-up').trim() || cs.getPropertyValue('--market-up').trim();
+        const down = cs.getPropertyValue('--color-down').trim() || cs.getPropertyValue('--market-down').trim();
 
         // CSS variables are now defined per-theme in base.html, so they should always be available
         const theme = root.getAttribute('data-theme')
@@ -149,28 +177,7 @@ BW.Theme = (function () {
     // Initialization: apply saved or sensible defaults
     function init(force) {
         if (_initialized && !force) return;
-        // pick theme from BW.Settings if present, otherwise from localStorage, otherwise fallback to system-preference
-        let theme = 'light';
-        try {
-            if (BW.Settings && typeof BW.Settings.getTheme === 'function') {
-                theme = BW.Settings.getTheme() || theme;
-            } else {
-                theme = safeGet(THEME_KEY) || theme;
-            }
-        } catch (e) { /* ignore */ }
-
-        // detect system preference if nothing explicit
-        if (!theme || theme === 'light') {
-            try {
-                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const settingsThemeKey = BW.Settings && BW.Settings.KEYS ? BW.Settings.KEYS.THEME : THEME_KEY;
-                if (prefersDark && !hasStoredPreference(THEME_KEY, settingsThemeKey)) {
-                    theme = 'dark';
-                }
-            } catch (e) { /* ignore */ }
-        }
-
-        applyTheme(theme);
+        applyTheme(getPreference(), false);
 
         // market theme
         let market = 'western';
@@ -182,7 +189,7 @@ BW.Theme = (function () {
             }
         } catch (e) { /* ignore */ }
 
-        applyMarketTheme(market);
+        applyMarketTheme(['western', 'asian', 'monochrome'].includes(market) ? market : 'western', false);
         _initialized = true;
     }
 
@@ -193,9 +200,19 @@ BW.Theme = (function () {
         updateThemeButtons,
         updateMarketButtons,
         getSparklineColors,
+        getPreference,
+        refreshVisuals,
         init
     };
 })();
+
+if (!window.__bwThemeChangeBound) {
+    window.__bwThemeChangeBound = true;
+    window.addEventListener('bw:theme-change', () => {
+        BW.Theme.updateThemeButtons(BW.Theme.getPreference());
+        BW.Theme.refreshVisuals();
+    });
+}
 
 // Auto-init on DOMContentLoaded (bind once even if script is evaluated multiple times)
 if (!window.__bwThemeDomReadyBound) {

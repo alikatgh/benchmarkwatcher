@@ -42,7 +42,7 @@ describe('BW.Theme stored preference detection', () => {
         BW.Theme.init();
 
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-        expect(setTheme).toHaveBeenCalledWith('dark');
+        expect(setTheme).not.toHaveBeenCalled();
     });
 
     test('respects explicit stored theme even if system prefers dark', () => {
@@ -62,6 +62,6 @@ describe('BW.Theme stored preference detection', () => {
         BW.Theme.init();
 
         expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-        expect(setTheme).toHaveBeenCalledWith('light');
+        expect(setTheme).not.toHaveBeenCalled();
     });
 });

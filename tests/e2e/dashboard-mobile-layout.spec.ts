@@ -69,6 +69,21 @@ async function expectConsistentControls(page: Page) {
   }));
   expect(chevrons).toEqual([['16px', '16px', '10px'], ['16px', '16px', '10px']]);
 
+  const labelSpace = await page.evaluate(() => {
+    const range = document.querySelector('#tw-range-select') as HTMLSelectElement;
+    const style = getComputedStyle(range);
+    const context = document.createElement('canvas').getContext('2d')!;
+    context.font = style.font;
+    const rangeText = Math.max(...Array.from(range.options, option => context.measureText(option.text).width));
+    const view = document.querySelector('.tw-view-picker [data-slot="select-value"]')!;
+    return {
+      range: range.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - rangeText,
+      view: view.clientWidth - view.scrollWidth,
+    };
+  });
+  expect(labelSpace.range).toBeGreaterThanOrEqual(0);
+  expect(labelSpace.view).toBeGreaterThanOrEqual(0);
+
   // Reserve the live catalog's wider count, which the three-row fixture cannot expose.
   const viewLabelSpace = await page.evaluate(() => {
     const select = document.querySelector('#tw-view-select') as HTMLSelectElement;
@@ -231,9 +246,9 @@ for (const width of [320, 390, 600]) {
         return rect.top + rect.height / 2;
       };
       return [
-        ['#tw-view-select', '#tw-compact-count', '#tw-more-button'].map(center),
+        ['#tw-view-select', '#tw-range-select', '#tw-compact-count', '#tw-more-button'].map(center),
         ['.tw-search', '#tw-filter-button', '#tw-visual-actions button'].map(center),
-        ['#tw-range-select', '#tw-filter-chips .tw-chip'].map(center),
+        ['#tw-filter-chips .tw-chip'].map(center),
       ];
     });
     for (const row of rows) expect(Math.max(...row) - Math.min(...row)).toBeLessThanOrEqual(1);

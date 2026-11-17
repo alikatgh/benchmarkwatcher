@@ -138,3 +138,6 @@ html[data-theme] body .profile-method[open]>summary {
   html[data-theme] body :is(button,.ui-secondary,.benchmark-detail-link) {border:1px solid ButtonText!important;}
   html[data-theme] body :is(button[aria-pressed="true"],button[aria-selected="true"],a[aria-current]) {outline:2px solid Highlight;outline-offset:-3px;}
 }
+
+/* Branded text selection across product shells. */
+::selection{background:var(--theme-accent,#0f5499);color:#fff}

@@ -122,6 +122,19 @@ def test_homepage_renders_saved_published_coverage_and_dataset_links(saved_homep
     companies = next(row['entity_count'] for row in summaries if row['source'] == 'sec')
     assert f'{observations:,} observations in the country & company library' in page.text
     assert f'{histories:,} histories · {len(summaries)} datasets' in page.text
+    # Reading and keyboard order reach the working search and observations before
+    # the longer dataset inventory and tool guides.
+    positions = [response.text.index(f'id="{element_id}"') for element_id in (
+        'home-overview', 'bw-table-heading', 'tw-query', 'data-table',
+        'home-library-details', 'home-catalog-title', 'home-tools-title',
+    )]
+    assert positions == sorted(positions)
+    assert any(link['href'] == '#bw-table-heading' and 'Explore benchmarks' in link['text']
+               for link in page.links)
+    assert any(link['href'] == '#home-catalog-title' and 'Browse the library' in link['text']
+               for link in page.links)
+    assert 'id="bw-table-heading" tabindex="-1"' in response.text
+    assert 'id="home-catalog-title" tabindex="-1"' in response.text
 
     collections = [link for link in page.links if 'home-collection' in link['classes']]
     assert len(collections) == 3
@@ -158,6 +171,7 @@ def test_explicit_compact_view_keeps_commodity_table_without_coverage_read(homep
     response = homepage_client.get('/?view=compact')
     assert response.status_code == 200
     assert 'id="home-overview"' not in response.text
+    assert 'id="home-library-details"' not in response.text
     assert 'id="compact-view"' in response.text
     assert 'href="/commodity/gold"' in response.text
 
@@ -170,6 +184,7 @@ def test_library_failure_leaves_homepage_and_commodity_workspace_available(homep
     response = homepage_client.get('/')
     assert response.status_code == 200
     assert 'id="home-overview"' in response.text
+    assert 'id="home-library-details"' in response.text
     if state == 'corrupt':
         assert 'Library counts are temporarily unavailable.' in response.text
         assert path.read_bytes() == b'Not a SQLite database'

@@ -418,7 +418,8 @@
             const ids = new Set(this.state.entries.map(e => e.id)), matches = this.pendingImport.entries.filter(e => ids.has(e.id)).length;
             const propertyIds = new Set([...BASE, ...this.state.properties, ...this.pendingImport.properties].map(property => property.id));
             this.pendingMergeViewCount = mergeViews(this.state.views, this.pendingImport.views, propertyIds).length;
-            this.$('rw-import-summary').textContent = this.pendingImport.entries.length + ' entries (' + matches + ' matching existing IDs), ' + this.pendingImport.properties.length + ' personal properties, and ' + this.pendingImport.views.length + ' saved views. Your current workspace has ' + this.state.entries.length + ' entries. Merging would keep ' + this.pendingMergeViewCount + ' saved views after removing identical copies.';
+            const plural = (count, one, many) => count + ' ' + (count === 1 ? one : many);
+            this.$('rw-import-summary').textContent = plural(this.pendingImport.entries.length, 'entry', 'entries') + ' (' + matches + ' matching existing ' + (matches === 1 ? 'ID' : 'IDs') + '), ' + plural(this.pendingImport.properties.length, 'personal property', 'personal properties') + ', and ' + plural(this.pendingImport.views.length, 'saved view', 'saved views') + '. Your current workspace has ' + plural(this.state.entries.length, 'entry', 'entries') + '. Merging would keep ' + plural(this.pendingMergeViewCount, 'saved view', 'saved views') + ' after removing identical copies.';
             this.$('rw-import-error').hidden = true; this.root.querySelector('[data-rw-action="apply-import"]').disabled = false;
             this.root.querySelector('[name="rw-import-mode"][value="merge"]').checked = true; this.renderImportMode(); this.openDialog(this.$('rw-import-dialog'));
         },

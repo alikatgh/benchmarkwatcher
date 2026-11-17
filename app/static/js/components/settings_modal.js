@@ -40,7 +40,7 @@ BW.SettingsModal = {
         bindClick(modal.querySelector('button[aria-label="Close settings"]'), () => this.toggle());
         bindClick(modal.querySelector('.mt-6.flex.justify-end button'), () => this.toggle());
 
-        ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach((theme) => {
+        ['system', 'light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach((theme) => {
             bindClick(document.getElementById(`theme-${theme}`), () => this.setTheme(theme));
         });
 
@@ -228,15 +228,16 @@ BW.SettingsModal = {
 
     // Set theme
     setTheme: function (mode) {
-        if (window.BW && BW.Settings && typeof BW.Settings.setTheme === 'function') {
+        if (BW.Theme && typeof BW.Theme.applyTheme === 'function') {
+            BW.Theme.applyTheme(mode);
+        } else if (BW.Base && typeof BW.Base.setTheme === 'function') {
+            BW.Base.setTheme(mode);
+        } else if (BW.Settings && typeof BW.Settings.setTheme === 'function') {
             BW.Settings.setTheme(mode);
+            this.applyTheme();
         } else {
             this.setRawSetting('THEME', 'theme', mode);
-        }
-        this.applyTheme();
-        if (BW.Commodity && BW.Commodity.ctx) {
-            BW.Commodity.setupColors();
-            BW.Commodity.applyChartTheme(mode);
+            this.applyTheme();
         }
         this.updateUI();
     },
@@ -263,14 +264,18 @@ BW.SettingsModal = {
 
     // Set market color theme (western/asian/monochrome)
     setMarketTheme: function (mode) {
-        if (window.BW && BW.Settings && typeof BW.Settings.setMarketTheme === 'function') {
+        if (BW.Theme && typeof BW.Theme.applyMarketTheme === 'function') {
+            BW.Theme.applyMarketTheme(mode);
+            this.updateUI();
+            return;
+        } else if (BW.Settings && typeof BW.Settings.setMarketTheme === 'function') {
             BW.Settings.setMarketTheme(mode);
         } else {
             this.setRawSetting('MARKET_THEME', 'market-theme', mode);
         }
 
         // Apply immediately so CSS variables update without reload
-        if (window.BW && BW.Base && typeof BW.Base.setMarketTheme === 'function') {
+        if (BW.Base && typeof BW.Base.setMarketTheme === 'function') {
             BW.Base.setMarketTheme(mode);
         } else {
             document.documentElement.setAttribute('data-market', mode);
@@ -281,6 +286,15 @@ BW.SettingsModal = {
 
     // Apply theme to document
     applyTheme: function () {
+        // Initialization renders the preference without saving a resolved system color.
+        if (BW.Theme && typeof BW.Theme.init === 'function') {
+            BW.Theme.init();
+            return;
+        }
+        if (BW.Base && typeof BW.Base.initTheme === 'function') {
+            BW.Base.initTheme();
+            return;
+        }
         let theme = 'light';
         if (window.BW && BW.Settings && typeof BW.Settings.getTheme === 'function') {
             theme = BW.Settings.getTheme() || 'light';
@@ -308,12 +322,12 @@ BW.SettingsModal = {
         if (!window.BW || !BW.Settings) return;
 
         // Use BW.Settings exclusively - no direct localStorage access
-        const theme = BW.Settings.getTheme();
+        const theme = BW.Theme?.getPreference?.() || BW.Base?.getThemePreference?.() || BW.Settings.getTheme();
         const view = BW.Settings.getViewMode();
-        const market = BW.Settings.getMarketTheme();
+        const market = document.documentElement.getAttribute('data-market') || BW.Settings.getMarketTheme();
 
         // Update Theme Buttons (attribute-based active state - CSS handles styling)
-        ['light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach(m => {
+        ['system', 'light', 'dark', 'mono-light', 'mono-dark', 'bloomberg', 'ft'].forEach(m => {
             const btn = document.getElementById(`theme-${m}`);
             // ReUI owns its controlled radio state and aria-checked semantics.
             if (btn?.getAttribute('role') === 'radio') return;

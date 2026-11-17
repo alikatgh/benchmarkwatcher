@@ -61,3 +61,6 @@
  [data-market-data] .market-evidence-stack{order:1}
 }
 @media(max-width:380px){.market-history .benchmark-detail-readout{flex-wrap:wrap}.market-history .benchmark-detail-range-change{max-width:100%;text-align:left}.market-history .benchmark-detail-ranges button{padding-inline:7px}}
+
+/* Visible keyboard focus on market shells (mirrors benchmark-detail). */
+[data-market-data] :is(button,a,input,select,summary,[tabindex]):focus-visible{outline:2px solid var(--theme-accent,#1967d2);outline-offset:2px}

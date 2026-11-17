@@ -44,19 +44,35 @@ describe('Commodity chart view button scoping', () => {
 
 describe('Global appearance updates the detail chart', () => {
     test('updates chart colors after applying the page theme without resetting other chart options', () => {
+        document.body.innerHTML = `
+            <div id="priceChart"></div>
+            <button id="view-price" class="view-btn">Price</button>
+            <button id="view-percent" class="view-btn">%</button>
+        `;
+        document.documentElement.removeAttribute('data-theme');
+        document.documentElement.removeAttribute('data-theme-preference');
+        document.documentElement.classList.remove('dark');
+        localStorage.clear();
+        Object.defineProperty(document, 'readyState', { configurable: true, get: () => 'complete' });
         global.BW = {};
+        // Use the actual page appearance path. D3 owns chartElement; the old
+        // canvas ctx and a mocked applyTheme bypass the shared theme controller.
+        ['base.js', 'core/settings.js', 'theme.js'].forEach(file => {
+            window.eval(fs.readFileSync(path.join(__dirname, '..', 'app/static/js', file), 'utf8'));
+        });
         loadCommodityScript();
         const commodity = BW.Commodity;
-        commodity.ctx = {};
+        commodity.chartElement = document.getElementById('priceChart');
         commodity.chartSettings.lineWidth = 4;
         commodity.updateChart = jest.fn();
         commodity.populateSettingsUI = jest.fn();
         commodity.applySettingsToDOM = jest.fn();
         commodity.saveChartSettings = jest.fn();
         window.eval(fs.readFileSync(path.join(__dirname, '..', 'app/static/js/components/settings_modal.js'), 'utf8'));
-        BW.SettingsModal.applyTheme = jest.fn(() => document.documentElement.setAttribute('data-theme', 'dark'));
         BW.SettingsModal.updateUI = jest.fn();
         BW.SettingsModal.setTheme('dark');
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+        expect(document.documentElement.classList.contains('dark')).toBe(true);
         expect(commodity.chartSettings.lineColor).toBe(commodity.themes.dark.lineColor);
         expect(commodity.chartSettings.lineWidth).toBe(4);
         expect(commodity.updateChart).toHaveBeenCalled();

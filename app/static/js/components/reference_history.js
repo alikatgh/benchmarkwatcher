@@ -331,7 +331,9 @@
             input.addEventListener('input', () => chart?.inspectDate(usable[Number(input.value)].date));
             picker.append(label, hint, input); chartSurface.append(picker);
             const extent = element('div', 'benchmark-detail-chart-extent');
+            const values = usable.map(point => point.price).filter(price => typeof price === 'number' && Number.isFinite(price));
             extent.append(element('span', '', usable[0].date + ' – ' + usable[usable.length - 1].date), element('span', '', usable.length + ' observations'));
+            if (values.length) extent.append(element('span', 'benchmark-detail-range-extent', 'Range ' + format(Math.min(...values)) + ' – ' + format(Math.max(...values)) + ' ' + unit(record)));
             chartSurface.append(extent);
             container.append(chartSurface);
             scheduleResize();

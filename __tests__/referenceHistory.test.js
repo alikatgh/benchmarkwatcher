@@ -29,7 +29,7 @@ test('full daily history retains every source observation, range controls, exact
 test('short five-day stock history has observed-day ticks, single-point and empty custom ranges with recovery',()=>{
     const data=fixture(5),calls=jest.spyOn(BW.Visuals,'timeSeries');mount(data);
     expect(calls.mock.calls.at(-1)[2].xValues).toHaveLength(5);
-    expect(document.querySelector('.benchmark-detail-chart-extent').textContent).toContain('5 observations');
+    expect(document.querySelector('.benchmark-detail-chart-extent').textContent).toMatch(/Range \d+\.\d{2} – \d+\.\d{2}/);
     dates(data.history[2].date,data.history[2].date);
     expect(document.getElementById('market-detail-observation').disabled).toBe(true);
     expect(document.querySelector('.benchmark-detail-range-change').hidden).toBe(true);

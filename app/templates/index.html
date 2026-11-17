@@ -9,7 +9,7 @@
             <div class="bw-page-heading"><div>{% if show_home_overview %}<h2 id="bw-page-title">Commodity benchmarks</h2>{% else %}<h1 id="bw-page-title">Commodity benchmarks</h1>{% endif %}<p id="bw-page-description">A clearer view of energy, metals and agriculture.</p></div><div class="bw-layout-switch" aria-label="Benchmark layout"><a href="{{ url_for('main.index', view='compact', range=date_range, category=selected_category) }}" {% if active_view == 'compact' %}aria-current="page"{% endif %}>Table</a><a href="{{ url_for('main.index', view='grid', range=date_range, category=selected_category) }}" {% if active_view == 'grid' %}aria-current="page"{% endif %}>Cards</a></div></div>
             <details id="bw-featured" class="bw-featured"><summary>Featured observations</summary><section id="bw-overview" class="bw-overview" aria-label="Selected reference observations"></section></details>
             <details id="bw-visual-explorer" class="bw-visual-disclosure"><summary>Visual explorer <span>History, distributions, monthly patterns &amp; coverage</span></summary></details>
-            <div class="bw-section-heading"><h2 id="bw-table-heading">Explore benchmarks</h2><span>Historical observations · source schedules vary</span></div>
+            <div class="bw-section-heading"><h2 id="bw-table-heading" tabindex="-1">Explore benchmarks</h2><span>Historical observations · source schedules vary</span></div>
     <section id="quick-find" class="mb-5 sm:mb-6 font-ui" aria-label="Quick find">
         <div class="bg-card-warm dark:bg-terminal-surface rounded-xl border border-brand-black-60/20 dark:border-white/10 p-3 sm:p-4">
             <div class="flex flex-col lg:flex-row lg:items-center gap-3">
@@ -141,7 +141,7 @@
                             {{ summary.latest_date|default('No date', true) }}
                         </div>
                         <div class="text-2xs text-brand-black-60">
-                            <span id="market-pulse-latest-count">{{ summary.latest_count|default(0) }}</span> series
+                            <span id="market-pulse-latest-count">{{ summary.latest_count|default(0) }}</span> series · saved snapshot, manual updates
                         </div>
                     </div>
                     <div class="border-t border-brand-black-60/15 dark:border-white/10 pt-2.5">
@@ -227,6 +227,7 @@
 
                 <p>Each benchmark has its own unit, frequency and observation date. Changes describe the selected historical range; gaps and revisions can occur. Open a benchmark for its source and observation history.</p>
             </div>
+            {% if show_home_overview %}{% include 'components/home_library_details.html' %}{% endif %}
         </section>
         {% include 'components/research_workspace.html' %}
     </div>

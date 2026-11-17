@@ -1,0 +1,152 @@
+import { test, expect } from '@playwright/test';
+import { selectOption } from './select-option';
+
+test('layout links preserve the current range and category through native navigation', async ({ page, context }) => {
+  await page.goto('/?view=compact&range=6M');
+  await page.locator('#range-1M').click();
+  await page.locator('[data-workspace-category="energy"]').click();
+  const cards = page.locator('.bw-layout-switch').getByRole('link', { name: 'Cards', exact: true });
+  await expect(cards).toHaveAttribute('href', /range=1M/);
+  await expect(cards).toHaveAttribute('href', /category=energy/);
+  // A modified click must retain normal browser navigation in a separate tab.
+  const opened = context.waitForEvent('page');
+  await cards.click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
+  const tab = await opened;
+  await tab.waitForLoadState();
+  await expect(tab).toHaveURL(/view=grid/);
+  expect(new URL(tab.url()).searchParams.get('range')).toBe('1M');
+  expect(new URL(tab.url()).searchParams.get('category')).toBe('energy');
+  await tab.close();
+  await expect(page).toHaveURL(/view=compact/);
+  await cards.click();
+  await expect(page.locator('#grid-view')).toBeVisible();
+  await expect(page.locator('#grid-range-1M')).toHaveAttribute('aria-checked', 'true');
+  expect(new URL(page.url()).searchParams.get('category')).toBe('energy');
+  await page.locator('#grid-range-3M').click();
+  const table = page.locator('.bw-layout-switch').getByRole('link', { name: 'Table', exact: true });
+  await expect(table).toHaveAttribute('href', /range=3M/);
+  await table.click();
+  await expect(page.locator('#table-workspace')).toBeVisible();
+  await expect(page.locator('#range-3M')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#tw-category')).toHaveValue('energy');
+  await page.goBack();
+  await expect(page.locator('#grid-view')).toBeVisible();
+  await expect(page.locator('#grid-range-3M')).toHaveAttribute('aria-checked', 'true');
+});
+
+test('layout links retain restored table filters when the new URL has no category', async ({ page }) => {
+  await page.goto('/?view=compact&range=1Y&category=energy');
+  await expect(page.locator('#tw-category')).toHaveValue('energy');
+  await page.goto('/?view=compact');
+  await expect(page.locator('#tw-category')).toHaveValue('energy');
+  await expect(page.locator('.bw-layout-switch').getByRole('link', { name: 'Cards', exact: true })).toHaveAttribute('href', /category=energy/);
+});
+
+test('card ranges provide a complete radio keyboard interaction', async ({ page }) => {
+  await page.goto('/?view=grid&range=1Y');
+  await page.locator('#grid-range-1Y').focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#grid-range-ALL')).toBeFocused();
+  await expect(page.locator('#grid-range-ALL')).toHaveAttribute('aria-checked', 'true');
+  const group = page.getByRole('radiogroup', { name: 'Observation range', exact: true });
+  await expect(group.getByRole('radio')).toHaveCount(6);
+  await expect(group.locator('[tabindex="0"]')).toHaveCount(1);
+  await page.keyboard.press('ArrowRight');
+  await expect(page.locator('#grid-range-1W')).toBeFocused();
+  await page.keyboard.press('End');
+  await expect(page.locator('#grid-range-ALL')).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(page.locator('#grid-range-1W')).toBeFocused();
+  await page.keyboard.press('ArrowUp');
+  await expect(page.locator('#grid-range-ALL')).toBeFocused();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.locator('#grid-range-1Y')).toBeFocused();
+  await expect(page.locator('#grid-range-1Y')).toHaveAttribute('aria-checked', 'true');
+  await page.locator('#grid-range-3M').click();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#grid-range-6M')).toBeFocused();
+  await expect(page).toHaveURL(/range=6M/);
+});
+
+test('catalog explorer follows SPA categories and saved views without resetting its controls', async ({ page }) => {
+  await page.goto('/?view=compact&category=energy');
+  const explorer = page.locator('#bw-visual-explorer');
+  await explorer.locator('summary').first().click();
+  await selectOption(explorer.getByLabel('Benchmark', { exact: true }), '__catalog__');
+  await expect(explorer.locator('.bw-visual-note')).toContainText('1 benchmarks');
+  await explorer.locator('.bw-visual-data summary').click();
+  const rows = explorer.locator('.bw-visual-data tbody tr');
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText('Oil');
+  await page.locator('[data-workspace-category="metal"]').click();
+  await expect(rows.first()).toContainText('Copper');
+  await page.locator('#tw-new-view').click();
+  await page.locator('#tw-view-name').fill('Metals overview');
+  await page.locator('#tw-view-form').getByRole('button', { name: 'Save as new view', exact: true }).click();
+  await page.locator('[data-workspace-category="precious"]').click();
+  await expect(rows.first()).toContainText('Gold');
+  await page.locator('#tw-views').getByRole('button', { name: 'Metals overview', exact: true }).click();
+  await expect(rows.first()).toContainText('Copper');
+  await expect(explorer.getByLabel('Benchmark', { exact: true })).toHaveValue('__catalog__');
+  await expect(explorer.getByLabel('Observation range', { exact: true })).toHaveValue('1Y');
+  await expect(explorer.locator('.bw-visual-choice')).toHaveJSProperty('value', 'ranking');
+  await expect(explorer.locator('.bw-visual-data')).toHaveJSProperty('open', true);
+});
+
+test('explorer uses the latest scope and selection when catalog responses arrive late', async ({ page }) => {
+  await page.goto('/?view=compact&category=energy');
+  const explorer = page.locator('#bw-visual-explorer');
+  await explorer.locator('summary').first().click();
+  await expect(explorer.locator('.bw-visual-stage')).not.toHaveAttribute('aria-busy');
+  let release!: () => void;
+  let held = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/commodities?include_history=false&range=*', async route => {
+    const response = await route.fetch();
+    await held;
+    await route.fulfill({ response });
+  });
+  await selectOption(explorer.getByLabel('Benchmark', { exact: true }), '__catalog__');
+  await expect(explorer.locator('.bw-visual-stage')).toHaveAttribute('aria-busy', 'true');
+  await page.locator('[data-workspace-category="metal"]').click();
+  release();
+  await expect(explorer.locator('.bw-visual-stage')).not.toHaveAttribute('aria-busy');
+  await explorer.locator('.bw-visual-data summary').click();
+  await expect(explorer.locator('.bw-visual-data tbody tr')).toHaveCount(1);
+  await expect(explorer.locator('.bw-visual-data tbody tr')).toContainText('Copper');
+  held = new Promise<void>(resolve => { release = resolve; });
+  await selectOption(explorer.getByLabel('Observation range', { exact: true }), 'ALL');
+  await expect(explorer.locator('.bw-visual-stage')).toHaveAttribute('aria-busy', 'true');
+  await selectOption(explorer.getByLabel('Benchmark', { exact: true }), 'gold');
+  await expect(explorer.locator('.bw-visual-stage')).not.toHaveAttribute('aria-busy');
+  const staleResponse = page.waitForResponse(response => response.url().includes('include_history=false&range=ALL'));
+  release();
+  await staleResponse;
+  await expect(explorer.getByLabel('Benchmark', { exact: true })).toHaveValue('gold');
+  await expect(explorer.locator('.bw-visual-choice')).toHaveJSProperty('value', 'line');
+  await expect(explorer.locator('.bw-visual-data summary')).toHaveText('View exact values · 120 rows');
+});
+
+test('homepage keeps featured observations collapsed until requested on desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const featured = page.locator('#bw-featured');
+  await expect(page.locator('#home-overview')).toBeVisible();
+  await expect(featured).toHaveJSProperty('open', false);
+  await page.locator('[data-workspace-category="energy"]').click();
+  await expect(featured).toHaveJSProperty('open', true);
+  await page.goBack();
+  await expect(page.locator('#home-overview')).toBeVisible();
+  await expect(featured).toHaveJSProperty('open', false);
+  await featured.locator('summary').click();
+  await expect(featured).toHaveJSProperty('open', true);
+  await expect(featured.locator('.bw-observation')).toHaveCount(3);
+  await page.getByRole('navigation', { name: 'Workspace', exact: true }).getByRole('link', { name: 'Research', exact: true }).click();
+  await expect(page.locator('#research-workspace')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('#home-overview')).toBeVisible();
+  await expect(featured).toHaveJSProperty('open', true);
+  await page.goto('/?view=compact&category=energy');
+  await expect(featured).toHaveJSProperty('open', true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(featured).toHaveJSProperty('open', false);
+});

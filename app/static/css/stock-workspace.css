@@ -132,3 +132,6 @@
 }
 @media(max-width:380px){.stock-selection{display:block}.stock-selection>strong{display:block;font-size:12px}#stock-position{display:block;font-size:10px}.stock-selection-actions{gap:5px}.stock-workspace .stock-detail-toolbar{padding-inline:12px}.stock-workspace .stock-step-controls>button{min-width:40px}}
 @media(prefers-reduced-motion:no-preference){.stock-row,.stock-row-star,.stock-view-tabs>button{transition:background-color 120ms ease,color 120ms ease}.stock-detail-host{transition:opacity 120ms ease}}
+
+/* Visible keyboard focus on the stocks workspace. */
+.stock-workspace :is(button,a,input,select,summary,[tabindex]):focus-visible{outline:2px solid var(--theme-accent,#1967d2);outline-offset:2px}

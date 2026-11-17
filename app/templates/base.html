@@ -55,12 +55,12 @@
     <script defer src="{{ url_for('static', filename='js/components/quick_visuals.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/components/visual_builder_sources.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/components/reference_history.js') }}"></script>
-    <script defer src="{{ url_for('static', filename='js/components/visual_explorer.js', v='3ae1b26') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/components/visual_explorer.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visuals.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quick-visuals.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder-sources.css', v='20261018.1') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/visual-builder-sources.css') }}">
     <style>
         :root {
             /* Base brand colors */
@@ -757,9 +757,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/benchmark-detail.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/controls.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/reui.css', v='20261024.search') }}">
-  <!-- portfolio visitor analytics: coarse route categories only -->
-  <script defer src="/_analytics/tracker.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/reui.css') }}">
 </head>
 
 <body class="bg-brand-pink dark:bg-terminal-black min-h-screen transition-colors duration-300">
@@ -772,10 +770,10 @@
     {% include 'components/footer.html' %}
     {% include 'components/settings_modal.html' %}
     {% include 'components/benchmark_detail.html' %}
-    <script src="{{ url_for('static', filename='js/components/reui.js', v='20261024.search') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/components/workspace.js', v='20261024.search') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/components/research_workspace.js', v='3ae1b26') }}" defer></script>
-    <script src="{{ url_for('static', filename='js/components/benchmark_detail.js', v='3ae1b26') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/reui.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/research_workspace.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/components/benchmark_detail.js') }}" defer></script>
 </body>
 
 </html>

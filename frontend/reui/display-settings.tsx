@@ -30,16 +30,16 @@ export function installDisplaySettings(api: SettingsAPI) {
 
   function Settings() {
     const [open, setOpen] = useState(false);
-    const [theme, setTheme] = useState(document.documentElement.dataset.theme || 'light');
+    const [theme, setTheme] = useState(document.documentElement.dataset.themePreference || document.documentElement.dataset.theme || 'system');
     const [market, setMarket] = useState(document.documentElement.dataset.market || 'western');
     const opener = document.getElementById('settings-button');
     toggle = () => setOpen(value => !value);
     useEffect(() => {
       const observer = new MutationObserver(() => {
-        setTheme(document.documentElement.dataset.theme || 'light');
+        setTheme(document.documentElement.dataset.themePreference || document.documentElement.dataset.theme || 'system');
         setMarket(document.documentElement.dataset.market || 'western');
       });
-      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-market'] });
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-theme-preference', 'data-market'] });
       return () => observer.disconnect();
     }, []);
     useEffect(() => { opener?.setAttribute('aria-expanded', String(open)); }, [open, opener]);
@@ -53,6 +53,9 @@ export function installDisplaySettings(api: SettingsAPI) {
         </div>
         <section aria-labelledby="rui-theme-label">
           <h3 id="rui-theme-label">Appearance</h3>
+          <Button id="theme-system" variant="outline" style={{ width: '100%', marginBottom: 8 }} aria-pressed={theme === 'system'} onClick={() => api.setTheme('system')}>
+            <Monitor aria-hidden="true" />Use device appearance{theme === 'system' && <Check size={13} aria-hidden="true" />}
+          </Button>
           <ToggleGroup type="single" value={theme} onValueChange={value => { if (value) api.setTheme(value); }} className="rui-theme-grid" aria-labelledby="rui-theme-label">
             {themes.map(([value, label, description, ariaLabel]) => <ToggleGroupItem key={value} id={'theme-' + value} value={value} aria-label={ariaLabel} className="rui-theme-option">
               <span className="rui-theme-preview" data-preview={value} aria-hidden="true"><i /><span><b /><b /><b /></span></span>

@@ -60,21 +60,23 @@ describe('BW.Theme init lifecycle', () => {
   test('init is idempotent unless forced', () => {
     loadThemeScript();
 
-    const setThemeSpy = BW.Settings.setTheme;
-    const setMarketSpy = BW.Settings.setMarketTheme;
+    const getThemeSpy = BW.Settings._getRaw;
+    const getMarketSpy = BW.Settings.getMarketTheme;
 
-    setThemeSpy.mockClear();
-    setMarketSpy.mockClear();
+    getThemeSpy.mockClear();
+    getMarketSpy.mockClear();
 
     BW.Theme.init();
     BW.Theme.init();
 
-    expect(setThemeSpy).toHaveBeenCalledTimes(1);
-    expect(setMarketSpy).toHaveBeenCalledTimes(1);
+    expect(getThemeSpy).toHaveBeenCalledTimes(1);
+    expect(getMarketSpy).toHaveBeenCalledTimes(1);
+    expect(BW.Settings.setTheme).not.toHaveBeenCalled();
+    expect(BW.Settings.setMarketTheme).not.toHaveBeenCalled();
 
     BW.Theme.init(true);
 
-    expect(setThemeSpy).toHaveBeenCalledTimes(2);
-    expect(setMarketSpy).toHaveBeenCalledTimes(2);
+    expect(getThemeSpy).toHaveBeenCalledTimes(2);
+    expect(getMarketSpy).toHaveBeenCalledTimes(2);
   });
 });
