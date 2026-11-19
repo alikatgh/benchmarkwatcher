@@ -92,3 +92,17 @@ test('Back while editing Research closes its modal and keeps the draft', async (
   await page.locator('[data-workspace="research"]').click();
   await expect(page.locator('#rw-table-body')).toContainText('Retain the navigation draft');
 });
+
+
+test('Back from a benchmark view dialog closes the modal before showing Research', async ({page}) => {
+    await page.goto('/?workspace=research');
+    await page.locator('[data-workspace="benchmarks"]').first().click();
+    await page.locator('#tw-new-view').click();
+    await expect(page.locator('#tw-view-menu')).toBeVisible();
+    await page.goBack();
+    await expect(page.locator('#research-workspace')).toBeVisible();
+    await expect(page.locator('#tw-view-menu')).not.toBeVisible();
+    await expect(page.locator('#tw-view-menu')).not.toHaveAttribute('open', '');
+    await page.locator('[data-rw-action="new"]').first().click();
+    await expect(page.locator('#rw-editor')).toBeVisible();
+});

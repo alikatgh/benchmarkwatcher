@@ -76,6 +76,8 @@
         externalFilter: 'all',
         navigationWatchOnly: false,
         storageOkay: true,
+        controlsCollapsed: false,
+        controlsManual: null,
         getRows() { return Array.from(byId('table-body')?.querySelectorAll('tr[data-id]') || []); },
         getVisibleRows() { return this.getRows().filter(row => !row.hidden && row.style.display !== 'none'); },
         getSelectedIds() { return this.getRows().filter(row => this.selected.has(row.dataset.id)).map(row => row.dataset.id); },
@@ -195,6 +197,7 @@
             this.applyColumns(); this.updateSelection(); this.renderChips();
             const count = this.getVisibleRows().length;
             if (byId('tw-result-count')) byId('tw-result-count').textContent = `${count} of ${rows.length} benchmarks`;
+            this.renderCompactSummary();
             if (byId('tw-empty')) byId('tw-empty').hidden = count > 0;
             if (byId('tw-export-filtered')) byId('tw-export-filtered').disabled = count === 0;
             if (byId('tw-export-all')) byId('tw-export-all').disabled = rows.length === 0;
@@ -335,11 +338,66 @@
             [{ id: 'all', name: this.navigationWatchOnly ? 'All in watchlist' : 'All benchmarks' }, { id: 'watchlist', name: 'Watchlist' }, ...this.views].forEach(view => {
                 const tab = button(view.name, () => this.activateView(view.id), 'tw-view'); tab.dataset.viewId = view.id; tab.setAttribute('aria-pressed', String(view.id === this.activeId)); container.append(tab);
             });
-            const custom = this.views.some(view => view.id === this.activeId);
-            ['tw-update-view', 'tw-rename-view', 'tw-delete-view'].forEach(id => { if (byId(id)) byId(id).disabled = !custom; });
             const current = this.views.find(view => view.id === this.activeId);
-            if (byId('tw-view-name')) byId('tw-view-name').value = current?.name || '';
+            if (byId('tw-view-name') && byId('tw-view-menu')?.hidden) byId('tw-view-name').value = current?.name || '';
+            this.renderCompactSummary();
             this.updateViewStatus();
+        },
+        renderCompactSummary() {
+            const view = this.views.find(item => item.id === this.activeId);
+            const name = view?.name || (this.activeId === 'watchlist' ? 'Watchlist' : this.navigationWatchOnly ? 'All in watchlist' : 'All benchmarks');
+            if (byId('tw-summary-view')) byId('tw-summary-view').textContent = name;
+            const filters = Object.values(this.current.filters).filter(Boolean).length + Number(Boolean(this.current.query || this.externalQuery || this.externalFilter !== 'all'));
+            if (byId('tw-summary-context')) byId('tw-summary-context').textContent = `${this.current.range} · ${this.getVisibleRows().length} of ${this.getRows().length}${filters ? ` · ${filters} filters` : ''}`;
+        },
+        setControlsCollapsed(collapsed, manual = false) {
+            const controls = byId('tw-controls'), views = byId('tw-viewbar'), toggle = byId('tw-controls-toggle');
+            if (!controls || !toggle) return;
+            if (collapsed && !manual && (controls.contains(document.activeElement) || views?.contains(document.activeElement) || this.hasOpenPanel())) return;
+            const region = byId('table-workspace')?.querySelector('.tw-table-region');
+            const preserveRows = collapsed && !manual && !this.controlsCollapsed && region;
+            const previousTop = preserveRows ? region.getBoundingClientRect().top : 0;
+            if (manual) this.controlsManual = collapsed ? 'closed' : 'open';
+            this.controlsCollapsed = collapsed;
+            controls.hidden = collapsed;
+            if (views) views.hidden = collapsed;
+            if (byId('tw-compact-summary')) byId('tw-compact-summary').hidden = !collapsed;
+            byId('table-workspace')?.classList.toggle('tw-controls-collapsed', collapsed);
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            toggle.textContent = collapsed ? 'Show controls ⌄' : 'Hide controls ⌃';
+            if (preserveRows) {
+                const targetScroll = region.scrollTop + region.getBoundingClientRect().top - previousTop;
+                region.scrollTop = Math.max(0, targetScroll);
+                if (targetScroll < 0) window.scrollBy(0, targetScroll);
+            }
+            this.renderCompactSummary();
+        },
+        hasOpenPanel() {
+            return ['view-menu', 'filters', 'sort-panel', 'properties', 'actions'].some(name => { const panel = byId(`tw-${name}`); return panel && !panel.hidden; });
+        },
+        updateScrollControls() {
+            const root = byId('table-workspace'), region = root?.querySelector('.tw-table-region');
+            if (!root || !region || !byId('tw-controls') || this.controlsManual || !root.getClientRects().length) return;
+            // The root's document position does not depend on its children's height.
+            // Separate thresholds prevent collapse/expand oscillation near the edge.
+            const top = root.getBoundingClientRect().top + window.scrollY;
+            const header = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bw-header-height')) || 48;
+            const pagePast = window.scrollY > top - header + 56;
+            // Leave enough scroll above the visible rows to compensate for the
+            // removed controls, so collapsing never jumps to a different row.
+            const controlsHeight = byId('tw-controls').getBoundingClientRect().height + Math.max(0, (byId('tw-viewbar')?.getBoundingClientRect().height || 0) - 44);
+            if (!this.controlsCollapsed && (region.scrollTop > controlsHeight + 56 || pagePast)) this.setControlsCollapsed(true);
+            else if (this.controlsCollapsed && region.scrollTop <= 4 && window.scrollY < Math.max(8, top - header - 120)) this.setControlsCollapsed(false);
+        },
+        prepareViewDialog(mode = 'manage') {
+            const view = mode === 'manage' ? this.views.find(item => item.id === this.activeId) : null;
+            this.editingViewId = view?.id || null;
+            if (byId('tw-view-heading')) byId('tw-view-heading').textContent = view ? 'Edit saved view' : 'Save this view';
+            if (byId('tw-view-submit')) byId('tw-view-submit').textContent = view ? 'Save changes' : 'Save as new view';
+            if (byId('tw-view-name')) byId('tw-view-name').value = view?.name || '';
+            if (byId('tw-view-actions')) byId('tw-view-actions').hidden = !view;
+            if (byId('tw-view-help')) byId('tw-view-help').textContent = view ? 'Save this name and the current filters, sorting, properties, density and range.' : 'Save filters, sorting, properties, density and observation range as a new view in this browser.';
+            if (byId('tw-view-save-status')) byId('tw-view-save-status').textContent = '';
         },
         updateViewStatus() {
             const current = this.views.find(view => view.id === this.activeId);
@@ -405,7 +463,9 @@
             let focusTarget = null;
             ['view-menu', 'filters', 'sort-panel', 'properties', 'actions'].forEach(name => {
                 const panel = byId(`tw-${name}`); if (!panel || panel.hidden) return;
+                if (panel.open) { if (typeof panel.close === 'function') panel.close(); else panel.removeAttribute('open'); }
                 panel.hidden = true; const trigger = document.querySelector(`[aria-controls="tw-${name}"]`); trigger?.setAttribute('aria-expanded', 'false'); focusTarget = this.panelTrigger || trigger;
+                document.querySelectorAll(`[aria-controls="tw-${name}"]`).forEach(control => control.setAttribute('aria-expanded', 'false'));
             });
             this.panelTrigger = null;
             if (restoreFocus) focusTarget?.focus();
@@ -413,7 +473,12 @@
         togglePanel(panelId, trigger) {
             const panel = byId(panelId); if (!panel) return;
             const open = panel.hidden; this.closePanels(); panel.hidden = !open; trigger?.setAttribute('aria-expanded', String(open));
-            if (open) { this.panelTrigger = trigger; panel.querySelector('input,select,button')?.focus(); }
+            if (open) {
+                this.panelTrigger = trigger;
+                if (panel.tagName === 'DIALOG') { this.prepareViewDialog(trigger?.id === 'tw-new-view' ? 'new' : 'manage'); if (typeof panel.showModal === 'function') panel.showModal(); else panel.setAttribute('open', ''); }
+                panel.querySelector('input,select,button')?.focus();
+                if (panel.tagName === 'DIALOG') byId('tw-view-name')?.focus();
+            }
         },
         csvField(value, numeric = false) {
             let content = text(value);
@@ -440,16 +505,26 @@
         },
         bind() {
             [['tw-filter-button', 'tw-filters'], ['tw-sort-button', 'tw-sort-panel'], ['tw-properties-button', 'tw-properties'], ['tw-actions-button', 'tw-actions'], ['tw-view-menu-button', 'tw-view-menu']].forEach(([trigger, panel]) => byId(trigger)?.addEventListener('click', () => this.togglePanel(panel, byId(trigger))));
-            byId('tw-new-view')?.addEventListener('click', () => { this.closePanels(); this.panelTrigger = byId('tw-new-view'); byId('tw-view-menu').hidden = false; byId('tw-view-menu-button').setAttribute('aria-expanded', 'true'); byId('tw-view-name').value = ''; byId('tw-view-name').focus(); });
+            byId('tw-new-view')?.addEventListener('click', () => this.togglePanel('tw-view-menu', byId('tw-new-view')));
+            byId('tw-controls-toggle')?.addEventListener('click', () => { this.closePanels(); byId('tw-controls-toggle').focus(); this.setControlsCollapsed(!this.controlsCollapsed, true); });
+            byId('tw-view-close')?.addEventListener('click', () => this.closePanels(true));
+            byId('tw-view-menu')?.addEventListener('cancel', event => { event.preventDefault(); this.closePanels(true); });
+            byId('tw-view-menu')?.addEventListener('click', event => { if (event.target !== event.currentTarget) return; const box = event.currentTarget.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) this.closePanels(true); });
             byId('tw-query')?.addEventListener('input', event => this.change({ query: event.target.value }));
             Object.keys(defaults().filters).forEach(key => byId(`tw-${key}`)?.addEventListener('change', event => this.change({ filters: { ...this.current.filters, [key]: event.target.value } })));
             byId('tw-density')?.addEventListener('change', event => this.change({ density: event.target.value }));
             byId('tw-add-sort')?.addEventListener('click', () => { const next = PROPERTIES.find(p => p.type && !this.current.sorts.some(rule => rule.key === p.key)); if (next) { this.change({ sorts: [...this.current.sorts, { key: next.key, direction: 'asc' }] }); this.renderSortRules(); } });
             byId('tw-reset-filters')?.addEventListener('click', () => this.clearFilters());
-            byId('tw-view-form')?.addEventListener('submit', event => { event.preventDefault(); if (this.saveView(byId('tw-view-name').value)) this.closePanels(true); });
-            byId('tw-update-view')?.addEventListener('click', () => { const view = this.views.find(item => item.id === this.activeId); if (!view) return; view.config = copy(this.current); this.persist(); this.announce(this.storageOkay ? `${view.name} updated` : 'View update is not saved'); });
-            byId('tw-rename-view')?.addEventListener('click', () => { const view = this.views.find(item => item.id === this.activeId); const name = text(byId('tw-view-name')?.value); if (!view || !name) return; view.name = name.slice(0, 60); this.persist(); this.renderViews(); });
-            byId('tw-delete-view')?.addEventListener('click', () => { const view = this.views.find(item => item.id === this.activeId); if (!view || !window.confirm(`Remove the view “${view.name}”? Your research and watchlist will be kept.`)) return; this.views = this.views.filter(item => item.id !== this.activeId); this.activeId = 'all'; this.persist(); this.renderViews(); this.announce('View removed'); });
+            byId('tw-view-form')?.addEventListener('submit', event => {
+                event.preventDefault(); const name = text(byId('tw-view-name').value).slice(0, 60); if (!name) return;
+                const view = this.views.find(item => item.id === this.editingViewId);
+                if (view) { view.name = name; view.config = copy(this.current); this.persist(); this.renderViews(); this.announce(this.storageOkay ? `${name} updated` : 'View update is not saved'); }
+                else { if (!this.saveView(name)) return; this.editingViewId = this.activeId; }
+                if (this.storageOkay) this.closePanels(true);
+                else if (byId('tw-view-save-status')) byId('tw-view-save-status').textContent = 'Not saved. Close this dialog to retry saving or export your views backup.';
+            });
+            byId('tw-copy-view')?.addEventListener('click', () => { this.prepareViewDialog('new'); byId('tw-view-name')?.focus(); });
+            byId('tw-delete-view')?.addEventListener('click', () => { const view = this.views.find(item => item.id === this.editingViewId); if (!view || !window.confirm(`Remove the view “${view.name}”? Your research and watchlist will be kept.`)) return; this.views = this.views.filter(item => item.id !== view.id); this.activeId = 'all'; this.persist(); this.renderViews(); this.closePanels(true); this.announce(this.storageOkay ? 'View removed' : 'View removal is not saved. Retry saving.'); });
             byId('tw-select-all')?.addEventListener('change', event => { const rows = this.getVisibleRows(); rows.forEach(row => event.target.checked ? this.selected.add(row.dataset.id) : this.selected.delete(row.dataset.id)); this.updateSelection(); this.announce(`${event.target.checked ? 'Selected' : 'Deselected'} ${rows.length} filtered benchmarks`); });
             byId('tw-clear-selection')?.addEventListener('click', () => { this.selected.clear(); this.updateSelection(); this.announce('Selection cleared'); });
             byId('tw-watch-selected')?.addEventListener('click', () => this.getSelectedIds().filter(id => !this.watched.has(id)).forEach(id => document.dispatchEvent(new CustomEvent('bw:watch-toggle', { detail: { id } }))));
@@ -460,6 +535,11 @@
             byId('tw-backup-views')?.addEventListener('click', () => this.download(JSON.stringify({ version: 1, activeId: this.activeId, current: this.current, views: this.views }, null, 2), 'benchmark-views-backup.json', 'application/json'));
             byId('table-workspace')?.addEventListener('keydown', event => { if (event.key === 'Escape') this.closePanels(true); });
             document.addEventListener('bw:watchlist-change', event => this.setWatchlist(event.detail?.ids));
+            if (byId('tw-controls')) {
+                const onScroll = () => { if (this.scrollFrame) return; this.scrollFrame = requestAnimationFrame(() => { this.scrollFrame = null; this.updateScrollControls(); }); };
+                window.addEventListener('scroll', onScroll, { passive: true });
+                byId('table-workspace').querySelector('.tw-table-region')?.addEventListener('scroll', onScroll, { passive: true });
+            }
         },
         init() {
             if (this.ready || !byId('table-workspace') || !byId('data-table')) return;

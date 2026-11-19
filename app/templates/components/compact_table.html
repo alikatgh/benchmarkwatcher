@@ -1,21 +1,15 @@
 <section id="table-workspace" class="table-workspace" aria-label="Benchmark table workspace">
-    <div class="tw-viewbar">
-        <div id="tw-views" class="tw-views" role="group" aria-label="Saved table views"></div>
-        <button type="button" id="tw-new-view" class="tw-button tw-subtle">+ New view</button>
-        <button type="button" id="tw-view-menu-button" class="tw-button tw-subtle" aria-expanded="false" aria-controls="tw-view-menu">View settings</button>
-    </div>
-    <div id="tw-view-menu" class="tw-panel" hidden>
-        <form id="tw-view-form" class="tw-inline-form">
-            <label for="tw-view-name">View name</label><input id="tw-view-name" maxlength="60" required placeholder="e.g. Monthly energy" autocomplete="off">
-            <button class="tw-button tw-primary" type="submit">Save as new view</button>
-        </form>
-        <div class="tw-panel-actions">
-            <button type="button" id="tw-update-view" class="tw-button">Update current view</button>
-            <button type="button" id="tw-rename-view" class="tw-button">Rename</button>
-            <button type="button" id="tw-delete-view" class="tw-button">Remove view</button>
+    <div class="tw-control-shell">
+    <div class="tw-control-heading">
+        <div id="tw-viewbar" class="tw-viewbar">
+            <div id="tw-views" class="tw-views" role="group" aria-label="Saved table views"></div>
+            <button type="button" id="tw-new-view" class="tw-button tw-subtle" aria-haspopup="dialog" aria-expanded="false" aria-controls="tw-view-menu">+ New view</button>
+            <button type="button" id="tw-view-menu-button" class="tw-button tw-subtle" aria-haspopup="dialog" aria-expanded="false" aria-controls="tw-view-menu">View settings</button>
         </div>
-        <p class="tw-help">Named views save your filters, sorting, properties, density and observation range in this browser. Removing a view keeps your research and watchlist.</p>
+        <div id="tw-compact-summary" class="tw-compact-summary" hidden><strong id="tw-summary-view">All benchmarks</strong><span id="tw-summary-context"></span></div>
+        <button type="button" id="tw-controls-toggle" class="tw-button tw-subtle tw-controls-toggle" aria-expanded="true" aria-controls="tw-controls tw-viewbar">Hide controls <span aria-hidden="true">⌃</span></button>
     </div>
+    <div id="tw-controls">
     <div class="tw-toolbar">
         <label class="tw-search"><span aria-hidden="true">⌕</span><span class="sr-only">Search this view</span><input type="search" id="tw-query" placeholder="Search this view" autocomplete="off"></label>
         <div class="tw-tools">
@@ -42,10 +36,22 @@
         <span id="date-range-display" class="tw-help">All available observations</span><span id="tw-result-count" class="tw-count" aria-live="polite"></span>
     </div>
     <div id="tw-filter-chips" class="tw-chips"></div>
+    </div>
+    </div>
     <div id="tw-selection" class="tw-selection" hidden>
         <strong id="tw-selection-count"></strong><button type="button" id="tw-watch-selected" class="tw-button">Watch selected</button><button type="button" id="tw-research-selected" class="tw-button">Add to research</button><button type="button" id="tw-compare-selected" class="tw-button">Compare</button><button type="button" id="tw-export-selected" class="tw-button">Export selected</button><button type="button" id="tw-clear-selection" class="tw-button tw-subtle">Clear selection</button>
     </div>
     <div id="tw-storage-warning" class="tw-storage-warning" role="status" hidden><span>View changes are not saved. Browser storage is unavailable.</span><button type="button" id="tw-retry-save" class="tw-button">Retry save</button><button type="button" id="tw-backup-views" class="tw-button">Export views backup</button></div>
+    <dialog id="tw-view-menu" class="tw-view-dialog" aria-labelledby="tw-view-heading" hidden>
+        <div class="tw-dialog-heading"><h2 id="tw-view-heading">Save this view</h2><button type="button" id="tw-view-close" class="tw-button tw-subtle" aria-label="Close view settings">×</button></div>
+        <p id="tw-view-help" class="tw-help">Save filters, sorting, properties, density and observation range in this browser.</p>
+        <form id="tw-view-form">
+            <label for="tw-view-name">View name</label><input id="tw-view-name" maxlength="60" required placeholder="e.g. Monthly energy" autocomplete="off">
+            <button id="tw-view-submit" class="tw-button tw-primary" type="submit">Save as new view</button>
+        </form>
+        <div id="tw-view-actions" class="tw-panel-actions" hidden><button type="button" id="tw-copy-view" class="tw-button">Save a copy</button><button type="button" id="tw-delete-view" class="tw-button tw-danger">Remove view</button></div>
+        <p id="tw-view-save-status" class="tw-help" role="status"></p>
+    </dialog>
     <div class="tw-table-region" tabindex="0" role="region" aria-label="Benchmark table. Scroll horizontally for more properties.">
         <div id="table-loading" class="loading-overlay hidden" role="status"><span class="loading-spinner"></span><span class="sr-only">Loading observations</span></div>
         <table id="data-table" class="tw-table">

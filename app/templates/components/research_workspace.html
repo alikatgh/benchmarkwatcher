@@ -1,20 +1,22 @@
 <section id="research-workspace" class="research-workspace" aria-labelledby="research-heading" hidden>
   <div class="rw-heading">
-    <div><p class="rw-eyebrow">Your working notes</p><h1 id="research-heading">Research</h1><p>Connect the observations. Keep your own perspective.</p></div>
+    <div><h1 id="research-heading">Research</h1><p>Connect the observations. Keep your own perspective.</p></div>
     <button type="button" class="rw-button rw-primary" data-rw-action="new">+ New entry</button>
   </div>
-  <div class="rw-storage-notice"><span>Stored in this browser only. Browser cleanup can remove entries. Export a backup to keep a copy.</span><button type="button" class="rw-text-button" data-rw-action="export">Export backup</button></div>
+  <div class="rw-storage-notice"><span>Stored only in this browser. Export a backup before clearing browser data.</span><button type="button" class="rw-text-button" data-rw-action="export">Export backup</button></div>
   <div class="rw-viewbar" aria-label="Research views">
     <div id="rw-views" class="rw-views"></div>
     <button type="button" class="rw-text-button" data-rw-action="save-view">+ Save view</button>
   </div>
   <div class="rw-toolbar">
     <label class="rw-search"><span class="rw-sr-only">Search research entries</span><input id="rw-search" type="search" placeholder="Search this research view" autocomplete="off"></label>
+    <div class="rw-filter-controls">
     <label class="rw-control"><span>Status</span><select id="rw-status-filter" aria-label="Filter by status"><option value="">All statuses</option><option>To review</option><option>In progress</option><option>Reviewed</option></select></label>
     <label class="rw-control"><span>Sort</span><select id="rw-sort" aria-label="Sort research by"><option value="updatedAt">Last edited</option><option value="title">Title</option><option value="status">Status</option><option value="benchmark">Linked benchmark</option></select></label>
     <button type="button" class="rw-button" id="rw-sort-direction" aria-label="Sort oldest first" title="Reverse sort direction">↓</button>
-    <button type="button" class="rw-button" data-rw-action="properties">Properties</button>
-    <button type="button" class="rw-button" data-rw-action="import">Import backup</button>
+    </div>
+    <div class="rw-toolbar-actions"><button type="button" class="rw-button" data-rw-action="properties">Properties</button>
+    <details class="rw-more"><summary class="rw-button">More <span aria-hidden="true">⌄</span></summary><div class="rw-more-panel"><button type="button" class="rw-button" data-rw-action="import">Import backup</button></div></details></div>
     <input id="rw-import-file" type="file" accept=".json,application/json" hidden>
   </div>
   <div class="rw-results-bar"><span id="rw-count"></span><button type="button" class="rw-text-button" id="rw-reset" data-rw-action="reset" hidden>Clear filters</button><span id="rw-save-state" role="status" aria-live="polite">No changes yet</span><button type="button" class="rw-text-button" id="rw-retry" data-rw-action="retry" hidden>Retry saving</button><button type="button" class="rw-text-button" id="rw-undo" data-rw-action="undo" disabled>Undo</button></div>
